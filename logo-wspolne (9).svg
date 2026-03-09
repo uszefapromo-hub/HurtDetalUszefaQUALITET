@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="pl"><head><title>Checkout</title><meta charset="utf-8">
+<html lang="pl"><head><title>Koszyk</title><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="css/styles.css"></head>
-<body data-page="checkout">
+<body data-page="koszyk">
 <header class="topbar">
   <div class="wrap topbar-inner">
     <a class="brand" href="index.html">
@@ -30,22 +30,13 @@
 </header>
 
 <main class="wrap">
-  <section class="page-hero compact"><span class="eyebrow">Checkout</span><h1>Złóż zamówienie w 1 krok.</h1></section>
-  <section class="form-grid">
-    <form class="panel-card form-card" id="checkout-form">
-      <label>Imię i nazwisko<input required name="name"></label>
-      <label>Email<input required type="email" name="email"></label>
-      <label>Telefon<input required name="phone"></label>
-      <label>Adres<input required name="address"></label>
-      <button class="btn btn-primary" type="submit">Potwierdź zamówienie</button>
-    </form>
-    <div class="panel-card">
-      <h3>Podsumowanie</h3>
-      <div id="checkout-summary"></div>
-    </div>
-  </section>
+  <section class="page-hero compact"><span class="eyebrow">Koszyk</span><h1>Produkty wybrane do zamówienia.</h1></section>
+  <section class="panel-card" id="cart-list"></section>
+  <div class="checkout-bar wrap-mini">
+    <a class="btn btn-primary" href="checkout.html">Przejdź do checkout</a>
+  </div>
 </main>
-<script src="js/orders.js" defer></script>
+<script src="js/cart.js" defer></script>
 
 <footer class="footer">
   <div class="wrap footer-grid">

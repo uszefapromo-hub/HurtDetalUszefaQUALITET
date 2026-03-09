@@ -1,55 +1,64 @@
 <!doctype html>
-<html lang="pl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>U Szefa</title>
-  <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-  <div data-header></div>
-  
-<section class="hero">
-  <div class="container hero-grid">
+<html lang="pl"><head><title>Hurtownie</title><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/styles.css"></head>
+<body data-page="hurtownie">
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="index.html">
+      <img src="assets/logo-wspolne.svg" alt="U Szefa + QualitetMarket">
+      <div>
+        <strong>U Szefa</strong>
+        <span>królestwo zarabiania</span>
+      </div>
+    </a>
+    <nav class="nav" aria-label="Główna nawigacja">
+      <a href="index.html">Start</a>
+      <a href="qualitetmarket.html">QualitetMarket</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="generator-sklepu.html">Nowy sklep</a>
+      <a href="hurtownie.html">Hurtownie</a>
+      <a href="platforma.html">Reklama</a>
+      <a href="cennik.html">Cennik</a>
+      <a href="sklep.html">Sklep</a>
+      <a href="koszyk.html">Koszyk</a>
+      <a href="zamowienia.html">Zamówienia</a>
+      <a href="panel-sklepu.html">Panel sklepu</a>
+    </nav>
+    <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="page-hero compact">
+    <span class="eyebrow">Import hurtowni</span>
+    <h1>Wybierz dostawcę i zapisz gotowy prefill produktów.</h1>
+    <p>Prosty import do localStorage bez starego chaosu.</p>
+  </section>
+  <section class="supplier-grid" id="suppliers-list"></section>
+</main>
+<script src="js/hurtownie.js" defer></script>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
     <div>
-      <span class="badge">Królestwo zarabiania od zera do miliona</span>
-      <h1>U Szefa — menu główne do startu bez wkładu.</h1>
-      <p class="lead">Ludzie wchodzą, zakładają własny sklep z logo, ustawiają motyw, liczą marżę i startują ze sprzedażą. Ty zarabiasz na subskrypcjach miesięcznych i rozwoju całego systemu.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="generator-sklepu.html">Załóż sklep</a>
-        <a class="btn btn-alt" href="qualitetmarket.html">Wejdź do QualitetMarket</a>
-      </div>
-      <div class="section">
-        <div class="notice" data-promo-left></div>
-      </div>
+      <img class="footer-logo" src="assets/logo-uszefa.svg" alt="U Szefa">
+      <p>U Szefa to menu główne i start od zera. QualitetMarket to centrum dowodzenia sprzedażą.</p>
     </div>
-    <div class="card hero-visual">
-      <img src="assets/bg-business.svg" alt="Biznesowa grafika platformy">
+    <div>
+      <h4>Szybki start</h4>
+      <a href="generator-sklepu.html">Otwórz sklep</a>
+      <a href="hurtownie.html">Wybierz hurtownię</a>
+      <a href="platforma.html">Ustaw reklamę</a>
+    </div>
+    <div>
+      <h4>System</h4>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="sklep.html">Podgląd sklepu</a>
+      <a href="zamowienia.html">Zamówienia</a>
     </div>
   </div>
-</section>
+</footer>
+<script src="js/app.js" defer></script>
 
-<section class="section">
-  <div class="container grid-4">
-    <div class="card"><div class="kpi" data-stores-count>0</div><div class="sub">założonych sklepów</div></div>
-    <div class="card"><div class="kpi" data-margin-default>35%</div><div class="sub">domyślna marża</div></div>
-    <div class="card"><div class="kpi" data-est-sales>0 zł</div><div class="sub">szacowana sprzedaż</div></div>
-    <div class="card"><div class="kpi" data-est-profit>0 zł</div><div class="sub">szacowany zysk</div></div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="container grid-3">
-    <div class="card"><h3>Własne sklepy</h3><p>Każdy zakłada własny sklep, wrzuca logo i wybiera motyw bez wychodzenia z aplikacji.</p></div>
-    <div class="card"><h3>Reklama w środku</h3><p>Użytkownik może planować reklamę i liczyć opłacalność na jednej platformie.</p></div>
-    <div class="card promo"><h3>Pierwsze 3 sklepy</h3><p>Mają promocję startową i mocniejsze wejście na stronie głównej.</p></div>
-  </div>
-</section>
-
-  <footer class="footer">
-    <div class="container">U Szefa + QualitetMarket • gotowe pod GitHub Pages • localStorage • mobile</div>
-  </footer>
-  <script src="js/app.js"></script>
-  
-</body>
-</html>
+</body></html>

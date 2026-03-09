@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="pl"><head><title>Checkout</title><meta charset="utf-8">
+<html lang="pl"><head><title>Cennik</title><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="css/styles.css"></head>
-<body data-page="checkout">
+<body data-page="cennik">
 <header class="topbar">
   <div class="wrap topbar-inner">
     <a class="brand" href="index.html">
@@ -30,22 +30,38 @@
 </header>
 
 <main class="wrap">
-  <section class="page-hero compact"><span class="eyebrow">Checkout</span><h1>Złóż zamówienie w 1 krok.</h1></section>
-  <section class="form-grid">
-    <form class="panel-card form-card" id="checkout-form">
-      <label>Imię i nazwisko<input required name="name"></label>
-      <label>Email<input required type="email" name="email"></label>
-      <label>Telefon<input required name="phone"></label>
-      <label>Adres<input required name="address"></label>
-      <button class="btn btn-primary" type="submit">Potwierdź zamówienie</button>
-    </form>
-    <div class="panel-card">
-      <h3>Podsumowanie</h3>
-      <div id="checkout-summary"></div>
-    </div>
+  <section class="page-hero compact">
+    <span class="eyebrow">Subskrypcje miesięczne</span>
+    <h1>Plany, które mają zarabiać Tobie co miesiąc.</h1>
+    <p>Pierwsze 3 sklepy dostają promocję wdrożeniową i mocniejsze wybicie na starcie.</p>
+  </section>
+  <section class="pricing-grid">
+    <article class="price-card">
+      <h3>Basic</h3><strong>49 zł / mies.</strong>
+      <p>Start dla nowych sprzedawców.</p>
+      <ul><li>1 sklep</li><li>Podstawowa marża</li><li>Prosty panel</li></ul>
+      <button class="btn btn-secondary" data-plan-select="basic">Wybierz Basic</button>
+    </article>
+    <article class="price-card featured">
+      <div class="badge">Najczęściej wybierany</div>
+      <h3>Pro</h3><strong>149 zł / mies.</strong>
+      <p>Mocna sprzedaż, reklama i wiele motywów.</p>
+      <ul><li>5 sklepów</li><li>Reklamy w aplikacji</li><li>Lepszy boost</li></ul>
+      <button class="btn btn-primary" data-plan-select="pro">Wybierz Pro</button>
+    </article>
+    <article class="price-card">
+      <h3>Elite</h3><strong>349 zł / mies.</strong>
+      <p>Pełne dowodzenie i najwyższy poziom.</p>
+      <ul><li>Nielimitowane sklepy</li><li>Pełny CRM</li><li>Priorytetowe wdrożenie</li></ul>
+      <button class="btn btn-secondary" data-plan-select="elite">Wybierz Elite</button>
+    </article>
+  </section>
+  <section class="panel-card">
+    <div class="kv"><span>Wybrany plan</span><strong data-active-plan>BASIC</strong></div>
+    <div class="kv"><span>Promocja</span><strong data-promo-left>Sprawdzanie promocji...</strong></div>
   </section>
 </main>
-<script src="js/orders.js" defer></script>
+<script src="js/pricing.js" defer></script>
 
 <footer class="footer">
   <div class="wrap footer-grid">

@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="pl"><head><title>Checkout</title><meta charset="utf-8">
+<html lang="pl"><head><title>Dashboard</title><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="css/styles.css"></head>
-<body data-page="checkout">
+<body data-page="dashboard">
 <header class="topbar">
   <div class="wrap topbar-inner">
     <a class="brand" href="index.html">
@@ -30,23 +30,35 @@
 </header>
 
 <main class="wrap">
-  <section class="page-hero compact"><span class="eyebrow">Checkout</span><h1>Złóż zamówienie w 1 krok.</h1></section>
-  <section class="form-grid">
-    <form class="panel-card form-card" id="checkout-form">
-      <label>Imię i nazwisko<input required name="name"></label>
-      <label>Email<input required type="email" name="email"></label>
-      <label>Telefon<input required name="phone"></label>
-      <label>Adres<input required name="address"></label>
-      <button class="btn btn-primary" type="submit">Potwierdź zamówienie</button>
-    </form>
-    <div class="panel-card">
-      <h3>Podsumowanie</h3>
-      <div id="checkout-summary"></div>
-    </div>
+  <section class="page-hero compact">
+    <span class="eyebrow">Dashboard operatora</span>
+    <h1>Steruj swoim królestwem sprzedaży z jednego panelu.</h1>
+    <p>Kolorowy panel pod e-commerce i marketplace. Wszystko czytelne na telefonie i gotowe pod GitHub Pages.</p>
+  </section>
+  <section class="stats-grid">
+    <article class="stat-card"><span>Produkty</span><strong data-products-count>0</strong></article>
+    <article class="stat-card"><span>Zamówienia</span><strong data-orders-count>0</strong></article>
+    <article class="stat-card"><span>Sklepy</span><strong data-stores-count>0</strong></article>
+    <article class="stat-card"><span>Marża</span><strong data-margin-default>20%</strong></article>
+  </section>
+  <section class="dashboard-grid">
+    <article class="panel-card wide" id="lista-magazynow-danych"></article>
+    <article class="panel-card">
+      <h3>Status systemu</h3>
+      <div class="kv"><span>Aktywny sklep</span><strong data-active-store-name>demo</strong></div>
+      <div class="kv"><span>Plan</span><strong data-active-plan>BASIC</strong></div>
+      <div class="kv"><span>Produkty</span><strong data-products-count>0</strong></div>
+      <div class="kv"><span>Zamówienia</span><strong data-orders-count>0</strong></div>
+    </article>
+  </section>
+  <section class="quick-links">
+    <a class="btn btn-secondary" href="sklep.html">Sklep</a>
+    <a class="btn btn-secondary" href="koszyk.html">Koszyk</a>
+    <a class="btn btn-secondary" href="checkout.html">Checkout</a>
+    <a class="btn btn-secondary" href="zamowienia.html">Zamówienia</a>
+    <a class="btn btn-secondary" href="panel-sklepu.html">Panel sklepu</a>
   </section>
 </main>
-<script src="js/orders.js" defer></script>
-
 <footer class="footer">
   <div class="wrap footer-grid">
     <div>
@@ -68,5 +80,4 @@
   </div>
 </footer>
 <script src="js/app.js" defer></script>
-
 </body></html>

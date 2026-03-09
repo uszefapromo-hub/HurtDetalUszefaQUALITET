@@ -1,6 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="420" height="90" viewBox="0 0 420 90">
-<defs><linearGradient id="g1" x1="0" x2="1"><stop stop-color="#f59e0b"/><stop offset="1" stop-color="#fb7185"/></linearGradient>
-<linearGradient id="g2" x1="0" x2="1"><stop stop-color="#06b6d4"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
-<rect width="420" height="90" rx="18" fill="#111827"/><circle cx="38" cy="45" r="18" fill="url(#g1)"/><rect x="68" y="27" width="36" height="36" rx="10" fill="url(#g2)"/>
-<text x="120" y="39" font-size="27" font-family="Arial" font-weight="700" fill="#fff">U Szefa + QualitetMarket</text>
-<text x="120" y="62" font-size="14" font-family="Arial" fill="#cbd5e1">sprzedaż • sklepy • reklama • marża</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="120" viewBox="0 0 400 120">
+<defs>
+<linearGradient id="g1" x1="0" x2="1"><stop stop-color="#ffd84d"/><stop offset="1" stop-color="#ff4fd8"/></linearGradient>
+<linearGradient id="g2" x1="0" x2="1"><stop stop-color="#38d9ff"/><stop offset="1" stop-color="#9e77ff"/></linearGradient>
+</defs>
+<rect width="400" height="120" rx="28" fill="#111a35"/>
+<circle cx="42" cy="60" r="20" fill="url(#g1)"/>
+<rect x="72" y="40" width="40" height="40" rx="12" fill="url(#g2)"/>
+<text x="130" y="52" fill="#fff" font-family="Arial" font-weight="700" font-size="28">U Szefa + QualitetMarket</text>
+<text x="130" y="82" fill="#b8c0ff" font-family="Arial" font-size="16">sprzedaż • sklepy • reklama • zarabianie</text>
+</svg>
