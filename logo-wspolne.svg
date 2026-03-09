@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+<linearGradient id="gold" x1="0" x2="1"><stop stop-color="#ffc857"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient>
+<linearGradient id="vio" x1="0" x2="1"><stop stop-color="#43d9ff"/><stop offset="1" stop-color="#8d7dff"/></linearGradient>
+</defs>
+<rect width="512" height="512" rx="120" fill="#07111f"/>
+<circle cx="180" cy="200" r="96" fill="url(#gold)"/>
+<rect x="208" y="208" width="170" height="170" rx="46" fill="url(#vio)"/>
+<path d="M124 205c25-5 42-24 52-56 10 21 28 34 49 41-14 37-36 62-69 73-28-9-50-31-63-58 10 0 20 0 31 0z" fill="#221500"/>
+<path d="M244 294l34-36 24 24 48-49 24 24-72 74-24-24-10 11z" fill="#07111f"/></svg>
