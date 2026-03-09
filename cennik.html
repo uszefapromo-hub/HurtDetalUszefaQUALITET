@@ -1,102 +1,91 @@
-(function(){
+(function () {
   const KEYS = {
-    products:'qm_products_by_supplier_v1',
-    intel:'qm_intel_prefill_v1',
-    listing:'qm_listing_prefill_v1',
-    crm:'qm_crm_v1',
-    stores:'qm_stores_v1',
-    activeStore:'qm_active_store_v1',
-    margin:'qm_store_margin_pct'
+    stores: 'qm_stores_v1',
+    activeStore: 'qm_active_store_v1',
+    margin: 'qm_store_margin_pct',
+    intel: 'qm_intel_prefill_v1',
+    listing: 'qm_listing_prefill_v1',
+    crm: 'qm_crm_v1',
+    products: 'qm_products_by_supplier_v1'
   };
 
   const safeParse = (value, fallback) => {
-    try { return JSON.parse(value) ?? fallback; } catch(e){ return fallback; }
+    try { return JSON.parse(value); } catch (e) { return fallback; }
   };
 
   const getStores = () => safeParse(localStorage.getItem(KEYS.stores), []);
   const setStores = (stores) => localStorage.setItem(KEYS.stores, JSON.stringify(stores));
   const getMargin = () => Number(localStorage.getItem(KEYS.margin) || 35);
+  const setMargin = (value) => localStorage.setItem(KEYS.margin, String(value));
 
-  function formatMoney(value){
-    return new Intl.NumberFormat('pl-PL',{style:'currency',currency:'PLN',maximumFractionDigits:2}).format(Number(value||0));
-  }
+  const fmt = (value) => new Intl.NumberFormat('pl-PL', {style: 'currency', currency: 'PLN'}).format(Number(value || 0));
 
-  function countPromoLeft(){
-    const stores = getStores();
-    return Math.max(0, 3 - stores.length);
-  }
-
-  function injectPromo(){
-    document.querySelectorAll('[data-promo-left]').forEach(el => {
-      const left = countPromoLeft();
-      el.textContent = left > 0
-        ? `Promocja aktywna: jeszcze ${left} z 3 pierwszych sprzedawców wejdzie na start bez opłaty wdrożeniowej i z mocniejszym podbiciem na stronie głównej.`
-        : 'Promocja dla pierwszych 3 sprzedawców została już wykorzystana. Kolejni wchodzą standardowo z pełnym dostępem do systemu.';
-    });
-  }
-
-  function injectHeader(){
-    const slots = document.querySelectorAll('[data-shared-header]');
-    slots.forEach(slot => {
-      slot.innerHTML = `
-      <div class="topbar">
-        <div class="container nav">
-          <a class="brand" href="index.html">
-            <img src="assets/logo-wspolne.svg" alt="U Szefa + QualitetMarket">
-            <div class="brand-text">
-              <span class="brand-title">U Szefa</span>
-              <span class="brand-sub">menu główne • wejście do królestwa zarabiania</span>
+  function injectHeader() {
+    document.querySelectorAll('[data-header]').forEach(el => {
+      el.innerHTML = `
+        <div class="topbar">
+          <div class="container nav">
+            <div class="logo-row">
+              <a href="index.html" class="logo-box"><img src="assets/logo-wspolne.svg" alt="U Szefa + QualitetMarket" height="42"></a>
             </div>
-          </a>
-          <div class="nav-links">
-            <a href="index.html">Start</a>
-            <a href="qualitetmarket.html">QualitetMarket</a>
-            <a href="generator-sklepu.html">Załóż sklep</a>
-            <a href="platforma.html">Reklama i rozwój</a>
-            <a href="cennik.html">Subskrypcje</a>
+            <div class="nav-links">
+              <a href="index.html">U Szefa</a>
+              <a href="qualitetmarket.html">QualitetMarket</a>
+              <a href="generator-sklepu.html">Załóż sklep</a>
+              <a href="platforma.html">Reklama i marża</a>
+              <a href="cennik.html">Subskrypcje</a>
+            </div>
           </div>
         </div>
-      </div>`;
+      `;
     });
   }
 
-  function fillDashboardStats(){
+  function updatePromoText() {
+    const left = Math.max(0, 3 - getStores().length);
+    document.querySelectorAll('[data-promo-left]').forEach(el => {
+      el.textContent = left > 0
+        ? `Promocja dla pierwszych 3 sprzedawców aktywna. Zostało ${left} miejsc.`
+        : 'Promocja startowa została wykorzystana. System działa już w trybie standardowym.';
+    });
+  }
+
+  function fillDashboard() {
     const stores = getStores();
     const avgMargin = getMargin();
     const salesBase = stores.length * 7800;
-    const estProfit = salesBase * (avgMargin/100);
+    const profit = salesBase * (avgMargin / 100);
+
     document.querySelectorAll('[data-stores-count]').forEach(el => el.textContent = stores.length);
     document.querySelectorAll('[data-margin-default]').forEach(el => el.textContent = avgMargin + '%');
-    document.querySelectorAll('[data-est-sales]').forEach(el => el.textContent = formatMoney(salesBase));
-    document.querySelectorAll('[data-est-profit]').forEach(el => el.textContent = formatMoney(estProfit));
+    document.querySelectorAll('[data-est-sales]').forEach(el => el.textContent = fmt(salesBase));
+    document.querySelectorAll('[data-est-profit]').forEach(el => el.textContent = fmt(profit));
   }
 
-  function renderStores(targetSelector){
-    const target = document.querySelector(targetSelector);
-    if(!target) return;
+  function renderStores(targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
     const stores = getStores();
-    if(!stores.length){
-      target.innerHTML = `<div class="notice">Nie ma jeszcze zapisanych sklepów. Wejdź w generator, ustaw logo, wybierz motyw i zapisz pierwszy sklep.</div>`;
+    if (!stores.length) {
+      target.innerHTML = '<div class="warning">Nie ma jeszcze zapisanych sklepów. Wejdź do generatora sklepu i dodaj pierwszy sklep.</div>';
       return;
     }
     target.innerHTML = stores.map((store, idx) => `
-      <article class="store-card">
-        <div class="badge">${idx < 3 ? 'Promocja startowa' : 'Aktywny sklep'}</div>
-        <h4>${store.name}</h4>
-        <p class="muted">${store.niche || 'Sprzedaż wielobranżowa'} • plan: ${store.plan}</p>
-        <div class="micro">Logo: ${store.logoName || 'domyślne'} • motyw: ${store.theme}</div>
-      </article>
+      <div class="store-item">
+        <div class="tag">${idx < 3 ? 'Promocja startowa' : 'Aktywny sklep'}</div>
+        <h3>${store.name}</h3>
+        <p class="sub">${store.niche || 'Sprzedaż wielobranżowa'} • plan: ${store.plan}</p>
+        <p>Logo: ${store.logoName || 'domyślne'} • motyw: ${store.theme}</p>
+      </div>
     `).join('');
   }
 
-  window.QM = {
-    KEYS, safeParse, getStores, setStores, getMargin, formatMoney, injectPromo, injectHeader, fillDashboardStats, renderStores
-  };
-
   document.addEventListener('DOMContentLoaded', () => {
     injectHeader();
-    injectPromo();
-    fillDashboardStats();
-    renderStores('[data-stores-list]');
+    updatePromoText();
+    fillDashboard();
+    renderStores('stores-list');
   });
+
+  window.QM = { KEYS, safeParse, getStores, setStores, getMargin, setMargin, fmt, renderStores };
 })();

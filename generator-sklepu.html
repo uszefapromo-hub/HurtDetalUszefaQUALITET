@@ -1,126 +1,48 @@
-<!doctype html>
-<html lang="pl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Generator sklepu — U Szefa</title>
-  <meta name="description" content="Załóż sklep ze swoim logo, motywem i marżą.">
-  <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-  <div data-shared-header></div>
+(function () {
+  function bindStoreGenerator() {
+    const form = document.getElementById('store-generator-form');
+    if (!form || !window.QM) return;
 
-  <main class="container">
-    <section class="hero">
-      <div class="hero-grid">
-        <div>
-          <span class="kicker">🛍️ Generator sklepu</span>
-          <h1>Załóż własny sklep
-            pod swoim logo
-            i od razu ustaw zysk.</h1>
-          <p class="lead">Ten ekran robi robotę od razu: nazwa, nisza, logo, motyw, plan i marża. Zapis trafia do localStorage i platforma jest gotowa do dalszej rozbudowy.</p>
-          <div class="promo-strip" style="margin-top:18px">
-            <div>
-              <strong>Premia dla pierwszych 3 sprzedawców</strong>
-              <div class="micro" data-promo-left></div>
-            </div>
-          </div>
-        </div>
-        <div class="hero-card">
-          <img src="assets/logo-uszefa.svg" alt="Logo U Szefa" style="width:96px;height:96px">
-          <p class="lead" style="font-size:1rem">Każdy sklep może mieć osobny klimat, ale dalej buduje Twoje królestwo zarabiania i wraca do Ciebie w abonamencie.</p>
-        </div>
-      </div>
-    </section>
+    const chips = [...document.querySelectorAll('.theme-chip')];
+    const themeInput = document.getElementById('theme');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        themeInput.value = chip.dataset.theme;
+      });
+    });
 
-    <section class="section">
-      <div class="output-grid">
-        <div class="card">
-          <h2 class="section-title" style="margin-top:0">Ustaw sklep</h2>
-          <form id="store-form">
-            <div class="form-grid">
-              <div class="field">
-                <label for="storeName">Nazwa sklepu</label>
-                <input id="storeName" required placeholder="np. MegaDom Premium">
-              </div>
-              <div class="field">
-                <label for="storeNiche">Nisza / branża</label>
-                <input id="storeNiche" placeholder="np. dom, beauty, auto, premium">
-              </div>
-              <div class="field">
-                <label for="storeLogo">Logo sklepu</label>
-                <input id="storeLogo" type="file" accept="image/*">
-                <div class="micro">Wybrane logo: <span data-logo-name>brak</span></div>
-              </div>
-              <div class="field">
-                <label for="storePlan">Plan subskrypcji</label>
-                <select id="storePlan">
-                  <option value="basic">Basic</option>
-                  <option value="pro" selected>Pro</option>
-                  <option value="elite">Elite</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="storePrimary">Kolor główny</label>
-                <input id="storePrimary" type="color" value="#ffbf3c">
-              </div>
-              <div class="field">
-                <label for="storeAccent">Kolor akcentu</label>
-                <input id="storeAccent" type="color" value="#34d5ff">
-              </div>
-              <div class="field">
-                <label for="storeTheme">Motyw sklepu</label>
-                <select id="storeTheme">
-                  <option value="luxury">Luxury Gold</option>
-                  <option value="neon" selected>Neon Growth</option>
-                  <option value="clean">Clean Trust</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="storeMargin">Marża domyślna (%)</label>
-                <input id="storeMargin" type="number" min="1" max="300" value="35">
-              </div>
-            </div>
-            <div class="field" style="margin-top:16px">
-              <label for="storeTagline">Hasło sklepu</label>
-              <textarea id="storeTagline" placeholder="np. Sprzedaż premium bez chaosu."></textarea>
-            </div>
-            <div class="actions">
-              <button class="btn btn-primary" type="submit">Zapisz sklep</button>
-              <a class="btn" href="cennik.html">Zobacz plany</a>
-            </div>
-          </form>
-          <div id="save-status" style="margin-top:16px"></div>
-        </div>
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const stores = QM.getStores();
+      const store = {
+        id: Date.now(),
+        name: fd.get('storeName'),
+        niche: fd.get('niche'),
+        plan: fd.get('plan'),
+        theme: fd.get('theme'),
+        logoName: (fd.get('logo') && fd.get('logo').name) ? fd.get('logo').name : 'logo-wlasne',
+        createdAt: new Date().toISOString()
+      };
 
-        <div>
-          <div id="store-preview" class="preview"></div>
-          <div class="theme-grid">
-            <div class="theme-card">
-              <span class="theme-chip theme-luxury">Luxury Gold</span>
-              <p class="muted">Dla marek premium, mocny klimat, złoto i prestiż.</p>
-            </div>
-            <div class="theme-card">
-              <span class="theme-chip theme-neon">Neon Growth</span>
-              <p class="muted">Dla nowoczesnych sklepów i szybkiego wzrostu.</p>
-            </div>
-            <div class="theme-card">
-              <span class="theme-chip theme-clean">Clean Trust</span>
-              <p class="muted">Dla prostych i wiarygodnych sklepów pod szeroki rynek.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+      stores.push(store);
+      QM.setStores(stores);
+      localStorage.setItem(QM.KEYS.activeStore, String(store.id));
+      localStorage.setItem(QM.KEYS.margin, String(fd.get('margin') || 35));
+      localStorage.setItem(QM.KEYS.intel, JSON.stringify({ storeName: store.name, niche: store.niche }));
+      localStorage.setItem(QM.KEYS.listing, JSON.stringify({ theme: store.theme, plan: store.plan }));
+      localStorage.setItem(QM.KEYS.crm, JSON.stringify({ ownerPanel: true, storeId: store.id }));
 
-    <section class="section">
-      <h2 class="section-title">Zapisane sklepy</h2>
-      <div class="store-list" data-stores-list></div>
-    </section>
-  </main>
+      const box = document.getElementById('save-result');
+      if (box) {
+        box.innerHTML = `<div class="notice">Sklep zapisany. Nazwa: <b>${store.name}</b>. Plan: <b>${store.plan}</b>. Motyw: <b>${store.theme}</b>.</div>`;
+      }
+      QM.renderStores('stores-list');
+      form.reset();
+    });
+  }
 
-  <footer class="footer container">Generator sklepu • U Szefa</footer>
-  <script src="js/app.js"></script>
-  <script src="js/store.js"></script>
-</body>
-</html>
+  document.addEventListener('DOMContentLoaded', bindStoreGenerator);
+})();

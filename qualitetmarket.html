@@ -3,78 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QualitetMarket — centrum dowodzenia</title>
-  <meta name="description" content="QualitetMarket to centrum dowodzenia sprzedażą, sklepami, marżą i reklamą.">
+  <title>QualitetMarket</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div data-shared-header></div>
-
-  <main class="container">
-    <section class="hero">
-      <div class="hero-grid">
-        <div>
-          <span class="kicker">⚡ QualitetMarket • centrum dowodzenia</span>
-          <h1>Tu jest całe sterowanie
-            sprzedażą, reklamą
-            i wzrostem sklepów.</h1>
-          <p class="lead">
-            QualitetMarket to zaplecze operacyjne. Użytkownik dostaje jasne liczby, szybkie decyzje i prostą ścieżkę:
-            wybór planu, ustawienie marży, rozwój sklepu i dalsze ruchy sprzedażowe.
-          </p>
-          <div class="cta-row">
-            <a class="btn btn-primary" href="generator-sklepu.html">Stwórz sklep</a>
-            <a class="btn" href="platforma.html">Przejdź do reklamy</a>
-          </div>
-        </div>
-        <div class="hero-card">
-          <img src="assets/logo-qualitet.svg" alt="Logo QualitetMarket" style="width:96px;height:96px;margin-bottom:14px">
-          <div class="kpis">
-            <div class="kpi"><strong data-stores-count>0</strong> sklepów</div>
-            <div class="kpi"><strong data-margin-default>35%</strong> marży</div>
-            <div class="kpi"><strong data-est-sales>0 zł</strong> obrotu</div>
-            <div class="kpi"><strong data-est-profit>0 zł</strong> zysku</div>
-          </div>
-        </div>
+  <div data-header></div>
+  
+<section class="hero">
+  <div class="container">
+    <span class="badge">QualitetMarket</span>
+    <h1>Centrum dowodzenia sprzedażą, reklamą i wzrostem.</h1>
+    <p class="lead">Tutaj zaczynają ludzie od zera. System prowadzi ich przez sklep, ofertę, marżę, plan i działania promocyjne.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container grid-2">
+    <div class="card">
+      <h3>Aktywne sklepy</h3>
+      <div id="stores-list"></div>
+    </div>
+    <div class="card">
+      <h3>Dowodzenie</h3>
+      <ul class="feature-list">
+        <li>start bez wkładu</li>
+        <li>własne logo i motywy sklepu</li>
+        <li>marża liczona automatycznie</li>
+        <li>subskrypcje miesięczne Basic / Pro / Elite</li>
+        <li>reklamy bez wychodzenia z aplikacji</li>
+      </ul>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="generator-sklepu.html">Dodaj sklep</a>
+        <a class="btn" href="platforma.html">Przelicz zysk</a>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
 
-    <section class="section">
-      <h2 class="section-title">Centrum dowodzenia dla człowieka, nie dla developera</h2>
-      <div class="cards">
-        <article class="card">
-          <span class="badge">Sterowanie</span>
-          <h3>Jeden system zamiast pięciu</h3>
-          <p>Zakładanie sklepu, motyw, marża, reklama i plan subskrypcji siedzą razem. Mniej pytań, mniej gubienia się, więcej ruchu do zakupu.</p>
-        </article>
-        <article class="card">
-          <span class="badge">Opłacalność</span>
-          <h3>Liczby mówią od razu</h3>
-          <p>Użytkownik szybciej płaci abonament, kiedy od razu rozumie ile zarabia na sztuce i co dostaje w planie.</p>
-        </article>
-        <article class="card">
-          <span class="badge">Skalowanie</span>
-          <h3>Od pierwszego sklepu do sieci sklepów</h3>
-          <p>To nie ma wyglądać jak zwykła hurtownia. To ma być królestwo zarabiania z jasnym wejściem i łatwym sterowaniem.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="promo-strip">
-      <div>
-        <strong>Startowa promocja dla pierwszych 3 sprzedawców działa w całym systemie.</strong>
-        <div class="micro" data-promo-left></div>
-      </div>
-      <a class="btn" href="cennik.html">Przejdź do abonamentów</a>
-    </section>
-
-    <section class="section">
-      <h2 class="section-title">Ostatnio zapisane sklepy</h2>
-      <div class="store-list" data-stores-list></div>
-    </section>
-  </main>
-
-  <footer class="footer container">QualitetMarket • centrum dowodzenia U Szefa</footer>
+  <footer class="footer">
+    <div class="container">U Szefa + QualitetMarket • gotowe pod GitHub Pages • localStorage • mobile</div>
+  </footer>
   <script src="js/app.js"></script>
+  
 </body>
 </html>
