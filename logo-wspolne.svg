@@ -1,10 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
 <defs>
-<linearGradient id="gold" x1="0" x2="1"><stop stop-color="#ffc857"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient>
-<linearGradient id="vio" x1="0" x2="1"><stop stop-color="#43d9ff"/><stop offset="1" stop-color="#8d7dff"/></linearGradient>
+  <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#36d6ff"/>
+    <stop offset="100%" stop-color="#4f8cff"/>
+  </linearGradient>
 </defs>
-<rect width="512" height="512" rx="120" fill="#07111f"/>
-<circle cx="180" cy="200" r="96" fill="url(#gold)"/>
-<rect x="208" y="208" width="170" height="170" rx="46" fill="url(#vio)"/>
-<path d="M124 205c25-5 42-24 52-56 10 21 28 34 49 41-14 37-36 62-69 73-28-9-50-31-63-58 10 0 20 0 31 0z" fill="#221500"/>
-<path d="M244 294l34-36 24 24 48-49 24 24-72 74-24-24-10 11z" fill="#07111f"/></svg>
+<rect width="220" height="220" rx="52" fill="#081126"/>
+<circle cx="110" cy="110" r="86" fill="url(#g2)" opacity=".13"/>
+<path d="M60 148V72l52-26 48 25v78l-48 25-52-26z" fill="none" stroke="url(#g2)" stroke-width="14" stroke-linejoin="round"/>
+<path d="M89 109l15 15 29-34" fill="none" stroke="#dff8ff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="110" y="192" font-family="Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle" fill="#bfeeff">QUALITET</text>
+</svg>

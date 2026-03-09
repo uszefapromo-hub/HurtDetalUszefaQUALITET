@@ -2,139 +2,79 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>QualitetMarket — centrum dowodzenia</title>
-  <meta name="description" content="U Szefa + QualitetMarket. Platforma do zarabiania od zera, otwierania sklepów pod własnym logo, ustawiania marży, reklam i subskrypcji miesięcznych.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="QualitetMarket to centrum dowodzenia sprzedażą, sklepami, marżą i reklamą.">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <div data-shared-header></div>
 
-<header class="topbar">
-  <div class="container topbar-inner">
-    <a class="brand" href="index.html">
-      <img src="logo-wspolne.svg" alt="Logo U Szefa + QualitetMarket">
-      <div class="brand-text">
-        <strong>U Szefa</strong>
-        <span>QualitetMarket • królestwo zarabiania</span>
-      </div>
-    </a>
-    <nav class="nav">
-      <a href="index.html" >Start</a>
-      <a href="qualitetmarket.html" style="background:rgba(255,255,255,.1)">QualitetMarket</a>
-      <a href="generator-sklepu.html" >Generator sklepu</a>
-      <a href="platforma.html" >Reklamy i wzrost</a>
-      <a href="cennik.html" >Subskrypcje</a>
-    </nav>
-  </div>
-</header>
-
-
-<main>
-  <section class="hero">
-    <div class="container">
-      <div class="section-title">
-        <h2>QualitetMarket — centrum dowodzenia</h2>
-        <p>Tutaj partner zaczyna od zera, wybiera swój sklep, widzi marżę, plan, budżet reklamowy i szybkie kroki do wzrostu.</p>
-      </div>
-      <div class="kpis">
-        <div class="kpi panel"><strong data-bind="storeName">Sklep Demo U Szefa</strong><span>Aktywny sklep</span></div>
-        <div class="kpi panel"><strong data-bind="ownerName">Demo Partner</strong><span>Właściciel</span></div>
-        <div class="kpi panel"><strong data-bind="marginPct">35%</strong><span>Marża aktywna</span></div>
-        <div class="kpi panel"><strong data-bind="adBudget">1200 zł</strong><span>Budżet reklam</span></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="container cards-2">
-      <div class="panel card">
-        <div class="section-title" style="margin-top:0">
-          <h2 style="font-size:1.5rem">Kalkulator marży</h2>
-          <span class="pill">Liczy od razu</span>
-        </div>
-        <div class="form-grid">
-          <div class="field">
-            <label for="buyPrice">Cena zakupu netto</label>
-            <input id="buyPrice" type="number" step="0.01" value="59">
-          </div>
-          <div class="field">
-            <label for="marginPct">Marża %</label>
-            <input id="marginPct" type="number" step="1" value="35">
-          </div>
-          <div class="field">
-            <label for="adCost">Koszt reklamy / szt.</label>
-            <input id="adCost" type="number" step="0.01" value="7">
-          </div>
-          <div class="field">
-            <label>Aktywny sklep</label>
-            <select class="store-select"></select>
+  <main class="container">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <span class="kicker">⚡ QualitetMarket • centrum dowodzenia</span>
+          <h1>Tu jest całe sterowanie
+            sprzedażą, reklamą
+            i wzrostem sklepów.</h1>
+          <p class="lead">
+            QualitetMarket to zaplecze operacyjne. Użytkownik dostaje jasne liczby, szybkie decyzje i prostą ścieżkę:
+            wybór planu, ustawienie marży, rozwój sklepu i dalsze ruchy sprzedażowe.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="generator-sklepu.html">Stwórz sklep</a>
+            <a class="btn" href="platforma.html">Przejdź do reklamy</a>
           </div>
         </div>
-        <div style="height:14px"></div>
-        <div class="cards-3">
-          <div class="calc-box"><div class="small">Cena sprzedaży</div><div id="saleResult" class="result-big">0 zł</div></div>
-          <div class="calc-box"><div class="small">Zysk / szt.</div><div id="profitResult" class="result-big">0 zł</div></div>
-          <div class="calc-box"><div class="small">Zysk / 40 szt.</div><div id="monthResult" class="result-big">0 zł</div></div>
-        </div>
-        <div class="plan-cta">
-          <button id="applyMarginGlobal" class="btn btn-primary" type="button">Zapisz marżę do sklepu</button>
-          <div id="marginSaved" class="notice hidden"></div>
-        </div>
-      </div>
-
-      <div class="panel card">
-        <div class="section-title" style="margin-top:0">
-          <h2 style="font-size:1.5rem">Plan i guardy</h2>
-          <span class="pill">Pilnowane</span>
-        </div>
-        <p class="muted">Aktywny plan sklepu: <strong data-bind="planName">PRO</strong>. Zmieniaj kliknięciem i sprawdź jak odblokowują się moduły.</p>
-        <div class="plan-cta">
-          <button class="btn" data-plan-target="basic" type="button">Ustaw BASIC</button>
-          <button class="btn btn-secondary" data-plan-target="pro" type="button">Ustaw PRO</button>
-          <button class="btn btn-primary" data-plan-target="elite" type="button">Ustaw ELITE</button>
-        </div>
-        <div style="height:12px"></div>
-        <div class="cards-2">
-          <div class="panel card" data-require="pro">
-            <div class="guard-label badge">Wymaga planu PRO</div>
-            <h3>Panel reklam in-app</h3>
-            <p>Budżet, kliknięcia i sprzedaż liczone bez wychodzenia z aplikacji.</p>
-          </div>
-          <div class="panel card" data-require="elite">
-            <div class="guard-label badge">Wymaga planu ELITE</div>
-            <h3>Tryb premium partnera</h3>
-            <p>Wyróżnienie sklepu, priorytetowe motywy i rozbudowane kampanie.</p>
+        <div class="hero-card">
+          <img src="assets/logo-qualitet.svg" alt="Logo QualitetMarket" style="width:96px;height:96px;margin-bottom:14px">
+          <div class="kpis">
+            <div class="kpi"><strong data-stores-count>0</strong> sklepów</div>
+            <div class="kpi"><strong data-margin-default>35%</strong> marży</div>
+            <div class="kpi"><strong data-est-sales>0 zł</strong> obrotu</div>
+            <div class="kpi"><strong data-est-profit>0 zł</strong> zysku</div>
           </div>
         </div>
-        <div style="height:12px"></div>
-        <div class="notice">Klucze localStorage są zachowane zgodnie z projektem i nie zmieniają nazw.</div>
       </div>
-    </div>
-  </section>
-</main>
+    </section>
 
-<footer class="footer">
-  <div class="container footer-grid">
-    <div class="panel card">
-      <strong>Gotowe pod GitHub Pages</strong>
-      <p class="muted">Wszystkie linki są względne. Jeden upload i działa jako statyczna paczka.</p>
-      <div class="linkline">
-        <a href="index.html">Menu główne</a>
-        <a href="qualitetmarket.html">Dowodzenie</a>
-        <a href="generator-sklepu.html">Tworzenie sklepów</a>
-        <a href="cennik.html">Płatne plany</a>
+    <section class="section">
+      <h2 class="section-title">Centrum dowodzenia dla człowieka, nie dla developera</h2>
+      <div class="cards">
+        <article class="card">
+          <span class="badge">Sterowanie</span>
+          <h3>Jeden system zamiast pięciu</h3>
+          <p>Zakładanie sklepu, motyw, marża, reklama i plan subskrypcji siedzą razem. Mniej pytań, mniej gubienia się, więcej ruchu do zakupu.</p>
+        </article>
+        <article class="card">
+          <span class="badge">Opłacalność</span>
+          <h3>Liczby mówią od razu</h3>
+          <p>Użytkownik szybciej płaci abonament, kiedy od razu rozumie ile zarabia na sztuce i co dostaje w planie.</p>
+        </article>
+        <article class="card">
+          <span class="badge">Skalowanie</span>
+          <h3>Od pierwszego sklepu do sieci sklepów</h3>
+          <p>To nie ma wyglądać jak zwykła hurtownia. To ma być królestwo zarabiania z jasnym wejściem i łatwym sterowaniem.</p>
+        </article>
       </div>
-    </div>
-    <div class="panel card">
-      <strong>Klucze localStorage pilnowane</strong>
-      <p class="small">qm_products_by_supplier_v1 • qm_intel_prefill_v1 • qm_listing_prefill_v1 • qm_crm_v1 • qm_stores_v1 • qm_active_store_v1 • qm_store_margin_pct</p>
-      <p class="small">Logo U Szefa, logo QualitetMarket i logo wspólne są w paczce jako osobne pliki SVG.</p>
-    </div>
-  </div>
-</footer>
-<script src="app.js"></script>
+    </section>
+
+    <section class="promo-strip">
+      <div>
+        <strong>Startowa promocja dla pierwszych 3 sprzedawców działa w całym systemie.</strong>
+        <div class="micro" data-promo-left></div>
+      </div>
+      <a class="btn" href="cennik.html">Przejdź do abonamentów</a>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Ostatnio zapisane sklepy</h2>
+      <div class="store-list" data-stores-list></div>
+    </section>
+  </main>
+
+  <footer class="footer container">QualitetMarket • centrum dowodzenia U Szefa</footer>
+  <script src="js/app.js"></script>
 </body>
 </html>

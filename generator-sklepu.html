@@ -2,141 +2,125 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Generator sklepu — U Szefa + QualitetMarket</title>
-  <meta name="description" content="U Szefa + QualitetMarket. Platforma do zarabiania od zera, otwierania sklepów pod własnym logo, ustawiania marży, reklam i subskrypcji miesięcznych.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generator sklepu — U Szefa</title>
+  <meta name="description" content="Załóż sklep ze swoim logo, motywem i marżą.">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <div data-shared-header></div>
 
-<header class="topbar">
-  <div class="container topbar-inner">
-    <a class="brand" href="index.html">
-      <img src="logo-wspolne.svg" alt="Logo U Szefa + QualitetMarket">
-      <div class="brand-text">
-        <strong>U Szefa</strong>
-        <span>QualitetMarket • królestwo zarabiania</span>
+  <main class="container">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <span class="kicker">🛍️ Generator sklepu</span>
+          <h1>Załóż własny sklep
+            pod swoim logo
+            i od razu ustaw zysk.</h1>
+          <p class="lead">Ten ekran robi robotę od razu: nazwa, nisza, logo, motyw, plan i marża. Zapis trafia do localStorage i platforma jest gotowa do dalszej rozbudowy.</p>
+          <div class="promo-strip" style="margin-top:18px">
+            <div>
+              <strong>Premia dla pierwszych 3 sprzedawców</strong>
+              <div class="micro" data-promo-left></div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-card">
+          <img src="assets/logo-uszefa.svg" alt="Logo U Szefa" style="width:96px;height:96px">
+          <p class="lead" style="font-size:1rem">Każdy sklep może mieć osobny klimat, ale dalej buduje Twoje królestwo zarabiania i wraca do Ciebie w abonamencie.</p>
+        </div>
       </div>
-    </a>
-    <nav class="nav">
-      <a href="index.html" >Start</a>
-      <a href="qualitetmarket.html" >QualitetMarket</a>
-      <a href="generator-sklepu.html" style="background:rgba(255,255,255,.1)">Generator sklepu</a>
-      <a href="platforma.html" >Reklamy i wzrost</a>
-      <a href="cennik.html" >Subskrypcje</a>
-    </nav>
-  </div>
-</header>
+    </section>
 
-
-<main>
-  <section class="hero">
-    <div class="container">
-      <div class="section-title">
-        <h2>Generator sklepu pod własne logo</h2>
-        <p>Partner wpisuje nazwę sklepu, wrzuca logo, wybiera motyw i od razu ląduje w Twoim systemie subskrypcji.</p>
-      </div>
-      <div class="cards-2">
-        <div class="panel card">
-          <form id="storeGeneratorForm">
+    <section class="section">
+      <div class="output-grid">
+        <div class="card">
+          <h2 class="section-title" style="margin-top:0">Ustaw sklep</h2>
+          <form id="store-form">
             <div class="form-grid">
               <div class="field">
-                <label for="ownerName">Imię właściciela</label>
-                <input id="ownerName" name="ownerName" placeholder="np. Adam">
-              </div>
-              <div class="field">
                 <label for="storeName">Nazwa sklepu</label>
-                <input id="storeName" name="storeName" placeholder="np. Biznes Szefa Home">
+                <input id="storeName" required placeholder="np. MegaDom Premium">
               </div>
               <div class="field">
-                <label for="plan">Plan miesięczny</label>
-                <select id="plan" name="plan">
+                <label for="storeNiche">Nisza / branża</label>
+                <input id="storeNiche" placeholder="np. dom, beauty, auto, premium">
+              </div>
+              <div class="field">
+                <label for="storeLogo">Logo sklepu</label>
+                <input id="storeLogo" type="file" accept="image/*">
+                <div class="micro">Wybrane logo: <span data-logo-name>brak</span></div>
+              </div>
+              <div class="field">
+                <label for="storePlan">Plan subskrypcji</label>
+                <select id="storePlan">
                   <option value="basic">Basic</option>
                   <option value="pro" selected>Pro</option>
                   <option value="elite">Elite</option>
                 </select>
               </div>
               <div class="field">
-                <label for="margin">Marża startowa %</label>
-                <input id="margin" name="margin" type="number" value="35">
+                <label for="storePrimary">Kolor główny</label>
+                <input id="storePrimary" type="color" value="#ffbf3c">
               </div>
               <div class="field">
-                <label for="adBudget">Budżet reklamowy</label>
-                <input id="adBudget" name="adBudget" type="number" value="900">
+                <label for="storeAccent">Kolor akcentu</label>
+                <input id="storeAccent" type="color" value="#34d5ff">
               </div>
               <div class="field">
-                <label for="logoInput">Logo sklepu</label>
-                <input id="logoInput" type="file" accept="image/*">
+                <label for="storeTheme">Motyw sklepu</label>
+                <select id="storeTheme">
+                  <option value="luxury">Luxury Gold</option>
+                  <option value="neon" selected>Neon Growth</option>
+                  <option value="clean">Clean Trust</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="storeMargin">Marża domyślna (%)</label>
+                <input id="storeMargin" type="number" min="1" max="300" value="35">
               </div>
             </div>
-            <div style="height:16px"></div>
-            <div class="section-title" style="margin:0 0 12px">
-              <h2 style="font-size:1.25rem">Wybierz motyw</h2>
-              <p>Kolorowo, biznesowo i pod sprzedaż.</p>
+            <div class="field" style="margin-top:16px">
+              <label for="storeTagline">Hasło sklepu</label>
+              <textarea id="storeTagline" placeholder="np. Sprzedaż premium bez chaosu."></textarea>
             </div>
-            <div class="cards-3">
-              <div class="theme-option active" data-theme="royal">
-                <img src="theme-royal.svg" alt="Motyw Royal Gold">
-                <strong>Royal Gold</strong>
-                <span class="small">Mocny premium, złoto i fiolet.</span>
-              </div>
-              <div class="theme-option" data-theme="boost">
-                <img src="theme-boost.svg" alt="Motyw Neon Boost">
-                <strong>Neon Boost</strong>
-                <span class="small">Mocne kolory, szybkie CTA, nowoczesny vibe.</span>
-              </div>
-              <div class="theme-option" data-theme="clean">
-                <img src="theme-clean.svg" alt="Motyw Clean Commerce">
-                <strong>Clean Commerce</strong>
-                <span class="small">Jaśniejszy, czytelny, prosty do wejścia.</span>
-              </div>
+            <div class="actions">
+              <button class="btn btn-primary" type="submit">Zapisz sklep</button>
+              <a class="btn" href="cennik.html">Zobacz plany</a>
             </div>
-            <div class="plan-cta">
-              <button class="btn btn-primary" type="submit">Zapisz sklep i aktywuj</button>
-              <a class="btn" href="qualitetmarket.html">Przejdź do dowodzenia</a>
-            </div>
-            <div id="generatorSuccess" class="notice hidden" style="margin-top:14px"></div>
           </form>
+          <div id="save-status" style="margin-top:16px"></div>
         </div>
 
-        <div class="panel card">
-          <h3>Podgląd marki</h3>
-          <div id="logoPreview" class="logo-preview">
-            <strong>Podgląd logo sklepu</strong>
-            <div class="small" style="margin-top:8px">Wgraj swoje logo i otwórz sklep pod własną marką.</div>
+        <div>
+          <div id="store-preview" class="preview"></div>
+          <div class="theme-grid">
+            <div class="theme-card">
+              <span class="theme-chip theme-luxury">Luxury Gold</span>
+              <p class="muted">Dla marek premium, mocny klimat, złoto i prestiż.</p>
+            </div>
+            <div class="theme-card">
+              <span class="theme-chip theme-neon">Neon Growth</span>
+              <p class="muted">Dla nowoczesnych sklepów i szybkiego wzrostu.</p>
+            </div>
+            <div class="theme-card">
+              <span class="theme-chip theme-clean">Clean Trust</span>
+              <p class="muted">Dla prostych i wiarygodnych sklepów pod szeroki rynek.</p>
+            </div>
           </div>
-          <div style="height:16px"></div>
-          <img src="business-growth.svg" alt="Rozwój biznesu">
-          <div style="height:14px"></div>
-          <div class="notice">Pierwsze 3 zapisane sklepy dostają oznaczenie promocji startowej. To jest już ustawione w logice paczki.</div>
         </div>
       </div>
-    </div>
-  </section>
-</main>
+    </section>
 
-<footer class="footer">
-  <div class="container footer-grid">
-    <div class="panel card">
-      <strong>Gotowe pod GitHub Pages</strong>
-      <p class="muted">Wszystkie linki są względne. Jeden upload i działa jako statyczna paczka.</p>
-      <div class="linkline">
-        <a href="index.html">Menu główne</a>
-        <a href="qualitetmarket.html">Dowodzenie</a>
-        <a href="generator-sklepu.html">Tworzenie sklepów</a>
-        <a href="cennik.html">Płatne plany</a>
-      </div>
-    </div>
-    <div class="panel card">
-      <strong>Klucze localStorage pilnowane</strong>
-      <p class="small">qm_products_by_supplier_v1 • qm_intel_prefill_v1 • qm_listing_prefill_v1 • qm_crm_v1 • qm_stores_v1 • qm_active_store_v1 • qm_store_margin_pct</p>
-      <p class="small">Logo U Szefa, logo QualitetMarket i logo wspólne są w paczce jako osobne pliki SVG.</p>
-    </div>
-  </div>
-</footer>
-<script src="app.js"></script>
+    <section class="section">
+      <h2 class="section-title">Zapisane sklepy</h2>
+      <div class="store-list" data-stores-list></div>
+    </section>
+  </main>
+
+  <footer class="footer container">Generator sklepu • U Szefa</footer>
+  <script src="js/app.js"></script>
+  <script src="js/store.js"></script>
 </body>
 </html>
