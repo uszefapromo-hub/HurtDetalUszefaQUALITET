@@ -7,7 +7,6 @@ const ROOT = process.cwd();
 
 const REQUIRED_DIRS = [
   "assets",
-  "assets/images",
   "css",
   "js",
   "pages",
@@ -19,24 +18,17 @@ const REQUIRED_ROOT_FILES = [
 
 const SECONDARY_PAGES = [
   "platforma.html",
-  "login.html",
   "dashboard.html",
   "cennik.html",
-  "aktywuj-pro.html",
   "hurtownie.html",
   "qualitetmarket.html",
-  "intelligence.html",
   "sklep.html",
   "koszyk.html",
   "checkout.html",
   "zamowienia.html",
   "panel-sklepu.html",
   "generator-sklepu.html",
-  "panel-zamowien-sklepu.html",
-  "sklepy.html",
-  "success.html",
-  "suppliers.html",
-  "blueprints.html",
+  "indeks.html",
 ];
 
 function exists(relPath) {
@@ -127,6 +119,8 @@ function checkLooseFiles() {
     if (name === "index.html") continue;
     if (name === "check-structure.js") continue;
     if (name === "restructure-project.js") continue;
+    if (name === "reorganizuj-projekt.js") continue;
+    if (name === "cleanup.js") continue;
     if (name.startsWith(".")) continue;
 
     if (ext === ".html" || ext === ".css" || ext === ".js") {
@@ -147,13 +141,13 @@ function checkFolderContent() {
 
   const cssFiles = listFiles("css").filter(f => f.endsWith(".css"));
   const jsFiles = listFiles("js").filter(f => f.endsWith(".js"));
-  const imgFiles = listFiles("assets/images").filter(f =>
+  const imgFiles = listFiles("assets").filter(f =>
     /\.(png|jpg|jpeg|gif|webp|svg|avif|ico|bmp)$/i.test(f)
   );
 
   console.log(`css/: ${cssFiles.length} plików CSS`);
   console.log(`js/: ${jsFiles.length} plików JS`);
-  console.log(`assets/images/: ${imgFiles.length} plików obrazów`);
+  console.log(`assets/: ${imgFiles.length} plików graficznych`);
 
   return true;
 }
