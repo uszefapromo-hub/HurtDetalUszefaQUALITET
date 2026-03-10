@@ -6,7 +6,9 @@
     usersList: 'app_users_list',
     trialDays: 'app_user_trial_days',
     trialStart: 'app_user_trial_start',
-    plan: 'app_user_plan'
+    plan: 'app_user_plan',
+    storeSettings: 'app_store_settings',
+    storeReady: 'app_store_ready'
   };
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
   const TRIAL_RULES = [
@@ -136,6 +138,58 @@
     }
   }
 
+  function loadStoreSettings(){
+    const raw = localStorage.getItem(STORAGE_KEYS.storeSettings);
+    if(!raw){
+      return null;
+    }
+    try{
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (_error){
+      return null;
+    }
+  }
+
+  function saveStoreSettings(settings){
+    if(!settings){
+      return;
+    }
+    localStorage.setItem(STORAGE_KEYS.storeSettings, JSON.stringify(settings));
+    localStorage.setItem(STORAGE_KEYS.storeReady, 'true');
+  }
+
+  function getStoreInitial(storeName){
+    const trimmed = (storeName || '').trim();
+    if(!trimmed){
+      return 'S';
+    }
+    return trimmed.charAt(0).toUpperCase();
+  }
+
+  function updateLogoPreview(preview, image, placeholder, storeName, logoDataUrl){
+    if(!preview || !image || !placeholder){
+      return;
+    }
+    placeholder.textContent = getStoreInitial(storeName);
+    if(logoDataUrl){
+      image.src = logoDataUrl;
+      preview.classList.add('has-image');
+    } else {
+      image.removeAttribute('src');
+      preview.classList.remove('has-image');
+    }
+  }
+
+  function updateColorChips(primaryInput, accentInput, primaryChip, accentChip){
+    if(primaryInput && primaryChip){
+      primaryChip.style.background = primaryInput.value;
+    }
+    if(accentInput && accentChip){
+      accentChip.style.background = accentInput.value;
+    }
+  }
+
   function startTrialIfNeeded(email){
     if(localStorage.getItem(STORAGE_KEYS.trialStart)){
       return;
@@ -225,6 +279,36 @@
     }
   }
 
+  function renderDashboardStoreSummary(){
+    const summary = document.querySelector('[data-store-summary]');
+    if(!summary){
+      return;
+    }
+    const nameTarget = summary.querySelector('[data-store-name]');
+    const styleTarget = summary.querySelector('[data-store-style]');
+    const statusTarget = summary.querySelector('[data-store-status]');
+    const helper = summary.querySelector('[data-store-helper]');
+    const settings = loadStoreSettings();
+    const ready = localStorage.getItem(STORAGE_KEYS.storeReady) === 'true' && settings;
+    const storeName = settings && settings.storeName ? settings.storeName : 'Brak danych';
+    const storeStyle = settings && settings.storeStyle ? settings.storeStyle : '---';
+
+    if(nameTarget){
+      nameTarget.textContent = storeName;
+    }
+    if(styleTarget){
+      styleTarget.textContent = storeStyle;
+    }
+    if(statusTarget){
+      statusTarget.textContent = ready ? 'Gotowy' : 'Nieuzupełniony';
+      statusTarget.classList.toggle('is-ready', ready);
+      statusTarget.classList.toggle('is-pending', !ready);
+    }
+    if(helper){
+      helper.hidden = Boolean(ready);
+    }
+  }
+
   function guardDashboard(){
     if(document.body.dataset.page !== 'dashboard'){
       return;
@@ -236,6 +320,108 @@
     }
     startTrialIfNeeded(localStorage.getItem(STORAGE_KEYS.email));
     updateDashboardStatus();
+    renderDashboardStoreSummary();
+  }
+
+  function initStoreGenerator(){
+    const form = document.querySelector('[data-store-form]');
+    if(!form){
+      return;
+    }
+    const nameInput = form.querySelector('input[name="storeName"]');
+    const descriptionInput = form.querySelector('textarea[name="storeDescription"]');
+    const primaryColorInput = form.querySelector('input[name="primaryColor"]');
+    const accentColorInput = form.querySelector('input[name="accentColor"]');
+    const styleInputs = form.querySelectorAll('input[name="storeStyle"]');
+    const logoInput = form.querySelector('input[name="storeLogo"]');
+    const logoPreview = form.querySelector('[data-logo-preview]');
+    const logoImage = form.querySelector('[data-logo-image]');
+    const logoPlaceholder = form.querySelector('[data-logo-placeholder]');
+    const primaryChip = form.querySelector('[data-primary-chip]');
+    const accentChip = form.querySelector('[data-accent-chip]');
+    let logoDataUrl = '';
+
+    const storedSettings = loadStoreSettings();
+    if(storedSettings){
+      if(nameInput && storedSettings.storeName){
+        nameInput.value = storedSettings.storeName;
+      }
+      if(descriptionInput && storedSettings.storeDescription){
+        descriptionInput.value = storedSettings.storeDescription;
+      }
+      if(primaryColorInput && storedSettings.primaryColor){
+        primaryColorInput.value = storedSettings.primaryColor;
+      }
+      if(accentColorInput && storedSettings.accentColor){
+        accentColorInput.value = storedSettings.accentColor;
+      }
+      if(storedSettings.storeStyle){
+        const matched = Array.from(styleInputs).find(input => input.value === storedSettings.storeStyle);
+        if(matched){
+          matched.checked = true;
+        }
+      }
+      if(storedSettings.logoDataUrl){
+        logoDataUrl = storedSettings.logoDataUrl;
+      }
+    }
+
+    updateLogoPreview(
+      logoPreview,
+      logoImage,
+      logoPlaceholder,
+      nameInput ? nameInput.value : '',
+      logoDataUrl
+    );
+    updateColorChips(primaryColorInput, accentColorInput, primaryChip, accentChip);
+
+    if(nameInput){
+      nameInput.addEventListener('input', () => {
+        updateLogoPreview(logoPreview, logoImage, logoPlaceholder, nameInput.value, logoDataUrl);
+      });
+    }
+    if(primaryColorInput){
+      primaryColorInput.addEventListener('input', () => {
+        updateColorChips(primaryColorInput, accentColorInput, primaryChip, accentChip);
+      });
+    }
+    if(accentColorInput){
+      accentColorInput.addEventListener('input', () => {
+        updateColorChips(primaryColorInput, accentColorInput, primaryChip, accentChip);
+      });
+    }
+    if(logoInput){
+      logoInput.addEventListener('change', event => {
+        const file = event.target.files && event.target.files[0];
+        if(!file){
+          logoDataUrl = '';
+          updateLogoPreview(logoPreview, logoImage, logoPlaceholder, nameInput ? nameInput.value : '', logoDataUrl);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          logoDataUrl = typeof reader.result === 'string' ? reader.result : '';
+          updateLogoPreview(logoPreview, logoImage, logoPlaceholder, nameInput ? nameInput.value : '', logoDataUrl);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const selectedStyle = form.querySelector('input[name="storeStyle"]:checked');
+      const settings = {
+        storeName: nameInput ? nameInput.value.trim() : '',
+        storeDescription: descriptionInput ? descriptionInput.value.trim() : '',
+        primaryColor: primaryColorInput ? primaryColorInput.value : '',
+        accentColor: accentColorInput ? accentColorInput.value : '',
+        storeStyle: selectedStyle ? selectedStyle.value : '',
+        logoDataUrl: logoDataUrl,
+        updatedAt: new Date().toISOString()
+      };
+      saveStoreSettings(settings);
+      window.location.href = 'dashboard.html';
+    });
   }
 
   function initLoginForm(){
@@ -260,6 +446,7 @@
     bindMenu();
     initCounters();
     initHelperBoxes();
+    initStoreGenerator();
     initLoginForm();
     guardDashboard();
   });
