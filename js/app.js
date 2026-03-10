@@ -1,5 +1,5 @@
 (function(){
-  const STORAGE_KEYS = {
+  const BASE_STORAGE_KEYS = {
     email: 'app_user_email',
     logged: 'app_user_logged',
     usersCount: 'app_users_count',
@@ -12,6 +12,11 @@
     surveyResponses: 'app_survey_responses',
     surveySeen: 'app_survey_seen'
   };
+  const STORAGE_KEYS = {
+    ...BASE_STORAGE_KEYS,
+    ...(window.APP_STORAGE_KEYS || {})
+  };
+  window.APP_STORAGE_KEYS = STORAGE_KEYS;
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
   const SURVEY_AUTO_OPEN_DELAY = 4500;
   const SURVEY_SUCCESS_TIMEOUT = 1500;
@@ -39,8 +44,7 @@
     {limit: 5, days: 30}
   ];
   const DEFAULT_TRIAL_DAYS = 7;
-  const planButtonOriginalText = new WeakMap();
-  const PLAN_ACTIVE_TEXT = 'Aktywny';
+  const PLAN_ACTIVE_LABEL = 'Aktywny plan';
   const PLAN_LABELS = {
     trial: 'Trial',
     basic: 'Basic',
@@ -539,19 +543,29 @@
     const plan = resolveCurrentPlan(remaining);
     if(trialTargets.length){
       trialTargets.forEach(target => {
-        target.textContent = `${remaining}`;
-        target.hidden = plan !== 'trial';
+        if(plan === 'trial'){
+          target.textContent = `${remaining}`;
+          target.hidden = false;
+        } else {
+          target.textContent = '';
+          target.hidden = true;
+        }
       });
     }
     if(trialLabels.length){
       trialLabels.forEach(label => {
-        label.textContent = getTrialLabel(remaining);
-        label.hidden = plan !== 'trial';
+        if(plan === 'trial'){
+          label.textContent = getTrialLabel(remaining);
+          label.hidden = false;
+        } else {
+          label.textContent = '';
+          label.hidden = true;
+        }
       });
     }
     if(activeTargets.length){
       activeTargets.forEach(target => {
-        target.textContent = `${PLAN_ACTIVE_TEXT} plan`;
+        target.textContent = PLAN_ACTIVE_LABEL;
         target.hidden = plan === 'trial';
       });
     }
@@ -570,7 +584,7 @@
     }
     const label = formatPlanLabel(plan);
     statusTargets.forEach(target => {
-      target.textContent = `${PLAN_ACTIVE_TEXT} plan: ${label}`;
+      target.textContent = `${PLAN_ACTIVE_LABEL}: ${label}`;
     });
   }
 
@@ -581,8 +595,8 @@
     }
     buttons.forEach(button => {
       const buttonPlan = (button.dataset.planBuy || '').toLowerCase();
-      if(!planButtonOriginalText.has(button)){
-        planButtonOriginalText.set(button, button.textContent.trim());
+      if(!button.dataset.planOriginalText){
+        button.dataset.planOriginalText = button.textContent.trim();
       }
       const isActive = buttonPlan && buttonPlan === plan;
       if(isActive){
@@ -590,7 +604,7 @@
         button.disabled = true;
         button.setAttribute('aria-disabled', 'true');
       } else {
-        button.textContent = planButtonOriginalText.get(button) || button.textContent;
+        button.textContent = button.dataset.planOriginalText || button.textContent;
         button.disabled = false;
         button.removeAttribute('aria-disabled');
       }

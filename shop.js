@@ -23,7 +23,7 @@
   const MOCK_PRODUCTS_RANGE = 24;
   const MOCK_REVENUE_BASE = 12000;
   const MOCK_REVENUE_RANGE = 9000;
-  const PLAN_STORAGE_KEY = 'app_user_plan';
+  const PLAN_STORAGE_KEY = window.APP_STORAGE_KEYS ? window.APP_STORAGE_KEYS.plan : 'app_user_plan';
   const CURRENCY_FORMATTER = new Intl.NumberFormat('pl-PL', {
     style: 'currency',
     currency: 'PLN',
