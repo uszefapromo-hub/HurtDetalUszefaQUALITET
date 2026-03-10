@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Dodaj produkt - HurtDetal Uszefa QUALITET</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="add-product" class="panel-page">
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <div class="topbar-cta">
+        <a class="btn btn-secondary" href="panel.html">Panel</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap wizard-layout">
+    <section class="page-hero compact">
+      <span class="eyebrow">Produkty</span>
+      <h1>Dodaj produkt</h1>
+      <p class="lead">Uzupełnij dane produktu, aby pojawił się w sklepie klienta.</p>
+    </section>
+
+    <section class="panel-card form-card" data-product-empty hidden>
+      <h2>Brak aktywnego sklepu</h2>
+      <p class="hint">Najpierw utwórz sklep w generatorze, aby dodawać produkty.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="generator-sklepu.html">Utwórz sklep</a>
+        <a class="btn btn-secondary" href="panel.html">Wróć do panelu</a>
+      </div>
+    </section>
+
+    <form class="panel-card form-card" data-product-form>
+      <label>
+        Nazwa produktu
+        <input type="text" name="productName" placeholder="np. Zestaw firmowy" required>
+      </label>
+      <label>
+        Cena zakupu (netto)
+        <input type="number" name="productCost" min="0" step="0.01" placeholder="np. 49.90" required>
+      </label>
+      <label>
+        Marża (%)
+        <input type="number" name="productMargin" min="0" step="0.1" placeholder="np. 25" required>
+      </label>
+      <label>
+        Zdjęcie URL
+        <input type="url" name="productImage" placeholder="https://...">
+      </label>
+      <label>
+        Opis
+        <textarea name="productDescription" placeholder="Krótki opis produktu"></textarea>
+      </label>
+      <div class="cta-row">
+        <button class="btn btn-primary" type="submit">Zapisz produkt</button>
+        <a class="btn btn-secondary" href="panel.html">Wróć do panelu</a>
+      </div>
+    </form>
+  </main>
+
+  <script src="js/app.js" defer></script>
+</body>
+</html>

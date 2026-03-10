@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Panel sklepu - HurtDetal Uszefa QUALITET</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="panel" class="panel-page">
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <div class="topbar-cta">
+        <a class="btn btn-secondary" href="dashboard.html">Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap wizard-layout panel-layout" data-panel>
+    <section class="panel-card">
+      <span class="eyebrow">Panel klienta</span>
+      <h1>Panel sklepu</h1>
+      <p class="lead">Zarządzaj swoim sklepem, produktami i ustawieniami marki w jednym miejscu.</p>
+      <div class="panel-actions">
+        <a class="btn btn-primary" href="dodaj-produkt.html">Dodaj produkt</a>
+        <a class="btn btn-secondary" href="sklep.html">Otwórz sklep</a>
+        <a class="btn btn-secondary" href="generator-sklepu.html">Edytuj sklep</a>
+        <a class="btn btn-secondary" href="#">Reklamy</a>
+        <a class="btn btn-secondary" href="#">Ustawienia</a>
+      </div>
+    </section>
+
+    <section class="panel-card panel-info">
+      <span class="eyebrow">Aktywny sklep</span>
+      <h2 data-panel-store-name>Brak aktywnego sklepu</h2>
+      <p class="hint" data-panel-store-description>Najpierw uzupełnij dane sklepu w generatorze.</p>
+      <div class="dashboard-meta">
+        <div>
+          <span>Produkty</span>
+          <strong data-panel-product-count>0</strong>
+        </div>
+        <div>
+          <span>Status</span>
+          <strong data-panel-store-status>Nieaktywny</strong>
+        </div>
+      </div>
+      <p class="hint panel-empty" data-panel-empty hidden>Brak aktywnego sklepu. Przejdź do generatora.</p>
+    </section>
+  </main>
+
+  <script src="js/app.js" defer></script>
+</body>
+</html>
