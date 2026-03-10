@@ -39,7 +39,9 @@
     {limit: 5, days: 30}
   ];
   const DEFAULT_TRIAL_DAYS = 7;
-  const planButtonDefaults = new WeakMap();
+  const planButtonOriginalText = new WeakMap();
+  const PLAN_ACTIVE_TEXT = 'Aktywny';
+  const TRIAL_EXPIRED_DAYS = '0';
   const PLAN_LABELS = {
     trial: 'Trial',
     basic: 'Basic',
@@ -536,7 +538,7 @@
     const plan = resolveCurrentPlan(remaining);
     if(trialTargets.length){
       trialTargets.forEach(target => {
-        target.textContent = plan === 'trial' ? `${remaining}` : 'Aktywny';
+        target.textContent = plan === 'trial' ? `${remaining}` : PLAN_ACTIVE_TEXT;
       });
     }
     const trialLabel = document.querySelector('[data-trial-label]');
@@ -558,7 +560,7 @@
     }
     const label = formatPlanLabel(plan);
     statusTargets.forEach(target => {
-      target.textContent = `Aktywny plan: ${label}`;
+      target.textContent = `${PLAN_ACTIVE_TEXT} plan: ${label}`;
     });
   }
 
@@ -569,8 +571,8 @@
     }
     buttons.forEach(button => {
       const buttonPlan = (button.dataset.planBuy || '').toLowerCase();
-      if(!planButtonDefaults.has(button)){
-        planButtonDefaults.set(button, button.textContent.trim());
+      if(!planButtonOriginalText.has(button)){
+        planButtonOriginalText.set(button, button.textContent.trim());
       }
       const isActive = buttonPlan && buttonPlan === plan;
       if(isActive){
@@ -578,7 +580,7 @@
         button.disabled = true;
         button.setAttribute('aria-disabled', 'true');
       } else {
-        button.textContent = planButtonDefaults.get(button) || button.textContent;
+        button.textContent = planButtonOriginalText.get(button) || button.textContent;
         button.disabled = false;
         button.removeAttribute('aria-disabled');
       }
@@ -592,7 +594,7 @@
     }
     localStorage.setItem(STORAGE_KEYS.plan, normalizedPlan);
     if(normalizedPlan !== 'trial'){
-      localStorage.setItem(STORAGE_KEYS.trialDays, '0');
+      localStorage.setItem(STORAGE_KEYS.trialDays, TRIAL_EXPIRED_DAYS);
     }
     updateDashboardStatus();
   }
