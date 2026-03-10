@@ -367,8 +367,8 @@
     if(!alreadySeen){
       setTimeout(() => {
         const landingModal = document.querySelector('[data-landing-modal]');
-        const landingVisible = landingModal && !landingModal.hidden;
-        if(modal.hidden && !landingVisible){
+        const isLandingVisible = landingModal && !landingModal.hidden;
+        if(modal.hidden && !isLandingVisible){
           openModal(true);
         }
       }, SURVEY_AUTO_OPEN_DELAY);
@@ -643,11 +643,11 @@
     return 'Plan Basic daje dostęp do podstawowych modułów sprzedaży.';
   }
 
-  function getDisplayTrialDays(plan, remaining){
+  function getDisplayTrialDaysForPlan(plan, remaining){
     return plan === 'trial' ? remaining : 0;
   }
 
-  function getDisplayTrialLabel(plan, remaining){
+  function getDisplayTrialLabelForPlan(plan, remaining){
     return plan === 'trial' ? getTrialLabel(remaining) : 'Brak trialu';
   }
 
@@ -657,12 +657,12 @@
     const currentPlan = getCurrentPlan();
     if(trialTargets.length){
       trialTargets.forEach(target => {
-        target.textContent = `${getDisplayTrialDays(currentPlan, remaining)}`;
+        target.textContent = `${getDisplayTrialDaysForPlan(currentPlan, remaining)}`;
       });
     }
     const trialLabel = document.querySelector('[data-trial-label]');
     if(trialLabel){
-      trialLabel.textContent = getDisplayTrialLabel(currentPlan, remaining);
+      trialLabel.textContent = getDisplayTrialLabelForPlan(currentPlan, remaining);
     }
     const planTarget = document.querySelector('[data-user-plan]');
     if(planTarget){
@@ -678,7 +678,7 @@
     }
     const planTrial = document.querySelector('[data-plan-trial]');
     if(planTrial){
-      planTrial.textContent = `${getDisplayTrialDays(currentPlan, remaining)}`;
+      planTrial.textContent = `${getDisplayTrialDaysForPlan(currentPlan, remaining)}`;
     }
     const planHint = document.querySelector('[data-plan-hint]');
     if(planHint){
@@ -726,16 +726,10 @@
       return;
     }
     const planParam = normalizePlan(params.get('plan'));
-    const statusParam = normalizePlan(
-      params.get('status')
-      || params.get('success')
-      || params.get('payment')
-      || params.get('checkout')
-    );
+    const statusParam = normalizePlan(params.get('status'));
     const pendingPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.pendingPlan));
     const resolvedPlan = planParam || pendingPlan;
-    const isSuccess = ['success', 'paid', 'true', '1', 'ok'].includes(statusParam)
-      || Boolean(params.get('session_id') && resolvedPlan);
+    const isSuccess = ['success', 'paid', 'true', '1', 'ok'].includes(statusParam);
 
     const validPlans = ['basic', 'pro', 'elite'];
     if(resolvedPlan && validPlans.includes(resolvedPlan) && isSuccess){
