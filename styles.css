@@ -4,6 +4,7 @@
   --store-primary: #35d9ff;
   --store-accent: #54ffb0;
   --store-background: #f5f7fb;
+  --topbar-height: 90px;
 }
 
 .store-generator .page-hero,
