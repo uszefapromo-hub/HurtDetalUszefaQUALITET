@@ -54,6 +54,7 @@
   let activityToastIntervalId = null;
   let upgradeModal = null;
   let upgradeModalInitialized = false;
+  let storefrontFallbackProducts = null;
   const DEFAULT_TRIAL_DAYS = 7;
   const PLAN_LEVELS = {
     trial: 0,
@@ -102,6 +103,10 @@
     detal: 8,
     hurt: 6
   };
+  const DEFAULT_PRODUCT_IMAGE = 'https://placehold.co/400x280/0f1837/FFFFFF?text=Produkt';
+  const ESTIMATED_PRICE_MARKUP_PCT = 18;
+  const COST_DISCOUNT_FACTOR = 1 - ESTIMATED_PRICE_MARKUP_PCT / 100;
+  const PRICE_MARKUP_FACTOR = 1 + ESTIMATED_PRICE_MARKUP_PCT / 100;
 
   function bindMenu(){
     const button = document.querySelector('[data-menu-toggle]');
@@ -1113,6 +1118,42 @@
     localStorage.setItem(key, JSON.stringify(list));
   }
 
+  function resolveCostAndPrice(product){
+    if(!product || typeof product !== 'object'){
+      return {
+        cost: 0,
+        price: 0,
+        costEstimated: false
+      };
+    }
+    const costRaw = Number.parseFloat(product.cost);
+    const priceRaw = Number.parseFloat(product.price);
+    const hasCost = Number.isFinite(costRaw);
+    const hasPrice = Number.isFinite(priceRaw);
+    const estimatedFromPrice = !hasCost && hasPrice;
+    let cost = 0;
+    if(hasCost){
+      cost = costRaw;
+    } else if(hasPrice){
+      cost = roundCurrency(priceRaw * COST_DISCOUNT_FACTOR);
+    }
+    const priceCandidate = hasPrice ? priceRaw : null;
+    const priceIsValid = priceCandidate !== null && (!hasCost || priceCandidate > cost);
+    const price = priceIsValid ? priceCandidate : roundCurrency(cost * PRICE_MARKUP_FACTOR);
+    return {
+      cost,
+      price,
+      costEstimated: estimatedFromPrice
+    };
+  }
+
+  function resolveProductImage(product){
+    if(!product || typeof product !== 'object'){
+      return DEFAULT_PRODUCT_IMAGE;
+    }
+    return product.image || product.img || DEFAULT_PRODUCT_IMAGE;
+  }
+
   function ensureSeedList(key, seedList){
     const existing = getStoredList(key);
     if(Array.isArray(existing) && existing.length){
@@ -1128,17 +1169,15 @@
       if(!item || typeof item !== 'object'){
         return item;
       }
-      const resolvedImage = item.image || item.img || 'https://placehold.co/400x280/0f1837/FFFFFF?text=Produkt';
-      const resolvedCostRaw = Number.parseFloat(item.cost ?? item.price);
-      const resolvedCost = Number.isNaN(resolvedCostRaw) ? 0 : resolvedCostRaw;
-      const resolvedPriceRaw = Number.parseFloat(item.price);
-      const resolvedPrice = Number.isNaN(resolvedPriceRaw) ? resolvedCost : resolvedPriceRaw;
+      const resolvedImage = resolveProductImage(item);
+      const {cost, price, costEstimated} = resolveCostAndPrice(item);
       return {
         ...item,
-        cost: resolvedCost,
-        price: resolvedPrice,
+        cost,
+        price,
+        costEstimated,
         image: resolvedImage,
-        img: item.img || resolvedImage
+        img: resolvedImage
       };
     });
   }
@@ -1160,21 +1199,19 @@
       return supplier.products.map(product => {
         const margin = 30 + (index % 4) * 5;
         const createdAt = new Date(now - (index + 1) * MS_PER_DAY).toISOString();
-        const resolvedImage = product.image || product.img || 'https://placehold.co/400x280/0f1837/FFFFFF?text=Produkt';
-        const costRaw = Number.parseFloat(product.cost ?? product.price);
-        const cost = Number.isNaN(costRaw) ? 0 : costRaw;
-        const priceRaw = Number.parseFloat(product.price);
-        const price = Number.isNaN(priceRaw) ? cost : priceRaw;
+        const resolvedImage = resolveProductImage(product);
+        const {cost, price, costEstimated} = resolveCostAndPrice(product);
         const mapped = {
           id: `catalog_${product.id}`,
           name: product.name,
           cost,
           price,
+          costEstimated,
           margin,
           supplier: supplier.name,
           category: product.category,
           image: resolvedImage,
-          img: product.img || resolvedImage,
+          img: resolvedImage,
           description: product.description,
           storeId: index % 2 === 0 ? 'store_elektronika' : 'store_moda',
           createdAt
@@ -1197,27 +1234,20 @@
       }
       return store.products.map(product => {
         const createdAt = new Date(now - (index + 1) * MS_PER_DAY).toISOString();
-        const resolvedImage = product.image || product.img || 'https://placehold.co/400x280/0f1837/FFFFFF?text=Produkt';
-        const costRaw = Number.parseFloat(product.cost ?? product.price);
-        const cost = Number.isNaN(costRaw) ? 0 : costRaw;
-        const pricing = calculateTieredPricing(cost, {
-          userMargin: product.margin,
-          store,
-          product
-        });
-        const priceRaw = Number.parseFloat(product.price);
-        const price = Number.isNaN(priceRaw) ? pricing.finalPrice : priceRaw;
+        const resolvedImage = resolveProductImage(product);
+        const {cost, price, costEstimated} = resolveCostAndPrice(product);
         const mapped = {
           id: product.id,
           name: product.name,
           cost,
           price,
+          costEstimated,
           margin: product.margin,
           supplierMode: product.supplierMode,
           supplier: product.supplier,
           category: product.category,
           image: resolvedImage,
-          img: product.img || resolvedImage,
+          img: resolvedImage,
           description: product.description,
           storeId: store.id,
           createdAt
@@ -1229,6 +1259,7 @@
   }
 
   function ensureOwnerDemoData(){
+    // plan: basic/pro/elite controls access level for suppliers in the hurtownie module.
     const seedSuppliers = [
       {
         id: 'supplier_aliexpress',
@@ -1261,7 +1292,7 @@
             description: 'Nagrywanie nocne, sensor Sony, Wi-Fi w aplikacji.',
             supplier: 'AliExpress',
             category: 'Auto',
-            sourceUrl: 'https://allegro.pl/oferta/kamera-samochodowa-4k-11887762189'
+            sourceUrl: 'https://www.aliexpress.com/item/1005006498872.html'
           },
           {
             id: 'aliexpress_usbkit',
@@ -1273,7 +1304,7 @@
             description: 'Kable 1.2m, oplot nylonowy, szybkie ładowanie.',
             supplier: 'AliExpress',
             category: 'Akcesoria',
-            sourceUrl: 'https://www.amazon.pl/dp/B0C5J5V9PT'
+            sourceUrl: 'https://www.aliexpress.com/item/1005006361429.html'
           },
           {
             id: 'aliexpress_lamps',
@@ -1320,7 +1351,7 @@
             description: 'Pojemność 18L, kieszeń na laptop 15".',
             supplier: 'CJ Dropshipping',
             category: 'Akcesoria',
-            sourceUrl: 'https://www.amazon.pl/dp/B0C9T3FZVN'
+            sourceUrl: 'https://cjdropshipping.com/product/urbanline-backpack-239001'
           },
           {
             id: 'cj_bottle',
@@ -1332,7 +1363,7 @@
             description: 'Stal nierdzewna, utrzymuje temperaturę 12h.',
             supplier: 'CJ Dropshipping',
             category: 'Sport',
-            sourceUrl: 'https://allegro.pl/oferta/bidon-termiczny-820ml-14208746019'
+            sourceUrl: 'https://cjdropshipping.com/product/sportflow-thermo-bottle-238772'
           }
         ]
       },
@@ -1355,7 +1386,7 @@
             description: 'Kreatywny zestaw edukacyjny, wiek 6+.',
             supplier: 'EPROLO',
             category: 'Dzieci',
-            sourceUrl: 'https://www.olx.pl/d/oferta/klocki-stem-320-el-564211223'
+            sourceUrl: 'https://eprolo.com/product/stem-explorer-blocks-320'
           },
           {
             id: 'eprolo_mat',
@@ -1379,7 +1410,7 @@
             description: 'Modułowe kosze do garderoby i szuflad.',
             supplier: 'EPROLO',
             category: 'Wyposażenie domu',
-            sourceUrl: 'https://allegro.pl/oferta/organizer-do-szafy-15822499321'
+            sourceUrl: 'https://eprolo.com/product/flexibox-wardrobe-organizer'
           }
         ]
       },
@@ -2491,10 +2522,8 @@
     if(!product){
       return null;
     }
-    const resolvedCostRaw = Number.parseFloat(product.cost ?? product.price);
-    const resolvedCost = Number.isNaN(resolvedCostRaw) ? 0 : resolvedCostRaw;
-    const resolvedImage = product.image || product.img || 'https://placehold.co/400x280/0f1837/FFFFFF?text=Produkt';
-    const resolvedPriceRaw = Number.parseFloat(product.price);
+    const resolvedImage = resolveProductImage(product);
+    const {cost: resolvedCost, price: resolvedPrice, costEstimated} = resolveCostAndPrice(product);
     const stores = ensureStoresList();
     let activeStore = getActiveStore(stores);
     if(!activeStore){
@@ -2512,12 +2541,12 @@
       settings: storeSettings,
       product
     });
-    const resolvedPrice = Number.isNaN(resolvedPriceRaw) ? pricing.finalPrice : resolvedPriceRaw;
     const entry = {
       id: product.id,
       name: product.name,
       cost: pricing.cost,
-      price: resolvedPrice,
+      price: resolvedPrice || pricing.finalPrice,
+      costEstimated,
       margin: pricing.userMarginPct,
       supplierMode: pricing.supplierMode,
       supplierMarginPct: pricing.supplierMarginPct,
@@ -2529,7 +2558,7 @@
       supplier: product.supplier,
       category: product.category,
       image: resolvedImage,
-      img: product.img || resolvedImage,
+      img: resolvedImage,
       description: product.description,
       addedAt: new Date().toISOString()
     };
@@ -2577,6 +2606,7 @@
       name: entry.name,
       cost: entry.cost,
       price: entry.price,
+      costEstimated: entry.costEstimated,
       margin: entry.margin,
       supplierMode: entry.supplierMode,
       supplierMarginPct: entry.supplierMarginPct,
@@ -3470,10 +3500,7 @@
     const importsToday = document.querySelector('[data-imports-today]');
 
     const allProducts = suppliers.flatMap(supplier => supplier.products || []);
-    const totalCost = allProducts.reduce((sum, product) => {
-      const costRaw = Number.parseFloat(product.cost ?? product.price);
-      return sum + (Number.isNaN(costRaw) ? 0 : costRaw);
-    }, 0);
+    const totalCost = allProducts.reduce((sum, product) => sum + resolveCostAndPrice(product).cost, 0);
     const avgCost = allProducts.length ? Math.round(totalCost / allProducts.length) : 0;
     const activeStore = getActiveStore(ensureStoresList());
     const storeSettings = loadStoreSettings();
@@ -3510,7 +3537,7 @@
     const resolveSupplierPlan = supplier => normalizePlan(supplier && supplier.plan) || 'basic';
     const isSupplierLocked = supplier => getPlanLevel(resolveSupplierPlan(supplier)) > currentPlanLevel;
     const getSupplierLockLabel = plan => (plan === 'elite' ? 'Elite only' : 'Premium');
-    const firstAvailableSupplier = suppliers.find(supplier => !isSupplierLocked(supplier)) || suppliers[0] || null;
+    const firstAvailableSupplier = suppliers.find(supplier => !isSupplierLocked(supplier)) || null;
     let selectedSupplier = firstAvailableSupplier;
     let currentProducts = [];
     let selectedProduct = null;
@@ -3534,9 +3561,8 @@
         }
         return;
       }
-      const resolvedCostRaw = Number.parseFloat(product.cost ?? product.price);
-      const resolvedCost = Number.isNaN(resolvedCostRaw) ? 0 : resolvedCostRaw;
-      const pricing = calculateTieredPricing(resolvedCost, {
+      const {cost} = resolveCostAndPrice(product);
+      const pricing = calculateTieredPricing(cost, {
         userMargin: marginValue,
         store: activeStore,
         settings: storeSettings,
@@ -3599,9 +3625,8 @@
         productsEmpty.hidden = true;
       }
       products.forEach(product => {
-        const resolvedCostRaw = Number.parseFloat(product.cost ?? product.price);
-        const resolvedCost = Number.isNaN(resolvedCostRaw) ? 0 : resolvedCostRaw;
-        const resolvedImage = product.image || product.img || 'https://placehold.co/400x280/0f1837/FFFFFF?text=Produkt';
+        const {cost: resolvedCost} = resolveCostAndPrice(product);
+        const resolvedImage = resolveProductImage(product);
         const card = document.createElement('article');
         card.className = 'product-card';
         const defaultMargin = bulkMarginInput ? normalizeMarginValue(bulkMarginInput.value, storeMargin) : storeMargin;
@@ -3758,11 +3783,11 @@
         const lockLabel = getSupplierLockLabel(requiredPlan);
         const card = document.createElement('article');
         card.className = 'supplier-card';
-        card.classList.toggle('is-locked', locked);
+        card.dataset.locked = locked ? 'true' : 'false';
         card.dataset.supplierId = supplier.slug;
         card.dataset.supplierPlan = requiredPlan;
         const lockTag = locked
-          ? `<span class="tag tag-lock ${requiredPlan === 'elite' ? 'tag-elite' : 'tag-premium'}">${lockLabel}</span>`
+          ? `<span class="tag tag-lock ${requiredPlan === 'elite' ? 'tag-elite' : 'tag-premium'}" aria-label="${lockLabel} - wymaga planu ${formatPlanLabel(requiredPlan)}">${lockLabel}</span>`
           : '';
         const importLabel = locked ? 'Upgrade' : 'Importuj';
         card.innerHTML = `
@@ -3775,13 +3800,18 @@
           </div>
           <p class="hint">${supplier.description}</p>
           <div class="cta-row">
-            <button class="btn btn-primary" type="button" data-supplier-import>${importLabel}</button>
+            <button class="btn btn-primary" type="button" data-supplier-import aria-label="Importuj produkty z ${supplier.name}">${importLabel}</button>
             <button class="btn btn-secondary" type="button" data-supplier-view>Zobacz produkty</button>
             ${lockTag}
             <span class="tag">${(supplier.products || []).length} produktów</span>
           </div>
         `;
-        card.addEventListener('click', () => selectSupplier(supplier));
+        card.addEventListener('click', event => {
+          if(event.target.closest('button')){
+            return;
+          }
+          selectSupplier(supplier);
+        });
         const viewButton = card.querySelector('[data-supplier-view]');
         if(viewButton){
           viewButton.addEventListener('click', event => {
@@ -3808,6 +3838,14 @@
     renderSuppliers();
     if(selectedSupplier){
       selectSupplier(selectedSupplier);
+    } else if(suppliers.length){
+      if(supplierName){
+        supplierName.textContent = 'Ulepsz plan';
+      }
+      if(supplierDesc){
+        supplierDesc.textContent = 'Twoja wersja planu nie obejmuje aktywnych hurtowni.';
+      }
+      updateStatus('Ulepsz plan, aby odblokować hurtownie.');
     }
 
     if(searchInput){
@@ -3884,8 +3922,11 @@
       storeProducts = activeStore.products.map(product => ({...product, storeId: activeStore.id}));
     }
     if(!storeProducts.length){
-      const fallbackSuppliers = ensureOwnerDemoData().suppliers;
-      storeProducts = buildProductsFromSuppliers(fallbackSuppliers).map(product => ({
+      if(!storefrontFallbackProducts){
+        const fallbackSuppliers = ensureOwnerDemoData().suppliers;
+        storefrontFallbackProducts = buildProductsFromSuppliers(fallbackSuppliers);
+      }
+      storeProducts = storefrontFallbackProducts.map(product => ({
         ...product,
         storeId: (activeStore && activeStore.id) || product.storeId
       }));
@@ -3900,10 +3941,8 @@
     if(emptyState){
       emptyState.hidden = true;
     }
-    const fallbackImage = 'https://placehold.co/400x280/0f1837/FFFFFF?text=Produkt';
     storeProducts.forEach(product => {
-      const resolvedCostRaw = Number.parseFloat(product.cost ?? product.price);
-      const resolvedCost = Number.isNaN(resolvedCostRaw) ? 0 : resolvedCostRaw;
+      const {cost: resolvedCost} = resolveCostAndPrice(product);
       const pricing = calculateTieredPricing(resolvedCost, {
         userMargin: product.margin ?? storeMargin,
         store: activeStore,
@@ -3916,7 +3955,7 @@
       const media = document.createElement('div');
       media.className = 'product-media';
       const image = document.createElement('img');
-      image.src = product.image || product.img || fallbackImage;
+      image.src = resolveProductImage(product);
       image.alt = product.name || 'Produkt';
       media.appendChild(image);
 

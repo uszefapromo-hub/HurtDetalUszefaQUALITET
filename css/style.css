@@ -547,7 +547,7 @@ body.modal-open{overflow:hidden}
 .tag.tag-lock{
   border-color:rgba(255,216,77,.6);
   background:rgba(255,216,77,.16);
-  color:#fff1b6;
+  color:#2c1b00;
 }
 .tag.tag-premium{
   border-color:rgba(84,255,176,.55);
@@ -575,10 +575,10 @@ body.modal-open{overflow:hidden}
   transform:translateY(-4px);
   box-shadow:0 18px 32px rgba(15,23,42,.25);
 }
-.supplier-card.is-locked{
+.supplier-card[data-locked="true"]{
   opacity:.7;
 }
-.supplier-card.is-locked .btn{
+.supplier-card[data-locked="true"] .btn{
   opacity:.85;
 }
 .supplier-card.is-active{border-color:rgba(84,255,176,.6);box-shadow:0 0 0 2px rgba(84,255,176,.2)}
