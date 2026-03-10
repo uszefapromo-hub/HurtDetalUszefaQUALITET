@@ -13,6 +13,8 @@
     surveySeen: 'app_survey_seen'
   };
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  const SURVEY_AUTO_OPEN_DELAY = 4500;
+  const SURVEY_SUCCESS_TIMEOUT = 1500;
   const TRIAL_RULES = [
     {limit: 3, days: 60},
     {limit: 5, days: 30}
@@ -191,7 +193,7 @@
           if(successMessage){
             successMessage.hidden = true;
           }
-        }, 1500);
+        }, SURVEY_SUCCESS_TIMEOUT);
       });
     }
 
@@ -201,7 +203,7 @@
         if(modal.hidden){
           openModal(true);
         }
-      }, 4500);
+      }, SURVEY_AUTO_OPEN_DELAY);
     }
   }
 
