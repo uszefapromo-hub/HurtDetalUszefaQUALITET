@@ -643,18 +643,26 @@
     return 'Plan Basic daje dostęp do podstawowych modułów sprzedaży.';
   }
 
+  function getDisplayTrialDays(plan, remaining){
+    return plan === 'trial' ? remaining : 0;
+  }
+
+  function getDisplayTrialLabel(plan, remaining){
+    return plan === 'trial' ? getTrialLabel(remaining) : 'Brak trialu';
+  }
+
   function updateDashboardStatus(){
     const trialTargets = document.querySelectorAll('[data-trial-remaining]');
     const remaining = getTrialRemainingDays();
     const currentPlan = getCurrentPlan();
     if(trialTargets.length){
       trialTargets.forEach(target => {
-        target.textContent = `${currentPlan === 'trial' ? remaining : 0}`;
+        target.textContent = `${getDisplayTrialDays(currentPlan, remaining)}`;
       });
     }
     const trialLabel = document.querySelector('[data-trial-label]');
     if(trialLabel){
-      trialLabel.textContent = currentPlan === 'trial' ? getTrialLabel(remaining) : 'Brak trialu';
+      trialLabel.textContent = getDisplayTrialLabel(currentPlan, remaining);
     }
     const planTarget = document.querySelector('[data-user-plan]');
     if(planTarget){
@@ -670,7 +678,7 @@
     }
     const planTrial = document.querySelector('[data-plan-trial]');
     if(planTrial){
-      planTrial.textContent = currentPlan === 'trial' ? `${remaining}` : '0';
+      planTrial.textContent = `${getDisplayTrialDays(currentPlan, remaining)}`;
     }
     const planHint = document.querySelector('[data-plan-hint]');
     if(planHint){
@@ -877,7 +885,7 @@
   function initPlanGates(){
     const currentPlan = getCurrentPlan();
     const currentLevel = getPlanLevel(currentPlan);
-    const elements = Array.from(document.querySelectorAll('[data-require]')).filter(el => el !== document.body);
+    const elements = Array.from(document.querySelectorAll('[data-require]:not(body)'));
     if(elements.length){
       elements.forEach(element => {
         const requiredPlan = normalizePlan(element.dataset.require);
@@ -885,6 +893,9 @@
           return;
         }
         const requiredLevel = getPlanLevel(requiredPlan);
+        if(requiredLevel < 0){
+          return;
+        }
         const allowed = currentLevel >= requiredLevel;
         element.classList.toggle('is-locked', !allowed);
         if(!allowed){
@@ -901,7 +912,8 @@
       });
     }
     const pageRequirement = normalizePlan(document.body.dataset.require);
-    if(pageRequirement && currentLevel < getPlanLevel(pageRequirement)){
+    const pageRequirementLevel = getPlanLevel(pageRequirement);
+    if(pageRequirement && pageRequirementLevel >= 0 && currentLevel < pageRequirementLevel){
       document.body.classList.add('page-locked');
       showUpgradeModal(pageRequirement, {lockPage: true});
     }
