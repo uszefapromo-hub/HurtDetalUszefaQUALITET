@@ -7,12 +7,14 @@
     trialDays: 'app_user_trial_days',
     trialStart: 'app_user_trial_start',
     plan: 'app_user_plan',
+    role: 'app_user_role',
     storeSettings: 'app_store_settings',
     storeReady: 'app_store_ready',
     surveyResponses: 'app_survey_responses',
     surveySeen: 'app_survey_seen',
     pendingPlan: 'app_pending_plan',
-    landingSeen: 'app_landing_seen'
+    landingSeen: 'app_landing_seen',
+    calculatorResults: 'calculatorResults'
   };
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
   const SURVEY_AUTO_OPEN_DELAY = 4500;
@@ -52,6 +54,17 @@
     basic: 'Basic',
     pro: 'PRO',
     elite: 'ELITE'
+  };
+  const OWNER_EMAIL = 'uszefaqualitetpromo@gmail.com';
+  const PRICE_LINKS = {
+    basic: '',
+    pro: '',
+    elite: ''
+  };
+  const PLAN_RECOMMENDATION_THRESHOLDS = {
+    profit: {pro: 8000, elite: 20000},
+    budget: {pro: 15000, elite: 35000},
+    traffic: {pro: 12000, elite: 30000}
   };
   const OWNER_STORAGE_KEYS = {
     users: 'users',
@@ -977,6 +990,13 @@
     };
   }
 
+  function ensureFinalStorage(){
+    const data = ensureOwnerDemoData();
+    ensureCalculatorResults();
+    ensureStoreSettingsSeed();
+    return data;
+  }
+
   function getActiveStore(stores){
     if(!Array.isArray(stores) || !stores.length){
       return null;
@@ -1031,6 +1051,14 @@
     return Math.max(0, parsed);
   }
 
+  function normalizeNumberValue(value, fallback = 0){
+    const parsed = Number.parseFloat(value);
+    if(Number.isNaN(parsed)){
+      return fallback;
+    }
+    return parsed;
+  }
+
   function calculatePricing(cost, margin){
     const safeCost = Number.parseFloat(cost);
     const resolvedCost = Number.isNaN(safeCost) ? 0 : safeCost;
@@ -1043,6 +1071,127 @@
       finalPrice: Math.round(finalPrice * 100) / 100,
       profit: Math.round(profit * 100) / 100
     };
+  }
+
+  function loadCalculatorResults(){
+    const raw = localStorage.getItem(STORAGE_KEYS.calculatorResults);
+    if(!raw){
+      return null;
+    }
+    try{
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (_error){
+      return null;
+    }
+  }
+
+  function saveCalculatorResults(results){
+    if(!results || typeof results !== 'object'){
+      return;
+    }
+    localStorage.setItem(STORAGE_KEYS.calculatorResults, JSON.stringify(results));
+  }
+
+  function getPlanRecommendationForValue(value, thresholds){
+    const numericValue = normalizeNumberValue(value, 0);
+    if(numericValue >= thresholds.elite){
+      return 'elite';
+    }
+    if(numericValue >= thresholds.pro){
+      return 'pro';
+    }
+    return 'basic';
+  }
+
+  function resolvePlanDecision(results){
+    const plans = [];
+    const currentDecision = normalizeDecision(results && results.decision);
+    if(currentDecision){
+      plans.push(currentDecision);
+    }
+    const profitCalc = results && results.profitCalc ? results.profitCalc : null;
+    if(profitCalc && profitCalc.monthlyProfit !== undefined){
+      plans.push(getPlanRecommendationForValue(profitCalc.monthlyProfit, PLAN_RECOMMENDATION_THRESHOLDS.profit));
+    }
+    const storeCalc = results && results.storeCalc ? results.storeCalc : null;
+    if(storeCalc){
+      const budget = normalizeNumberValue(storeCalc.budget, 0);
+      const goal = normalizeNumberValue(storeCalc.goal, 0);
+      const storeSignal = Math.max(budget, goal, 0);
+      if(storeSignal > 0){
+        plans.push(getPlanRecommendationForValue(storeSignal, PLAN_RECOMMENDATION_THRESHOLDS.budget));
+      }
+      const storeSuggested = normalizeDecision(storeCalc.suggestedPlan);
+      if(storeSuggested){
+        plans.push(storeSuggested);
+      }
+    }
+    const trafficCalc = results && results.trafficCalc ? results.trafficCalc : null;
+    if(trafficCalc){
+      const trafficSignal = normalizeNumberValue(
+        trafficCalc.monthlyVisits ?? trafficCalc.visits ?? trafficCalc.traffic,
+        0
+      );
+      if(trafficSignal > 0){
+        plans.push(getPlanRecommendationForValue(trafficSignal, PLAN_RECOMMENDATION_THRESHOLDS.traffic));
+      }
+    }
+    return plans.reduce((best, plan) => {
+      const bestLevel = getPlanLevel(best);
+      const planLevel = getPlanLevel(plan);
+      return planLevel > bestLevel ? plan : best;
+    }, 'basic');
+  }
+
+  function applyPlanRecommendation(results){
+    const resolved = results || loadCalculatorResults() || {};
+    const decision = normalizeDecision(resolved.decision);
+    const label = formatPlanLabel(decision);
+    document.querySelectorAll('[data-recommended-plan]').forEach(target => {
+      target.textContent = label;
+    });
+    document.querySelectorAll('[data-recommended-cta]').forEach(target => {
+      target.dataset.plan = decision;
+      target.setAttribute('href', `cennik.html?plan=${decision}`);
+      target.textContent = `Wybierz plan ${label}`;
+    });
+    document.querySelectorAll('[data-plan-card]').forEach(card => {
+      const cardPlan = normalizePlan(card.dataset.plan);
+      card.classList.toggle('is-recommended', cardPlan === decision);
+    });
+  }
+
+  function updateCalculatorResults(partial){
+    const existing = loadCalculatorResults() || {};
+    const merged = {
+      profitCalc: existing.profitCalc || null,
+      storeCalc: existing.storeCalc || null,
+      trafficCalc: existing.trafficCalc || null,
+      ...existing,
+      ...partial
+    };
+    merged.decision = resolvePlanDecision(merged);
+    saveCalculatorResults(merged);
+    applyPlanRecommendation(merged);
+    return merged;
+  }
+
+  function ensureCalculatorResults(){
+    const existing = loadCalculatorResults();
+    if(existing){
+      return existing;
+    }
+    const storeSettings = loadStoreSettings();
+    const suggestedPlan = normalizeDecision(storeSettings && (storeSettings.suggestedPlan || storeSettings.plan));
+    const seed = {
+      profitCalc: null,
+      storeCalc: null,
+      trafficCalc: null,
+      decision: suggestedPlan || 'basic'
+    };
+    saveCalculatorResults(seed);
+    return seed;
   }
 
   function initSalesCalculator(){
@@ -1066,6 +1215,7 @@
       const unitsValue = unitsInput ? Number.parseFloat(unitsInput.value) : 0;
       const resolvedUnits = Number.isNaN(unitsValue) ? 0 : Math.max(0, unitsValue);
       const pricing = calculatePricing(resolvedCost, resolvedMargin);
+      const monthlyProfit = pricing.profit * resolvedUnits;
       if(finalTarget){
         finalTarget.textContent = formatCurrency(pricing.finalPrice);
       }
@@ -1073,8 +1223,18 @@
         profitTarget.textContent = formatCurrency(pricing.profit);
       }
       if(monthlyTarget){
-        monthlyTarget.textContent = formatCurrency(pricing.profit * resolvedUnits);
+        monthlyTarget.textContent = formatCurrency(monthlyProfit);
       }
+      updateCalculatorResults({
+        profitCalc: {
+          cost: pricing.cost,
+          margin: pricing.margin,
+          units: resolvedUnits,
+          finalPrice: pricing.finalPrice,
+          profit: pricing.profit,
+          monthlyProfit: Math.round(monthlyProfit * 100) / 100
+        }
+      });
     };
 
     [costInput, marginInput, unitsInput].forEach(input => {
@@ -1083,6 +1243,103 @@
       }
     });
     updateResults();
+  }
+
+  function resolveStoreCalculatorPlan(payload){
+    const budget = normalizeNumberValue(payload && payload.budget, 0);
+    const goal = normalizeNumberValue(payload && payload.goal, 0);
+    const signal = Math.max(budget, goal, 0);
+    return getPlanRecommendationForValue(signal, PLAN_RECOMMENDATION_THRESHOLDS.budget);
+  }
+
+  function initStoreCalculator(){
+    const calculator = document.querySelector('[data-store-calculator]');
+    if(!calculator){
+      return;
+    }
+    const nicheInput = calculator.querySelector('[data-store-niche]');
+    const budgetInput = calculator.querySelector('[data-store-budget]');
+    const marginInput = calculator.querySelector('[data-store-margin]');
+    const goalInput = calculator.querySelector('[data-store-goal]');
+    const planTarget = calculator.querySelector('[data-store-plan]');
+
+    const update = () => {
+      const niche = nicheInput ? nicheInput.value.trim() : '';
+      const budgetValue = Math.max(0, normalizeNumberValue(budgetInput ? budgetInput.value : 0, 0));
+      const marginValue = normalizeMarginValue(marginInput ? marginInput.value : 0, 0);
+      const goalValue = Math.max(0, normalizeNumberValue(goalInput ? goalInput.value : 0, 0));
+      const payload = {
+        niche,
+        budget: budgetValue,
+        margin: marginValue,
+        goal: goalValue
+      };
+      const suggestedPlan = resolveStoreCalculatorPlan(payload);
+      if(planTarget){
+        planTarget.textContent = formatPlanLabel(suggestedPlan);
+      }
+      updateCalculatorResults({
+        storeCalc: {
+          ...payload,
+          suggestedPlan
+        }
+      });
+      saveStoreSettings({
+        ...payload,
+        suggestedPlan,
+        updatedAt: new Date().toISOString()
+      });
+    };
+
+    [nicheInput, budgetInput, marginInput, goalInput].forEach(input => {
+      if(input){
+        input.addEventListener('input', update);
+      }
+    });
+    update();
+  }
+
+  function initTrafficCalculator(){
+    const calculator = document.querySelector('[data-traffic-calculator]');
+    if(!calculator){
+      return;
+    }
+    const visitsInput = calculator.querySelector('[data-traffic-visits]');
+    const conversionInput = calculator.querySelector('[data-traffic-conversion]');
+    const orderInput = calculator.querySelector('[data-traffic-order]');
+    const revenueTarget = calculator.querySelector('[data-traffic-revenue]');
+    const ordersTarget = calculator.querySelector('[data-traffic-orders]');
+
+    const update = () => {
+      const visits = Math.max(0, normalizeNumberValue(visitsInput ? visitsInput.value : 0, 0));
+      const conversion = Math.max(0, normalizeNumberValue(conversionInput ? conversionInput.value : 0, 0));
+      const orderValue = Math.max(0, normalizeNumberValue(orderInput ? orderInput.value : 0, 0));
+      const conversionRate = conversion > 1 ? conversion / 100 : conversion;
+      const orders = Math.round(visits * conversionRate);
+      const revenue = Math.round(orders * orderValue);
+      if(ordersTarget){
+        ordersTarget.textContent = `${orders}`;
+      }
+      if(revenueTarget){
+        revenueTarget.textContent = formatCurrency(revenue);
+      }
+      updateCalculatorResults({
+        trafficCalc: {
+          visits,
+          conversion,
+          orderValue,
+          orders,
+          revenue
+        }
+      });
+    };
+
+    [visitsInput, conversionInput, orderInput].forEach(input => {
+      if(input){
+        input.addEventListener('input', update);
+      }
+    });
+    update();
   }
 
   function addProductToStore(product, margin){
@@ -1174,8 +1431,43 @@
     if(!settings){
       return;
     }
-    localStorage.setItem(STORAGE_KEYS.storeSettings, JSON.stringify(settings));
+    const existing = loadStoreSettings() || {};
+    const merged = {
+      ...existing,
+      ...settings
+    };
+    const calculatorResults = loadCalculatorResults();
+    const suggestedPlan = normalizeDecision(
+      merged.suggestedPlan
+      || merged.plan
+      || (calculatorResults && calculatorResults.decision)
+    );
+    if(suggestedPlan){
+      merged.suggestedPlan = suggestedPlan;
+    }
+    localStorage.setItem(STORAGE_KEYS.storeSettings, JSON.stringify(merged));
     localStorage.setItem(STORAGE_KEYS.storeReady, 'true');
+  }
+
+  function ensureStoreSettingsSeed(){
+    const existing = loadStoreSettings();
+    if(existing){
+      return existing;
+    }
+    const stores = ensureStoresList();
+    const activeStore = getActiveStore(stores) || createFallbackStore();
+    const seed = {
+      niche: activeStore.name,
+      budget: 12000,
+      margin: activeStore.margin,
+      goal: 25000,
+      suggestedPlan: normalizeDecision(activeStore.plan),
+      storeName: activeStore.name,
+      storeStyle: activeStore.theme,
+      updatedAt: new Date().toISOString()
+    };
+    saveStoreSettings(seed);
+    return seed;
   }
 
   function getStoreInitial(storeName){
@@ -1280,6 +1572,14 @@
 
   function normalizePlan(plan){
     return normalizeQueryParam(plan);
+  }
+
+  function normalizeDecision(plan){
+    const normalized = normalizePlan(plan);
+    if(normalized === 'basic' || normalized === 'pro' || normalized === 'elite'){
+      return normalized;
+    }
+    return 'basic';
   }
 
   /**
@@ -1455,8 +1755,10 @@
     const helper = summary.querySelector('[data-store-helper]');
     const settings = loadStoreSettings();
     const ready = localStorage.getItem(STORAGE_KEYS.storeReady) === 'true' && settings;
-    const storeName = settings && settings.storeName ? settings.storeName : 'Brak danych';
-    const storeStyle = settings && settings.storeStyle ? settings.storeStyle : '---';
+    const storeName = settings && (settings.storeName || settings.niche) ? (settings.storeName || settings.niche) : 'Brak danych';
+    const storeStyle = settings && (settings.storeStyle || settings.goal)
+      ? (settings.storeStyle || `Cel: ${formatCurrency(settings.goal)}`)
+      : '---';
 
     if(nameTarget){
       nameTarget.textContent = storeName;
@@ -1509,13 +1811,19 @@
     const buttons = document.querySelectorAll('[data-plan-checkout]');
     if(buttons.length){
       buttons.forEach(button => {
+        const plan = normalizePlan(button.dataset.plan);
+        const fallbackUrl = button.getAttribute('href');
+        const resolvedUrl = plan && PRICE_LINKS[plan] ? PRICE_LINKS[plan] : fallbackUrl;
+        if(resolvedUrl){
+          button.setAttribute('href', resolvedUrl);
+        }
         button.addEventListener('click', () => {
-          const plan = normalizePlan(button.dataset.plan);
+          const checkoutPlan = normalizePlan(button.dataset.plan);
           const checkoutUrl = button.getAttribute('href');
-          if(!plan || !checkoutUrl){
+          if(!checkoutPlan || !checkoutUrl){
             return;
           }
-          localStorage.setItem(STORAGE_KEYS.pendingPlan, plan);
+          localStorage.setItem(STORAGE_KEYS.pendingPlan, checkoutPlan);
         });
       });
     }
@@ -1679,11 +1987,57 @@
     renderDashboardStoreSummary();
   }
 
+  function getStoredUserRole(){
+    const storedRole = normalizeQueryParam(localStorage.getItem(STORAGE_KEYS.role));
+    if(storedRole){
+      return storedRole;
+    }
+    const rawProfile = localStorage.getItem('app_user_profile');
+    if(!rawProfile){
+      return '';
+    }
+    try{
+      const parsed = JSON.parse(rawProfile);
+      const profileRole = normalizeQueryParam(parsed && parsed.role ? parsed.role : '');
+      return profileRole;
+    } catch (_error){
+      return '';
+    }
+  }
+
+  function hasOwnerAccess(){
+    const role = getStoredUserRole();
+    if(role === 'owner'){
+      return true;
+    }
+    const email = normalizeQueryParam(localStorage.getItem(STORAGE_KEYS.email));
+    return email && email === normalizeQueryParam(OWNER_EMAIL);
+  }
+
+  function applyOwnerAccessState(){
+    if(document.body.dataset.page !== 'owner-panel'){
+      return false;
+    }
+    const accessGranted = hasOwnerAccess();
+    const lockedPanel = document.querySelector('[data-owner-locked]');
+    const content = document.querySelector('[data-owner-content]');
+    if(lockedPanel){
+      lockedPanel.hidden = accessGranted;
+    }
+    if(content){
+      content.hidden = !accessGranted;
+    }
+    return accessGranted;
+  }
+
   function initOwnerPanel(){
     if(document.body.dataset.page !== 'owner-panel'){
       return;
     }
-    const data = ensureOwnerDemoData();
+    if(!applyOwnerAccessState()){
+      return;
+    }
+    const data = ensureFinalStorage();
     const users = data.users;
     const stores = data.stores;
     const leads = data.leads;
@@ -2207,8 +2561,8 @@
 
     const storedSettings = loadStoreSettings();
     if(storedSettings){
-      if(nameInput && storedSettings.storeName){
-        nameInput.value = storedSettings.storeName;
+      if(nameInput && (storedSettings.storeName || storedSettings.niche)){
+        nameInput.value = storedSettings.storeName || storedSettings.niche;
       }
       if(descriptionInput && storedSettings.storeDescription){
         descriptionInput.value = storedSettings.storeDescription;
@@ -2299,6 +2653,11 @@
       const email = emailInput ? emailInput.value.trim() : '';
       if(email){
         localStorage.setItem(STORAGE_KEYS.email, email);
+        if(normalizeQueryParam(email) === normalizeQueryParam(OWNER_EMAIL)){
+          localStorage.setItem(STORAGE_KEYS.role, 'owner');
+        } else {
+          localStorage.removeItem(STORAGE_KEYS.role);
+        }
       }
       localStorage.setItem(STORAGE_KEYS.logged, 'true');
       startTrialIfNeeded(email);
@@ -2308,18 +2667,21 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     bindMenu();
-    ensureOwnerDemoData();
+    ensureFinalStorage();
     initOwnerPanel();
     initSuppliersModule();
     initCounters();
     initHelperBoxes();
     initActivityToasts();
     initSalesCalculator();
+    initStoreCalculator();
+    initTrafficCalculator();
     initSlotsBanner();
     initLandingModal();
     initSurveyModal();
     initPlanCheckoutReturn();
     initPricingSelector();
+    applyPlanRecommendation();
     initPlanGates();
     initStoreGenerator();
     initLoginForm();

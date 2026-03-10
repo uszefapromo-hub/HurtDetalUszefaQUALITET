@@ -42,6 +42,16 @@
     </aside>
 
     <main class="dashboard-main">
+      <section class="panel-card owner-locked" data-owner-locked hidden>
+        <span class="eyebrow">Brak dostępu</span>
+        <h2>Panel właściciela jest zastrzeżony</h2>
+        <p class="hint">Ten widok jest dostępny tylko dla właściciela konta.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="dashboard.html">Wróć do panelu</a>
+          <a class="btn btn-secondary" href="login.html">Zaloguj się</a>
+        </div>
+      </section>
+      <div data-owner-content>
       <section class="panel-card dashboard-welcome">
         <span class="eyebrow">Centrum dowodzenia</span>
         <h1>Panel właściciela</h1>
@@ -230,6 +240,7 @@
         </div>
         <div class="list-cards" data-owner-suppliers-list></div>
       </section>
+      </div>
     </main>
   </div>
 
