@@ -729,9 +729,13 @@
     }
     const planParam = normalizePlan(params.get('plan'));
     const statusParam = normalizePlan(params.get('status'));
+    const successParam = normalizePlan(params.get('success'));
+    const sessionId = params.get('session_id') || params.get('checkout_session_id');
     const pendingPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.pendingPlan));
     const resolvedPlan = planParam || pendingPlan;
-    const isSuccess = SUCCESS_STATUSES.includes(statusParam);
+    const isSuccess = SUCCESS_STATUSES.includes(statusParam)
+      || SUCCESS_STATUSES.includes(successParam)
+      || Boolean(sessionId);
 
     const validPlans = ['basic', 'pro', 'elite'];
     if(resolvedPlan && validPlans.includes(resolvedPlan) && isSuccess){
