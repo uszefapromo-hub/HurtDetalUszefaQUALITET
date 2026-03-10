@@ -239,6 +239,7 @@
     const closeButtons = popup.querySelectorAll('[data-popup-close]');
     let timeTriggered = false;
     let scrollTriggered = false;
+    let scrollTicking = false;
 
     function openPopup({title, message, ctaLabel, ctaLink}){
       if(titleTarget){
@@ -293,7 +294,7 @@
       });
     }, POPUP_TIME_TRIGGER_MS);
 
-    window.addEventListener('scroll', () => {
+    function handleScrollTrigger(){
       if(scrollTriggered || popup.classList.contains('is-visible')){
         return;
       }
@@ -305,6 +306,17 @@
           message: 'Dobierz plan dla swojego sklepu.'
         });
       }
+    }
+
+    window.addEventListener('scroll', () => {
+      if(scrollTicking){
+        return;
+      }
+      scrollTicking = true;
+      window.requestAnimationFrame(() => {
+        scrollTicking = false;
+        handleScrollTrigger();
+      });
     }, {passive: true});
   }
 

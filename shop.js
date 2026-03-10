@@ -297,8 +297,6 @@
       }
     }
 
-    updateLivePreview();
-
     function handleGeneratorSave(redirectUrl){
       const storeData = buildStoreFromForm(form);
       if(!storeData.name){
@@ -346,6 +344,8 @@
         select.addEventListener('change', updateLivePreview);
       }
     });
+
+    updateLivePreview();
   }
 
   function hashString(value){
