@@ -356,11 +356,8 @@
 
   function getMockMetrics(store){
     const seed = hashString(store.id || store.slug || store.name);
-    const parsedProducts = typeof store.productsCount === 'string'
-      ? parseInt(store.productsCount, 10)
-      : store.productsCount;
-    const products = Number.isFinite(parsedProducts)
-      ? parsedProducts
+    const products = Number.isFinite(store.productsCount)
+      ? store.productsCount
       : MOCK_PRODUCTS_BASE + (seed % MOCK_PRODUCTS_RANGE);
     const revenue = MOCK_REVENUE_BASE + (seed % MOCK_REVENUE_RANGE);
     return {products, revenue};
