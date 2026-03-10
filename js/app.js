@@ -41,7 +41,6 @@
   const DEFAULT_TRIAL_DAYS = 7;
   const planButtonOriginalText = new WeakMap();
   const PLAN_ACTIVE_TEXT = 'Aktywny';
-  const TRIAL_EXPIRED_DAYS = '0';
   const PLAN_LABELS = {
     trial: 'Trial',
     basic: 'Basic',
@@ -534,16 +533,27 @@
 
   function updateDashboardStatus(){
     const trialTargets = document.querySelectorAll('[data-trial-remaining]');
+    const trialLabels = document.querySelectorAll('[data-trial-label]');
+    const activeTargets = document.querySelectorAll('[data-plan-active]');
     const remaining = getTrialRemainingDays();
     const plan = resolveCurrentPlan(remaining);
     if(trialTargets.length){
       trialTargets.forEach(target => {
-        target.textContent = plan === 'trial' ? `${remaining}` : PLAN_ACTIVE_TEXT;
+        target.textContent = `${remaining}`;
+        target.hidden = plan !== 'trial';
       });
     }
-    const trialLabel = document.querySelector('[data-trial-label]');
-    if(trialLabel){
-      trialLabel.textContent = plan === 'trial' ? getTrialLabel(remaining) : 'plan';
+    if(trialLabels.length){
+      trialLabels.forEach(label => {
+        label.textContent = getTrialLabel(remaining);
+        label.hidden = plan !== 'trial';
+      });
+    }
+    if(activeTargets.length){
+      activeTargets.forEach(target => {
+        target.textContent = `${PLAN_ACTIVE_TEXT} plan`;
+        target.hidden = plan === 'trial';
+      });
     }
     const planTarget = document.querySelector('[data-user-plan]');
     if(planTarget){
@@ -594,7 +604,8 @@
     }
     localStorage.setItem(STORAGE_KEYS.plan, normalizedPlan);
     if(normalizedPlan !== 'trial'){
-      localStorage.setItem(STORAGE_KEYS.trialDays, TRIAL_EXPIRED_DAYS);
+      localStorage.removeItem(STORAGE_KEYS.trialDays);
+      localStorage.removeItem(STORAGE_KEYS.trialStart);
     }
     updateDashboardStatus();
   }
