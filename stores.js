@@ -79,6 +79,7 @@
 
   function setActiveStore(storeId){
     if(!storeId){
+      localStorage.removeItem(STORAGE_KEYS.activeStore);
       return;
     }
     localStorage.setItem(STORAGE_KEYS.activeStore, storeId);

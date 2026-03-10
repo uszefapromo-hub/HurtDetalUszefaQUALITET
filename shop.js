@@ -14,6 +14,13 @@
     trial: true
   };
   const DEFAULT_INITIAL = 'S';
+  const HASH_MULTIPLIER = 31;
+  const HASH_MODULO = 10000;
+  const HASH_SEED = 7;
+  const MOCK_PRODUCTS_BASE = 12;
+  const MOCK_PRODUCTS_RANGE = 24;
+  const MOCK_REVENUE_BASE = 12000;
+  const MOCK_REVENUE_RANGE = 9000;
 
   function formatPlan(plan){
     const value = (plan || '').toLowerCase();
@@ -91,7 +98,7 @@
     const name = nameInput ? nameInput.value.trim() : '';
     const slug = manager.normalizeSlug(slugInput && slugInput.value ? slugInput.value : name);
     const marginRaw = marginInput ? marginInput.value : '';
-    const marginValue = Number.parseFloat(marginRaw);
+    const marginValue = parseFloat(marginRaw);
 
     return {
       name,
@@ -249,14 +256,14 @@
 
   function hashString(value){
     return Array.from(value || '').reduce((acc, char) => {
-      return (acc * 31 + char.charCodeAt(0)) % 10000;
-    }, 7);
+      return (acc * HASH_MULTIPLIER + char.charCodeAt(0)) % HASH_MODULO;
+    }, HASH_SEED);
   }
 
   function getMockMetrics(store){
     const seed = hashString(store.id || store.slug || store.name);
-    const products = 12 + (seed % 24);
-    const revenue = 12000 + (seed % 9000);
+    const products = MOCK_PRODUCTS_BASE + (seed % MOCK_PRODUCTS_RANGE);
+    const revenue = MOCK_REVENUE_BASE + (seed % MOCK_REVENUE_RANGE);
     return {products, revenue};
   }
 
