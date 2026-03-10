@@ -32,6 +32,7 @@
   const TOAST_DISPLAY_MS = 4200;
   const TOAST_DISPLAY_REDUCED_MS = 3600;
   const PROMO_MOTION_IDLE_MS = 20000;
+  const PROMO_MOTION_INTERSECTION_THRESHOLD = 0.35;
   const SUCCESS_STATUSES = ['success', 'paid', 'true', '1', 'ok'];
   const SAMPLE_USER_NAMES = ['Jan', 'Anna', 'Marek', 'Ola', 'Kamil', 'Ewa', 'Tomasz', 'Klara', 'Paweł', 'Lena'];
   const ACTIVITY_TOAST_MESSAGES = [
@@ -466,16 +467,21 @@
       let visibilityPaused = false;
       let intersectionPaused = false;
 
+      const updateToggleButton = isPaused => {
+        if(!toggle){
+          return;
+        }
+        toggle.setAttribute('aria-pressed', isPaused ? 'true' : 'false');
+        toggle.textContent = isPaused ? 'Wznów animację' : 'Zatrzymaj animację';
+      };
+
       const setPaused = isPaused => {
         gallery.classList.toggle('is-paused', isPaused);
         if(isPaused && idleTimeout){
           clearTimeout(idleTimeout);
           idleTimeout = null;
         }
-        if(toggle){
-          toggle.setAttribute('aria-pressed', isPaused ? 'true' : 'false');
-          toggle.textContent = isPaused ? 'Wznów animację' : 'Zatrzymaj animację';
-        }
+        updateToggleButton(isPaused);
       };
 
       const scheduleIdlePause = () => {
@@ -539,7 +545,7 @@
             intersectionPaused = !entry.isIntersecting;
             applyPauseState();
           });
-        }, {threshold: 0.35});
+        }, {threshold: PROMO_MOTION_INTERSECTION_THRESHOLD});
         observer.observe(gallery);
       }
 
