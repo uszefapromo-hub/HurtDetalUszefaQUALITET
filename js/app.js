@@ -108,7 +108,9 @@
     if(!('onbeforeinstallprompt' in window)){
       return;
     }
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const supportsDisplayMode = typeof window.matchMedia === 'function';
+    const isStandalone = (supportsDisplayMode && window.matchMedia('(display-mode: standalone)').matches)
+      || window.navigator.standalone === true;
     if(isStandalone){
       return;
     }
@@ -149,7 +151,9 @@
       const content = document.createElement('div');
       content.className = 'install-banner__content';
       const title = document.createElement('strong');
+      title.id = 'install-banner-title';
       title.textContent = 'Zainstaluj aplikację';
+      banner.setAttribute('aria-labelledby', title.id);
       const description = document.createElement('span');
       description.textContent = 'Dodaj UszefaQualitet na ekran główny i korzystaj szybciej.';
       content.append(title, description);
