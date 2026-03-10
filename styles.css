@@ -256,6 +256,7 @@ body.store-shop{
   --card:#1e293b;
   --stroke:rgba(148,163,184,.22);
   --shadow:0 22px 44px rgba(2,6,23,.45);
+  --store-grid-min:240px;
   background:
     radial-gradient(circle at top right, rgba(56,189,248,.12), transparent 30%),
     radial-gradient(circle at top left, rgba(34,197,94,.1), transparent 28%),
@@ -499,7 +500,7 @@ body.store-shop .slider-meta{
 body.store-shop .category-grid{
   display:grid;
   gap:18px;
-  grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns:repeat(auto-fit, minmax(var(--store-grid-min), 1fr));
 }
 
 body.store-shop .category-card{
@@ -556,7 +557,7 @@ body.store-shop .category-info p{
 }
 
 body.store-shop .product-grid-large{
-  grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns:repeat(auto-fit, minmax(var(--store-grid-min), 1fr));
   padding:0 0 18px;
 }
 
@@ -662,7 +663,7 @@ body.store-shop .promo-card.highlight{
 }
 
 body.store-shop .supplier-grid-large{
-  grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns:repeat(auto-fit, minmax(var(--store-grid-min), 1fr));
   gap:18px;
 }
 
