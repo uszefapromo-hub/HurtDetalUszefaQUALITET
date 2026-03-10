@@ -728,13 +728,15 @@
       return;
     }
     const planParam = normalizePlan(params.get('plan'));
-    const statusParam = normalizePlan(params.get('status'));
-    const successParam = normalizePlan(params.get('success'));
+    const statusParam = params.get('status');
+    const successParam = params.get('success');
     const sessionId = params.get('session_id') || params.get('checkout_session_id');
+    const normalizedStatus = statusParam ? statusParam.toString().trim().toLowerCase() : '';
+    const normalizedSuccess = successParam ? successParam.toString().trim().toLowerCase() : '';
     const pendingPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.pendingPlan));
     const resolvedPlan = planParam || pendingPlan;
-    const isSuccess = SUCCESS_STATUSES.includes(statusParam)
-      || SUCCESS_STATUSES.includes(successParam)
+    const isSuccess = SUCCESS_STATUSES.includes(normalizedStatus)
+      || SUCCESS_STATUSES.includes(normalizedSuccess)
       || Boolean(sessionId);
 
     const validPlans = ['basic', 'pro', 'elite'];
