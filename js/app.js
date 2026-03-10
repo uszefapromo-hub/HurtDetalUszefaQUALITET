@@ -587,10 +587,11 @@
    * Determines success for Stripe redirect callbacks using status/success flags or
    * a returned session id paired with a pending plan.
    */
-  function isCheckoutSuccess(statusParam, successParam, sessionId, pendingPlan) {
+  function isCheckoutSuccess(statusParam, successParam, sessionId, pendingPlanValue) {
     const hasStatusSuccess = SUCCESS_STATUSES.includes(statusParam);
     const hasSuccessFlag = SUCCESS_STATUSES.includes(successParam);
-    const hasSessionSuccess = Boolean(sessionId) && Boolean(pendingPlan);
+    const hasPendingPlan = Boolean(pendingPlanValue);
+    const hasSessionSuccess = Boolean(sessionId) && hasPendingPlan;
     return hasStatusSuccess || hasSuccessFlag || hasSessionSuccess;
   }
 
