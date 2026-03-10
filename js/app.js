@@ -10,10 +10,13 @@
     storeSettings: 'app_store_settings',
     storeReady: 'app_store_ready',
     surveyResponses: 'app_survey_responses',
-    surveySeen: 'app_survey_seen'
+    surveySeen: 'app_survey_seen',
+    pendingPlan: 'app_pending_plan',
+    landingSeen: 'app_landing_seen'
   };
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
   const SURVEY_AUTO_OPEN_DELAY = 4500;
+  const LANDING_AUTO_OPEN_DELAY = 2400;
   const SURVEY_SUCCESS_TIMEOUT = 1500;
   const DEFAULT_LOCALE = 'pl-PL';
   const DEFAULT_TEST_SLOTS = 20;
@@ -34,11 +37,22 @@
   ];
   const liveCounterIntervals = new Map();
   let activityToastIntervalId = null;
-  const TRIAL_RULES = [
-    {limit: 3, days: 60},
-    {limit: 5, days: 30}
-  ];
+  let upgradeModal = null;
+  let upgradeModalInitialized = false;
+  const TRIAL_RULES = [];
   const DEFAULT_TRIAL_DAYS = 7;
+  const PLAN_LEVELS = {
+    trial: 0,
+    basic: 0,
+    pro: 1,
+    elite: 2
+  };
+  const PLAN_LABELS = {
+    trial: 'Trial',
+    basic: 'Basic',
+    pro: 'PRO',
+    elite: 'ELITE'
+  };
 
   function bindMenu(){
     const button = document.querySelector('[data-menu-toggle]');
@@ -353,10 +367,72 @@
     const alreadySeen = localStorage.getItem(STORAGE_KEYS.surveySeen) === 'true';
     if(!alreadySeen){
       setTimeout(() => {
-        if(modal.hidden){
+        const landingModal = document.querySelector('[data-landing-modal]');
+        const landingVisible = landingModal && !landingModal.hidden;
+        if(modal.hidden && !landingVisible){
           openModal(true);
         }
       }, SURVEY_AUTO_OPEN_DELAY);
+    }
+  }
+
+  function initLandingModal(){
+    if(document.body.dataset.page !== 'index'){
+      return;
+    }
+    const modal = document.querySelector('[data-landing-modal]');
+    if(!modal){
+      return;
+    }
+    const closeButtons = modal.querySelectorAll('[data-landing-close]');
+    const surveyButtons = modal.querySelectorAll('[data-landing-survey]');
+
+    const openModal = () => {
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+      localStorage.setItem(STORAGE_KEYS.landingSeen, 'true');
+    };
+
+    const closeModal = () => {
+      modal.hidden = true;
+      document.body.classList.remove('modal-open');
+    };
+
+    closeButtons.forEach(button => {
+      button.addEventListener('click', closeModal);
+    });
+
+    modal.addEventListener('click', event => {
+      if(event.target === modal){
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if(event.key === 'Escape' && !modal.hidden){
+        closeModal();
+      }
+    });
+
+    surveyButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        closeModal();
+        const surveyButton = document.querySelector('[data-survey-open]');
+        if(surveyButton){
+          surveyButton.click();
+        }
+      });
+    });
+
+    const alreadySeen = localStorage.getItem(STORAGE_KEYS.landingSeen) === 'true';
+    if(!alreadySeen){
+      setTimeout(() => {
+        const surveyModal = document.querySelector('[data-survey-modal]');
+        const surveyVisible = surveyModal && !surveyModal.hidden;
+        if(modal.hidden && !surveyVisible){
+          openModal();
+        }
+      }, LANDING_AUTO_OPEN_DELAY);
     }
   }
 
@@ -431,6 +507,10 @@
   }
 
   function startTrialIfNeeded(email){
+    const existingPlan = (localStorage.getItem(STORAGE_KEYS.plan) || '').toLowerCase();
+    if(existingPlan && existingPlan !== 'trial'){
+      return;
+    }
     if(localStorage.getItem(STORAGE_KEYS.trialStart)){
       return;
     }
@@ -499,23 +579,112 @@
     return 'dni pozostało';
   }
 
+  function normalizePlan(plan){
+    return (plan || '').toString().trim().toLowerCase();
+  }
+
+  function formatPlanLabel(plan){
+    const normalized = normalizePlan(plan);
+    return PLAN_LABELS[normalized] || PLAN_LABELS.basic;
+  }
+
+  function getPlanLevel(plan){
+    const normalized = normalizePlan(plan);
+    if(!normalized){
+      return -1;
+    }
+    return PLAN_LEVELS[normalized] ?? -1;
+  }
+
+  function setPlan(plan){
+    const normalized = normalizePlan(plan);
+    if(!normalized){
+      return;
+    }
+    localStorage.setItem(STORAGE_KEYS.plan, normalized);
+    if(normalized !== 'trial'){
+      localStorage.removeItem(STORAGE_KEYS.trialStart);
+      localStorage.removeItem(STORAGE_KEYS.trialDays);
+    }
+  }
+
+  function getCurrentPlan(){
+    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
+    if(logged){
+      startTrialIfNeeded(localStorage.getItem(STORAGE_KEYS.email));
+    }
+    const storedPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.plan));
+    if(storedPlan){
+      return storedPlan;
+    }
+    if(logged){
+      const remaining = getTrialRemainingDays();
+      return remaining > 0 ? 'trial' : 'basic';
+    }
+    return null;
+  }
+
+  function getPlanStatusLabel(plan, remaining){
+    const normalized = normalizePlan(plan);
+    if(!normalized){
+      return 'Brak aktywnego planu';
+    }
+    if(normalized === 'trial'){
+      return `Trial • ${remaining} ${getTrialLabel(remaining)}`;
+    }
+    return 'Aktywny';
+  }
+
+  function getPlanHint(plan, remaining){
+    const normalized = normalizePlan(plan);
+    if(normalized === 'trial'){
+      return `Trial Basic jest aktywny jeszcze przez ${remaining} ${getTrialLabel(remaining)}.`;
+    }
+    if(normalized === 'pro'){
+      return 'Masz pełny dostęp do modułów PRO oraz hurtowni.';
+    }
+    if(normalized === 'elite'){
+      return 'Pełen pakiet ELITE odblokowuje wszystkie moduły i analitykę AI.';
+    }
+    return 'Plan Basic daje dostęp do podstawowych modułów sprzedaży.';
+  }
+
   function updateDashboardStatus(){
     const trialTargets = document.querySelectorAll('[data-trial-remaining]');
     const remaining = getTrialRemainingDays();
+    const currentPlan = getCurrentPlan();
     if(trialTargets.length){
       trialTargets.forEach(target => {
-        target.textContent = `${remaining}`;
+        target.textContent = `${currentPlan === 'trial' ? remaining : 0}`;
       });
     }
     const trialLabel = document.querySelector('[data-trial-label]');
     if(trialLabel){
-      trialLabel.textContent = getTrialLabel(remaining);
+      trialLabel.textContent = currentPlan === 'trial' ? getTrialLabel(remaining) : 'brak trialu';
     }
     const planTarget = document.querySelector('[data-user-plan]');
     if(planTarget){
-      const storedPlan = localStorage.getItem(STORAGE_KEYS.plan);
-      const plan = storedPlan || (remaining > 0 ? 'trial' : 'basic');
-      planTarget.textContent = plan === 'trial' ? 'Trial' : 'Basic';
+      planTarget.textContent = formatPlanLabel(currentPlan);
+    }
+    const planName = document.querySelector('[data-plan-name]');
+    if(planName){
+      planName.textContent = formatPlanLabel(currentPlan);
+    }
+    const planStatus = document.querySelector('[data-plan-status]');
+    if(planStatus){
+      planStatus.textContent = getPlanStatusLabel(currentPlan, remaining);
+    }
+    const planTrial = document.querySelector('[data-plan-trial]');
+    if(planTrial){
+      planTrial.textContent = currentPlan === 'trial' ? `${remaining}` : '0';
+    }
+    const planHint = document.querySelector('[data-plan-hint]');
+    if(planHint){
+      planHint.textContent = getPlanHint(currentPlan, remaining);
+    }
+    const planCta = document.querySelector('[data-plan-cta]');
+    if(planCta){
+      planCta.textContent = currentPlan === 'elite' ? 'Zarządzaj planem' : 'Ulepsz plan';
     }
   }
 
@@ -546,6 +715,201 @@
     }
     if(helper){
       helper.hidden = Boolean(ready);
+    }
+  }
+
+  function initPlanCheckoutReturn(){
+    const params = new URLSearchParams(window.location.search);
+    if(!params.size){
+      return;
+    }
+    const planParam = normalizePlan(params.get('plan'));
+    const statusParam = normalizePlan(
+      params.get('status')
+      || params.get('success')
+      || params.get('payment')
+      || params.get('checkout')
+    );
+    const pendingPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.pendingPlan));
+    const resolvedPlan = planParam || pendingPlan;
+    const isSuccess = ['success', 'paid', 'true', '1', 'ok'].includes(statusParam)
+      || Boolean(params.get('session_id') && resolvedPlan);
+
+    const validPlans = ['basic', 'pro', 'elite'];
+    if(resolvedPlan && validPlans.includes(resolvedPlan) && isSuccess){
+      setPlan(resolvedPlan);
+      localStorage.removeItem(STORAGE_KEYS.pendingPlan);
+      const successPanel = document.querySelector('[data-plan-success]');
+      if(successPanel){
+        const nameTarget = successPanel.querySelector('[data-plan-success-name]');
+        if(nameTarget){
+          nameTarget.textContent = formatPlanLabel(resolvedPlan);
+        }
+        successPanel.hidden = false;
+      }
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.search = '';
+      window.history.replaceState({}, document.title, cleanUrl.toString());
+    }
+  }
+
+  function initPricingSelector(){
+    const buttons = document.querySelectorAll('[data-plan-checkout]');
+    if(buttons.length){
+      buttons.forEach(button => {
+        button.addEventListener('click', event => {
+          const plan = normalizePlan(button.dataset.plan);
+          const checkoutUrl = button.dataset.checkoutUrl || button.getAttribute('href');
+          if(!plan || !checkoutUrl){
+            return;
+          }
+          localStorage.setItem(STORAGE_KEYS.pendingPlan, plan);
+          if(button.tagName !== 'A'){
+            window.location.href = checkoutUrl;
+            event.preventDefault();
+          }
+        });
+      });
+    }
+    const currentPlan = getCurrentPlan();
+    const highlightPlan = currentPlan === 'trial' ? 'basic' : currentPlan;
+    const cards = document.querySelectorAll('[data-plan-card]');
+    if(cards.length){
+      cards.forEach(card => {
+        const cardPlan = normalizePlan(card.dataset.plan);
+        const isCurrent = cardPlan && cardPlan === highlightPlan;
+        card.classList.toggle('is-current', isCurrent);
+        const badge = card.querySelector('[data-current-plan]');
+        if(badge){
+          badge.hidden = !isCurrent;
+        }
+      });
+    }
+  }
+
+  function ensureUpgradeModal(){
+    if(upgradeModal && document.body.contains(upgradeModal)){
+      return upgradeModal;
+    }
+    upgradeModal = document.querySelector('[data-upgrade-modal]');
+    if(upgradeModal){
+      return upgradeModal;
+    }
+    const modal = document.createElement('div');
+    modal.className = 'upgrade-modal';
+    modal.dataset.upgradeModal = '';
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="upgrade-window" role="dialog" aria-modal="true" aria-labelledby="upgrade-title">
+        <button class="upgrade-close" type="button" data-upgrade-close aria-label="Zamknij okno">×</button>
+        <span class="eyebrow">Upgrade planu</span>
+        <h2 id="upgrade-title">Odblokuj plan <span data-upgrade-plan>PRO</span></h2>
+        <p class="hint" data-upgrade-message>Ta funkcja wymaga planu PRO</p>
+        <div class="upgrade-plans">
+          <div class="upgrade-pill">Basic <strong>29 zł / mies.</strong></div>
+          <div class="upgrade-pill">PRO <strong>79 zł / mies.</strong></div>
+          <div class="upgrade-pill">ELITE <strong>199 zł / mies.</strong></div>
+        </div>
+        <div class="upgrade-actions">
+          <a class="btn btn-primary" href="cennik.html" data-upgrade-cta>Zobacz plany</a>
+          <a class="btn btn-secondary" href="dashboard.html" data-upgrade-back hidden>Wróć do dashboardu</a>
+          <button class="btn btn-secondary" type="button" data-upgrade-close>Wróć</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    upgradeModal = modal;
+    return modal;
+  }
+
+  function initUpgradeModal(){
+    const modal = ensureUpgradeModal();
+    if(!modal || upgradeModalInitialized){
+      return;
+    }
+    const closeButtons = modal.querySelectorAll('[data-upgrade-close]');
+    const closeModal = () => {
+      if(modal.dataset.locked === 'true'){
+        return;
+      }
+      modal.hidden = true;
+      document.body.classList.remove('modal-open');
+    };
+    closeButtons.forEach(button => {
+      button.addEventListener('click', closeModal);
+    });
+    modal.addEventListener('click', event => {
+      if(event.target === modal){
+        closeModal();
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if(event.key === 'Escape' && !modal.hidden){
+        closeModal();
+      }
+    });
+    upgradeModalInitialized = true;
+  }
+
+  function showUpgradeModal(requiredPlan, options = {}){
+    const modal = ensureUpgradeModal();
+    if(!modal){
+      return;
+    }
+    initUpgradeModal();
+    const planLabel = formatPlanLabel(requiredPlan).toUpperCase();
+    const titleTarget = modal.querySelector('[data-upgrade-plan]');
+    if(titleTarget){
+      titleTarget.textContent = planLabel;
+    }
+    const messageTarget = modal.querySelector('[data-upgrade-message]');
+    if(messageTarget){
+      messageTarget.textContent = `Ta funkcja wymaga planu ${planLabel}`;
+    }
+    modal.dataset.locked = options.lockPage ? 'true' : 'false';
+    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
+    const backLink = modal.querySelector('[data-upgrade-back]');
+    if(backLink){
+      backLink.hidden = !options.lockPage;
+      backLink.href = logged ? 'dashboard.html' : 'login.html';
+    }
+    modal.querySelectorAll('[data-upgrade-close]').forEach(button => {
+      button.hidden = Boolean(options.lockPage);
+    });
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+  }
+
+  function initPlanGates(){
+    const currentPlan = getCurrentPlan();
+    const currentLevel = getPlanLevel(currentPlan);
+    const elements = Array.from(document.querySelectorAll('[data-require]')).filter(el => el !== document.body);
+    if(elements.length){
+      elements.forEach(element => {
+        const requiredPlan = normalizePlan(element.dataset.require);
+        if(!requiredPlan){
+          return;
+        }
+        const requiredLevel = getPlanLevel(requiredPlan);
+        const allowed = currentLevel >= requiredLevel;
+        element.classList.toggle('is-locked', !allowed);
+        if(!allowed){
+          element.setAttribute('aria-disabled', 'true');
+        }
+        element.addEventListener('click', event => {
+          const latestLevel = getPlanLevel(getCurrentPlan());
+          if(latestLevel < requiredLevel){
+            event.preventDefault();
+            event.stopPropagation();
+            showUpgradeModal(requiredPlan);
+          }
+        });
+      });
+    }
+    const pageRequirement = normalizePlan(document.body.dataset.require);
+    if(pageRequirement && currentLevel < getPlanLevel(pageRequirement)){
+      document.body.classList.add('page-locked');
+      showUpgradeModal(pageRequirement, {lockPage: true});
     }
   }
 
@@ -688,7 +1052,11 @@
     initHelperBoxes();
     initActivityToasts();
     initSlotsBanner();
+    initLandingModal();
     initSurveyModal();
+    initPlanCheckoutReturn();
+    initPricingSelector();
+    initPlanGates();
     initStoreGenerator();
     initLoginForm();
     guardDashboard();
