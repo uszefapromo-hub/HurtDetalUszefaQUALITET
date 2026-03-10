@@ -11,7 +11,8 @@
     theme: 'modern',
     margin: 15,
     plan: 'basic',
-    trial: true
+    trial: true,
+    description: 'Nowoczesny sklep online na platformie U SZEFA.'
   };
   const DEFAULT_INITIAL = 'S';
   const HASH_MULTIPLIER = 31;
@@ -101,6 +102,10 @@
     const marginRaw = marginInput ? marginInput.value : '';
     const marginValue = marginRaw === '' ? NaN : parseFloat(marginRaw);
 
+    const normalizedMargin = Number.isFinite(marginValue)
+      ? Math.min(100, Math.max(0, marginValue))
+      : DEFAULTS.margin;
+
     return {
       name,
       slug,
@@ -110,7 +115,7 @@
       accentColor: accentInput ? accentInput.value : DEFAULTS.accentColor,
       backgroundColor: backgroundInput ? backgroundInput.value : DEFAULTS.backgroundColor,
       theme: themeSelect ? themeSelect.value : DEFAULTS.theme,
-      margin: Number.isFinite(marginValue) ? marginValue : DEFAULTS.margin,
+      margin: normalizedMargin,
       plan: planSelect ? planSelect.value : DEFAULTS.plan,
       trial: trialSelect ? trialSelect.value === 'true' : DEFAULTS.trial
     };
@@ -346,7 +351,7 @@
 
     const map = {
       'store-name': store.name,
-      'store-description': store.description || 'Nowoczesny sklep online na platformie U SZEFA.',
+      'store-description': store.description || DEFAULTS.description,
       'store-plan': `Plan: ${formatPlan(store.plan)}`,
       'store-margin': `Marża: ${store.margin}%`,
       'store-theme': `Styl: ${store.theme}`,
