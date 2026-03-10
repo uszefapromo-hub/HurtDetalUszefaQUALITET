@@ -369,7 +369,7 @@
       setTimeout(() => {
         const landingModal = document.querySelector('[data-landing-modal]');
         const isLandingVisible = landingModal && !landingModal.hidden;
-        if(modal.hidden && !isLandingVisible){
+        if(!isLandingVisible){
           openModal(true);
         }
       }, SURVEY_AUTO_OPEN_DELAY);
@@ -429,7 +429,7 @@
       setTimeout(() => {
         const surveyModal = document.querySelector('[data-survey-modal]');
         const surveyVisible = surveyModal && !surveyModal.hidden;
-        if(modal.hidden && !surveyVisible){
+        if(!surveyVisible){
           openModal();
         }
       }, LANDING_AUTO_OPEN_DELAY);
@@ -755,17 +755,13 @@
     const buttons = document.querySelectorAll('[data-plan-checkout]');
     if(buttons.length){
       buttons.forEach(button => {
-        button.addEventListener('click', event => {
+        button.addEventListener('click', () => {
           const plan = normalizePlan(button.dataset.plan);
-          const checkoutUrl = button.dataset.checkoutUrl || button.getAttribute('href');
+          const checkoutUrl = button.getAttribute('href');
           if(!plan || !checkoutUrl){
             return;
           }
           localStorage.setItem(STORAGE_KEYS.pendingPlan, plan);
-          if(button.tagName !== 'A'){
-            window.location.href = checkoutUrl;
-            event.preventDefault();
-          }
         });
       });
     }
@@ -827,7 +823,7 @@
     }
     const closeButtons = modal.querySelectorAll('[data-upgrade-close]');
     const closeModal = () => {
-      if(modal.hasAttribute('data-upgrade-locked')){
+      if(modal.hasAttribute('data-upgrade-locked-page')){
         return;
       }
       modal.hidden = true;
@@ -864,7 +860,7 @@
     if(messageTarget){
       messageTarget.textContent = `Ta funkcja wymaga planu ${planLabel}`;
     }
-    modal.toggleAttribute('data-upgrade-locked', Boolean(options.lockPage));
+    modal.toggleAttribute('data-upgrade-locked-page', Boolean(options.lockPage));
     const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
     const backLink = modal.querySelector('[data-upgrade-back]');
     if(backLink){
