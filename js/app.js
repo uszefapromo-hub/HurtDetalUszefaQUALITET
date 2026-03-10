@@ -79,6 +79,66 @@
     });
   }
 
+  function initServiceWorker(){
+    if(!('serviceWorker' in navigator)){
+      return;
+    }
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  }
+
+  function initBottomNav(){
+    const nav = document.querySelector('.bottom-nav');
+    if(!nav){
+      return;
+    }
+    const path = window.location.pathname.split('/').pop() || '';
+    const page = document.body.dataset.page || path.replace('.html', '') || 'index';
+    const pageMap = {
+      start: ['index'],
+      sklep: ['sklep', 'store-panel', 'store-generator', 'panel-sklepu', 'generator-sklepu', 'listing'],
+      hurtownie: ['hurtownie', 'qualitetmarket'],
+      panel: ['dashboard', 'owner-panel', 'cennik', 'crm', 'intelligence'],
+      konto: ['login']
+    };
+    nav.querySelectorAll('a[data-nav]').forEach(link => {
+      const key = link.dataset.nav;
+      const pages = pageMap[key] || [];
+      if(pages.includes(page)){
+        link.setAttribute('aria-current', 'page');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    });
+  }
+
+  function initAppSplash(){
+    if(sessionStorage.getItem('app_splash_seen') === 'true'){
+      return;
+    }
+    const splash = document.createElement('div');
+    splash.className = 'app-splash';
+    splash.innerHTML = `
+      <div class="splash-card">
+        <div class="splash-logo">
+          <img src="assets/icons/icon-192.png" alt="U SZEFA">
+        </div>
+        <h2 class="splash-title">U SZEFA</h2>
+        <p class="splash-subtitle">UszefaQualitet • QualitetMarket</p>
+        <div class="splash-loader" aria-hidden="true"></div>
+      </div>
+    `;
+    document.body.appendChild(splash);
+    document.body.classList.add('splash-open');
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hideDelay = prefersReduced ? 400 : 1200;
+    window.setTimeout(() => {
+      splash.classList.add('is-hidden');
+      document.body.classList.remove('splash-open');
+      sessionStorage.setItem('app_splash_seen', 'true');
+      window.setTimeout(() => splash.remove(), prefersReduced ? 0 : 420);
+    }, hideDelay);
+  }
+
   function getRandomElement(list){
     return list[Math.floor(Math.random() * list.length)];
   }
@@ -2307,7 +2367,10 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    initServiceWorker();
+    initAppSplash();
     bindMenu();
+    initBottomNav();
     ensureOwnerDemoData();
     initOwnerPanel();
     initSuppliersModule();

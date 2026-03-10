@@ -19,6 +19,7 @@
   --shadow:0 20px 40px rgba(0,0,0,.22);
   --topbar-offset:90px;
   --topbar-height:90px;
+  --bottom-nav-height:72px;
 }
 *{box-sizing:border-box}
 [hidden]{display:none !important}
@@ -31,6 +32,7 @@ body{
     radial-gradient(circle at top left, rgba(56,217,255,.18), transparent 24%),
     linear-gradient(180deg, #08101f 0%, #0f1837 100%);
 }
+body.splash-open{overflow:hidden}
 img{max-width:100%;display:block}
 a{color:#fff;text-decoration:none}
 .wrap{width:min(1180px,calc(100% - 28px));margin:0 auto}
@@ -45,6 +47,93 @@ a{color:#fff;text-decoration:none}
 .nav a{padding:10px 12px;border-radius:999px;color:var(--muted)}
 .nav a:hover,.nav a.active{background:rgba(255,255,255,.08);color:#fff}
 .menu-toggle{display:none;margin-left:auto;border:1px solid var(--stroke);background:transparent;color:#fff;border-radius:12px;padding:10px 12px}
+.bottom-nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:var(--bottom-nav-height);
+  padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(8,16,31,.92);
+  border-top:1px solid var(--stroke);
+  display:none;
+  gap:6px;
+  justify-content:space-between;
+  align-items:center;
+  z-index:60;
+  backdrop-filter: blur(18px);
+}
+.bottom-nav a{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.3px;
+  padding:8px 6px;
+  border-radius:14px;
+  transition:color .2s ease, background .2s ease;
+}
+.bottom-nav a svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.bottom-nav a[aria-current="page"]{color:#fff;background:rgba(255,255,255,.08)}
+.bottom-nav a[aria-current="page"] svg{stroke:#fff}
+.bottom-nav-label{line-height:1}
+.app-splash{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:linear-gradient(180deg, rgba(8,16,31,.98) 0%, rgba(10,18,38,.98) 100%);
+  z-index:200;
+  transition:opacity .4s ease, transform .4s ease;
+}
+.app-splash.is-hidden{
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(-10px);
+}
+.splash-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+  text-align:center;
+}
+.splash-logo{
+  width:92px;
+  height:92px;
+  border-radius:26px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:var(--shadow);
+}
+.splash-logo img{width:72px;height:72px;border-radius:18px}
+.splash-title{
+  font-size:22px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin:0;
+}
+.splash-subtitle{color:var(--muted);margin:0;font-size:14px}
+.splash-loader{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,.25);
+  border-top-color:var(--accent-green);
+  animation:splash-spin 1.1s linear infinite;
+}
+@keyframes splash-spin{
+  to{transform:rotate(360deg)}
+}
 .hero{padding:52px 0 26px}
 .page-hero{padding:46px 0 20px}
 .hero-grid,.section-grid,.dashboard-grid,.form-grid,.pricing-grid,.supplier-grid,.products-grid,.stats-grid,.footer-grid{display:grid;gap:18px}
@@ -544,6 +633,8 @@ body.modal-open{overflow:hidden}
   .helper-card{transform:none;transition:none}
   .promo-value{transition:none}
   .activity-toast{transform:none;transition:none}
+  .app-splash{transition:none}
+  .splash-loader{animation:none}
 }
 @media (max-width: 980px){
   .hero-grid,.section-grid,.dashboard-grid,.form-grid,.pricing-grid,.supplier-grid,.products-grid,.footer-grid,.stats-grid,.marketplace-block,.promo-grid,.helper-grid,.store-summary-grid,.plan-status-grid,.style-options,.activity-grid,.results-grid,.supplier-layout,.action-grid,.filter-row{grid-template-columns:1fr}
@@ -562,4 +653,7 @@ body.modal-open{overflow:hidden}
   .logo-grid{grid-template-columns:1fr}
   .color-row{align-items:flex-start}
   .auth-layout{min-height:auto;padding:30px 0 40px}
+  body{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))}
+  .bottom-nav{display:flex}
+  .activity-toasts{bottom:calc(var(--bottom-nav-height) + 20px)}
 }
