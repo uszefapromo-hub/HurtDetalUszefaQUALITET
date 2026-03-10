@@ -653,7 +653,7 @@ body.modal-open{overflow:hidden}
   .logo-grid{grid-template-columns:1fr}
   .color-row{align-items:flex-start}
   .auth-layout{min-height:auto;padding:30px 0 40px}
-  body{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))}
+  body.has-bottom-nav{padding-bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))}
   .bottom-nav{display:flex}
   .activity-toasts{bottom:calc(var(--bottom-nav-height) + 20px)}
 }

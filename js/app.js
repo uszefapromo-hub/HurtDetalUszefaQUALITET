@@ -91,6 +91,7 @@
     if(!nav){
       return;
     }
+    document.body.classList.add('has-bottom-nav');
     const path = window.location.pathname.split('/').pop() || '';
     const page = document.body.dataset.page || path.replace('.html', '') || 'index';
     const pageMap = {

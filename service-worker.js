@@ -1,16 +1,16 @@
 const CACHE_NAME = 'uszefaqualitet-app-v1';
 const CORE_ASSETS = [
   '/',
-  '/index.html',
-  '/css/style.css',
-  '/styles.css',
-  '/js/app.js',
-  '/shop.js',
-  '/stores.js',
-  '/assets/icons/icon-192.png',
-  '/assets/icons/icon-512.png',
-  '/assets/icons/apple-touch-icon.png',
-  '/assets/icons/favicon-32x32.png'
+  'index.html',
+  'css/style.css',
+  'styles.css',
+  'js/app.js',
+  'shop.js',
+  'stores.js',
+  'assets/icons/icon-192.png',
+  'assets/icons/icon-512.png',
+  'assets/icons/apple-touch-icon.png',
+  'assets/icons/favicon-32x32.png'
 ];
 
 self.addEventListener('install', event => {
