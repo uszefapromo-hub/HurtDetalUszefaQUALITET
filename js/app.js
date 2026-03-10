@@ -576,7 +576,7 @@
   }
 
   function normalizePlan(plan){
-    return (plan || '').toString().trim().toLowerCase();
+    return normalizeParam(plan);
   }
 
   function normalizeParam(param) {
