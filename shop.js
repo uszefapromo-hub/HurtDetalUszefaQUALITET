@@ -264,7 +264,7 @@
         return;
       }
       const storeData = buildStoreFromForm(form);
-      const name = storeData.name || 'Twoja nazwa';
+      const name = storeData.name || 'Nazwa sklepu';
       const planLabel = formatPlan(storeData.plan);
       const marginLabel = `${storeData.margin}%`;
       const productsLabel = `${storeData.productsCount}`;

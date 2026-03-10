@@ -19,6 +19,7 @@
   const DAYS_PER_MONTH = 30;
   const POPUP_TIME_TRIGGER_MS = 9000;
   const POPUP_SCROLL_TRIGGER_RATIO = 0.45;
+  const MARGIN_DECIMAL_PLACES = 1;
   const CURRENCY_FORMATTER = new Intl.NumberFormat('pl-PL', {
     style: 'currency',
     currency: 'PLN',
@@ -163,7 +164,7 @@
           const marginTarget = card.querySelector('[data-calc-output="margin"]');
           const profitTarget = card.querySelector('[data-calc-output="profit"]');
           if(marginTarget){
-            marginTarget.textContent = `${margin.toFixed(1)}%`;
+            marginTarget.textContent = `${margin.toFixed(MARGIN_DECIMAL_PLACES)}%`;
           }
           if(profitTarget){
             profitTarget.textContent = `Zysk: ${formatCurrency(profit)} / szt.`;
