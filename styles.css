@@ -1,9 +1,9 @@
 @import url("css/style.css");
 
 :root{
-  --store-primary:#35d9ff;
-  --store-accent:#54ffb0;
-  --store-background:#f5f7fb;
+  --store-primary: #35d9ff;
+  --store-accent: #54ffb0;
+  --store-background: #f5f7fb;
 }
 
 .store-generator .page-hero,

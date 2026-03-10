@@ -13,6 +13,7 @@
     plan: 'basic',
     trial: true
   };
+  const DEFAULT_INITIAL = 'S';
 
   function formatPlan(plan){
     const value = (plan || '').toLowerCase();
@@ -35,7 +36,7 @@
 
   function getInitial(name){
     const trimmed = (name || '').trim();
-    return trimmed ? trimmed.charAt(0).toUpperCase() : 'S';
+    return trimmed ? trimmed.charAt(0).toUpperCase() : DEFAULT_INITIAL;
   }
 
   function renderLogo(container, store){
@@ -246,8 +247,14 @@
     }
   }
 
+  function hashString(value){
+    return Array.from(value || '').reduce((acc, char) => {
+      return (acc * 31 + char.charCodeAt(0)) % 10000;
+    }, 7);
+  }
+
   function getMockMetrics(store){
-    const seed = Array.from(store.id || store.slug || store.name || '').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const seed = hashString(store.id || store.slug || store.name);
     const products = 12 + (seed % 24);
     const revenue = 12000 + (seed % 9000);
     return {products, revenue};
