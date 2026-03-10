@@ -461,6 +461,10 @@
 
     const setPaused = paused => {
       gallery.classList.toggle('is-paused', paused);
+      if(paused && idleTimeout){
+        clearTimeout(idleTimeout);
+        idleTimeout = null;
+      }
       if(toggle){
         toggle.setAttribute('aria-pressed', paused ? 'true' : 'false');
         toggle.textContent = paused ? 'Wznów animację' : 'Zatrzymaj animację';
@@ -468,7 +472,7 @@
     };
 
     const scheduleIdlePause = () => {
-      if(prefersReducedMotion){
+      if(prefersReducedMotion || gallery.classList.contains('is-paused')){
         return;
       }
       if(idleTimeout){
@@ -492,8 +496,9 @@
     if(toggle){
       toggle.addEventListener('click', () => {
         const paused = gallery.classList.contains('is-paused');
-        setPaused(!paused);
-        if(!paused){
+        const shouldPause = !paused;
+        setPaused(shouldPause);
+        if(!shouldPause){
           scheduleIdlePause();
         }
       });

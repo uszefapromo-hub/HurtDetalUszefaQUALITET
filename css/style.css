@@ -205,7 +205,7 @@ a{color:#fff;text-decoration:none}
 .promo-motion-image:nth-of-type(1){animation-delay:0s}
 .promo-motion-image:nth-of-type(2){animation-delay:6s}
 .promo-motion-image:nth-of-type(3){animation-delay:12s}
-.promo-motion-gallery:hover .promo-motion-image,.promo-motion-gallery:focus-within .promo-motion-image,.promo-motion-gallery.is-paused .promo-motion-image{animation-play-state:paused}
+.promo-motion-gallery.is-paused .promo-motion-image{animation-play-state:paused}
 .section-head{margin-bottom:22px}
 .section-head h2{margin:10px 0 12px;font-size:clamp(28px,4vw,42px)}
 .section-head p{color:var(--muted);max-width:720px}
