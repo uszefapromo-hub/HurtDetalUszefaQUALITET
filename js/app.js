@@ -244,7 +244,7 @@
       toast.className = 'activity-toast';
       const title = document.createElement('strong');
       const randomUserName = getRandomElement(SAMPLE_USER_NAMES);
-      const titleText = message.useName ? message.title.replaceAll('{name}', randomUserName) : message.title;
+      const titleText = message.useName ? message.title.replace(/\{name\}/g, randomUserName) : message.title;
       title.textContent = titleText;
       const detail = document.createElement('span');
       detail.textContent = message.detail;
