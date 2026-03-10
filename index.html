@@ -233,6 +233,77 @@
           </div>
           <p class="hint calculator-hint">Wartości są symulacją i pomagają zaplanować strategię cenową.</p>
         </article>
+        <div class="cta-row calculator-recommendation">
+          <div>
+            <span class="eyebrow">Rekomendowany plan</span>
+            <strong data-recommended-plan>Basic</strong>
+          </div>
+          <a class="btn btn-primary" href="cennik.html" data-recommended-cta>Wybierz plan</a>
+        </div>
+        <div class="section-head">
+          <span class="eyebrow">Kalkulator sklepu</span>
+          <h3>Zaplanuj parametry sklepu</h3>
+          <p>Ustal niszę, budżet oraz cel sprzedaży, aby dobrać plan dla Twojego sklepu.</p>
+        </div>
+        <article class="panel-card calculator-card" data-store-calculator>
+          <div class="calculator-grid is-columns">
+            <label class="calculator-item">
+              <span>Nisza / branża</span>
+              <input type="text" placeholder="np. Elektronika" data-store-niche>
+            </label>
+            <label class="calculator-item">
+              <span>Budżet startowy (zł)</span>
+              <input type="number" min="0" step="100" value="12000" data-store-budget>
+            </label>
+            <label class="calculator-item">
+              <span>Marża (%)</span>
+              <input type="number" min="0" max="300" step="1" value="25" data-store-margin>
+            </label>
+            <label class="calculator-item">
+              <span>Cel miesięczny (zł)</span>
+              <input type="number" min="0" step="100" value="25000" data-store-goal>
+            </label>
+          </div>
+          <div class="calculator-grid is-columns calculator-results">
+            <div class="calculator-item">
+              <span>Plan rekomendowany</span>
+              <strong data-store-plan>Basic</strong>
+            </div>
+          </div>
+          <p class="hint calculator-hint">Parametry są zapisywane, aby przygotować konfigurację sklepu.</p>
+        </article>
+        <div class="section-head">
+          <span class="eyebrow">Kalkulator ruchu</span>
+          <h3>Policz ruch i przychód</h3>
+          <p>Sprawdź ile zamówień wygeneruje ruch w sklepie oraz szacowany przychód.</p>
+        </div>
+        <article class="panel-card calculator-card" data-traffic-calculator>
+          <div class="calculator-grid is-columns">
+            <label class="calculator-item">
+              <span>Odwiedziny / miesiąc</span>
+              <input type="number" min="0" step="100" value="12000" data-traffic-visits>
+            </label>
+            <label class="calculator-item">
+              <span>Konwersja (%)</span>
+              <input type="number" min="0" max="100" step="0.1" value="2.5" data-traffic-conversion>
+            </label>
+            <label class="calculator-item">
+              <span>Średni koszyk (zł)</span>
+              <input type="number" min="0" step="10" value="180" data-traffic-order>
+            </label>
+          </div>
+          <div class="calculator-grid is-columns calculator-results">
+            <div class="calculator-item">
+              <span>Zamówienia / miesiąc</span>
+              <strong data-traffic-orders>0</strong>
+            </div>
+            <div class="calculator-item">
+              <span>Prognoza przychodu</span>
+              <strong data-traffic-revenue>0 zł</strong>
+            </div>
+          </div>
+          <p class="hint calculator-hint">Wyniki pomagają oszacować potrzebny poziom planu i ruchu.</p>
+        </article>
       </div>
     </section>
 
@@ -352,8 +423,9 @@
           <span class="hint">Po opłaceniu odblokujemy PRO/ELITE automatycznie.</span>
         </div>
       </div>
+      <p class="hint">Rekomendowany plan: <strong data-recommended-plan>Basic</strong></p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="cennik.html">Zobacz plany</a>
+        <a class="btn btn-primary" href="cennik.html" data-recommended-cta>Wybierz plan</a>
         <button class="btn btn-secondary" type="button" data-landing-survey>Wypełnij ankietę</button>
         <a class="btn btn-secondary" href="login.html">Wejdź do platformy</a>
       </div>

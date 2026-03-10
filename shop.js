@@ -15,6 +15,7 @@
     description: 'Nowoczesny sklep online na platformie U SZEFA.',
     delivery: 'Wysyłka w 24h'
   };
+  const STORE_SETTINGS_KEY = 'app_store_settings';
   const DEFAULT_INITIAL = 'S';
   const HASH_MULTIPLIER = 31;
   const HASH_MODULO = 10000;
@@ -99,6 +100,82 @@
       return DEFAULTS.margin;
     }
     return Math.min(100, Math.max(0, parsedValue));
+  }
+
+  function loadStoreSettings(){
+    const raw = localStorage.getItem(STORE_SETTINGS_KEY);
+    if(!raw){
+      return null;
+    }
+    try{
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (_error){
+      return null;
+    }
+  }
+
+  function ensureStoreSettings(){
+    const existing = loadStoreSettings();
+    if(existing){
+      return existing;
+    }
+    const seed = {
+      niche: 'Sklep startowy',
+      budget: 12000,
+      margin: DEFAULTS.margin,
+      goal: 25000,
+      suggestedPlan: DEFAULTS.plan,
+      storeName: 'Sklep startowy',
+      storeStyle: DEFAULTS.theme
+    };
+    localStorage.setItem(STORE_SETTINGS_KEY, JSON.stringify(seed));
+    return seed;
+  }
+
+  function resolvePlanFromSettings(settings){
+    const rawPlan = settings ? (settings.suggestedPlan || settings.plan) : '';
+    const value = rawPlan ? rawPlan.toString().toLowerCase() : '';
+    if(value === 'pro' || value === 'elite'){
+      return value;
+    }
+    return 'basic';
+  }
+
+  function buildStoreFromSettings(settings){
+    if(!settings){
+      return null;
+    }
+    const resolvedName = (settings.storeName || settings.niche || '').trim();
+    const name = resolvedName || 'Mój sklep';
+    const parsedGoal = parseFloat(settings.goal);
+    const goalValue = Number.isFinite(parsedGoal) ? parsedGoal : null;
+    let description = settings.storeDescription || '';
+    if(!description && settings.niche){
+      description = `Sklep w branży ${settings.niche}.`;
+    }
+    if(!description && goalValue !== null){
+      description = `Cel sprzedaży: ${formatCurrencyPLN(goalValue)}`;
+    }
+    if(!description){
+      description = DEFAULTS.description;
+    }
+    return {
+      name,
+      slug: manager.normalizeSlug(settings.storeSlug || name),
+      description,
+      logo: settings.logo || settings.storeLogo || '',
+      email: settings.email || settings.storeEmail || '',
+      phone: settings.phone || settings.storePhone || '',
+      delivery: settings.delivery || settings.storeDelivery || DEFAULTS.delivery,
+      primaryColor: settings.primaryColor || DEFAULTS.primaryColor,
+      accentColor: settings.accentColor || DEFAULTS.accentColor,
+      backgroundColor: settings.backgroundColor || DEFAULTS.backgroundColor,
+      theme: settings.theme || settings.storeStyle || DEFAULTS.theme,
+      margin: normalizeMargin(settings.margin),
+      plan: resolvePlanFromSettings(settings),
+      trial: false
+    };
   }
 
   function buildStoreFromForm(form){
@@ -192,8 +269,12 @@
     const panelButton = form.querySelector('[data-store-panel]');
 
     let activeStore = manager.getActiveStore();
+    const storeSettings = ensureStoreSettings();
+    const settingsStore = !activeStore && storeSettings ? buildStoreFromSettings(storeSettings) : null;
     if(activeStore){
       hydrateGenerator(form, activeStore);
+    } else if(settingsStore){
+      hydrateGenerator(form, settingsStore);
     }
 
     let slugTouched = false;
@@ -243,8 +324,9 @@
       backgroundInput.addEventListener('input', () => updateColorChip(backgroundInput, backgroundChip));
     }
 
-    if(activeStore){
-      renderLogo(logoPreview, activeStore);
+    const previewStore = activeStore || settingsStore;
+    if(previewStore){
+      renderLogo(logoPreview, previewStore);
     }
 
     function handleGeneratorSave(redirectUrl){
@@ -304,10 +386,13 @@
       return;
     }
     const store = manager.getActiveStore();
+    const storeSettings = ensureStoreSettings();
+    const fallbackStore = !store && storeSettings ? buildStoreFromSettings(storeSettings) : null;
+    const resolvedStore = store || fallbackStore;
     const content = panel.querySelector('[data-store-content]');
     const emptyState = panel.querySelector('[data-store-empty]');
 
-    if(!store){
+    if(!resolvedStore){
       if(content){
         content.hidden = true;
       }
@@ -324,11 +409,11 @@
       emptyState.hidden = true;
     }
 
-    const metrics = getMockMetrics(store);
+    const metrics = getMockMetrics(resolvedStore);
     const map = {
-      'store-name': store.name,
-      'store-plan': formatPlan(store.plan),
-      'store-margin': `${store.margin}%`,
+      'store-name': resolvedStore.name,
+      'store-plan': formatPlan(resolvedStore.plan),
+      'store-margin': `${resolvedStore.margin}%`,
       'store-products': `${metrics.products}`,
       'store-revenue': formatCurrencyPLN(metrics.revenue)
     };
@@ -347,10 +432,13 @@
       return;
     }
     const store = manager.getActiveStore();
+    const storeSettings = ensureStoreSettings();
+    const fallbackStore = !store && storeSettings ? buildStoreFromSettings(storeSettings) : null;
+    const resolvedStore = store || fallbackStore;
     const content = shop.querySelector('[data-store-content]');
     const emptyState = shop.querySelector('[data-store-empty]');
 
-    if(!store){
+    if(!resolvedStore){
       if(content){
         content.hidden = true;
       }
@@ -367,17 +455,17 @@
       emptyState.hidden = true;
     }
 
-    document.documentElement.style.setProperty('--store-primary', store.primaryColor || DEFAULTS.primaryColor);
-    document.documentElement.style.setProperty('--store-accent', store.accentColor || DEFAULTS.accentColor);
-    document.documentElement.style.setProperty('--store-background', store.backgroundColor || DEFAULTS.backgroundColor);
+    document.documentElement.style.setProperty('--store-primary', resolvedStore.primaryColor || DEFAULTS.primaryColor);
+    document.documentElement.style.setProperty('--store-accent', resolvedStore.accentColor || DEFAULTS.accentColor);
+    document.documentElement.style.setProperty('--store-background', resolvedStore.backgroundColor || DEFAULTS.backgroundColor);
 
     const map = {
-      'store-name': store.name,
-      'store-description': store.description || DEFAULTS.description,
-      'store-plan': `Plan: ${formatPlan(store.plan)}`,
-      'store-margin': `Marża: ${store.margin}%`,
-      'store-theme': `Styl: ${store.theme}`,
-      'store-slug': `@${store.slug}`
+      'store-name': resolvedStore.name,
+      'store-description': resolvedStore.description || DEFAULTS.description,
+      'store-plan': `Plan: ${formatPlan(resolvedStore.plan)}`,
+      'store-margin': `Marża: ${resolvedStore.margin}%`,
+      'store-theme': `Styl: ${resolvedStore.theme}`,
+      'store-slug': `@${resolvedStore.slug}`
     };
 
     Object.entries(map).forEach(([key, value]) => {
@@ -388,9 +476,9 @@
     });
 
     const contactMap = {
-      'store-email': store.email,
-      'store-phone': store.phone,
-      'store-delivery': store.delivery || DEFAULTS.delivery
+      'store-email': resolvedStore.email,
+      'store-phone': resolvedStore.phone,
+      'store-delivery': resolvedStore.delivery || DEFAULTS.delivery
     };
 
     Object.entries(contactMap).forEach(([key, value]) => {
@@ -403,7 +491,7 @@
     });
 
     const logoContainer = shop.querySelector('[data-logo-preview]');
-    renderLogo(logoContainer, store);
+    renderLogo(logoContainer, resolvedStore);
   }
 
   document.addEventListener('DOMContentLoaded', () => {
