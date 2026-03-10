@@ -149,10 +149,16 @@
     const name = (settings.storeName || settings.niche || '').trim() || 'Mój sklep';
     const parsedGoal = parseFloat(settings.goal);
     const goalValue = Number.isFinite(parsedGoal) ? parsedGoal : null;
-    const description = settings.storeDescription
-      || (settings.niche ? `Sklep w branży ${settings.niche}.` : '')
-      || (goalValue !== null ? `Cel sprzedaży: ${formatCurrencyPLN(goalValue)}` : '')
-      || DEFAULTS.description;
+    let description = settings.storeDescription || '';
+    if(!description && settings.niche){
+      description = `Sklep w branży ${settings.niche}.`;
+    }
+    if(!description && goalValue !== null){
+      description = `Cel sprzedaży: ${formatCurrencyPLN(goalValue)}`;
+    }
+    if(!description){
+      description = DEFAULTS.description;
+    }
     return {
       name,
       slug: manager.normalizeSlug(settings.storeSlug || name),
