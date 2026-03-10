@@ -1,0 +1,1 @@
+// Content of pricing.js would go here. It defines window.QM and uses keys like qm_stores_v1, qm_active_store_v1, qm_store_margin_pct, qm_crm_v1.
