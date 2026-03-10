@@ -1239,7 +1239,37 @@
   }
 
   function normalizePlan(plan){
-    return (plan || '').toString().trim().toLowerCase();
+    return normalizeQueryParam(plan);
+  }
+
+  /**
+   * Normalizes query param values to lowercase trimmed strings,
+   * returning an empty string when the value is missing.
+   */
+  function normalizeQueryParam(param) {
+    return param ? param.toString().trim().toLowerCase() : '';
+  }
+
+  /**
+   * Determines success for Stripe redirect callbacks using status/success flags or
+   * a returned session id paired with a pending plan.
+   * SUCCESS_STATUSES covers known success flags from Stripe return URLs, while
+   * session-based success requires a pending plan saved before checkout.
+   */
+  function isCheckoutSuccess(statusParam, successParam, sessionId, pendingPlan) {
+    const hasStatusSuccess = SUCCESS_STATUSES.includes(statusParam);
+    const hasSuccessFlag = SUCCESS_STATUSES.includes(successParam);
+    const hasPendingPlan = Boolean(pendingPlan);
+    const hasSessionSuccess = Boolean(sessionId) && hasPendingPlan;
+    return hasStatusSuccess || hasSuccessFlag || hasSessionSuccess;
+  }
+
+  /**
+   * Returns the Stripe checkout session id from query parameters like
+   * session_id or checkout_session_id.
+   */
+  function getStripeSessionId(params) {
+    return params.get('session_id') || params.get('checkout_session_id');
   }
 
   function getAvailablePlans(){
@@ -1410,10 +1440,12 @@
       return;
     }
     const planParam = normalizePlan(params.get('plan'));
-    const statusParam = normalizePlan(params.get('status'));
+    const statusParam = normalizeQueryParam(params.get('status'));
+    const successParam = normalizeQueryParam(params.get('success'));
+    const sessionId = getStripeSessionId(params);
     const pendingPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.pendingPlan));
     const resolvedPlan = planParam || pendingPlan;
-    const isSuccess = SUCCESS_STATUSES.includes(statusParam);
+    const isSuccess = isCheckoutSuccess(statusParam, successParam, sessionId, pendingPlan);
 
     const validPlans = getAvailablePlans();
     if(resolvedPlan && validPlans.has(resolvedPlan) && isSuccess){
