@@ -8,7 +8,9 @@
     trialStart: 'app_user_trial_start',
     plan: 'app_user_plan',
     storeSettings: 'app_store_settings',
-    storeReady: 'app_store_ready'
+    storeReady: 'app_store_ready',
+    surveyResponses: 'app_survey_responses',
+    surveySeen: 'app_survey_seen'
   };
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
   const TRIAL_RULES = [
@@ -118,6 +120,89 @@
     }, {threshold: 0.3});
 
     boxes.forEach(box => observer.observe(box));
+  }
+
+  function initSurveyModal(){
+    const modal = document.querySelector('[data-survey-modal]');
+    if(!modal){
+      return;
+    }
+    const openButtons = document.querySelectorAll('[data-survey-open]');
+    const closeButtons = modal.querySelectorAll('[data-survey-close]');
+    const form = modal.querySelector('[data-survey-form]');
+    const successMessage = modal.querySelector('[data-survey-success]');
+
+    const openModal = (markSeen = true) => {
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+      if(successMessage){
+        successMessage.hidden = true;
+      }
+      if(markSeen){
+        localStorage.setItem(STORAGE_KEYS.surveySeen, 'true');
+      }
+    };
+
+    const closeModal = () => {
+      modal.hidden = true;
+      document.body.classList.remove('modal-open');
+    };
+
+    openButtons.forEach(button => {
+      button.addEventListener('click', () => openModal(true));
+    });
+
+    closeButtons.forEach(button => {
+      button.addEventListener('click', closeModal);
+    });
+
+    modal.addEventListener('click', event => {
+      if(event.target === modal){
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if(event.key === 'Escape' && !modal.hidden){
+        closeModal();
+      }
+    });
+
+    if(form){
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        if(typeof form.reportValidity === 'function' && !form.reportValidity()){
+          return;
+        }
+        const payload = Object.fromEntries(new FormData(form).entries());
+        const responses = getStoredList(STORAGE_KEYS.surveyResponses) || [];
+        responses.push({
+          ...payload,
+          submittedAt: new Date().toISOString()
+        });
+        localStorage.setItem(STORAGE_KEYS.surveyResponses, JSON.stringify(responses));
+        localStorage.setItem(STORAGE_KEYS.surveySeen, 'true');
+        if(successMessage){
+          successMessage.hidden = false;
+        }
+        form.reset();
+        setTimeout(() => {
+          closeModal();
+          if(successMessage){
+            successMessage.hidden = true;
+          }
+        }, 1500);
+      });
+    }
+
+    const alreadySeen = localStorage.getItem(STORAGE_KEYS.surveySeen) === 'true';
+    if(!alreadySeen){
+      setTimeout(() => {
+        if(modal.hidden){
+          openModal(true);
+        }
+      }, 4500);
+    }
   }
 
   function getStoredNumber(key, fallback = 0){
@@ -446,6 +531,7 @@
     bindMenu();
     initCounters();
     initHelperBoxes();
+    initSurveyModal();
     initStoreGenerator();
     initLoginForm();
     guardDashboard();

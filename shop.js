@@ -12,7 +12,8 @@
     margin: 15,
     plan: 'basic',
     trial: true,
-    description: 'Nowoczesny sklep online na platformie U SZEFA.'
+    description: 'Nowoczesny sklep online na platformie U SZEFA.',
+    delivery: 'Wysyłka w 24h'
   };
   const DEFAULT_INITIAL = 'S';
   const HASH_MULTIPLIER = 31;
@@ -71,6 +72,13 @@
     }
   }
 
+  function applyText(target, value, fallback){
+    if(!target){
+      return;
+    }
+    target.textContent = value ? value : fallback;
+  }
+
   function updateColorChip(input, chip){
     if(input && chip){
       chip.style.background = input.value;
@@ -98,6 +106,9 @@
     const slugInput = form.querySelector('input[name="storeSlug"]');
     const descriptionInput = form.querySelector('textarea[name="storeDescription"]');
     const logoInput = form.querySelector('input[name="storeLogo"]');
+    const emailInput = form.querySelector('input[name="storeEmail"]');
+    const phoneInput = form.querySelector('input[name="storePhone"]');
+    const deliveryInput = form.querySelector('input[name="storeDelivery"]');
     const primaryInput = form.querySelector('input[name="primaryColor"]');
     const accentInput = form.querySelector('input[name="accentColor"]');
     const backgroundInput = form.querySelector('input[name="backgroundColor"]');
@@ -116,6 +127,9 @@
       slug,
       description: descriptionInput ? descriptionInput.value.trim() : '',
       logo: logoInput ? logoInput.value.trim() : '',
+      email: emailInput ? emailInput.value.trim() : '',
+      phone: phoneInput ? phoneInput.value.trim() : '',
+      delivery: deliveryInput ? deliveryInput.value.trim() : '',
       primaryColor: primaryInput ? primaryInput.value : DEFAULTS.primaryColor,
       accentColor: accentInput ? accentInput.value : DEFAULTS.accentColor,
       backgroundColor: backgroundInput ? backgroundInput.value : DEFAULTS.backgroundColor,
@@ -135,6 +149,9 @@
       storeSlug: store.slug,
       storeDescription: store.description,
       storeLogo: store.logo,
+      storeEmail: store.email,
+      storePhone: store.phone,
+      storeDelivery: store.delivery,
       primaryColor: store.primaryColor,
       accentColor: store.accentColor,
       backgroundColor: store.backgroundColor,
@@ -368,6 +385,21 @@
       if(target){
         target.textContent = value;
       }
+    });
+
+    const contactMap = {
+      'store-email': store.email,
+      'store-phone': store.phone,
+      'store-delivery': store.delivery || DEFAULTS.delivery
+    };
+
+    Object.entries(contactMap).forEach(([key, value]) => {
+      const target = shop.querySelector(`[data-${key}]`);
+      if(!target){
+        return;
+      }
+      const fallback = key === 'store-delivery' ? DEFAULTS.delivery : 'Brak danych';
+      applyText(target, value, fallback);
     });
 
     const logoContainer = shop.querySelector('[data-logo-preview]');

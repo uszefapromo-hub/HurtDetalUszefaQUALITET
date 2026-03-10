@@ -278,6 +278,15 @@ body.store-shop .shop-empty{
   color:var(--text);
 }
 
+body.store-shop .metric-card{
+  background:var(--card);
+  border-color:var(--stroke);
+}
+
+body.store-shop .metric-card span{
+  color:var(--muted);
+}
+
 body.store-shop .btn-primary{
   background:linear-gradient(135deg,var(--store-primary),var(--store-accent));
   color:#10131c;
