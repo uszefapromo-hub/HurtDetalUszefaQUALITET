@@ -146,16 +146,11 @@
     let shouldIncrement = false;
 
     if(hasEmail){
-      if(listExists){
-        if(!emailKnown){
-          shouldAddEmail = true;
+      if(!emailKnown){
+        shouldAddEmail = true;
+        if(listExists || storedCount === 0){
           shouldIncrement = true;
         }
-      } else if(storedCount === 0){
-        shouldAddEmail = true;
-        shouldIncrement = true;
-      } else {
-        shouldAddEmail = true;
       }
     } else if(storedCount === 0){
       currentCount = 1;
