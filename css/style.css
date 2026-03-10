@@ -689,7 +689,27 @@ body.modal-open{overflow:hidden}
   .promo-motion-image:first-of-type{opacity:1}
 }
 @media (max-width: 980px){
-  .hero-grid,.section-grid,.dashboard-grid,.form-grid,.pricing-grid,.supplier-grid,.products-grid,.footer-grid,.stats-grid,.marketplace-block,.promo-grid,.helper-grid,.store-summary-grid,.plan-status-grid,.style-options,.activity-grid,.results-grid,.supplier-layout,.action-grid,.filter-row,.promo-motion-grid{grid-template-columns:1fr}
+  .hero-grid,
+  .section-grid,
+  .dashboard-grid,
+  .form-grid,
+  .pricing-grid,
+  .supplier-grid,
+  .products-grid,
+  .footer-grid,
+  .stats-grid,
+  .marketplace-block{grid-template-columns:1fr}
+  .promo-grid,
+  .helper-grid,
+  .store-summary-grid,
+  .plan-status-grid,
+  .style-options,
+  .activity-grid,
+  .results-grid,
+  .supplier-layout,
+  .action-grid,
+  .filter-row,
+  .promo-motion-grid{grid-template-columns:1fr}
   .survey-card{flex-direction:column;align-items:flex-start}
   .activity-banner{flex-direction:column;align-items:flex-start}
   .activity-remaining{align-items:flex-start;text-align:left}
