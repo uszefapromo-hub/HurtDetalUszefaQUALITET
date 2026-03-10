@@ -22,7 +22,7 @@
     <aside class="sidebar">
       <nav class="sidebar-nav" aria-label="Menu panelu">
         <a class="active" href="dashboard.html">Dashboard</a>
-        <a href="#">Mój sklep</a>
+        <a href="generator-sklepu.html">Mój sklep</a>
         <a href="#">Produkty</a>
         <a href="#">Reklamy</a>
         <a href="#">Kalkulacja</a>
@@ -46,6 +46,32 @@
             <strong data-user-plan>Trial</strong>
           </div>
         </div>
+      </section>
+
+      <section class="panel-card store-summary" data-store-summary>
+        <div class="store-summary-head">
+          <div>
+            <span class="eyebrow">Mój sklep</span>
+            <h2>Twoja identyfikacja sklepu</h2>
+            <p class="hint">Uzupełnij najważniejsze dane sklepu.</p>
+          </div>
+          <a class="btn btn-secondary" href="generator-sklepu.html">Edytuj sklep</a>
+        </div>
+        <div class="store-summary-grid">
+          <div class="store-summary-item">
+            <span>Nazwa sklepu</span>
+            <strong data-store-name>Brak danych</strong>
+          </div>
+          <div class="store-summary-item">
+            <span>Styl sklepu</span>
+            <strong data-store-style>---</strong>
+          </div>
+          <div class="store-summary-item">
+            <span>Status</span>
+            <strong class="status-pill is-pending" data-store-status>Nieuzupełniony</strong>
+          </div>
+        </div>
+        <p class="hint store-summary-helper" data-store-helper>Najpierw stwórz sklep, aby przejść dalej.</p>
       </section>
 
       <section class="helper-grid dashboard-helpers">
