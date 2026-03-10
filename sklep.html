@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Sklep klienta - HurtDetal Uszefa QUALITET</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="storefront" class="storefront-page">
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <div class="topbar-cta">
+        <a class="btn btn-secondary" href="panel.html">Panel</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap storefront-shell" data-storefront>
+    <section class="panel-card storefront-empty" data-store-empty hidden>
+      <h1>Brak aktywnego sklepu</h1>
+      <p class="lead">Najpierw utwórz sklep w generatorze, aby zobaczyć stronę klienta.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="generator-sklepu.html">Utwórz sklep</a>
+        <a class="btn btn-secondary" href="panel.html">Wróć do panelu</a>
+      </div>
+    </section>
+
+    <div class="storefront-content" data-store-view>
+      <section class="panel-card storefront-hero">
+        <div class="storefront-branding">
+          <span class="eyebrow">Sklep klienta</span>
+          <h1 data-store-name>Sklep klienta</h1>
+          <p class="lead" data-store-description>Opis sklepu pojawi się tutaj.</p>
+          <div class="storefront-color-row">
+            <div class="storefront-color">
+              <span data-store-primary-chip></span>
+              <div>
+                <strong>Kolor główny</strong>
+                <div data-store-primary-label>#35d9ff</div>
+              </div>
+            </div>
+            <div class="storefront-color">
+              <span data-store-accent-chip></span>
+              <div>
+                <strong>Kolor akcentu</strong>
+                <div data-store-accent-label>#54ffb0</div>
+              </div>
+            </div>
+          </div>
+          <p class="hint">Styl: <strong data-store-style>Jasny modern</strong></p>
+        </div>
+        <div class="storefront-visual">
+          <div class="storefront-logo" data-store-logo-wrap>
+            <span data-store-initial>S</span>
+            <img data-store-logo alt="Logo sklepu" hidden>
+          </div>
+          <p class="hint">Logo sklepu</p>
+        </div>
+      </section>
+
+      <section class="panel-card storefront-products">
+        <div class="store-summary-head">
+          <div>
+            <span class="eyebrow">Oferta</span>
+            <h2>Produkty w sklepie</h2>
+            <p class="hint">Ceny są już policzone z marżą.</p>
+          </div>
+          <a class="btn btn-secondary" href="dodaj-produkt.html">Dodaj produkt</a>
+        </div>
+        <p class="hint" data-products-empty hidden>Brak produktów. Dodaj pierwszy produkt, aby wypełnić sklep.</p>
+        <div class="storefront-products-grid" data-products-grid></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/app.js" defer></script>
+</body>
+</html>
