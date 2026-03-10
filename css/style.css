@@ -14,6 +14,8 @@
   --purple:#9e77ff;
   --accent-blue:#35d9ff;
   --accent-green:#54ffb0;
+  --accent-blue-dark:#1c8fb8;
+  --accent-green-dark:#1ca66b;
   --shadow:0 20px 40px rgba(0,0,0,.22);
 }
 *{box-sizing:border-box}
@@ -48,7 +50,7 @@ a{color:#fff;text-decoration:none}
 .eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:var(--yellow);font-weight:700;font-size:13px}
 .cta-row,.quick-links{display:flex;gap:12px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border-radius:16px;font-weight:700;border:0;cursor:pointer;box-shadow:var(--shadow)}
-.btn-primary{background:linear-gradient(135deg,var(--accent-blue),var(--accent-green));color:#02101c}
+.btn-primary{background:linear-gradient(135deg,var(--accent-blue-dark),var(--accent-green-dark));color:#fff}
 .btn-secondary{background:rgba(255,255,255,.08);color:#fff;border:1px solid var(--stroke)}
 .promo-banner,.panel-card,.stat-card,.feature-card,.price-card,.shop-hero,.footer,.preview-card,.mini-theme,.price-card ul,.checkout-bar{border:1px solid var(--stroke);background:var(--card);border-radius:24px;box-shadow:var(--shadow)}
 .promo-banner{padding:14px 16px;margin-top:20px;color:#fff79a}
@@ -135,8 +137,8 @@ a{color:#fff;text-decoration:none}
 .promo-card p{margin:10px 0 0}
 .promo-card.highlight{border-color:rgba(84,255,176,.6);background:linear-gradient(135deg,rgba(53,217,255,.16),rgba(84,255,176,.16))}
 .helper-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.helper-card{padding:20px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:rgba(7,18,33,.78);box-shadow:var(--shadow);opacity:0;transform:translateY(18px);transition:opacity .4s ease,transform .4s ease}
-.helper-card.is-visible{opacity:1;transform:translateY(0)}
+.helper-card{padding:20px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:rgba(7,18,33,.78);box-shadow:var(--shadow);transform:translateY(18px);transition:transform .4s ease}
+.helper-card.is-visible{transform:translateY(0)}
 .helper-card h3{margin-top:0;letter-spacing:1px}
 .helper-card.tip{border-left:4px solid var(--accent-green)}
 .helper-card.info{border-left:4px solid var(--accent-blue)}
@@ -144,6 +146,10 @@ a{color:#fff;text-decoration:none}
 .helper-card.warning{border-left:4px solid var(--orange)}
 .footer p{margin:6px 0;color:var(--muted)}
 .footer-legal{margin-top:16px;border-top:1px solid var(--stroke);padding-top:16px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){
+  .helper-card{transform:none;transition:none}
+  .promo-value{transition:none}
+}
 @media (max-width: 980px){
   .hero-grid,.section-grid,.dashboard-grid,.form-grid,.pricing-grid,.supplier-grid,.products-grid,.footer-grid,.stats-grid,.marketplace-block,.promo-grid,.helper-grid{grid-template-columns:1fr}
   .nav{display:none}

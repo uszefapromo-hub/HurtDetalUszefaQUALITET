@@ -15,16 +15,33 @@
     });
   }
 
+  function getCounterTarget(el){
+    const rawValue = el.dataset.counter;
+    if(!rawValue) return null;
+    const target = Number.parseInt(rawValue, 10);
+    return Number.isNaN(target) ? null : target;
+  }
+
+  function setCounterValue(el, value){
+    el.textContent = `${value}`;
+    if(el.dataset.counterLabel){
+      el.setAttribute('aria-label', `${el.dataset.counterLabel}: ${value}`);
+    }
+  }
+
   function animateCounter(el){
-    const target = Number.parseInt(el.dataset.counter, 10);
-    if(Number.isNaN(target)) return;
+    const target = getCounterTarget(el);
+    if(target === null){
+      setCounterValue(el, 0);
+      return;
+    }
     const duration = 1200;
     const start = performance.now();
 
     function step(now){
       const progress = Math.min((now - start) / duration, 1);
       const value = Math.round(progress * target);
-      el.textContent = `${value}`;
+      setCounterValue(el, value);
       if(progress < 1){
         requestAnimationFrame(step);
       }
@@ -36,10 +53,12 @@
   function initCounters(){
     const counters = document.querySelectorAll('[data-counter]');
     if(!counters.length) return;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if(!('IntersectionObserver' in window)){
+    if(prefersReducedMotion || !('IntersectionObserver' in window)){
       counters.forEach(counter => {
-        counter.textContent = counter.dataset.counter || '0';
+        const target = getCounterTarget(counter);
+        setCounterValue(counter, target === null ? 0 : target);
       });
       return;
     }
@@ -54,8 +73,11 @@
     }, {threshold: 0.4});
 
     counters.forEach(counter => {
-      counter.textContent = '0';
-      observer.observe(counter);
+      const target = getCounterTarget(counter);
+      setCounterValue(counter, 0);
+      if(target !== null){
+        observer.observe(counter);
+      }
     });
   }
 
