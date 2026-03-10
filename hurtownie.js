@@ -450,7 +450,7 @@
         addButton.disabled = false;
         if(storedProduct){
           addButton.textContent = 'Aktualizuj w sklepie';
-          statusTarget.textContent = `W sklepie · marża ${storedProduct.margin}%`;
+          statusTarget.textContent = `W sklepie · Marża ${storedProduct.margin}%`;
           return;
         }
         addButton.textContent = 'Dodaj do mojego sklepu';
