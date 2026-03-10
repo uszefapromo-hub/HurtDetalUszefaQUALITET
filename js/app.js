@@ -16,6 +16,9 @@
     {limit: 5, days: 30}
   ];
   const DEFAULT_TRIAL_DAYS = 7;
+  const DAYS_PER_MONTH = 30;
+  const POPUP_TIME_TRIGGER_MS = 9000;
+  const POPUP_SCROLL_TRIGGER_RATIO = 0.45;
   const CURRENCY_FORMATTER = new Intl.NumberFormat('pl-PL', {
     style: 'currency',
     currency: 'PLN',
@@ -160,7 +163,7 @@
           const marginTarget = card.querySelector('[data-calc-output="margin"]');
           const profitTarget = card.querySelector('[data-calc-output="profit"]');
           if(marginTarget){
-            marginTarget.textContent = `${Math.round(margin)}%`;
+            marginTarget.textContent = `${margin.toFixed(1)}%`;
           }
           if(profitTarget){
             profitTarget.textContent = `Zysk: ${formatCurrency(profit)} / szt.`;
@@ -194,7 +197,7 @@
         bindCalculator(card, () => {
           const dailyOrders = getNumericInputValue(card.querySelector('[data-calc-input="daily-orders"]'));
           const profitPerOrder = getNumericInputValue(card.querySelector('[data-calc-input="profit-per-order"]'));
-          const monthlyProfit = dailyOrders * profitPerOrder * 30;
+          const monthlyProfit = dailyOrders * profitPerOrder * DAYS_PER_MONTH;
           const monthlyTarget = card.querySelector('[data-calc-output="monthly-profit"]');
           if(monthlyTarget){
             monthlyTarget.textContent = formatCurrency(monthlyProfit);
@@ -288,14 +291,14 @@
         title: 'Chcesz własny sklep online?',
         message: 'Uruchom sklep bez programowania.'
       });
-    }, 9000);
+    }, POPUP_TIME_TRIGGER_MS);
 
     window.addEventListener('scroll', () => {
       if(scrollTriggered || popup.classList.contains('is-visible')){
         return;
       }
       const scrollRatio = (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
-      if(scrollRatio > 0.45){
+      if(scrollRatio > POPUP_SCROLL_TRIGGER_RATIO){
         scrollTriggered = true;
         openPopup({
           title: 'Zostało tylko kilka miejsc testowych',
