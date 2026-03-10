@@ -47,6 +47,7 @@
   let activityToastIntervalId = null;
   let upgradeModal = null;
   let upgradeModalInitialized = false;
+  let deferredInstallPrompt = null;
   const DEFAULT_TRIAL_DAYS = 7;
   const PLAN_LEVELS = {
     trial: 0,
@@ -140,7 +141,6 @@
     if(dismissed){
       return;
     }
-    let deferredPrompt = null;
     let banner = null;
 
     const hideBanner = (persistDismissal = false) => {
@@ -188,17 +188,17 @@
       actions.append(installButton, dismissButton);
 
       installButton.addEventListener('click', async () => {
-        if(!deferredPrompt){
+        if(!deferredInstallPrompt){
           return;
         }
         try{
-          await deferredPrompt.prompt();
-          if(deferredPrompt.userChoice){
-            await deferredPrompt.userChoice;
+          await deferredInstallPrompt.prompt();
+          if(deferredInstallPrompt.userChoice){
+            await deferredInstallPrompt.userChoice;
           }
         } catch (_error){
         } finally {
-          deferredPrompt = null;
+          deferredInstallPrompt = null;
           hideBanner(true);
         }
       });
@@ -213,13 +213,37 @@
 
     window.addEventListener('beforeinstallprompt', event => {
       event.preventDefault();
-      deferredPrompt = event;
+      deferredInstallPrompt = event;
       showBanner();
     });
 
     window.addEventListener('appinstalled', () => {
-      deferredPrompt = null;
+      deferredInstallPrompt = null;
       hideBanner();
+    });
+  }
+
+  function bindInstallCta(){
+    const targets = document.querySelectorAll('[data-install-cta]');
+    if(!targets.length){
+      return;
+    }
+    targets.forEach(target => {
+      target.addEventListener('click', async event => {
+        if(!deferredInstallPrompt){
+          return;
+        }
+        event.preventDefault();
+        try{
+          await deferredInstallPrompt.prompt();
+          if(deferredInstallPrompt.userChoice){
+            await deferredInstallPrompt.userChoice;
+          }
+        } catch (_error){
+        } finally {
+          deferredInstallPrompt = null;
+        }
+      });
     });
   }
 
@@ -3329,6 +3353,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     initServiceWorker();
     initInstallBanner();
+    bindInstallCta();
     initAppSplash();
     bindMenu();
     initBottomNav();
