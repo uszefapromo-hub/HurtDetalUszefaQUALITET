@@ -579,6 +579,9 @@
     return normalizeQueryParam(plan);
   }
 
+  /**
+   * Normalizes query param values to lowercase trimmed strings.
+   */
   function normalizeQueryParam(param) {
     return param ? param.toString().trim().toLowerCase() : '';
   }
@@ -595,6 +598,9 @@
     return hasStatusSuccess || hasSuccessFlag || hasSessionSuccess;
   }
 
+  /**
+   * Returns the Stripe checkout session id from supported query parameters.
+   */
   function getStripeSessionId(params) {
     return params.get('session_id') || params.get('checkout_session_id');
   }
