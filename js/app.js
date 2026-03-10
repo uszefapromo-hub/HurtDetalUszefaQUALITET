@@ -579,9 +579,27 @@
     return (plan || '').toString().trim().toLowerCase();
   }
 
+  function getAvailablePlans(){
+    const plans = new Set(Object.keys(PLAN_LEVELS));
+    const planElements = document.querySelectorAll('[data-plan-card],[data-plan-checkout]');
+    planElements.forEach(element => {
+      const plan = normalizePlan(element.dataset.plan);
+      if(plan){
+        plans.add(plan);
+      }
+    });
+    return plans;
+  }
+
   function formatPlanLabel(plan){
     const normalized = normalizePlan(plan);
-    return PLAN_LABELS[normalized] || PLAN_LABELS.basic;
+    if(PLAN_LABELS[normalized]){
+      return PLAN_LABELS[normalized];
+    }
+    if(!normalized){
+      return PLAN_LABELS.basic;
+    }
+    return normalized.toUpperCase();
   }
 
   function getPlanLevel(plan){
@@ -733,8 +751,8 @@
     const resolvedPlan = planParam || pendingPlan;
     const isSuccess = SUCCESS_STATUSES.includes(statusParam);
 
-    const validPlans = ['basic', 'pro', 'elite'];
-    if(resolvedPlan && validPlans.includes(resolvedPlan) && isSuccess){
+    const validPlans = getAvailablePlans();
+    if(resolvedPlan && validPlans.has(resolvedPlan) && isSuccess){
       setPlan(resolvedPlan);
       localStorage.removeItem(STORAGE_KEYS.pendingPlan);
       const successPanel = document.querySelector('[data-plan-success]');
