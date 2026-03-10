@@ -50,9 +50,9 @@
   };
   const PLAN_LABELS = {
     trial: 'Trial',
-    basic: 'Basic',
-    pro: 'Pro',
-    elite: 'Elite'
+    basic: 'BASIC',
+    pro: 'PRO',
+    elite: 'ELITE'
   };
   const PLAN_REQUIREMENTS = {
     pro: 'Ta funkcja wymaga planu PRO.',
@@ -592,7 +592,7 @@
     }
     const trialLabel = document.querySelector('[data-trial-label]');
     if(trialLabel){
-      trialLabel.textContent = plan === 'trial' ? getTrialLabel(remaining) : 'plan aktywny';
+      trialLabel.textContent = plan === 'trial' ? getTrialLabel(remaining) : 'Plan aktywny';
     }
     const planTarget = document.querySelector('[data-user-plan]');
     if(planTarget){
