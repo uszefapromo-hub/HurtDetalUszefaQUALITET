@@ -18,6 +18,7 @@
       <nav class="nav" aria-label="Główna nawigacja">
         <a href="#oferta">Oferta</a>
         <a href="#poradnik">Poradnik</a>
+        <a href="#ankieta">Ankieta</a>
         <a href="#kontakt">Kontakt</a>
       </nav>
       <a class="btn btn-primary topbar-cta" href="login.html">Wejdź do platformy</a>
@@ -114,6 +115,30 @@
         </div>
       </div>
     </section>
+
+    <section class="survey-section" id="ankieta">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Ankieta partnerów</span>
+          <h2>Pomóż nam dopracować platformę</h2>
+          <p>Krótka ankieta pozwala lepiej dopasować narzędzia do potrzeb sprzedawców.</p>
+        </div>
+        <div class="survey-card">
+          <div>
+            <h3>Co usprawniamy?</h3>
+            <ul>
+              <li>Najważniejsze funkcje sklepu i panelu</li>
+              <li>Preferowane kanały sprzedaży</li>
+              <li>Wsparcie marketingowe i logistyczne</li>
+            </ul>
+          </div>
+          <div class="cta-row">
+            <button class="btn btn-primary" type="button" data-survey-open>Wypełnij ankietę</button>
+            <a class="btn btn-secondary" href="login.html">Wejdź do platformy</a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer" id="kontakt">
@@ -144,6 +169,48 @@
       <small>Operator platformy: UszefaQualitet Sklep Internetowy Henryk Ślusarski</small>
     </div>
   </footer>
+
+  <div class="survey-modal" data-survey-modal hidden>
+    <div class="survey-window" role="dialog" aria-modal="true" aria-labelledby="survey-title">
+      <button class="survey-close" type="button" data-survey-close aria-label="Zamknij ankietę">×</button>
+      <span class="eyebrow">Ankieta</span>
+      <h2 id="survey-title">Krótka ankieta partnerów</h2>
+      <p class="hint">Twoja opinia pomoże nam dopracować generator sklepu i ofertę sprzedażową.</p>
+      <form class="form-card survey-form" data-survey-form>
+        <label>
+          Imię i nazwisko
+          <input type="text" name="name" placeholder="Twoje imię" required>
+        </label>
+        <label>
+          Email kontaktowy
+          <input type="email" name="email" placeholder="kontakt@firma.pl" required>
+        </label>
+        <label>
+          Profil działalności
+          <select name="profile" required>
+            <option value="" selected disabled>Wybierz profil</option>
+            <option value="handel">Handel detaliczny</option>
+            <option value="hurt">Hurt</option>
+            <option value="produkcja">Produkcja</option>
+            <option value="inne">Inne</option>
+          </select>
+        </label>
+        <label>
+          Najważniejsza funkcja sklepu
+          <input type="text" name="priority" placeholder="np. szybka wysyłka" required>
+        </label>
+        <label>
+          Dodatkowe uwagi
+          <textarea name="notes" placeholder="Napisz, czego oczekujesz od platformy"></textarea>
+        </label>
+        <div class="cta-row">
+          <button class="btn btn-primary" type="submit">Wyślij ankietę</button>
+          <button class="btn btn-secondary" type="button" data-survey-close>Wróć</button>
+        </div>
+      </form>
+      <p class="survey-success" data-survey-success hidden>Dziękujemy! Ankieta została wysłana.</p>
+    </div>
+  </div>
 
   <script src="js/app.js" defer></script>
 </body>
