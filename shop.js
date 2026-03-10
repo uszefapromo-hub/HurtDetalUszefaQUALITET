@@ -23,7 +23,13 @@
   const MOCK_PRODUCTS_RANGE = 24;
   const MOCK_REVENUE_BASE = 12000;
   const MOCK_REVENUE_RANGE = 9000;
-  const PLAN_STORAGE_KEY = window.APP_STORAGE_KEYS ? window.APP_STORAGE_KEYS.plan : 'app_user_plan';
+  const PLAN_STORAGE_KEY = window.APP_STORAGE_KEYS.plan;
+  const PLAN_LABELS = window.APP_PLAN_LABELS || {
+    trial: 'Trial',
+    basic: 'Basic',
+    pro: 'PRO',
+    elite: 'ELITE'
+  };
   const CURRENCY_FORMATTER = new Intl.NumberFormat('pl-PL', {
     style: 'currency',
     currency: 'PLN',
@@ -42,16 +48,7 @@
 
   function formatPlan(plan){
     const value = (plan || '').toLowerCase();
-    if(value === 'trial'){
-      return 'Trial';
-    }
-    if(value === 'pro'){
-      return 'PRO';
-    }
-    if(value === 'elite'){
-      return 'ELITE';
-    }
-    return 'Basic';
+    return PLAN_LABELS[value] || PLAN_LABELS.basic;
   }
 
   function formatCurrencyPLN(value){

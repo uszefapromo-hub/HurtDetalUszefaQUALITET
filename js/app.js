@@ -29,6 +29,7 @@
   const TOAST_INTERVAL_REDUCED_MS = 9000;
   const TOAST_DISPLAY_MS = 4200;
   const TOAST_DISPLAY_REDUCED_MS = 3600;
+  const PLAN_PRICE_FORMATTER = new Intl.NumberFormat(DEFAULT_LOCALE);
   const SAMPLE_USER_NAMES = ['Jan', 'Anna', 'Marek', 'Ola', 'Kamil', 'Ewa', 'Tomasz', 'Klara', 'Paweł', 'Lena'];
   const ACTIVITY_TOAST_MESSAGES = [
     {title: 'Nowy użytkownik otworzył sklep', detail: 'Aktywacja ukończona'},
@@ -45,12 +46,19 @@
   ];
   const DEFAULT_TRIAL_DAYS = 7;
   const PLAN_ACTIVE_LABEL = 'Aktywny plan';
+  const PLAN_CURRENT_LABEL = 'Aktualny plan';
   const PLAN_LABELS = {
     trial: 'Trial',
     basic: 'Basic',
     pro: 'PRO',
     elite: 'ELITE'
   };
+  const PLAN_DETAILS = {
+    basic: {price: 0},
+    pro: {price: 79},
+    elite: {price: 199}
+  };
+  window.APP_PLAN_LABELS = PLAN_LABELS;
 
   function bindMenu(){
     const button = document.querySelector('[data-menu-toggle]');
@@ -452,6 +460,22 @@
     return PLAN_LABELS[normalized] || PLAN_LABELS.basic;
   }
 
+  function formatPlanPrice(value){
+    return `${PLAN_PRICE_FORMATTER.format(value)} zł`;
+  }
+
+  function getPlanCta(plan){
+    const normalized = (plan || '').toLowerCase();
+    if(normalized === 'basic'){
+      return 'Aktywuj Basic';
+    }
+    const detail = PLAN_DETAILS[normalized];
+    if(!detail){
+      return '';
+    }
+    return `Kup ${formatPlanLabel(normalized)} ${formatPlanPrice(detail.price)}`;
+  }
+
   function resolveCurrentPlan(remaining){
     const storedPlan = getStoredPlan();
     if(storedPlan){
@@ -600,13 +624,43 @@
       }
       const isActive = buttonPlan && buttonPlan === plan;
       if(isActive){
-        button.textContent = 'Aktualny plan';
+        button.textContent = PLAN_CURRENT_LABEL;
         button.disabled = true;
         button.setAttribute('aria-disabled', 'true');
       } else {
         button.textContent = button.dataset.planOriginalText || button.textContent;
         button.disabled = false;
         button.removeAttribute('aria-disabled');
+      }
+    });
+  }
+
+  function updatePlanPricing(){
+    const priceTargets = document.querySelectorAll('[data-plan-price]');
+    if(priceTargets.length){
+      priceTargets.forEach(target => {
+        const plan = (target.dataset.planPrice || '').toLowerCase();
+        const detail = PLAN_DETAILS[plan];
+        if(detail){
+          target.textContent = formatPlanPrice(detail.price);
+        }
+      });
+    }
+    const buttons = document.querySelectorAll('[data-plan-buy]');
+    if(!buttons.length){
+      return;
+    }
+    buttons.forEach(button => {
+      const plan = (button.dataset.planBuy || '').toLowerCase();
+      const cta = getPlanCta(plan);
+      if(!cta){
+        return;
+      }
+      if(!button.dataset.planOriginalText){
+        button.dataset.planOriginalText = cta;
+      }
+      if(!button.disabled){
+        button.textContent = button.dataset.planOriginalText;
       }
     });
   }
@@ -626,6 +680,7 @@
 
   function initPlanPurchaseButtons(){
     const buttons = document.querySelectorAll('[data-plan-buy]');
+    updatePlanPricing();
     if(!buttons.length){
       updatePlanStatusLabels(resolveCurrentPlan(getTrialRemainingDays()));
       return;

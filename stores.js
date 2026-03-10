@@ -3,8 +3,8 @@
     plan: 'app_user_plan'
   };
   window.APP_STORAGE_KEYS = {
-    ...APP_STORAGE_KEYS,
-    ...(window.APP_STORAGE_KEYS || {})
+    ...(window.APP_STORAGE_KEYS || {}),
+    ...APP_STORAGE_KEYS
   };
   const STORAGE_KEYS = {
     stores: 'stores',
