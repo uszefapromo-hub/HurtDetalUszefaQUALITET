@@ -580,7 +580,8 @@
   }
 
   /**
-   * Normalizes query param values to lowercase trimmed strings.
+   * Normalizes query param values to lowercase trimmed strings,
+   * returning an empty string when the value is missing.
    */
   function normalizeQueryParam(param) {
     return param ? param.toString().trim().toLowerCase() : '';
@@ -592,10 +593,10 @@
    * SUCCESS_STATUSES covers known success flags from Stripe return URLs, while
    * session-based success requires a pending plan saved before checkout.
    */
-  function isCheckoutSuccess(statusParam, successParam, sessionId, pendingPlanValue) {
+  function isCheckoutSuccess(statusParam, successParam, sessionId, pendingPlan) {
     const hasStatusSuccess = SUCCESS_STATUSES.includes(statusParam);
     const hasSuccessFlag = SUCCESS_STATUSES.includes(successParam);
-    const hasPendingPlan = Boolean(pendingPlanValue);
+    const hasPendingPlan = Boolean(pendingPlan);
     const hasSessionSuccess = Boolean(sessionId) && hasPendingPlan;
     return hasStatusSuccess || hasSuccessFlag || hasSessionSuccess;
   }
