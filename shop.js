@@ -44,6 +44,11 @@
     return CURRENCY_FORMATTER.format(value);
   }
 
+  function parseNumber(value){
+    const parsedValue = typeof value === 'string' ? parseFloat(value) : Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : NaN;
+  }
+
   function getInitial(name){
     const trimmed = (name || '').trim();
     return trimmed ? trimmed.charAt(0).toUpperCase() : DEFAULT_INITIAL;
@@ -293,7 +298,8 @@
 
   function getMockMetrics(store){
     const seed = hashString(store.id || store.slug || store.name);
-    const products = MOCK_PRODUCTS_BASE + (seed % MOCK_PRODUCTS_RANGE);
+    const fallbackProducts = MOCK_PRODUCTS_BASE + (seed % MOCK_PRODUCTS_RANGE);
+    const products = Array.isArray(store.products) ? store.products.length : fallbackProducts;
     const revenue = MOCK_REVENUE_BASE + (seed % MOCK_REVENUE_RANGE);
     return {products, revenue};
   }
@@ -404,6 +410,61 @@
 
     const logoContainer = shop.querySelector('[data-logo-preview]');
     renderLogo(logoContainer, store);
+
+    const productsGrid = shop.querySelector('[data-store-products-grid]');
+    const productsEmpty = shop.querySelector('[data-store-products-empty]');
+    renderStoreProducts(productsGrid, productsEmpty, store);
+  }
+
+  function buildProductDetails(product, margin){
+    const details = [];
+    if(product.supplier){
+      details.push(product.supplier);
+    }
+    if(product.category){
+      details.push(product.category);
+    }
+    if(Number.isFinite(margin)){
+      details.push(`Marża ${margin}%`);
+    }
+    return details.join(' · ');
+  }
+
+  function getProductPricing(product, fallbackMargin){
+    const cost = parseNumber(product.cost);
+    const margin = Number.isFinite(product.margin) ? product.margin : fallbackMargin;
+    const safeCost = Number.isFinite(cost) ? cost : 0;
+    const finalPrice = Number.isFinite(product.finalPrice)
+      ? product.finalPrice
+      : safeCost * (1 + (Number.isFinite(margin) ? margin : 0) / 100);
+    return {finalPrice, margin};
+  }
+
+  function renderStoreProducts(container, emptyState, store){
+    if(!container){
+      return;
+    }
+    container.innerHTML = '';
+    const products = Array.isArray(store.products) ? store.products : [];
+    if(emptyState){
+      emptyState.hidden = products.length > 0;
+    }
+    if(!products.length){
+      return;
+    }
+    products.forEach(product => {
+      const card = document.createElement('article');
+      card.className = 'product-card';
+      const {finalPrice, margin} = getProductPricing(product, store.margin);
+      const description = product.description || buildProductDetails(product, margin);
+      const priceLabel = formatCurrencyPLN(finalPrice);
+      card.innerHTML = `
+        <h3>${product.name || 'Produkt'}</h3>
+        <p class="hint">${description}</p>
+        <span class="price">${priceLabel}</span>
+      `;
+      container.appendChild(card);
+    });
   }
 
   document.addEventListener('DOMContentLoaded', () => {

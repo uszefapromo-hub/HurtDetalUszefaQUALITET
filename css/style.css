@@ -436,6 +436,127 @@ a{color:#fff;text-decoration:none}
 }
 .upgrade-pill strong{font-size:12px}
 .upgrade-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.warehouse-status{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.warehouse-status-info{display:flex;flex-direction:column;gap:6px}
+.warehouse-status-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.warehouse-controls{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) 2fr;
+  gap:16px;
+  align-items:end;
+  margin:18px 0;
+}
+.warehouse-field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:#fff}
+.warehouse-field input{
+  width:100%;
+  height:46px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  padding:0 14px;
+}
+.warehouse-categories{display:flex;flex-wrap:wrap;gap:10px}
+.warehouse-chip{
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid var(--stroke);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-weight:700;
+  font-size:12px;
+  cursor:pointer;
+}
+.warehouse-chip.is-active{
+  background:linear-gradient(135deg,rgba(53,217,255,.2),rgba(84,255,176,.2));
+  border-color:rgba(84,255,176,.6);
+}
+.warehouse-calculator{padding:24px}
+.warehouse-calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.warehouse-result{
+  border:1px solid var(--stroke);
+  border-radius:16px;
+  padding:14px 16px;
+  background:rgba(255,255,255,.06);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.warehouse-result span{
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.warehouse-result strong{font-size:22px}
+.warehouse-supplier{display:flex;flex-direction:column;gap:12px}
+.warehouse-supplier .supplier-info{display:flex;gap:12px;align-items:center}
+.warehouse-supplier .supplier-logo{
+  width:56px;
+  height:56px;
+  border-radius:16px;
+  border:1px solid var(--stroke);
+  background:rgba(255,255,255,.06);
+  overflow:hidden;
+  flex-shrink:0;
+}
+.warehouse-supplier .supplier-logo img{width:100%;height:100%;object-fit:cover;display:block}
+.warehouse-supplier .supplier-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.warehouse-supplier .supplier-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:12px;color:var(--muted)}
+.warehouse-supplier .supplier-meta span{display:flex;flex-direction:column;gap:2px}
+.warehouse-product{display:flex;flex-direction:column;gap:14px}
+.warehouse-product .product-media{
+  position:relative;
+  border-radius:18px;
+  overflow:hidden;
+  background:rgba(255,255,255,.06);
+}
+.warehouse-product .product-media img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+  display:block;
+}
+.warehouse-product .product-tag{
+  position:absolute;
+  left:12px;
+  top:12px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:999px;
+  background:rgba(8,16,31,.75);
+  border:1px solid rgba(255,255,255,.2);
+  font-size:11px;
+  font-weight:700;
+}
+.warehouse-product .product-meta{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--muted)}
+.warehouse-product .product-calc{display:grid;gap:12px}
+.warehouse-product .product-values{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.warehouse-product .product-values div{
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.06);
+}
+.warehouse-product .product-values span{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.warehouse-product .product-values strong{font-size:18px}
+.warehouse-product .product-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.warehouse-product .product-actions .hint{margin:0;font-size:12px}
+.warehouse-empty{text-align:center;margin-top:16px}
 .is-locked{opacity:.6;cursor:not-allowed}
 body.page-locked main{filter:blur(2px);opacity:.4;pointer-events:none}
 body.modal-open{overflow:hidden}
@@ -446,6 +567,10 @@ body.modal-open{overflow:hidden}
 }
 @media (max-width: 980px){
   .hero-grid,.section-grid,.dashboard-grid,.form-grid,.pricing-grid,.supplier-grid,.products-grid,.footer-grid,.stats-grid,.marketplace-block,.promo-grid,.helper-grid,.store-summary-grid,.plan-status-grid,.style-options,.activity-grid,.results-grid{grid-template-columns:1fr}
+  .warehouse-controls{grid-template-columns:1fr}
+  .warehouse-calc-grid{grid-template-columns:1fr}
+  .warehouse-supplier .supplier-meta{grid-template-columns:1fr}
+  .warehouse-product .product-values{grid-template-columns:1fr}
   .survey-card{flex-direction:column;align-items:flex-start}
   .activity-banner{flex-direction:column;align-items:flex-start}
   .activity-remaining{align-items:flex-start;text-align:left}
