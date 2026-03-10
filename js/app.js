@@ -527,7 +527,10 @@
   }
 
   function normalizePlan(plan){
-    return (plan || '').toString().trim().toLowerCase();
+    if(plan === null || plan === undefined){
+      return '';
+    }
+    return String(plan).trim().toLowerCase();
   }
 
   function getPlanLevel(plan){
@@ -713,7 +716,7 @@
       }
       ctaButtons.forEach(button => {
         const plan = normalizePlan(button.dataset.planPurchase);
-        button.classList.toggle('is-highlight', plan === normalizedPlan);
+        button.classList.toggle('is-highlighted', plan === normalizedPlan);
       });
     };
 
