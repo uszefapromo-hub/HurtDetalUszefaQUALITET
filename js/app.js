@@ -589,6 +589,8 @@
   /**
    * Determines success for Stripe redirect callbacks using status/success flags or
    * a returned session id paired with a pending plan.
+   * SUCCESS_STATUSES covers known success flags from Stripe return URLs, while
+   * session-based success requires a pending plan saved before checkout.
    */
   function isCheckoutSuccess(statusParam, successParam, sessionId, pendingPlanValue) {
     const hasStatusSuccess = SUCCESS_STATUSES.includes(statusParam);
@@ -599,7 +601,8 @@
   }
 
   /**
-   * Returns the Stripe checkout session id from supported query parameters.
+   * Returns the Stripe checkout session id from query parameters like
+   * session_id or checkout_session_id.
    */
   function getStripeSessionId(params) {
     return params.get('session_id') || params.get('checkout_session_id');
