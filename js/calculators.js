@@ -7,6 +7,7 @@
   const integerFormatter = new Intl.NumberFormat(locale, {maximumFractionDigits: 0});
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const PLAN_THRESHOLDS = {
+    // products = liczba produktów, target = docelowy miesięczny zysk w zł
     eliteProducts: 120,
     eliteTarget: 12000,
     eliteBoostProducts: 60,
@@ -132,9 +133,10 @@
   };
 
   const choosePlan = ({products, target, ads, automation}) => {
-    if(products >= PLAN_THRESHOLDS.eliteProducts
-      || target >= PLAN_THRESHOLDS.eliteTarget
-      || (ads && automation && (products >= PLAN_THRESHOLDS.eliteBoostProducts || target >= PLAN_THRESHOLDS.eliteBoostTarget))){
+    const hitsEliteBase = products >= PLAN_THRESHOLDS.eliteProducts || target >= PLAN_THRESHOLDS.eliteTarget;
+    const hitsEliteBoost = ads && automation
+      && (products >= PLAN_THRESHOLDS.eliteBoostProducts || target >= PLAN_THRESHOLDS.eliteBoostTarget);
+    if(hitsEliteBase || hitsEliteBoost){
       return 'elite';
     }
     if(products >= PLAN_THRESHOLDS.proProducts || target >= PLAN_THRESHOLDS.proTarget || ads || automation){
