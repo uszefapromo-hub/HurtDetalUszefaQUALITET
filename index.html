@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="pl"><head><title>Hurtownie</title><meta charset="utf-8">
+<html lang="pl"><head><title>U Szefa + QualitetMarket – Start</title><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="css/styles.css"></head>
-<body data-page="hurtownie">
+<body data-page="index">
 <header class="topbar">
   <div class="wrap topbar-inner">
     <a class="brand" href="index.html">
@@ -30,14 +30,61 @@
 </header>
 
 <main class="wrap">
-  <section class="page-hero compact">
-    <span class="eyebrow">Import hurtowni</span>
-    <h1>Wybierz dostawcę i zapisz gotowy prefill produktów.</h1>
-    <p>Prosty import do localStorage bez starego chaosu.</p>
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Platforma sprzedaży</span>
+        <h1>Zarabiaj online bez chaosu.</h1>
+        <p class="lead">U Szefa to kompleksowy system dla dropshipperów i sprzedawców online. Sklep, hurtownie, reklamy i zamówienia w jednym miejscu.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="generator-sklepu.html">Otwórz sklep</a>
+          <a class="btn btn-secondary" href="hurtownie.html">Wybierz hurtownię</a>
+        </div>
+        <div class="promo-banner" data-promo-left></div>
+      </div>
+      <div>
+        <img src="assets/market-hero.svg" alt="platforma sprzedaży">
+      </div>
+    </div>
   </section>
-  <section class="supplier-grid" id="suppliers-list"></section>
+
+  <section class="section-grid">
+    <article class="feature-card gradient-a">
+      <h2>Sklep bez kodowania</h2>
+      <p>Otwórz własny sklep w kilka minut. Wybierz motyw, niszę, plan i marżę.</p>
+      <a class="link-arrow" href="generator-sklepu.html">Otwórz sklep →</a>
+    </article>
+    <article class="feature-card gradient-b">
+      <h2>Hurtownie do wyboru</h2>
+      <p>Importuj produkty od sprawdzonych dostawców. Ceny automatycznie z marżą.</p>
+      <a class="link-arrow" href="hurtownie.html">Wybierz hurtownię →</a>
+    </article>
+    <article class="feature-card gradient-c">
+      <h2>Reklama i marża</h2>
+      <p>Oblicz optymalną cenę i budżet reklamowy. Zarabiaj od pierwszego dnia.</p>
+      <a class="link-arrow" href="platforma.html">Ustaw reklamę →</a>
+    </article>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span>Twoje sklepy</span>
+      <strong data-stores-count>0</strong>
+    </article>
+    <article class="stat-card">
+      <span>Produkty</span>
+      <strong data-products-count>0</strong>
+    </article>
+    <article class="stat-card">
+      <span>Zamówienia</span>
+      <strong data-orders-count>0</strong>
+    </article>
+    <article class="stat-card">
+      <span>Domyślna marża</span>
+      <strong data-margin-default>20%</strong>
+    </article>
+  </section>
 </main>
-<script src="js/hurtownie.js" defer></script>
 
 <footer class="footer">
   <div class="wrap footer-grid">

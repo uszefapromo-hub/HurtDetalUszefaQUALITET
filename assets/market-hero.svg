@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="400" viewBox="0 0 560 400">
+<defs>
+<linearGradient id="a" x1="0" x2="1"><stop stop-color="#38d9ff"/><stop offset="1" stop-color="#9e77ff"/></linearGradient>
+<linearGradient id="b" x1="0" x2="1"><stop stop-color="#ffd84d"/><stop offset="1" stop-color="#ff4fd8"/></linearGradient>
+<linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#08101f"/><stop offset="1" stop-color="#0f1837"/></linearGradient>
+</defs>
+<rect width="560" height="400" rx="32" fill="url(#c)"/>
+<rect x="30" y="30" width="500" height="340" rx="24" fill="#ffffff07" stroke="#ffffff14"/>
+<rect x="60" y="80" width="180" height="100" rx="18" fill="url(#a)" opacity=".85"/>
+<rect x="260" y="120" width="180" height="100" rx="18" fill="url(#b)" opacity=".8"/>
+<path d="M100 280 C180 240, 240 230, 310 200 S430 160, 490 130" stroke="#5fff9d" stroke-width="12" fill="none" stroke-linecap="round"/>
+<circle cx="490" cy="130" r="14" fill="#5fff9d"/>
+<circle cx="310" cy="200" r="10" fill="#5fff9d" opacity=".7"/>
+<text x="76" y="138" fill="#fff" font-family="Arial" font-size="22" font-weight="700">U Szefa</text>
+<text x="76" y="164" fill="#e0e8ff" font-family="Arial" font-size="14">sklepy • hurtownie • reklamy</text>
+<text x="276" y="178" fill="#fff" font-family="Arial" font-size="22" font-weight="700">QualitetMarket</text>
+<text x="276" y="204" fill="#e0e8ff" font-family="Arial" font-size="14">centrum sprzedaży</text>
+<text x="60" y="340" fill="#ffd84d" font-family="Arial" font-size="18" font-weight="700">Start bez chaosu. Zarabiaj od dziś.</text>
+</svg>

@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="pl"><head><title>Panel sklepu</title><meta charset="utf-8">
+<html lang="pl"><head><title>QualitetMarket – Centrum sprzedaży</title><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="css/styles.css"></head>
-<body data-page="panel-sklepu">
+<body data-page="qualitetmarket">
 <header class="topbar">
   <div class="wrap topbar-inner">
     <a class="brand" href="index.html">
@@ -30,20 +30,44 @@
 </header>
 
 <main class="wrap">
-  <section class="page-hero compact"><span class="eyebrow">Panel sklepu</span><h1>Zarządzaj aktywnym sklepem.</h1></section>
-  <section class="dashboard-grid">
-    <article class="panel-card" id="active-store-card"></article>
-    <article class="panel-card">
-      <h3>Akcje</h3>
-      <div class="quick-links">
-        <a class="btn btn-secondary" href="sklep.html">Podgląd sklepu</a>
-        <a class="btn btn-secondary" href="platforma.html">Zmień marżę</a>
-        <a class="btn btn-secondary" href="cennik.html">Zmień plan</a>
-      </div>
+  <section class="page-hero compact">
+    <span class="eyebrow">QualitetMarket</span>
+    <h1>Centrum dowodzenia Twoją sprzedażą.</h1>
+    <p>Zarządzaj sklepami, hurtowniami, reklamami i zamówieniami z jednego miejsca.</p>
+  </section>
+
+  <section class="section-grid">
+    <article class="feature-card gradient-a">
+      <h2>Dashboard</h2>
+      <p>Statystyki, przychody i zyski w czasie rzeczywistym.</p>
+      <a class="link-arrow" href="dashboard.html">Otwórz dashboard →</a>
+    </article>
+    <article class="feature-card gradient-b">
+      <h2>Hurtownie</h2>
+      <p>Importuj produkty od sprawdzonych dostawców dropshipping.</p>
+      <a class="link-arrow" href="hurtownie.html">Wybierz hurtownię →</a>
+    </article>
+    <article class="feature-card gradient-c">
+      <h2>Generator sklepu</h2>
+      <p>Otwórz sklep w kilka minut. Motyw, nisza, plan i marża w jednym kroku.</p>
+      <a class="link-arrow" href="generator-sklepu.html">Otwórz sklep →</a>
     </article>
   </section>
+
+  <section class="dashboard-grid">
+    <article class="panel-card">
+      <h3>Twój aktywny sklep</h3>
+      <div class="kv"><span>Nazwa</span><strong data-active-store-name>—</strong></div>
+      <div class="kv"><span>Plan</span><strong data-active-plan>—</strong></div>
+      <div class="kv"><span>Marża</span><strong data-margin-default>—</strong></div>
+      <div class="quick-links" style="margin-top:16px">
+        <a class="btn btn-primary" href="panel-sklepu.html">Panel sklepu</a>
+        <a class="btn btn-secondary" href="generator-sklepu.html">Nowy sklep</a>
+      </div>
+    </article>
+    <article class="panel-card" id="lista-magazynow-danych"></article>
+  </section>
 </main>
-<script src="js/stores.js" defer></script>
 
 <footer class="footer">
   <div class="wrap footer-grid">

@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="pl"><head><title>Cennik – U Szefa</title><meta charset="utf-8">
+<html lang="pl"><head><title>Logowanie – U Szefa</title><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="css/styles.css"></head>
-<body data-page="cennik">
+<body data-page="login">
 <header class="topbar">
   <div class="wrap topbar-inner">
     <a class="brand" href="index.html">
@@ -31,54 +31,28 @@
 
 <main class="wrap">
   <section class="page-hero compact">
-    <span class="eyebrow">Wybierz plan</span>
-    <h1>Prosty cennik. Żadnych ukrytych kosztów.</h1>
-    <p>Aktywny plan: <strong data-active-plan>—</strong></p>
+    <span class="eyebrow">Konto</span>
+    <h1>Zaloguj się do systemu.</h1>
+    <p>Twoje dane i sklepy są bezpiecznie przechowywane lokalnie.</p>
   </section>
 
-  <section class="pricing-grid">
-    <article class="price-card">
-      <span class="eyebrow">Basic</span>
-      <strong>0 zł</strong>
-      <p>Idealny start. Przetestuj system bez ryzyka.</p>
-      <ul>
-        <li>1 sklep</li>
-        <li>Import 1 hurtowni</li>
-        <li>Kalkulator marży</li>
-        <li>Zamówienia podstawowe</li>
-      </ul>
-      <button class="btn btn-secondary" data-plan-select="basic">Wybierz Basic</button>
-    </article>
-    <article class="price-card featured">
-      <span class="badge">Popularny</span>
-      <span class="eyebrow">Pro</span>
-      <strong>97 zł/mies.</strong>
-      <p>Pełen zestaw narzędzi dla rosnącego biznesu.</p>
-      <ul>
-        <li>5 sklepów</li>
-        <li>Wszystkie hurtownie</li>
-        <li>Kalkulator reklam</li>
-        <li>Intel prefill</li>
-        <li>CRM podstawowy</li>
-      </ul>
-      <button class="btn btn-primary" data-plan-select="pro">Wybierz Pro</button>
-    </article>
-    <article class="price-card">
-      <span class="eyebrow">Elite</span>
-      <strong>297 zł/mies.</strong>
-      <p>Maksymalna moc dla zaawansowanych sprzedawców.</p>
-      <ul>
-        <li>Nieograniczone sklepy</li>
-        <li>Priorytetowe wsparcie</li>
-        <li>Automatyzacja zamówień</li>
-        <li>Pełny CRM i Intel</li>
-        <li>Dedykowane reklamy</li>
-      </ul>
-      <button class="btn btn-secondary" data-plan-select="elite">Wybierz Elite</button>
-    </article>
+  <section class="form-grid">
+    <form class="panel-card form-card" id="login-form">
+      <label>Email<input required type="email" name="email" placeholder="twoj@email.com"></label>
+      <label>Hasło<input required type="password" name="password" placeholder="Twoje hasło"></label>
+      <button class="btn btn-primary" type="submit">Zaloguj się</button>
+      <p class="hint">System działa lokalnie – Twoje dane nie są wysyłane na serwer.</p>
+    </form>
+    <div class="panel-card">
+      <h3>Nie masz konta?</h3>
+      <p>Zacznij od razu bez rejestracji. Stwórz sklep, zaimportuj hurtownię i zacznij sprzedawać.</p>
+      <div class="quick-links" style="margin-top:16px">
+        <a class="btn btn-primary" href="generator-sklepu.html">Otwórz sklep</a>
+        <a class="btn btn-secondary" href="index.html">Wróć na start</a>
+      </div>
+    </div>
   </section>
 </main>
-<script src="js/pricing.js" defer></script>
 
 <footer class="footer">
   <div class="wrap footer-grid">
