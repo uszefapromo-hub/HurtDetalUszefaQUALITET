@@ -481,12 +481,35 @@
   function scheduleAppPromoTriggers(){
     const page = document.body.dataset.page || '';
     const delay = (page === 'sklep' || page === 'hurtownie') ? APP_PROMO_FOCUS_DELAY : APP_PROMO_DEFAULT_DELAY;
-    window.setTimeout(() => {
-      openAppPromo();
-    }, delay);
-    window.setInterval(() => {
-      openAppPromo();
-    }, APP_PROMO_REPEAT_INTERVAL);
+    if(canShowAppPromo()){
+      window.setTimeout(() => {
+        openAppPromo();
+      }, delay);
+    }
+    let repeatIntervalId = null;
+    const startRepeatInterval = () => {
+      if(repeatIntervalId){
+        return;
+      }
+      repeatIntervalId = window.setInterval(() => {
+        openAppPromo();
+      }, APP_PROMO_REPEAT_INTERVAL);
+    };
+    const stopRepeatInterval = () => {
+      if(repeatIntervalId){
+        clearInterval(repeatIntervalId);
+        repeatIntervalId = null;
+      }
+    };
+    const handleVisibility = () => {
+      if(document.hidden){
+        stopRepeatInterval();
+      } else {
+        startRepeatInterval();
+      }
+    };
+    handleVisibility();
+    document.addEventListener('visibilitychange', handleVisibility);
     let scrollTriggered = false;
     window.addEventListener('scroll', () => {
       if(scrollTriggered){
