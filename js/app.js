@@ -27,6 +27,7 @@
   const TOAST_INTERVAL_REDUCED_MS = 9000;
   const TOAST_DISPLAY_MS = 4200;
   const TOAST_DISPLAY_REDUCED_MS = 3600;
+  const SUCCESS_STATUSES = ['success', 'paid', 'true', '1', 'ok'];
   const SAMPLE_USER_NAMES = ['Jan', 'Anna', 'Marek', 'Ola', 'Kamil', 'Ewa', 'Tomasz', 'Klara', 'Paweł', 'Lena'];
   const ACTIVITY_TOAST_MESSAGES = [
     {title: 'Nowy użytkownik otworzył sklep', detail: 'Aktywacja ukończona'},
@@ -507,7 +508,8 @@
 
   function startTrialIfNeeded(email){
     const existingPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.plan));
-    if(existingPlan && existingPlan !== 'trial'){
+    const hasTrialPlan = !existingPlan || existingPlan === 'trial';
+    if(!hasTrialPlan){
       return;
     }
     if(localStorage.getItem(STORAGE_KEYS.trialStart)){
@@ -729,7 +731,7 @@
     const statusParam = normalizePlan(params.get('status'));
     const pendingPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.pendingPlan));
     const resolvedPlan = planParam || pendingPlan;
-    const isSuccess = ['success', 'paid', 'true', '1', 'ok'].includes(statusParam);
+    const isSuccess = SUCCESS_STATUSES.includes(statusParam);
 
     const validPlans = ['basic', 'pro', 'elite'];
     if(resolvedPlan && validPlans.includes(resolvedPlan) && isSuccess){
@@ -825,7 +827,7 @@
     }
     const closeButtons = modal.querySelectorAll('[data-upgrade-close]');
     const closeModal = () => {
-      if(modal.dataset.locked === 'true'){
+      if(modal.hasAttribute('data-upgrade-locked')){
         return;
       }
       modal.hidden = true;
@@ -862,7 +864,7 @@
     if(messageTarget){
       messageTarget.textContent = `Ta funkcja wymaga planu ${planLabel}`;
     }
-    modal.dataset.locked = options.lockPage ? 'true' : 'false';
+    modal.toggleAttribute('data-upgrade-locked', Boolean(options.lockPage));
     const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
     const backLink = modal.querySelector('[data-upgrade-back]');
     if(backLink){
