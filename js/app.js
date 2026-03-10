@@ -579,7 +579,7 @@
     return (plan || '').toString().trim().toLowerCase();
   }
 
-  function normalizeParam(param){
+  function normalizeParam(param) {
     return param ? param.toString().trim().toLowerCase() : '';
   }
 
