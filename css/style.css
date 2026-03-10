@@ -203,6 +203,7 @@ a{color:#fff;text-decoration:none}
 .promo-motion-image:nth-child(1){animation-delay:0s}
 .promo-motion-image:nth-child(2){animation-delay:6s}
 .promo-motion-image:nth-child(3){animation-delay:12s}
+.promo-motion-gallery:hover .promo-motion-image,.promo-motion-gallery:focus-within .promo-motion-image{animation-play-state:paused}
 .section-head{margin-bottom:22px}
 .section-head h2{margin:10px 0 12px;font-size:clamp(28px,4vw,42px)}
 .section-head p{color:var(--muted);max-width:720px}
@@ -671,9 +672,9 @@ body.modal-open{overflow:hidden}
   50%{opacity:1;transform:translateX(40%)}
 }
 @keyframes promoMotion{
-  0%,5%{opacity:0;transform:scale(1.06)}
-  10%,30%{opacity:1;transform:scale(1)}
-  40%,100%{opacity:0;transform:scale(1.08)}
+  0%,6%{opacity:0;transform:scale(1.06)}
+  10%,40%{opacity:1;transform:scale(1)}
+  46%,100%{opacity:0;transform:scale(1.08)}
 }
 @media (prefers-reduced-motion: reduce){
   .helper-card{transform:none;transition:none}
