@@ -579,6 +579,10 @@
     return (plan || '').toString().trim().toLowerCase();
   }
 
+  function normalizeParam(param){
+    return param ? param.toString().trim().toLowerCase() : '';
+  }
+
   function formatPlanLabel(plan){
     const normalized = normalizePlan(plan);
     return PLAN_LABELS[normalized] || PLAN_LABELS.basic;
@@ -728,16 +732,14 @@
       return;
     }
     const planParam = normalizePlan(params.get('plan'));
-    const statusParam = params.get('status');
-    const successParam = params.get('success');
+    const statusParam = normalizeParam(params.get('status'));
+    const successParam = normalizeParam(params.get('success'));
     const sessionId = params.get('session_id') || params.get('checkout_session_id');
-    const normalizedStatus = statusParam ? statusParam.toString().trim().toLowerCase() : '';
-    const normalizedSuccess = successParam ? successParam.toString().trim().toLowerCase() : '';
     const pendingPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.pendingPlan));
     const resolvedPlan = planParam || pendingPlan;
-    const isSuccess = SUCCESS_STATUSES.includes(normalizedStatus)
-      || SUCCESS_STATUSES.includes(normalizedSuccess)
-      || Boolean(sessionId);
+    const isSuccess = SUCCESS_STATUSES.includes(statusParam)
+      || SUCCESS_STATUSES.includes(successParam)
+      || (Boolean(sessionId) && Boolean(pendingPlan));
 
     const validPlans = ['basic', 'pro', 'elite'];
     if(resolvedPlan && validPlans.includes(resolvedPlan) && isSuccess){
