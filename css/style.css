@@ -154,6 +154,8 @@ body.auth-page .auth-layout{flex-direction:column;gap:20px}
 .sidebar-nav{display:flex;flex-direction:column;gap:8px}
 .sidebar-nav a{padding:12px 14px;border-radius:14px;font-weight:600;color:var(--muted)}
 .sidebar-nav a.active,.sidebar-nav a:hover{background:rgba(148,163,184,.18);color:#fff}
+.sidebar-nav a[data-superadmin-link]{color:var(--yellow);border-top:1px solid var(--stroke);margin-top:8px;padding-top:20px}
+.sidebar-nav a[data-superadmin-link]:hover{background:rgba(250,204,21,.12);color:var(--yellow)}
 .dashboard-main{display:flex;flex-direction:column;gap:18px}
 .dashboard-welcome{padding:24px}
 .dashboard-meta{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px}

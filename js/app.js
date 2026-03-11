@@ -3288,7 +3288,7 @@
 
   function hasOwnerAccess(){
     const role = getStoredUserRole();
-    if(role === 'owner'){
+    if(role === 'owner' || role === 'superadmin'){
       return true;
     }
     const email = normalizeQueryParam(localStorage.getItem(STORAGE_KEYS.email));
@@ -3299,16 +3299,25 @@
     if(document.body.dataset.page !== 'owner-panel'){
       return false;
     }
+    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
+    if(!logged){
+      window.location.replace('login.html');
+      return false;
+    }
     const accessGranted = hasOwnerAccess();
+    if(!accessGranted){
+      window.location.replace('dashboard.html');
+      return false;
+    }
     const lockedPanel = document.querySelector('[data-owner-locked]');
     const content = document.querySelector('[data-owner-content]');
     if(lockedPanel){
-      lockedPanel.hidden = accessGranted;
+      lockedPanel.hidden = true;
     }
     if(content){
-      content.hidden = !accessGranted;
+      content.hidden = false;
     }
-    return accessGranted;
+    return true;
   }
 
   function initOwnerPanel(){
@@ -4148,7 +4157,7 @@
       if(email){
         localStorage.setItem(STORAGE_KEYS.email, email);
         if(normalizeQueryParam(email) === OWNER_EMAIL_NORMALIZED){
-          localStorage.setItem(STORAGE_KEYS.role, 'owner');
+          localStorage.setItem(STORAGE_KEYS.role, 'superadmin');
         } else {
           localStorage.removeItem(STORAGE_KEYS.role);
         }
@@ -4216,6 +4225,19 @@
     elements.forEach(el => observer.observe(el));
   }
 
+  function initSuperadminLink(){
+    const links = document.querySelectorAll('[data-superadmin-link]');
+    if(!links.length){
+      return;
+    }
+    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
+    if(logged && hasOwnerAccess()){
+      links.forEach(link => {
+        link.hidden = false;
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     initServiceWorker();
     initInstallBanner();
@@ -4245,6 +4267,7 @@
     initStoreGenerator();
     initLoginForm();
     guardDashboard();
+    initSuperadminLink();
     initMotionPolish();
   });
 
