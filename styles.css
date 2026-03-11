@@ -1190,6 +1190,7 @@ body.store-shop .shop-contact h2{
   transition:background .18s ease;flex-shrink:0;
 }
 .task-add-btn:hover{background:rgba(148,163,184,.2)}
+.status-col-badge{font-size:11px;padding:2px 8px}
 .task-modal{
   position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
   padding:24px;background:rgba(4,8,20,.72);z-index:120;

@@ -5977,7 +5977,20 @@
       const statusBadge = getStatusBadge(task.status);
       const actionBtn = getActionButton(task);
       const dueHtml = task.dueLabel ? `<span>${escapeHtml(task.dueLabel)}</span>` : '';
-      return `<div class="task-item${task.status === 'closed' ? ' is-closed' : ''}" data-task-id="${escapeHtml(task.id)}"><div class="task-header">${statusBadge}<span class="${priorityCls}">${priorityLabel}</span></div><p class="task-title">${escapeHtml(task.title)}</p><div class="task-meta"><span>${escapeHtml(task.assignee)}</span>${dueHtml}</div>${actionBtn ? `<div class="task-action-row">${actionBtn}</div>` : ''}</div>`;
+      const closedClass = task.status === 'closed' ? ' is-closed' : '';
+      return `
+        <div class="task-item${closedClass}" data-task-id="${escapeHtml(task.id)}">
+          <div class="task-header">
+            ${statusBadge}
+            <span class="${priorityCls}">${priorityLabel}</span>
+          </div>
+          <p class="task-title">${escapeHtml(task.title)}</p>
+          <div class="task-meta">
+            <span>${escapeHtml(task.assignee)}</span>
+            ${dueHtml}
+          </div>
+          ${actionBtn ? `<div class="task-action-row">${actionBtn}</div>` : ''}
+        </div>`;
     }
 
     function updateTaskStats(){
@@ -5998,7 +6011,36 @@
       const open = tasks.filter(t => t.status === 'open');
       const inProgress = tasks.filter(t => t.status === 'in_progress');
       const done = tasks.filter(t => t.status === 'done');
-      board.innerHTML = `<div class="task-column" data-column="open"><div class="task-column-head"><h3>Do zrobienia</h3><span class="status-open" style="font-size:11px;padding:2px 8px">OPEN</span><span class="task-count">${open.length}</span><button class="task-add-btn" data-task-add="open" aria-label="Dodaj zadanie" title="Dodaj zadanie">+</button></div>${open.map(renderTaskCard).join('')}</div><div class="task-column" data-column="in_progress"><div class="task-column-head"><h3>W realizacji</h3><span class="status-in-progress" style="font-size:11px;padding:2px 8px">IN PROGRESS</span><span class="task-count">${inProgress.length}</span><button class="task-add-btn" data-task-add="in_progress" aria-label="Dodaj zadanie" title="Dodaj zadanie">+</button></div>${inProgress.map(renderTaskCard).join('')}</div><div class="task-column" data-column="done"><div class="task-column-head"><h3>Ukończone</h3><span class="status-done" style="font-size:11px;padding:2px 8px">DONE</span><span class="task-count">${done.length}</span></div>${done.map(renderTaskCard).join('')}</div>`;
+      const openCol = `
+        <div class="task-column" data-column="open">
+          <div class="task-column-head">
+            <h3>Do zrobienia</h3>
+            <span class="status-open status-col-badge">OPEN</span>
+            <span class="task-count">${open.length}</span>
+            <button class="task-add-btn" data-task-add="open" aria-label="Dodaj zadanie" title="Dodaj zadanie">+</button>
+          </div>
+          ${open.map(renderTaskCard).join('')}
+        </div>`;
+      const inProgressCol = `
+        <div class="task-column" data-column="in_progress">
+          <div class="task-column-head">
+            <h3>W realizacji</h3>
+            <span class="status-in-progress status-col-badge">IN PROGRESS</span>
+            <span class="task-count">${inProgress.length}</span>
+            <button class="task-add-btn" data-task-add="in_progress" aria-label="Dodaj zadanie" title="Dodaj zadanie">+</button>
+          </div>
+          ${inProgress.map(renderTaskCard).join('')}
+        </div>`;
+      const doneCol = `
+        <div class="task-column" data-column="done">
+          <div class="task-column-head">
+            <h3>Ukończone</h3>
+            <span class="status-done status-col-badge">DONE</span>
+            <span class="task-count">${done.length}</span>
+          </div>
+          ${done.map(renderTaskCard).join('')}
+        </div>`;
+      board.innerHTML = openCol + inProgressCol + doneCol;
       updateTaskStats();
     }
 
