@@ -59,3 +59,136 @@ body{
 @media(max-width:700px){
   .roles-grid{grid-template-columns:1fr}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL.CSS — Mobile Responsive Improvements
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Owner tab navigation on mobile ── */
+@media(max-width:980px){
+  .sidebar.owner-sidebar,
+  .dashboard-shell .sidebar{
+    position:static;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:10px 12px;
+    border-radius:16px;
+  }
+  .owner-tab-nav,
+  .sidebar-nav.owner-tab-nav{
+    flex-direction:row;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    gap:4px;
+    padding-bottom:6px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .owner-tab-nav a,
+  .sidebar-nav.owner-tab-nav a{
+    white-space:nowrap;
+    flex-shrink:0;
+    padding:8px 12px;
+    font-size:13px;
+    border-radius:10px;
+  }
+  .owner-tab-nav .sidebar-sep{
+    display:none;
+  }
+}
+
+/* ── Owner toolbar on mobile ── */
+@media(max-width:640px){
+  .owner-toolbar{
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
+  }
+  .owner-search,.owner-filter,.owner-input{
+    width:100%;
+    font-size:16px;
+  }
+  .owner-table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    border-radius:12px;
+  }
+  .owner-table{
+    min-width:580px;
+    font-size:12px;
+  }
+  .owner-table th,.owner-table td{
+    padding:8px 10px;
+  }
+}
+
+/* ── Roles grid on small mobile ── */
+@media(max-width:480px){
+  .roles-grid{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  .role-card{
+    padding:14px;
+    border-radius:14px;
+  }
+  .role-card strong{font-size:14px}
+  .role-card ul{font-size:12px}
+}
+
+/* ── Status pills smaller on mobile ── */
+@media(max-width:480px){
+  .pill-active,.pill-trial,.pill-inactive,.pill-cancelled,
+  .pill-pending,.pill-paid,.pill-shipped,
+  .pill-superadmin,.pill-operator,.pill-partner,.pill-client{
+    font-size:11px;
+    padding:2px 8px;
+  }
+}
+
+/* ── Referral link box ── */
+@media(max-width:480px){
+  .referral-link-box{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .referral-link-box input{width:100%;font-size:16px}
+  .referral-link-box .btn{width:100%;justify-content:center}
+}
+
+/* ── Dashboard main stats on mobile ── */
+@media(max-width:640px){
+  .owner-metrics{
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+  .owner-plan-grid{
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+}
+@media(max-width:400px){
+  .owner-metrics{
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+  .owner-plan-grid{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+}
+
+/* ── Responsive grid column helpers ── */
+.stats-g2{grid-template-columns:repeat(2,1fr)}
+.stats-g3{grid-template-columns:repeat(3,1fr)}
+.stats-g4{grid-template-columns:repeat(4,1fr)}
+
+@media(max-width:980px){
+  .stats-g3,.stats-g4{grid-template-columns:repeat(2,1fr)}
+  .stats-g2{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .stats-g2,.stats-g3,.stats-g4{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:360px){
+  .stats-g2,.stats-g3,.stats-g4{grid-template-columns:1fr 1fr}
+}
