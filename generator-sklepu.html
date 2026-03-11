@@ -88,6 +88,21 @@
       </div>
     </section>
 
+    <!-- Live preview panel -->
+    <div class="store-preview-panel panel-card" id="storePreviewPanel">
+      <h3 class="preview-heading">Podgląd sklepu</h3>
+      <div class="store-preview-card" id="storePreviewCard">
+        <div class="preview-header" id="previewHeader" style="background:#35d9ff">
+          <div class="preview-logo" id="previewLogo"><span id="previewInitials">U</span></div>
+          <div class="preview-title" id="previewTitle">Nazwa sklepu</div>
+        </div>
+        <div class="preview-body">
+          <p class="preview-desc" id="previewDesc">Opis sklepu pojawi się tutaj…</p>
+          <a class="btn btn-primary preview-visit-btn" id="previewVisitBtn" href="sklep.html" target="_blank">Odwiedź sklep</a>
+        </div>
+      </div>
+    </div>
+
     <form class="panel-card store-form" data-store-generator>
       <div class="form-grid">
         <label class="form-field">
@@ -108,17 +123,32 @@
         </label>
       </div>
 
-      <div class="form-grid">
-        <label class="form-field">
-          Logo URL
-          <input type="url" name="storeLogo" placeholder="https://...">
-          <span class="field-hint">Podaj link do logo lub zostaw puste.</span>
-        </label>
+      <!-- Logo section with URL + emoji picker -->
+      <div class="form-grid full">
         <div class="form-field">
-          Podgląd logo
-          <div class="logo-preview" data-logo-preview>
-            <span>U</span>
-            <img alt="Logo sklepu">
+          Logo sklepu
+          <input type="url" name="storeLogo" id="storeLogoInput" placeholder="https://… (URL obrazu)" autocomplete="off">
+          <span class="field-hint">Wklej URL logo lub wybierz ikonę poniżej.</span>
+          <div class="emoji-picker" id="emojiPicker" role="group" aria-label="Wybierz ikonę sklepu">
+            <button type="button" class="emoji-btn" data-emoji="🛍️">🛍️</button>
+            <button type="button" class="emoji-btn" data-emoji="🏪">🏪</button>
+            <button type="button" class="emoji-btn" data-emoji="💎">💎</button>
+            <button type="button" class="emoji-btn" data-emoji="🌟">🌟</button>
+            <button type="button" class="emoji-btn" data-emoji="🔥">🔥</button>
+            <button type="button" class="emoji-btn" data-emoji="⚡">⚡</button>
+            <button type="button" class="emoji-btn" data-emoji="🎯">🎯</button>
+            <button type="button" class="emoji-btn" data-emoji="🚀">🚀</button>
+            <button type="button" class="emoji-btn" data-emoji="💡">💡</button>
+            <button type="button" class="emoji-btn" data-emoji="🌈">🌈</button>
+            <button type="button" class="emoji-btn" data-emoji="🦋">🦋</button>
+            <button type="button" class="emoji-btn" data-emoji="🎁">🎁</button>
+          </div>
+          <div class="logo-preview-row">
+            <div class="logo-preview" data-logo-preview id="logoPreviewBox">
+              <span id="logoInitials">U</span>
+              <img id="logoPreviewImg" alt="Logo sklepu" style="display:none">
+            </div>
+            <span class="field-hint" id="logoPreviewHint">Podgląd logo</span>
           </div>
         </div>
       </div>
@@ -145,10 +175,19 @@
       <div class="form-grid full">
         <div class="form-field">
           Kolory sklepu
+          <!-- Color presets -->
+          <div class="color-presets" id="colorPresets" role="group" aria-label="Gotowe zestawy kolorów">
+            <button type="button" class="color-preset-btn" data-preset="#3b82f6" style="background:#3b82f6" title="Niebieski"></button>
+            <button type="button" class="color-preset-btn" data-preset="#10b981" style="background:#10b981" title="Zielony"></button>
+            <button type="button" class="color-preset-btn" data-preset="#8b5cf6" style="background:#8b5cf6" title="Fioletowy"></button>
+            <button type="button" class="color-preset-btn" data-preset="#ef4444" style="background:#ef4444" title="Czerwony"></button>
+            <button type="button" class="color-preset-btn" data-preset="#f97316" style="background:#f97316" title="Pomarańczowy"></button>
+            <button type="button" class="color-preset-btn" data-preset="#1e293b" style="background:#1e293b" title="Ciemny"></button>
+          </div>
           <div class="color-grid">
             <label class="form-field">
               Główny
-              <input type="color" name="primaryColor" value="#35d9ff">
+              <input type="color" name="primaryColor" id="primaryColorInput" value="#35d9ff">
             </label>
             <label class="form-field">
               Akcent
@@ -200,12 +239,22 @@
         </label>
       </div>
 
-      <div class="store-actions">
-        <button class="btn btn-primary" type="submit">ZAPISZ SKLEP</button>
-        <button class="btn btn-secondary" type="button" data-store-preview>PODGLĄD SKLEPU</button>
-        <button class="btn btn-secondary" type="button" data-store-panel>OTWÓRZ PANEL</button>
+      <!-- Publishing section -->
+      <div class="publish-section" id="publishSection">
+        <div class="publish-status" id="publishStatus">
+          <span class="status-badge status-draft" id="statusBadge">Status: Wersja robocza 📝</span>
+        </div>
+        <div class="store-actions">
+          <button class="btn btn-primary" type="submit">💾 ZAPISZ SKLEP</button>
+          <button class="btn btn-success" type="button" id="publishBtn">🚀 OPUBLIKUJ SKLEP</button>
+          <a class="btn btn-secondary" href="sklep.html" id="previewLink" target="_blank">👁️ PODGLĄD SKLEPU</a>
+          <button class="btn btn-secondary" type="button" data-store-panel>OTWÓRZ PANEL</button>
+        </div>
       </div>
     </form>
+
+    <!-- Toast notification -->
+    <div class="generator-toast" id="generatorToast" role="alert" aria-live="polite"></div>
   </main>
 
   <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
@@ -252,5 +301,259 @@
   <script src="js/app.js" defer></script>
   <script src="stores.js" defer></script>
   <script src="shop.js" defer></script>
+  <script src="js/platform.js" defer></script>
+  <script>
+  (function () {
+    'use strict';
+
+    /* ── helpers ─────────────────────────────────────────────────── */
+    function $(id) { return document.getElementById(id); }
+
+    function showToast(msg, ok) {
+      const t = $('generatorToast');
+      if (!t) return;
+      t.textContent = msg;
+      t.className = 'generator-toast ' + (ok !== false ? 'toast-ok' : 'toast-err') + ' toast-visible';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('toast-visible'), 3500);
+    }
+
+    function getInitials(name) {
+      if (!name) return 'U';
+      return name.trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+    }
+
+    /* ── preview update ──────────────────────────────────────────── */
+    function updatePreview() {
+      const form = document.querySelector('[data-store-generator]');
+      if (!form) return;
+      const name  = form.storeName ? form.storeName.value.trim() : '';
+      const slug  = form.storeSlug ? form.storeSlug.value.trim() : '';
+      const desc  = form.storeDescription ? form.storeDescription.value.trim() : '';
+      const logo  = $('storeLogoInput') ? $('storeLogoInput').value.trim() : '';
+      const color = $('primaryColorInput') ? $('primaryColorInput').value : '#35d9ff';
+
+      // header bg
+      const header = $('previewHeader');
+      if (header) header.style.background = color;
+
+      // title
+      const title = $('previewTitle');
+      if (title) title.textContent = name || 'Nazwa sklepu';
+
+      // initials / logo
+      const initEl = $('previewInitials');
+      const imgEl  = $('logoPreviewImg');
+      const logoBox = $('previewLogo');
+      if (initEl) initEl.textContent = getInitials(name || 'U');
+
+      if (logo && logo.startsWith('http')) {
+        if (logoBox) { logoBox.style.backgroundImage = `url('${logo}')`; logoBox.style.backgroundSize = 'cover'; }
+        if (initEl)  initEl.style.display = 'none';
+      } else {
+        if (logoBox) { logoBox.style.backgroundImage = ''; }
+        if (initEl)  initEl.style.display = '';
+      }
+
+      // description
+      const descEl = $('previewDesc');
+      if (descEl) descEl.textContent = desc || 'Opis sklepu pojawi się tutaj…';
+
+      // visit button
+      const visitBtn = $('previewVisitBtn');
+      if (visitBtn) visitBtn.href = slug ? `sklep.html?store=${encodeURIComponent(slug)}` : 'sklep.html';
+
+      // preview link
+      const plink = $('previewLink');
+      if (plink) plink.href = slug ? `sklep.html?store=${encodeURIComponent(slug)}` : 'sklep.html';
+    }
+
+    /* ── logo preview (inline) ───────────────────────────────────── */
+    function updateLogoPreview(value) {
+      const initEl = $('logoInitials');
+      const imgEl  = $('logoPreviewImg');
+      const form   = document.querySelector('[data-store-generator]');
+      const name   = form && form.storeName ? form.storeName.value.trim() : '';
+
+      if (!value || !value.startsWith('http')) {
+        // show emoji or initials
+        if (initEl) { initEl.style.display = ''; initEl.textContent = getInitials(name || 'U'); }
+        if (imgEl)  { imgEl.style.display = 'none'; imgEl.src = ''; }
+      } else {
+        if (initEl) initEl.style.display = 'none';
+        if (imgEl)  { imgEl.style.display = 'block'; imgEl.src = value; }
+      }
+    }
+
+    /* ── publish status badge ────────────────────────────────────── */
+    function updateStatusBadge(active) {
+      const badge = $('statusBadge');
+      if (!badge) return;
+      if (active) {
+        badge.textContent = 'Status: Opublikowany ✅';
+        badge.className = 'status-badge status-active';
+      } else {
+        badge.textContent = 'Status: Wersja robocza 📝';
+        badge.className = 'status-badge status-draft';
+      }
+    }
+
+    /* ── save + publish helper ───────────────────────────────────── */
+    function buildStoreData(form, active) {
+      return {
+        name:         form.storeName        ? form.storeName.value.trim()        : '',
+        slug:         form.storeSlug        ? form.storeSlug.value.trim()        : '',
+        description:  form.storeDescription ? form.storeDescription.value.trim() : '',
+        logo:         $('storeLogoInput')   ? $('storeLogoInput').value.trim()   : '',
+        email:        form.storeEmail       ? form.storeEmail.value.trim()       : '',
+        phone:        form.storePhone       ? form.storePhone.value.trim()       : '',
+        delivery:     form.storeDelivery    ? form.storeDelivery.value.trim()    : '',
+        primaryColor: form.primaryColor     ? form.primaryColor.value            : '#35d9ff',
+        accentColor:  form.accentColor      ? form.accentColor.value             : '#54ffb0',
+        bgColor:      form.backgroundColor  ? form.backgroundColor.value         : '#f5f7fb',
+        theme:        form.storeTheme       ? form.storeTheme.value              : 'modern',
+        margin:       form.storeMargin      ? parseFloat(form.storeMargin.value) : 15,
+        plan:         form.storePlan        ? form.storePlan.value               : 'basic',
+        trial:        form.storeTrial       ? form.storeTrial.value === 'true'   : true,
+        active:       active,
+      };
+    }
+
+    /* ── wire up after DOM ready ─────────────────────────────────── */
+    function initGenerator() {
+      const form = document.querySelector('[data-store-generator]');
+      if (!form) return;
+
+      /* live preview on any input change */
+      form.addEventListener('input', updatePreview);
+      form.addEventListener('change', updatePreview);
+      updatePreview();
+
+      /* logo URL live preview */
+      const logoInput = $('storeLogoInput');
+      if (logoInput) {
+        logoInput.addEventListener('input', () => { updateLogoPreview(logoInput.value); updatePreview(); });
+      }
+
+      /* emoji picker */
+      document.querySelectorAll('.emoji-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const emoji = btn.dataset.emoji;
+          document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          // clear URL logo, show emoji as initials placeholder
+          if (logoInput) { logoInput.value = ''; }
+          const initEl = $('logoInitials');
+          const imgEl  = $('logoPreviewImg');
+          if (initEl) { initEl.style.display = ''; initEl.textContent = emoji; }
+          if (imgEl)  { imgEl.style.display = 'none'; }
+          const pInitials = $('previewInitials');
+          if (pInitials) { pInitials.style.display = ''; pInitials.textContent = emoji; }
+          const pLogo = $('previewLogo');
+          if (pLogo) { pLogo.style.backgroundImage = ''; }
+        });
+      });
+
+      /* color presets */
+      document.querySelectorAll('.color-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const color = btn.dataset.preset;
+          const pi = $('primaryColorInput');
+          if (pi) { pi.value = color; pi.dispatchEvent(new Event('input', { bubbles: true })); }
+          document.querySelectorAll('.color-preset-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          updatePreview();
+        });
+      });
+
+      /* form submit – save as draft */
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const data = buildStoreData(form, false);
+        if (!data.name || !data.slug) { showToast('⚠️ Podaj nazwę i slug sklepu.', false); return; }
+        if (window.StoreManager && window.StoreManager.upsertStore) {
+          window.StoreManager.upsertStore(data);
+        }
+        updateStatusBadge(false);
+        showToast('💾 Sklep zapisany jako wersja robocza.');
+      });
+
+      /* publish button */
+      const publishBtn = $('publishBtn');
+      if (publishBtn) {
+        publishBtn.addEventListener('click', function () {
+          const data = buildStoreData(form, true);
+          if (!data.name || !data.slug) { showToast('⚠️ Podaj nazwę i slug sklepu.', false); return; }
+          if (window.StoreManager && window.StoreManager.upsertStore) {
+            const saved = window.StoreManager.upsertStore(data);
+            if (saved && saved.id && window.StoreManager.setActiveStore) {
+              window.StoreManager.setActiveStore(saved.id);
+            }
+          }
+          updateStatusBadge(true);
+          showToast('✅ Sklep opublikowany!');
+          const plink = $('previewLink');
+          if (plink && data.slug) plink.href = `sklep.html?store=${encodeURIComponent(data.slug)}`;
+        });
+      }
+
+      /* panel button */
+      const panelBtn = form.querySelector('[data-store-panel]');
+      if (panelBtn) panelBtn.addEventListener('click', () => { window.location.href = 'panel-sklepu.html'; });
+
+      /* load existing active store into form */
+      if (window.StoreManager && window.StoreManager.getActiveStore) {
+        const existing = window.StoreManager.getActiveStore();
+        if (existing) {
+          if (form.storeName        && existing.name)         form.storeName.value        = existing.name;
+          if (form.storeSlug        && existing.slug)         form.storeSlug.value        = existing.slug;
+          if (form.storeDescription && existing.description)  form.storeDescription.value = existing.description;
+          if ($('storeLogoInput')   && existing.logo)         $('storeLogoInput').value   = existing.logo;
+          if (form.storeEmail       && existing.email)        form.storeEmail.value        = existing.email;
+          if (form.storePhone       && existing.phone)        form.storePhone.value        = existing.phone;
+          if (form.storeDelivery    && existing.delivery)     form.storeDelivery.value     = existing.delivery;
+          if (form.primaryColor     && existing.primaryColor) form.primaryColor.value      = existing.primaryColor;
+          if (form.accentColor      && existing.accentColor)  form.accentColor.value       = existing.accentColor;
+          if (form.backgroundColor  && existing.bgColor)      form.backgroundColor.value   = existing.bgColor;
+          if (form.storeTheme       && existing.theme)        form.storeTheme.value        = existing.theme;
+          if (form.storeMargin      && existing.margin != null) form.storeMargin.value     = existing.margin;
+          if (form.storePlan        && existing.plan)         form.storePlan.value         = existing.plan;
+          if (form.storeTrial       && existing.trial != null) form.storeTrial.value       = String(existing.trial);
+          updateStatusBadge(!!existing.active);
+          updateLogoPreview(existing.logo || '');
+          updatePreview();
+        }
+      }
+    }
+
+    /* Wait for deferred dependencies, then initialize */
+    function waitAndInit() {
+      if (document.readyState !== 'loading') {
+        // DOM already parsed; deferred scripts may still be running - poll briefly
+        var attempts = 0;
+        var check = setInterval(function () {
+          attempts++;
+          if (window.StoreManager || attempts > 20) {
+            clearInterval(check);
+            initGenerator();
+          }
+        }, 50);
+      } else {
+        document.addEventListener('DOMContentLoaded', function () {
+          var attempts = 0;
+          var check = setInterval(function () {
+            attempts++;
+            if (window.StoreManager || attempts > 20) {
+              clearInterval(check);
+              initGenerator();
+            }
+          }, 50);
+        });
+      }
+    }
+
+    waitAndInit();
+  }());
+  </script>
 </body>
 </html>

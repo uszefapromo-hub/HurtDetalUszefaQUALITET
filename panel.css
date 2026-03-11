@@ -4,3 +4,49 @@ body{
   background-color:var(--bg);
   color:var(--text);
 }
+
+/* ── Store Generator enhancements ─────────────────────────────────────── */
+
+/* Live preview panel */
+.store-preview-panel { margin-bottom: 1.5rem; }
+.preview-heading { font-size: .9rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; opacity: .7; }
+.store-preview-card { border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.12); max-width: 360px; }
+.preview-header { padding: 1.25rem 1.25rem .75rem; display: flex; align-items: center; gap: .75rem; transition: background .25s; }
+.preview-logo { width: 44px; height: 44px; border-radius: 10px; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; color: #fff; flex-shrink: 0; background-size: cover; background-position: center; }
+.preview-title { font-weight: 700; font-size: 1.05rem; color: #fff; }
+.preview-body { background: #fff; padding: 1rem 1.25rem 1.25rem; }
+.preview-desc { font-size: .85rem; color: #555; margin: 0 0 .85rem; }
+.preview-visit-btn { font-size: .8rem; padding: .45rem .9rem; }
+
+/* Emoji picker */
+.emoji-picker { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 .75rem; }
+.emoji-btn { background: var(--surface, #f1f5f9); border: 2px solid transparent; border-radius: 8px; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: .3rem .45rem; transition: border-color .15s, background .15s; }
+.emoji-btn:hover, .emoji-btn.selected { border-color: var(--primary, #35d9ff); background: var(--primary-soft, #e0f9ff); }
+
+/* Logo preview row */
+.logo-preview-row { display: flex; align-items: center; gap: .75rem; margin-top: .5rem; }
+.logo-preview { width: 52px; height: 52px; border-radius: 10px; background: var(--primary, #35d9ff); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: #fff; overflow: hidden; flex-shrink: 0; }
+.logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Color presets */
+.color-presets { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .75rem; }
+.color-preset-btn { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: transform .15s, border-color .15s; }
+.color-preset-btn:hover { transform: scale(1.15); }
+.color-preset-btn.selected { border-color: var(--text, #0f172a); transform: scale(1.15); }
+
+/* Publish section */
+.publish-section { border-top: 1px solid var(--border, #e2e8f0); padding-top: 1.25rem; margin-top: .5rem; }
+.publish-status { margin-bottom: .75rem; }
+.status-badge { display: inline-block; padding: .35rem .75rem; border-radius: 20px; font-size: .82rem; font-weight: 600; }
+.status-draft { background: #fef3c7; color: #92400e; }
+.status-active { background: #dcfce7; color: #166534; }
+
+/* Toast */
+.generator-toast { position: fixed; bottom: calc(var(--bottom-nav-h, 72px) + 1rem); left: 50%; transform: translateX(-50%) translateY(20px); background: #1e293b; color: #fff; padding: .65rem 1.25rem; border-radius: 10px; font-size: .9rem; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 999; white-space: nowrap; }
+.generator-toast.toast-ok { background: #166534; }
+.generator-toast.toast-err { background: #991b1b; }
+.generator-toast.toast-visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+
+/* Success button variant */
+.btn-success { background: #10b981; color: #fff; }
+.btn-success:hover { background: #059669; }
