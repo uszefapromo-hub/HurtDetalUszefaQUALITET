@@ -263,12 +263,23 @@
           var card = document.createElement('article');
           card.className = 'product-card product-tile';
 
-          var imgTag = product.image_url
-            ? '<img src="' + escHtml(product.image_url) + '" alt="' + escHtml(product.name || '') + '" onerror="this.style.display=\'none\'">'
-            : '<span aria-hidden="true">📦</span>';
+          // Build media element first so we can attach error listener via JS
+          var mediaDiv = document.createElement('div');
+          mediaDiv.className = 'product-media';
+          if (product.image_url) {
+            var img = document.createElement('img');
+            img.src = product.image_url;
+            img.alt = product.name || '';
+            img.addEventListener('error', function () { this.style.display = 'none'; });
+            mediaDiv.appendChild(img);
+          } else {
+            var icon = document.createElement('span');
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = '📦';
+            mediaDiv.appendChild(icon);
+          }
 
           card.innerHTML =
-            '<div class="product-media">' + imgTag + '</div>' +
             '<div class="product-details">' +
               '<span class="tag">' + escHtml(product.category || 'Produkt') + '</span>' +
               '<h3>' + escHtml(product.name || '') + '</h3>' +
@@ -287,6 +298,8 @@
               '</button>' +
               '<a class="btn btn-secondary" href="listing.html">Szczegóły</a>' +
             '</div>';
+
+          card.insertBefore(mediaDiv, card.firstChild);
 
           grid.appendChild(card);
         });
