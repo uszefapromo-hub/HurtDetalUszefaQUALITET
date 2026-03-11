@@ -155,7 +155,7 @@ router.post(
         0
       );
 
-      return res.status(200).json({
+      return res.status(201).json({
         cart: {
           ...cart,
           items: itemsResult.rows,

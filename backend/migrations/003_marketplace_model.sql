@@ -23,7 +23,7 @@ ALTER TABLE shop_products ADD COLUMN IF NOT EXISTS source_snapshot JSONB;
 ALTER TABLE shop_products ADD COLUMN IF NOT EXISTS status VARCHAR(30) NOT NULL DEFAULT 'active';
 -- Values: active | inactive | suspended
 
-CREATE INDEX IF NOT EXISTS idx_shop_products_status2 ON shop_products (store_id, status);
+CREATE INDEX IF NOT EXISTS idx_shop_products_store_status ON shop_products (store_id, status);
 
 -- ─── Cart items: shop_product reference ────────────────────────────────────────
 -- Marketplace carts reference shop_products (not raw products) so the cart

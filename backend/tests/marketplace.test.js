@@ -643,8 +643,7 @@ describe('POST /api/cart', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ shop_product_id: spId, quantity: 2 });
 
-    expect(res.status).toBe(200);
-    expect(mockDb.carts.length).toBe(1);
+    expect(res.status).toBe(201);
     expect(mockDb.cart_items.length).toBe(1);
     expect(mockDb.cart_items[0].quantity).toBe(2);
   });

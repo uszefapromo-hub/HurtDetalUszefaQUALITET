@@ -171,7 +171,7 @@ router.get('/stores', async (req, res) => {
 
 router.get('/audit-logs', async (req, res) => {
   const page   = Math.max(1, parseInt(req.query.page  || '1',  10));
-  const limit  = Math.min(100, parseInt(req.query.limit || '50', 10));
+  const limit  = Math.min(100, parseInt(req.query.limit || '20', 10));
   const offset = (page - 1) * limit;
   const entityType = req.query.entity_type || null;  // maps to resource column
   const actorId    = req.query.actor_user_id || null; // maps to user_id column
