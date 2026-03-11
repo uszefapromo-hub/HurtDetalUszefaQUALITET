@@ -327,14 +327,15 @@
             address: fd.get('address') || ''
           };
           var order = cart.saveOrder(formData, items);
-          cart.clearCart();
+          try{ sessionStorage.setItem('qm_last_order', order.number); }catch(e){}
           setTimeout(function(){
+            cart.clearCart();
             var numEl = document.querySelector('[data-order-number]');
             if(numEl){ numEl.textContent = 'Numer zamówienia: ' + order.number; }
             if(contentEl) contentEl.hidden = true;
             if(successEl) successEl.hidden = false;
             window.scrollTo({top: 0, behavior: 'smooth'});
-          }, 600);
+          }, 400);
         });
       }
 
