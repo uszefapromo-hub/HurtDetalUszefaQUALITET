@@ -1,0 +1,1045 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Zamówienia - HurtDetal Uszefa QUALITET</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    /* ── Tabs ── */
+    .ord-tabs { display:flex; gap:.25rem; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,.08); }
+    .ord-tab { padding:.6rem 1.25rem; cursor:pointer; border:none; background:none; color:#94a3b8; font-size:.9rem; font-weight:500; border-bottom:2px solid transparent; transition:color .18s,border-color .18s; white-space:nowrap; }
+    .ord-tab.is-active { color:#fff; border-bottom-color:#3b82f6; }
+    .ord-tab-panel { display:none; }
+    .ord-tab-panel.is-active { display:block; }
+
+    /* ── Filter bar ── */
+    .filter-bar { display:flex; gap:.75rem; flex-wrap:wrap; margin-bottom:1.25rem; align-items:flex-end; }
+    .filter-bar .filter-field { display:flex; flex-direction:column; gap:.3rem; flex:1; min-width:160px; }
+    .filter-bar .filter-field label { font-size:.78rem; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; }
+    .filter-bar input, .filter-bar select { background:#1e293b; border:1px solid rgba(255,255,255,.1); color:#fff; border-radius:.45rem; padding:.55rem .75rem; font-size:.875rem; }
+    .filter-bar input:focus, .filter-bar select:focus { outline:none; border-color:#3b82f6; }
+
+    /* ── Orders table ── */
+    .ord-table-wrap { overflow-x:auto; }
+    .ord-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+    .ord-table th { text-align:left; padding:.6rem .8rem; color:#64748b; font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid rgba(255,255,255,.07); white-space:nowrap; }
+    .ord-table td { padding:.7rem .8rem; border-bottom:1px solid rgba(255,255,255,.05); vertical-align:middle; }
+    .ord-table tr:last-child td { border-bottom:none; }
+    .ord-table tr:hover td { background:rgba(59,130,246,.05); }
+
+    /* ── Status badges ── */
+    .status-badge { display:inline-block; padding:.22rem .6rem; border-radius:99px; font-size:.72rem; font-weight:700; white-space:nowrap; }
+    .status-new      { background:rgba(59,130,246,.18);  color:#60a5fa; }
+    .status-paid     { background:rgba(34,197,94,.18);   color:#4ade80; }
+    .status-processing{ background:rgba(249,115,22,.18); color:#fb923c; }
+    .status-shipped  { background:rgba(168,85,247,.18);  color:#c084fc; }
+    .status-delivered{ background:rgba(34,197,94,.25);   color:#22c55e; }
+    .status-cancelled{ background:rgba(239,68,68,.18);   color:#f87171; }
+
+    /* ── Actions ── */
+    .ord-actions { display:flex; gap:.4rem; }
+    .ord-actions button { padding:.3rem .65rem; font-size:.78rem; border-radius:.35rem; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#e2e8f0; cursor:pointer; transition:background .15s; white-space:nowrap; }
+    .ord-actions button:hover { background:rgba(255,255,255,.12); }
+    .ord-actions button.detail-btn { border-color:rgba(59,130,246,.35); color:#60a5fa; }
+    .ord-actions button.detail-btn:hover { background:rgba(59,130,246,.15); }
+
+    /* ── Cart ── */
+    .cart-layout { display:grid; grid-template-columns:1fr 320px; gap:1.25rem; align-items:start; }
+    .cart-items-list { display:flex; flex-direction:column; gap:.75rem; }
+    .cart-item { display:flex; align-items:center; gap:.9rem; background:#1e293b; border:1px solid rgba(255,255,255,.08); border-radius:.75rem; padding:.85rem 1rem; }
+    .cart-item-img { width:48px; height:48px; border-radius:.4rem; background:#0f172a; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0; }
+    .cart-item-name { flex:1; font-size:.9rem; font-weight:500; }
+    .cart-item-price { color:#94a3b8; font-size:.8rem; margin-top:.15rem; }
+    .qty-controls { display:flex; align-items:center; gap:.4rem; }
+    .qty-btn { width:30px; height:30px; border-radius:.4rem; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); color:#fff; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+    .qty-btn:hover { background:rgba(255,255,255,.14); }
+    .qty-val { min-width:28px; text-align:center; font-weight:600; font-size:.9rem; }
+    .cart-item-total { font-weight:700; color:#facc15; min-width:70px; text-align:right; }
+    .cart-item-remove { background:none; border:none; color:#475569; cursor:pointer; font-size:1rem; padding:.25rem; transition:color .15s; }
+    .cart-item-remove:hover { color:#f87171; }
+    .cart-summary { background:#1e293b; border:1px solid rgba(255,255,255,.08); border-radius:.75rem; padding:1.25rem; position:sticky; top:80px; }
+    .cart-summary-title { font-size:.95rem; font-weight:700; margin-bottom:1rem; padding-bottom:.6rem; border-bottom:1px solid rgba(255,255,255,.08); }
+    .cart-summary-row { display:flex; justify-content:space-between; align-items:center; font-size:.88rem; color:#94a3b8; margin-bottom:.55rem; }
+    .cart-summary-row.total { font-size:1.05rem; font-weight:700; color:#fff; padding-top:.6rem; border-top:1px solid rgba(255,255,255,.08); margin-top:.4rem; }
+    .cart-summary-row.free-ship { color:#4ade80; font-size:.78rem; }
+    .cart-summary .btn { width:100%; margin-top:1rem; }
+    .cart-empty { text-align:center; padding:3.5rem 1rem; color:#475569; }
+    .cart-empty .es-icon { font-size:3.5rem; margin-bottom:.75rem; }
+    .cart-empty p { margin:.4rem 0; font-size:.95rem; }
+
+    /* ── Checkout ── */
+    .checkout-layout { display:grid; grid-template-columns:1fr 340px; gap:1.25rem; align-items:start; }
+    .checkout-form-card { background:#1e293b; border:1px solid rgba(255,255,255,.08); border-radius:.75rem; padding:1.5rem; }
+    .checkout-form-title { font-size:1rem; font-weight:700; margin-bottom:1.1rem; padding-bottom:.6rem; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:.5rem; }
+    .checkout-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:.85rem; }
+    .checkout-form-grid .span2 { grid-column:1/-1; }
+    .checkout-field { display:flex; flex-direction:column; gap:.3rem; }
+    .checkout-field label { font-size:.78rem; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; }
+    .checkout-field input, .checkout-field select { background:#0f172a; border:1px solid rgba(255,255,255,.1); color:#fff; border-radius:.45rem; padding:.65rem .85rem; font-size:.875rem; width:100%; box-sizing:border-box; }
+    .checkout-field input:focus, .checkout-field select:focus { outline:none; border-color:#3b82f6; }
+    .checkout-field input.has-error { border-color:#f87171; }
+    .checkout-field .field-error { color:#f87171; font-size:.75rem; margin-top:.15rem; }
+    .checkout-sidebar { position:sticky; top:80px; }
+    .order-summary-card { background:#1e293b; border:1px solid rgba(255,255,255,.08); border-radius:.75rem; padding:1.25rem; margin-bottom:1rem; }
+    .order-summary-title { font-size:.95rem; font-weight:700; margin-bottom:.85rem; }
+    .order-summary-item { display:flex; justify-content:space-between; font-size:.85rem; margin-bottom:.45rem; color:#94a3b8; }
+    .order-summary-item .item-name { flex:1; margin-right:.5rem; }
+    .order-summary-sep { height:1px; background:rgba(255,255,255,.08); margin:.6rem 0; }
+    .order-summary-total { display:flex; justify-content:space-between; font-size:1rem; font-weight:700; color:#fff; }
+    .payment-card { background:#1e293b; border:1px solid rgba(255,255,255,.08); border-radius:.75rem; padding:1.25rem; }
+    .payment-title { font-size:.95rem; font-weight:700; margin-bottom:.85rem; }
+    .payment-option { display:flex; align-items:center; gap:.75rem; border:1px solid rgba(59,130,246,.35); border-radius:.5rem; padding:.75rem; background:rgba(59,130,246,.08); cursor:pointer; margin-bottom:.75rem; }
+    .payment-option-icon { font-size:1.6rem; }
+    .payment-option-text { flex:1; font-size:.88rem; }
+    .payment-option-text strong { display:block; }
+    .payment-option-text span { color:#94a3b8; font-size:.78rem; }
+    .payment-option input[type=radio] { accent-color:#3b82f6; width:16px; height:16px; }
+    .checkout-actions { margin-top:1rem; display:flex; flex-direction:column; gap:.75rem; }
+
+    /* ── Order detail modal ── */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; pointer-events:none; transition:opacity .2s; }
+    .modal-overlay.is-open { opacity:1; pointer-events:all; }
+    .modal-box { background:#0f172a; border:1px solid rgba(255,255,255,.1); border-radius:1rem; width:100%; max-width:640px; max-height:90vh; overflow-y:auto; padding:1.75rem; position:relative; transform:translateY(12px); transition:transform .2s; }
+    .modal-overlay.is-open .modal-box { transform:translateY(0); }
+    .modal-close { position:absolute; top:1rem; right:1rem; background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1; padding:.25rem .5rem; border-radius:.35rem; transition:color .15s,background .15s; }
+    .modal-close:hover { color:#fff; background:rgba(255,255,255,.08); }
+    .modal-title { font-size:1.15rem; font-weight:700; margin-bottom:1.25rem; padding-right:2.5rem; }
+    .modal-section { margin-bottom:1.25rem; }
+    .modal-section-title { font-size:.78rem; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.6rem; font-weight:600; }
+    .modal-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:.5rem .85rem; }
+    .modal-info-item { font-size:.85rem; }
+    .modal-info-item span { display:block; color:#94a3b8; font-size:.75rem; }
+    .modal-items-table { width:100%; border-collapse:collapse; font-size:.83rem; }
+    .modal-items-table th { color:#64748b; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; text-align:left; padding:.4rem .5rem; border-bottom:1px solid rgba(255,255,255,.07); }
+    .modal-items-table td { padding:.5rem .5rem; border-bottom:1px solid rgba(255,255,255,.04); }
+    .modal-items-table tr:last-child td { border-bottom:none; }
+    .modal-total-row { display:flex; justify-content:space-between; font-weight:700; font-size:1rem; padding-top:.75rem; border-top:1px solid rgba(255,255,255,.1); margin-top:.5rem; }
+    .modal-status-row { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-top:.65rem; }
+    .modal-status-row select { background:#1e293b; border:1px solid rgba(255,255,255,.12); color:#fff; border-radius:.45rem; padding:.5rem .75rem; font-size:.875rem; flex:1; min-width:160px; }
+    .modal-status-row select:focus { outline:none; border-color:#3b82f6; }
+    .timeline { display:flex; flex-direction:column; gap:.5rem; }
+    .timeline-item { display:flex; gap:.75rem; align-items:flex-start; }
+    .timeline-dot { width:10px; height:10px; border-radius:50%; background:#3b82f6; margin-top:.3rem; flex-shrink:0; }
+    .timeline-dot.done { background:#22c55e; }
+    .timeline-content { font-size:.82rem; }
+    .timeline-content strong { display:block; color:#e2e8f0; }
+    .timeline-content span { color:#64748b; font-size:.75rem; }
+    .timeline-line { display:flex; gap:.75rem; align-items:stretch; }
+    .timeline-line::before { content:''; display:block; width:10px; flex-shrink:0; }
+
+    /* ── Stripe redirect modal ── */
+    .stripe-modal { position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:1100; display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; pointer-events:none; transition:opacity .2s; }
+    .stripe-modal.is-open { opacity:1; pointer-events:all; }
+    .stripe-modal-box { background:#0f172a; border:1px solid rgba(255,255,255,.12); border-radius:1rem; padding:2rem; text-align:center; max-width:360px; width:100%; }
+    .stripe-modal-box .stripe-icon { font-size:3rem; margin-bottom:1rem; }
+    .stripe-modal-box h3 { margin:0 0 .6rem; font-size:1.1rem; }
+    .stripe-modal-box p { color:#94a3b8; font-size:.88rem; margin:0; }
+    .stripe-loader { width:36px; height:36px; border:3px solid rgba(255,255,255,.1); border-top-color:#3b82f6; border-radius:50%; animation:spin .8s linear infinite; margin:1.25rem auto 0; }
+
+    /* ── Success modal ── */
+    .success-modal { position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:1100; display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; pointer-events:none; transition:opacity .2s; }
+    .success-modal.is-open { opacity:1; pointer-events:all; }
+    .success-modal-box { background:#0f172a; border:1px solid rgba(255,255,255,.12); border-radius:1rem; padding:2.25rem; text-align:center; max-width:400px; width:100%; }
+    .success-modal-box .success-icon { font-size:3.5rem; margin-bottom:1rem; }
+    .success-modal-box h3 { margin:0 0 .5rem; font-size:1.2rem; }
+    .success-modal-box .order-no { font-size:1.4rem; font-weight:800; color:#4ade80; margin:.75rem 0; }
+    .success-modal-box p { color:#94a3b8; font-size:.88rem; margin:0 0 1.25rem; }
+
+    /* ── Empty & misc ── */
+    .empty-state { text-align:center; padding:3rem 1rem; color:#475569; }
+    .empty-state .es-icon { font-size:3rem; margin-bottom:.75rem; }
+    .empty-state p { margin:.3rem 0; font-size:.9rem; }
+    .hint { font-size:.82rem; color:#94a3b8; }
+    .toolbar { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem; justify-content:space-between; }
+    .toolbar-left { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; }
+
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    @media(max-width:900px) {
+      .cart-layout, .checkout-layout { grid-template-columns:1fr; }
+      .checkout-sidebar { position:static; }
+    }
+    @media(max-width:640px) {
+      .ord-tabs { overflow-x:auto; padding-bottom:.1rem; }
+      .ord-table td:nth-child(2), .ord-table th:nth-child(2),
+      .ord-table td:nth-child(4), .ord-table th:nth-child(4) { display:none; }
+      .checkout-form-grid { grid-template-columns:1fr; }
+      .checkout-form-grid .span2 { grid-column:1; }
+      .modal-info-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body data-page="zamowienia" class="feature-page has-bottom-nav">
+
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="UszefaQualitet">
+      </div>
+      <div class="app-splash-title">
+        <strong>UszefaQualitet</strong>
+        <span>QualitetMarket</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="wrap">
+        <span class="eyebrow">Zarządzanie zamówieniami</span>
+        <h1>Zamówienia</h1>
+        <p class="lead">Przeglądaj, przetwarzaj i śledź zamówienia klientów w jednym miejscu.</p>
+      </div>
+    </section>
+
+    <section class="wrap stats-grid" id="stats-grid">
+      <div class="stat-card">
+        <span>Wszystkie zamówienia</span>
+        <strong id="stat-total">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Nowe</span>
+        <strong id="stat-new">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>W realizacji</span>
+        <strong id="stat-processing">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Dostarczone</span>
+        <strong id="stat-delivered">0</strong>
+      </div>
+    </section>
+
+    <section class="wrap">
+      <div class="panel-card">
+        <!-- Tabs -->
+        <div class="ord-tabs" role="tablist">
+          <button class="ord-tab is-active" role="tab" aria-selected="true"  data-tab="orders">📋 Lista zamówień</button>
+          <button class="ord-tab" role="tab" aria-selected="false" data-tab="cart">🛒 Koszyk <span id="cart-badge" class="status-badge status-new" style="display:none"></span></button>
+          <button class="ord-tab" role="tab" aria-selected="false" data-tab="checkout">💳 Checkout</button>
+        </div>
+
+        <!-- ═══════════ TAB: Lista zamówień ═══════════ -->
+        <div class="ord-tab-panel is-active" id="tab-orders">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <div class="filter-bar" style="margin-bottom:0">
+                <div class="filter-field" style="min-width:220px">
+                  <label for="order-search">Szukaj</label>
+                  <input id="order-search" type="search" placeholder="Nr zamówienia lub klient…" autocomplete="off">
+                </div>
+                <div class="filter-field" style="min-width:160px">
+                  <label for="status-filter">Status</label>
+                  <select id="status-filter">
+                    <option value="all">Wszystkie</option>
+                    <option value="new">Nowe</option>
+                    <option value="paid">Opłacone</option>
+                    <option value="processing">W realizacji</option>
+                    <option value="shipped">Wysłane</option>
+                    <option value="delivered">Dostarczone</option>
+                    <option value="cancelled">Anulowane</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-secondary" id="btn-demo-orders" style="min-height:38px;padding:0 .9rem;font-size:.82rem">
+              ✨ Generuj przykładowe zamówienia
+            </button>
+          </div>
+
+          <div class="ord-table-wrap">
+            <table class="ord-table" id="orders-table">
+              <thead>
+                <tr>
+                  <th>Nr zamówienia</th>
+                  <th>Data</th>
+                  <th>Klient</th>
+                  <th>Produkty</th>
+                  <th>Suma</th>
+                  <th>Status</th>
+                  <th>Akcje</th>
+                </tr>
+              </thead>
+              <tbody id="orders-tbody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="orders-empty" hidden>
+            <div class="es-icon">📦</div>
+            <p><strong>Brak zamówień</strong></p>
+            <p>Nie masz jeszcze żadnych zamówień lub żadne nie pasuje do filtrów.</p>
+            <button class="btn btn-secondary" id="btn-demo-empty" style="margin-top:.75rem;min-height:38px;padding:0 1rem;font-size:.85rem">
+              ✨ Generuj przykładowe zamówienia
+            </button>
+          </div>
+        </div>
+
+        <!-- ═══════════ TAB: Koszyk ═══════════ -->
+        <div class="ord-tab-panel" id="tab-cart">
+          <div id="cart-empty-state" class="cart-empty" hidden>
+            <div class="es-icon">🛒</div>
+            <p><strong>Koszyk jest pusty</strong></p>
+            <p>Dodaj produkty, aby złożyć zamówienie.</p>
+            <a href="produkty.html" class="btn btn-primary" style="display:inline-flex;margin-top:1rem">Przeglądaj produkty</a>
+          </div>
+          <div id="cart-content" hidden>
+            <div class="cart-layout">
+              <div>
+                <div class="cart-items-list" id="cart-items-list"></div>
+              </div>
+              <div class="cart-summary" id="cart-summary">
+                <div class="cart-summary-title">Podsumowanie koszyka</div>
+                <div class="cart-summary-row"><span>Produkty</span><span id="cs-subtotal">0,00 zł</span></div>
+                <div class="cart-summary-row"><span>Dostawa</span><span id="cs-shipping">15,00 zł</span></div>
+                <div class="cart-summary-row free-ship" id="cs-free-ship-info" hidden>
+                  <span>🎉 Darmowa dostawa od 199 zł!</span>
+                </div>
+                <div class="cart-summary-row total"><span>Razem</span><span id="cs-total">0,00 zł</span></div>
+                <button class="btn btn-primary" id="btn-to-checkout">Przejdź do checkout →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════ TAB: Checkout ═══════════ -->
+        <div class="ord-tab-panel" id="tab-checkout">
+          <div id="checkout-empty-state" class="cart-empty" hidden>
+            <div class="es-icon">🛒</div>
+            <p><strong>Koszyk jest pusty</strong></p>
+            <p>Wróć do koszyka i dodaj produkty przed zamówieniem.</p>
+            <button class="btn btn-secondary" id="btn-back-to-cart" style="display:inline-flex;margin-top:1rem">← Wróć do koszyka</button>
+          </div>
+          <div id="checkout-content" hidden>
+            <div class="checkout-layout">
+              <!-- Left: form -->
+              <div>
+                <div class="checkout-form-card">
+                  <div class="checkout-form-title">📍 Dane dostawy</div>
+                  <form id="checkout-form" novalidate autocomplete="on">
+                    <div class="checkout-form-grid">
+                      <div class="checkout-field span2">
+                        <label for="cf-name">Imię i nazwisko *</label>
+                        <input id="cf-name" name="fullName" type="text" autocomplete="name" placeholder="Jan Kowalski">
+                        <span class="field-error" id="err-name"></span>
+                      </div>
+                      <div class="checkout-field">
+                        <label for="cf-email">Email *</label>
+                        <input id="cf-email" name="email" type="email" autocomplete="email" placeholder="jan@example.com">
+                        <span class="field-error" id="err-email"></span>
+                      </div>
+                      <div class="checkout-field">
+                        <label for="cf-phone">Telefon</label>
+                        <input id="cf-phone" name="phone" type="tel" autocomplete="tel" placeholder="+48 500 000 000">
+                      </div>
+                      <div class="checkout-field span2">
+                        <label for="cf-street">Ulica i numer *</label>
+                        <input id="cf-street" name="street" type="text" autocomplete="address-line1" placeholder="ul. Kwiatowa 12/3">
+                        <span class="field-error" id="err-street"></span>
+                      </div>
+                      <div class="checkout-field">
+                        <label for="cf-zip">Kod pocztowy *</label>
+                        <input id="cf-zip" name="zip" type="text" autocomplete="postal-code" placeholder="00-000" maxlength="6">
+                        <span class="field-error" id="err-zip"></span>
+                      </div>
+                      <div class="checkout-field">
+                        <label for="cf-city">Miasto *</label>
+                        <input id="cf-city" name="city" type="text" autocomplete="address-level2" placeholder="Warszawa">
+                        <span class="field-error" id="err-city"></span>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Right: summary + payment -->
+              <div class="checkout-sidebar">
+                <div class="order-summary-card">
+                  <div class="order-summary-title">📦 Twoje zamówienie</div>
+                  <div id="co-items-list"></div>
+                  <div class="order-summary-sep"></div>
+                  <div class="order-summary-item"><span>Dostawa</span><span id="co-shipping">15,00 zł</span></div>
+                  <div class="order-summary-sep"></div>
+                  <div class="order-summary-total"><span>Razem</span><span id="co-total">0,00 zł</span></div>
+                </div>
+
+                <div class="payment-card">
+                  <div class="payment-title">💳 Metoda płatności</div>
+                  <label class="payment-option">
+                    <input type="radio" name="payment" value="stripe" checked>
+                    <span class="payment-option-icon">💳</span>
+                    <span class="payment-option-text">
+                      <strong>Płatność online (Stripe)</strong>
+                      <span>Karty, BLIK, przelew błyskawiczny</span>
+                    </span>
+                  </label>
+                  <div class="checkout-actions">
+                    <button class="btn btn-secondary" id="btn-stripe-redirect" type="button">Przekieruj do Stripe</button>
+                    <button class="btn btn-primary" id="btn-place-order" type="button">✅ Złóż zamówienie</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /.panel-card -->
+    </section>
+  </main>
+
+  <!-- ═══════════ Order Detail Modal ═══════════ -->
+  <div class="modal-overlay" id="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+    <div class="modal-box">
+      <button class="modal-close" id="order-modal-close" aria-label="Zamknij">✕</button>
+      <div class="modal-title" id="order-modal-title">Szczegóły zamówienia</div>
+
+      <div class="modal-section" id="modal-order-header"></div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Dane klienta</div>
+        <div class="modal-info-grid" id="modal-customer-info"></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Produkty</div>
+        <table class="modal-items-table">
+          <thead>
+            <tr>
+              <th>Produkt</th>
+              <th style="text-align:center">Szt.</th>
+              <th style="text-align:right">Cena</th>
+              <th style="text-align:right">Suma</th>
+            </tr>
+          </thead>
+          <tbody id="modal-items-tbody"></tbody>
+        </table>
+        <div class="modal-total-row">
+          <span>Razem</span>
+          <span id="modal-total"></span>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Status zamówienia</div>
+        <div class="modal-status-row">
+          <select id="modal-status-select">
+            <option value="new">Nowe</option>
+            <option value="paid">Opłacone</option>
+            <option value="processing">W realizacji</option>
+            <option value="shipped">Wysłane</option>
+            <option value="delivered">Dostarczone</option>
+            <option value="cancelled">Anulowane</option>
+          </select>
+          <button class="btn btn-primary" id="btn-save-status" style="min-height:38px;padding:0 1rem;font-size:.85rem">Zapisz status</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Historia statusów</div>
+        <div class="timeline" id="modal-timeline"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ Stripe Redirect Modal ═══════════ -->
+  <div class="stripe-modal" id="stripe-modal" role="alertdialog" aria-labelledby="stripe-modal-title">
+    <div class="stripe-modal-box">
+      <div class="stripe-icon">💳</div>
+      <h3 id="stripe-modal-title">Przekierowanie do Stripe...</h3>
+      <p>Trwa przygotowanie płatności. Za chwilę zostaniesz przekierowany do bezpiecznego formularza Stripe.</p>
+      <div class="stripe-loader"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ Success Modal ═══════════ -->
+  <div class="success-modal" id="success-modal" role="alertdialog" aria-labelledby="success-modal-title">
+    <div class="success-modal-box">
+      <div class="success-icon">🎉</div>
+      <h3 id="success-modal-title">Zamówienie złożone!</h3>
+      <div class="order-no" id="success-order-no"></div>
+      <p>Dziękujemy za zamówienie. Otrzymasz potwierdzenie na podany adres e-mail.</p>
+      <button class="btn btn-primary" id="btn-success-close" style="width:100%">Zobacz zamówienia</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
+    <a href="index.html" rel="nofollow noreferrer" data-nav="index">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 11.5L12 4l9 7.5"></path>
+        <path d="M5 10.5V20h14v-9.5"></path>
+      </svg>
+      <span>Start</span>
+    </a>
+    <a href="dashboard.html" rel="nofollow noreferrer" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.2"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.2"></rect>
+      </svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="hurtownie.html" rel="nofollow noreferrer" data-nav="hurtownie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="7" width="7" height="10" rx="1.4"></rect>
+        <rect x="14" y="7" width="7" height="10" rx="1.4"></rect>
+        <path d="M6.5 7V5.5a1.5 1.5 0 0 1 3 0V7"></path>
+      </svg>
+      <span>Hurtownie</span>
+    </a>
+    <a href="produkty.html" rel="nofollow noreferrer" data-nav="produkty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+        <path d="M8 21h8M12 17v4"></path>
+      </svg>
+      <span>Produkty</span>
+    </a>
+    <a href="zamowienia.html" rel="nofollow noreferrer" data-nav="zamowienia" class="is-active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <path d="M16 10a4 4 0 0 1-8 0"></path>
+      </svg>
+      <span>Zamówienia</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script src="stores.js"></script>
+  <script src="js/platform.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    /* ─── Helpers ─────────────────────────────────────────────────── */
+
+    function fmt(amount) {
+      return amount.toLocaleString('pl-PL', { style: 'currency', currency: 'PLN' });
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function fmtDateTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+             ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    const STATUS_MAP = {
+      new:        { label: 'Nowe',        cls: 'status-new' },
+      paid:       { label: 'Opłacone',    cls: 'status-paid' },
+      processing: { label: 'W realizacji', cls: 'status-processing' },
+      shipped:    { label: 'Wysłane',     cls: 'status-shipped' },
+      delivered:  { label: 'Dostarczone', cls: 'status-delivered' },
+      cancelled:  { label: 'Anulowane',   cls: 'status-cancelled' },
+    };
+
+    function statusBadge(status) {
+      const s = STATUS_MAP[status] || { label: status, cls: 'status-new' };
+      return `<span class="status-badge ${s.cls}">${s.label}</span>`;
+    }
+
+    function esc(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* ─── Tab logic ───────────────────────────────────────────────── */
+
+    const tabs = document.querySelectorAll('.ord-tab');
+    const panels = document.querySelectorAll('.ord-tab-panel');
+
+    function switchTab(name) {
+      tabs.forEach(t => {
+        const active = t.dataset.tab === name;
+        t.classList.toggle('is-active', active);
+        t.setAttribute('aria-selected', active);
+      });
+      panels.forEach(p => {
+        p.classList.toggle('is-active', p.id === 'tab-' + name);
+      });
+      if (name === 'cart')     renderCart();
+      if (name === 'checkout') renderCheckout();
+    }
+
+    tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+    /* ─── Stats ───────────────────────────────────────────────────── */
+
+    function refreshStats() {
+      const orders = Platform.getOrders();
+      document.getElementById('stat-total').textContent      = orders.length;
+      document.getElementById('stat-new').textContent        = orders.filter(o => o.status === 'new').length;
+      document.getElementById('stat-processing').textContent = orders.filter(o => o.status === 'processing' || o.status === 'shipped').length;
+      document.getElementById('stat-delivered').textContent  = orders.filter(o => o.status === 'delivered').length;
+    }
+
+    /* ─── Orders list ─────────────────────────────────────────────── */
+
+    function renderOrdersTable() {
+      const search = document.getElementById('order-search').value.trim().toLowerCase();
+      const statusFilter = document.getElementById('status-filter').value;
+      let orders = Platform.getOrders().slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      if (statusFilter !== 'all') orders = orders.filter(o => o.status === statusFilter);
+      if (search) {
+        orders = orders.filter(o =>
+          (o.orderNumber || '').toLowerCase().includes(search) ||
+          (o.customer && o.customer.fullName || '').toLowerCase().includes(search)
+        );
+      }
+
+      const tbody = document.getElementById('orders-tbody');
+      const empty = document.getElementById('orders-empty');
+
+      if (!orders.length) {
+        tbody.innerHTML = '';
+        empty.hidden = false;
+        return;
+      }
+      empty.hidden = true;
+
+      tbody.innerHTML = orders.map(o => {
+        const customer = o.customer || {};
+        const items = o.items || [];
+        const total = o.total || items.reduce((s, i) => s + (i.price * i.qty), 0);
+        return `<tr>
+          <td><strong>${esc(o.orderNumber || o.id)}</strong></td>
+          <td><span class="hint">${fmtDate(o.createdAt)}</span></td>
+          <td>${esc(customer.fullName || '—')}<br><span class="hint" style="font-size:.75rem">${esc(customer.email || '')}</span></td>
+          <td><span class="hint">${items.length} szt.</span></td>
+          <td><strong>${fmt(total)}</strong></td>
+          <td>${statusBadge(o.status)}</td>
+          <td>
+            <div class="ord-actions">
+              <button class="detail-btn" data-order-id="${esc(o.id)}">Szczegóły</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+
+      tbody.querySelectorAll('[data-order-id]').forEach(btn => {
+        btn.addEventListener('click', () => openOrderModal(btn.dataset.orderId));
+      });
+    }
+
+    document.getElementById('order-search').addEventListener('input', renderOrdersTable);
+    document.getElementById('status-filter').addEventListener('change', renderOrdersTable);
+
+    /* ─── Demo orders ─────────────────────────────────────────────── */
+
+    const DEMO_ORDERS = [
+      {
+        customer: { fullName: 'Anna Wiśniewska', email: 'anna@example.pl', phone: '+48 601 234 567', street: 'ul. Słoneczna 15/2', zip: '00-001', city: 'Warszawa' },
+        items: [
+          { name: 'Słuchawki bezprzewodowe BT-500', price: 149.90, qty: 1 },
+          { name: 'Etui ochronne do smartfona', price: 29.90, qty: 2 },
+        ],
+        status: 'delivered',
+        shipping: 0,
+      },
+      {
+        customer: { fullName: 'Piotr Nowak', email: 'piotr.nowak@example.pl', phone: '+48 512 345 678', street: 'ul. Kwiatowa 7', zip: '30-002', city: 'Kraków' },
+        items: [
+          { name: 'Power bank 20000 mAh', price: 89.99, qty: 1 },
+        ],
+        status: 'shipped',
+        shipping: 15,
+      },
+      {
+        customer: { fullName: 'Marta Kowalczyk', email: 'marta.k@example.pl', phone: '+48 789 012 345', street: 'ul. Lipowa 3/8', zip: '61-003', city: 'Poznań' },
+        items: [
+          { name: 'Smartwatch Fitness Pro', price: 249.00, qty: 1 },
+          { name: 'Pasek silikonowy do zegarka', price: 19.90, qty: 3 },
+        ],
+        status: 'processing',
+        shipping: 0,
+      },
+      {
+        customer: { fullName: 'Tomasz Jabłoński', email: 't.jablonski@example.pl', phone: '+48 883 456 789', street: 'ul. Różana 22', zip: '80-004', city: 'Gdańsk' },
+        items: [
+          { name: 'Kabel USB-C 2m', price: 24.99, qty: 2 },
+        ],
+        status: 'paid',
+        shipping: 15,
+      },
+      {
+        customer: { fullName: 'Katarzyna Zielińska', email: 'k.zielinska@example.pl', phone: '+48 664 567 890', street: 'ul. Brzozowa 9/1', zip: '50-005', city: 'Wrocław' },
+        items: [
+          { name: 'Głośnik Bluetooth Boom', price: 129.00, qty: 1 },
+          { name: 'Kabel audio 3.5mm', price: 14.99, qty: 1 },
+        ],
+        status: 'new',
+        shipping: 15,
+      },
+    ];
+
+    function generateDemoOrders() {
+      const existing = Platform.getOrders();
+      const existingNums = new Set(existing.map(o => o.orderNumber));
+
+      DEMO_ORDERS.forEach(demo => {
+        const items = demo.items;
+        const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+        const total = subtotal + demo.shipping;
+        const now = new Date();
+        const daysAgo = Math.floor(Math.random() * 30);
+        const createdAt = new Date(now - daysAgo * 86400000).toISOString();
+
+        const order = {
+          customer: demo.customer,
+          items,
+          subtotal,
+          shipping: demo.shipping,
+          total,
+          status: demo.status,
+          createdAt,
+          paymentMethod: 'stripe',
+          timeline: [
+            { status: 'new', ts: createdAt, note: 'Zamówienie złożone' },
+          ],
+        };
+
+        if (demo.status !== 'new') {
+          order.timeline.push({ status: demo.status, ts: new Date(new Date(createdAt).getTime() + 3600000).toISOString(), note: `Status zmieniony na: ${STATUS_MAP[demo.status]?.label || demo.status}` });
+        }
+
+        Platform.saveOrder(order);
+      });
+
+      refreshStats();
+      renderOrdersTable();
+    }
+
+    document.getElementById('btn-demo-orders').addEventListener('click', generateDemoOrders);
+    document.getElementById('btn-demo-empty').addEventListener('click', generateDemoOrders);
+
+    /* ─── Order detail modal ──────────────────────────────────────── */
+
+    let currentOrderId = null;
+
+    function openOrderModal(id) {
+      const order = Platform.getOrderById(id);
+      if (!order) return;
+      currentOrderId = id;
+
+      const c = order.customer || {};
+      const items = order.items || [];
+      const total = order.total || items.reduce((s, i) => s + i.price * i.qty, 0);
+
+      document.getElementById('order-modal-title').textContent = `Zamówienie ${order.orderNumber || order.id}`;
+
+      document.getElementById('modal-order-header').innerHTML = `
+        <div class="modal-info-grid">
+          <div class="modal-info-item"><span>Nr zamówienia</span><strong>${esc(order.orderNumber || order.id)}</strong></div>
+          <div class="modal-info-item"><span>Data zamówienia</span><strong>${fmtDateTime(order.createdAt)}</strong></div>
+          <div class="modal-info-item"><span>Status</span>${statusBadge(order.status)}</div>
+          <div class="modal-info-item"><span>Metoda płatności</span><strong>${esc(order.paymentMethod || 'stripe')}</strong></div>
+        </div>`;
+
+      document.getElementById('modal-customer-info').innerHTML = `
+        <div class="modal-info-item"><span>Imię i nazwisko</span><strong>${esc(c.fullName || '—')}</strong></div>
+        <div class="modal-info-item"><span>Email</span><strong>${esc(c.email || '—')}</strong></div>
+        <div class="modal-info-item"><span>Telefon</span><strong>${esc(c.phone || '—')}</strong></div>
+        <div class="modal-info-item"><span>Adres</span><strong>${esc([c.street, c.zip, c.city].filter(Boolean).join(', ') || '—')}</strong></div>`;
+
+      document.getElementById('modal-items-tbody').innerHTML = items.map(i => `
+        <tr>
+          <td>${esc(i.name)}</td>
+          <td style="text-align:center">${i.qty}</td>
+          <td style="text-align:right">${fmt(i.price)}</td>
+          <td style="text-align:right"><strong>${fmt(i.price * i.qty)}</strong></td>
+        </tr>`).join('');
+
+      document.getElementById('modal-total').textContent = fmt(total);
+      document.getElementById('modal-status-select').value = order.status;
+
+      const timeline = order.timeline || [{ status: order.status, ts: order.createdAt, note: 'Zamówienie złożone' }];
+      document.getElementById('modal-timeline').innerHTML = timeline.map((t, idx) => `
+        <div class="timeline-item">
+          <div class="timeline-dot${idx === timeline.length - 1 ? ' done' : ''}"></div>
+          <div class="timeline-content">
+            <strong>${esc(t.note || STATUS_MAP[t.status]?.label || t.status)}</strong>
+            <span>${fmtDateTime(t.ts)}</span>
+          </div>
+        </div>`).join('');
+
+      document.getElementById('order-modal').classList.add('is-open');
+    }
+
+    document.getElementById('order-modal-close').addEventListener('click', () => {
+      document.getElementById('order-modal').classList.remove('is-open');
+    });
+    document.getElementById('order-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('order-modal')) {
+        document.getElementById('order-modal').classList.remove('is-open');
+      }
+    });
+
+    document.getElementById('btn-save-status').addEventListener('click', () => {
+      if (!currentOrderId) return;
+      const newStatus = document.getElementById('modal-status-select').value;
+      const order = Platform.getOrderById(currentOrderId);
+      if (!order) return;
+
+      const timeline = order.timeline || [{ status: order.status, ts: order.createdAt, note: 'Zamówienie złożone' }];
+      timeline.push({ status: newStatus, ts: new Date().toISOString(), note: `Status zmieniony na: ${STATUS_MAP[newStatus]?.label || newStatus}` });
+
+      Platform.saveOrder({ ...order, status: newStatus, timeline });
+
+      document.getElementById('order-modal').classList.remove('is-open');
+      refreshStats();
+      renderOrdersTable();
+    });
+
+    /* ─── Cart ────────────────────────────────────────────────────── */
+
+    const SHIPPING_FLAT = 15;
+    const SHIPPING_FREE_THRESHOLD = 199;
+
+    function calcCart() {
+      const cart = Platform.getCart();
+      const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+      const shipping = subtotal >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FLAT;
+      return { cart, subtotal, shipping, total: subtotal + shipping };
+    }
+
+    function renderCart() {
+      const { cart, subtotal, shipping, total } = calcCart();
+      const emptyEl = document.getElementById('cart-empty-state');
+      const contentEl = document.getElementById('cart-content');
+      const badge = document.getElementById('cart-badge');
+
+      const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+      if (totalQty > 0) {
+        badge.textContent = totalQty;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+
+      if (!cart.length) {
+        emptyEl.hidden = false;
+        contentEl.hidden = true;
+        return;
+      }
+      emptyEl.hidden = true;
+      contentEl.hidden = false;
+
+      document.getElementById('cart-items-list').innerHTML = cart.map(item => `
+        <div class="cart-item" data-product-id="${esc(item.productId)}">
+          <div class="cart-item-img">${item.image ? `<img src="${esc(item.image)}" style="width:100%;height:100%;object-fit:cover;border-radius:.4rem" alt="">` : '📦'}</div>
+          <div style="flex:1;min-width:0">
+            <div class="cart-item-name">${esc(item.name)}</div>
+            <div class="cart-item-price">${fmt(item.price)} / szt.</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn" data-qty-dec data-pid="${esc(item.productId)}" aria-label="Zmniejsz ilość">−</button>
+            <span class="qty-val">${item.qty}</span>
+            <button class="qty-btn" data-qty-inc data-pid="${esc(item.productId)}" aria-label="Zwiększ ilość">+</button>
+          </div>
+          <div class="cart-item-total">${fmt(item.price * item.qty)}</div>
+          <button class="cart-item-remove" data-remove data-pid="${esc(item.productId)}" aria-label="Usuń produkt">✕</button>
+        </div>`).join('');
+
+      document.getElementById('cs-subtotal').textContent = fmt(subtotal);
+      document.getElementById('cs-shipping').textContent = shipping === 0 ? 'Darmowa' : fmt(shipping);
+      document.getElementById('cs-free-ship-info').hidden = subtotal >= SHIPPING_FREE_THRESHOLD;
+      document.getElementById('cs-total').textContent = fmt(total);
+
+      document.querySelectorAll('[data-qty-dec]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pid = btn.dataset.pid;
+          const cart = Platform.getCart();
+          const item = cart.find(i => i.productId === pid);
+          if (!item) return;
+          if (item.qty <= 1) {
+            Platform.removeFromCart(pid);
+          } else {
+            const updated = cart.map(i => i.productId === pid ? { ...i, qty: i.qty - 1 } : i);
+            localStorage.setItem(Platform._keys.cart, JSON.stringify(updated));
+          }
+          renderCart();
+        });
+      });
+
+      document.querySelectorAll('[data-qty-inc]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pid = btn.dataset.pid;
+          const cart = Platform.getCart();
+          const updated = cart.map(i => i.productId === pid ? { ...i, qty: i.qty + 1 } : i);
+          localStorage.setItem(Platform._keys.cart, JSON.stringify(updated));
+          renderCart();
+        });
+      });
+
+      document.querySelectorAll('[data-remove]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          Platform.removeFromCart(btn.dataset.pid);
+          renderCart();
+        });
+      });
+    }
+
+    document.getElementById('btn-to-checkout').addEventListener('click', () => switchTab('checkout'));
+
+    /* ─── Checkout ────────────────────────────────────────────────── */
+
+    function renderCheckout() {
+      const { cart, subtotal, shipping, total } = calcCart();
+      const emptyEl = document.getElementById('checkout-empty-state');
+      const contentEl = document.getElementById('checkout-content');
+
+      if (!cart.length) {
+        emptyEl.hidden = false;
+        contentEl.hidden = true;
+        return;
+      }
+      emptyEl.hidden = true;
+      contentEl.hidden = false;
+
+      document.getElementById('co-items-list').innerHTML = cart.map(i => `
+        <div class="order-summary-item">
+          <span class="item-name">${esc(i.name)} × ${i.qty}</span>
+          <span>${fmt(i.price * i.qty)}</span>
+        </div>`).join('');
+
+      document.getElementById('co-shipping').textContent = shipping === 0 ? 'Darmowa' : fmt(shipping);
+      document.getElementById('co-total').textContent = fmt(total);
+    }
+
+    document.getElementById('btn-back-to-cart').addEventListener('click', () => switchTab('cart'));
+
+    /* ─── Form validation ─────────────────────────────────────────── */
+
+    function getField(id) { return document.getElementById(id); }
+
+    function setErr(id, msg) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = msg;
+      if (msg) {
+        const input = el && el.previousElementSibling;
+        if (input) input.classList.add('has-error');
+      }
+    }
+
+    function clearErr(id) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '';
+      const input = el && el.previousElementSibling;
+      if (input) input.classList.remove('has-error');
+    }
+
+    function validateCheckout() {
+      let valid = true;
+      ['err-name','err-email','err-street','err-zip','err-city'].forEach(clearErr);
+
+      const name  = getField('cf-name').value.trim();
+      const email = getField('cf-email').value.trim();
+      const street= getField('cf-street').value.trim();
+      const zip   = getField('cf-zip').value.trim();
+      const city  = getField('cf-city').value.trim();
+
+      if (!name)  { setErr('err-name',  'Pole wymagane'); valid = false; }
+      if (!email) { setErr('err-email', 'Pole wymagane'); valid = false; }
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr('err-email', 'Nieprawidłowy email'); valid = false; }
+      if (!street){ setErr('err-street','Pole wymagane'); valid = false; }
+      if (!zip)   { setErr('err-zip',   'Pole wymagane'); valid = false; }
+      else if (!/^\d{2}-?\d{3}$/.test(zip)) { setErr('err-zip', 'Format: 00-000'); valid = false; }
+      if (!city)  { setErr('err-city',  'Pole wymagane'); valid = false; }
+
+      return valid;
+    }
+
+    /* ─── Place order ─────────────────────────────────────────────── */
+
+    document.getElementById('btn-place-order').addEventListener('click', () => {
+      if (!validateCheckout()) return;
+
+      const { cart, subtotal, shipping, total } = calcCart();
+      if (!cart.length) { switchTab('cart'); return; }
+
+      const customer = {
+        fullName: getField('cf-name').value.trim(),
+        email:    getField('cf-email').value.trim(),
+        phone:    getField('cf-phone').value.trim(),
+        street:   getField('cf-street').value.trim(),
+        zip:      getField('cf-zip').value.trim(),
+        city:     getField('cf-city').value.trim(),
+      };
+
+      const now = new Date().toISOString();
+      const order = Platform.saveOrder({
+        customer,
+        items: cart.map(i => ({ name: i.name, price: i.price, qty: i.qty, productId: i.productId })),
+        subtotal,
+        shipping,
+        total,
+        status: 'new',
+        paymentMethod: 'stripe',
+        timeline: [{ status: 'new', ts: now, note: 'Zamówienie złożone' }],
+      });
+
+      Platform.clearCart();
+      refreshStats();
+
+      document.getElementById('success-order-no').textContent = order.orderNumber || order.id;
+      document.getElementById('success-modal').classList.add('is-open');
+    });
+
+    document.getElementById('btn-success-close').addEventListener('click', () => {
+      document.getElementById('success-modal').classList.remove('is-open');
+      document.getElementById('checkout-form').reset();
+      switchTab('orders');
+      renderOrdersTable();
+    });
+
+    /* ─── Stripe redirect ─────────────────────────────────────────── */
+
+    document.getElementById('btn-stripe-redirect').addEventListener('click', () => {
+      document.getElementById('stripe-modal').classList.add('is-open');
+      setTimeout(() => {
+        document.getElementById('stripe-modal').classList.remove('is-open');
+      }, 3000);
+    });
+
+    /* ─── Init ────────────────────────────────────────────────────── */
+
+    refreshStats();
+    renderOrdersTable();
+    renderCart();
+
+  }());
+  </script>
+</body>
+</html>
