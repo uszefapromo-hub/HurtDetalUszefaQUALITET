@@ -3826,7 +3826,7 @@
       const img = document.createElement('img');
       img.src = supplier.logo || '';
       img.alt = supplier.name || '';
-      img.onerror = function(){ this.src = `https://placehold.co/48x48/0f1837/FFFFFF?text=${encodeURIComponent((supplier.name || 'H').slice(0, 2).toUpperCase())}`; };
+      img.addEventListener('error', function(){ this.src = `https://placehold.co/48x48/0f1837/FFFFFF?text=${encodeURIComponent((supplier.name || 'H').slice(0, 2).toUpperCase())}`; });
       const info = document.createElement('div');
       const nameEl = document.createElement('strong');
       nameEl.textContent = supplier.name;
@@ -3884,7 +3884,7 @@
       const exportBtn = document.querySelector('[data-export-users]');
       if(exportBtn){
         exportBtn.addEventListener('click', () => {
-          const headers = ['ID','Nazwa','Email','Telefon','Kraj','Rola','Plan','Rejestracja','Sprzeda\u017ce','Obr\u00f3t'];
+          const headers = ['ID','Nazwa','Email','Telefon','Kraj','Rola','Plan','Rejestracja','Sprzedaże','Obrót'];
           const rows = users.map(u => [u.id, u.name, u.email, u.phone || '', u.country || '', u.role || 'client', u.plan, u.createdAt, u.sales || 0, u.turnover || 0]);
           const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
           const blob = new Blob([csv], {type: 'text/csv'});
