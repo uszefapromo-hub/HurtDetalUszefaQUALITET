@@ -49,21 +49,23 @@ router.get('/:slug/products', async (req, res) => {
     if (!store) return res.status(404).json({ error: 'Sklep nie znaleziony' });
 
     const countResult = await db.query(
-      'SELECT COUNT(*) FROM shop_products WHERE store_id = $1 AND active = true',
+      `SELECT COUNT(*) FROM shop_products sp
+       JOIN products p ON sp.product_id = p.id
+       WHERE sp.store_id = $1 AND sp.active = true AND sp.status = 'active' AND p.status = 'active'`,
       [store.id]
     );
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await db.query(
       `SELECT sp.id, sp.store_id, sp.product_id, sp.active, sp.sort_order, sp.created_at,
-              COALESCE(sp.custom_title, p.name)              AS name,
+              COALESCE(sp.custom_title, p.name)              AS title,
               COALESCE(sp.custom_description, p.description) AS description,
               p.sku, p.category, p.image_url, p.stock,
-              COALESCE(sp.price_override, p.selling_price)   AS price,
-              COALESCE(sp.margin_override, p.margin)         AS margin
+              COALESCE(NULLIF(sp.selling_price, 0), p.selling_price) AS price_gross,
+              p.price_net, p.tax_rate
        FROM shop_products sp
        JOIN products p ON sp.product_id = p.id
-       WHERE sp.store_id = $1 AND sp.active = true
+       WHERE sp.store_id = $1 AND sp.active = true AND sp.status = 'active' AND p.status = 'active'
        ORDER BY sp.sort_order ASC, sp.created_at DESC
        LIMIT $2 OFFSET $3`,
       [store.id, limit, offset]

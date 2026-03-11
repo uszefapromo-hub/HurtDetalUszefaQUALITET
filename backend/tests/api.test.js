@@ -200,12 +200,24 @@ function setupDbMock() {
     }
 
     // ── carts ──
+    if (s.includes('from carts c') && s.includes('where c.id')) {
+      const cart = mockDb.carts.find((c) => c.id === params[0]);
+      if (!cart) return { rows: [] };
+      const store = mockDb.stores.find((st) => st.id === cart.store_id) || {};
+      return { rows: [{ ...cart, shop_name: store.name, shop_slug: store.slug }] };
+    }
+    if (s.includes('from carts c') && s.includes("status = 'active'") && s.includes('order by')) {
+      const row = mockDb.carts.find((c) => c.user_id === params[0] && c.status === 'active');
+      if (!row) return { rows: [] };
+      const store = mockDb.stores.find((st) => st.id === row.store_id) || {};
+      return { rows: [{ ...row, shop_name: store.name, shop_slug: store.slug }] };
+    }
     if (s.startsWith('select') && s.includes('from carts where id')) {
       const id = params[0];
       const row = mockDb.carts.find((c) => c.id === id);
       return { rows: row ? [row] : [] };
     }
-    if (s.startsWith('select') && s.includes('from carts where user_id')) {
+    if (s.includes('from carts where user_id') && s.includes("status = 'active'")) {
       const userId = params[0];
       const storeId = params[1];
       const row = mockDb.carts.find(
@@ -218,7 +230,7 @@ function setupDbMock() {
       mockDb.carts.push(cart);
       return { rows: [cart] };
     }
-    if (s.startsWith('update carts set updated_at')) {
+    if (s.startsWith('update carts set')) {
       return { rows: [] };
     }
     if (s.startsWith('delete from cart_items where cart_id') && !s.includes('and product_id')) {
@@ -233,8 +245,34 @@ function setupDbMock() {
       );
       return { rows: [] };
     }
+    if (s.startsWith('delete from cart_items where id')) {
+      const id = params[0];
+      mockDb.cart_items = mockDb.cart_items.filter((i) => i.id !== id);
+      return { rows: [] };
+    }
 
     // ── cart_items ──
+    if (s.includes('from cart_items ci') && s.includes('where ci.cart_id')) {
+      return {
+        rows: mockDb.cart_items
+          .filter((i) => i.cart_id === params[0])
+          .map((i) => {
+            const sp = mockDb.shop_products.find((x) => x.id === i.shop_product_id) || {};
+            const p = mockDb.products.find((x) => x.id === i.product_id) || {};
+            return { ...i, product_title: sp.custom_title || p.name || 'Produkt', image_url: p.image_url || null };
+          }),
+      };
+    }
+    if (s.includes('from cart_items ci') && s.includes('join carts c') && s.includes('where ci.id')) {
+      const ci = mockDb.cart_items.find((x) => x.id === params[0]);
+      if (!ci) return { rows: [] };
+      const cart = mockDb.carts.find((c) => c.id === ci.cart_id) || {};
+      return { rows: [{ id: ci.id, user_id: cart.user_id }] };
+    }
+    if (s.includes('from cart_items') && s.includes('where cart_id') && s.includes('shop_product_id')) {
+      const row = mockDb.cart_items.find((ci) => ci.cart_id === params[0] && ci.shop_product_id === params[1]);
+      return { rows: row ? [row] : [] };
+    }
     if (s.startsWith('select') && s.includes('from cart_items') && s.includes('join products')) {
       const cartId = params[0];
       return {
@@ -252,7 +290,8 @@ function setupDbMock() {
       return { rows: row ? [row] : [] };
     }
     if (s.startsWith('insert into cart_items')) {
-      const item = { id: params[0], cart_id: params[1], product_id: params[2], quantity: params[3], unit_price: params[4] };
+      const item = { id: params[0], cart_id: params[1], product_id: params[2],
+        shop_product_id: params[3], quantity: params[4], unit_price: params[5] };
       mockDb.cart_items.push(item);
       return { rows: [item] };
     }
@@ -308,13 +347,22 @@ function setupDbMock() {
     if (s.startsWith('select count(*)') && s.includes('from shop_products')) {
       return { rows: [{ count: String(mockDb.shop_products.length) }] };
     }
+    if (s.startsWith('select') && s.includes('from shop_products sp') && s.includes('p.price_gross') && s.includes('join stores s')) {
+      const id = params[0];
+      const row = mockDb.shop_products.find((sp) => sp.id === id);
+      if (!row) return { rows: [] };
+      const product = mockDb.products.find((p) => p.id === row.product_id) || {};
+      return { rows: [{ ...row, owner_id: SELLER_ID, price_gross: product.price_gross || 100 }] };
+    }
     if (s.startsWith('select') && s.includes('from shop_products sp') && s.includes('join products')) {
       return { rows: mockDb.shop_products };
     }
     if (s.startsWith('select') && s.includes('from shop_products') && s.includes('where sp.id')) {
       const id = params[0];
       const row = mockDb.shop_products.find((sp) => sp.id === id);
-      return { rows: row ? [{ ...row, owner_id: SELLER_ID }] : [] };
+      if (!row) return { rows: [] };
+      const product = mockDb.products.find((p) => p.id === row.product_id) || {};
+      return { rows: [{ ...row, owner_id: SELLER_ID, price_gross: product.price_gross || 100 }] };
     }
     if (s.startsWith('insert into shop_products')) {
       const sp = { id: params[0], store_id: params[1], product_id: params[2], active: true };
@@ -335,10 +383,12 @@ function setupDbMock() {
         if (params[0] !== null) sp.custom_title       = params[0];
         if (params[1] !== null) sp.custom_description = params[1];
         if (params[2] !== null) sp.margin_type        = params[2];
-        if (params[3] !== null) sp.margin_override    = params[3];
-        if (params[4] !== null) sp.price_override     = params[4];
-        if (params[5] !== null) sp.active             = params[5];
-        if (params[6] !== null) sp.sort_order         = params[6];
+        if (params[3] !== null) sp.margin_value       = params[3];
+        if (params[4] !== null) sp.selling_price      = params[4];
+        if (params[5] !== null) sp.price_override     = params[5];
+        if (params[6] !== null) sp.active             = params[6];
+        if (params[7] !== null) sp.sort_order         = params[7];
+        if (params[8] !== null) sp.status             = params[8];
       }
       return { rows: sp ? [sp] : [] };
     }
@@ -350,6 +400,11 @@ function setupDbMock() {
     }
 
     // ── audit_logs ──
+    if (s.startsWith('insert into audit_logs')) {
+      const log = { id: params[0], user_id: params[1], action: params[2], resource: params[3], resource_id: params[4] };
+      mockDb.audit_logs.push(log);
+      return { rows: [] };
+    }
     if (s.startsWith('select count(*)') && s.includes('from audit_logs')) {
       return { rows: [{ count: String(mockDb.audit_logs.length) }] };
     }
@@ -683,64 +738,38 @@ describe('POST /api/categories', () => {
 
 describe('GET /api/cart', () => {
   it('requires authentication', async () => {
-    const res = await request(app).get(`/api/cart?store_id=${STORE_ID}`);
+    const res = await request(app).get('/api/cart');
     expect(res.status).toBe(401);
   });
 
-  it('requires store_id param', async () => {
-    const res = await request(app).get('/api/cart').set('Authorization', `Bearer ${sellerToken}`);
-    expect(res.status).toBe(422);
-  });
-
-  it('returns empty cart when none exists', async () => {
+  it('returns null cart when none exists', async () => {
     db.query.mockResolvedValueOnce({ rows: [] }); // no cart found
 
     const res = await request(app)
-      .get(`/api/cart?store_id=${STORE_ID}`)
+      .get('/api/cart')
       .set('Authorization', `Bearer ${sellerToken}`);
     expect(res.status).toBe(200);
-    expect(res.body.items).toEqual([]);
-    expect(res.body.total).toBe(0);
+    expect(res.body.cart).toBeNull();
   });
 });
 
-describe('POST /api/cart/items', () => {
-  it('rejects missing fields', async () => {
+describe('POST /api/cart', () => {
+  it('rejects missing shop_product_id', async () => {
     const res = await request(app)
-      .post('/api/cart/items')
+      .post('/api/cart')
       .set('Authorization', `Bearer ${sellerToken}`)
-      .send({ store_id: STORE_ID }); // missing product_id and quantity
+      .send({ quantity: 1 }); // missing shop_product_id
     expect(res.status).toBe(422);
   });
 
-  it('returns 404 when product not in store', async () => {
-    db.query.mockResolvedValueOnce({ rows: [] }); // product not found
+  it('returns 404 when shop_product not found', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // shop_product not found
 
     const res = await request(app)
-      .post('/api/cart/items')
+      .post('/api/cart')
       .set('Authorization', `Bearer ${sellerToken}`)
-      .send({ store_id: STORE_ID, product_id: PRODUCT_ID, quantity: 1 });
+      .send({ shop_product_id: PRODUCT_ID, quantity: 1 });
     expect(res.status).toBe(404);
-  });
-
-  it('adds item to cart successfully', async () => {
-    const CART_ID = 'cart-1';
-    db.query
-      .mockResolvedValueOnce({ rows: [{ id: PRODUCT_ID, selling_price: 141.45, stock: 10, name: 'Fotel' }] }) // product found
-      .mockResolvedValueOnce({ rows: [{ id: CART_ID, user_id: SELLER_ID, store_id: STORE_ID, status: 'active' }] }) // get/create cart
-      .mockResolvedValueOnce({ rows: [] })  // check existing cart item
-      .mockResolvedValueOnce({ rows: [] })  // insert cart item
-      .mockResolvedValueOnce({ rows: [] })  // update cart updated_at
-      .mockResolvedValueOnce({ rows: [{ id: CART_ID, user_id: SELLER_ID, store_id: STORE_ID, status: 'active' }] }) // cartWithItems – cart
-      .mockResolvedValueOnce({ rows: [{ id: 'ci-1', cart_id: CART_ID, product_id: PRODUCT_ID, quantity: 1, unit_price: 141.45, name: 'Fotel', image_url: null }] }); // cartWithItems – items
-
-    const res = await request(app)
-      .post('/api/cart/items')
-      .set('Authorization', `Bearer ${sellerToken}`)
-      .send({ store_id: STORE_ID, product_id: PRODUCT_ID, quantity: 1 });
-    expect(res.status).toBe(201);
-    expect(res.body.items).toHaveLength(1);
-    expect(res.body.total).toBeCloseTo(141.45);
   });
 });
 

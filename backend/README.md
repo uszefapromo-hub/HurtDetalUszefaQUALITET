@@ -53,6 +53,8 @@ docker compose up --build
 |------|------|
 | `001_initial_schema.sql` | Podstawowy schemat: `users`, `subscriptions`, `suppliers`, `stores`, `products`, `orders`, `order_items` |
 | `002_extended_schema.sql` | Rozszerzony schemat marketplace: `categories`, `product_images`, `shop_products`, `carts`, `cart_items`, `payments`, `audit_logs` + kolumna `category_id` w `products` |
+| `003_product_status.sql` | Kolumna `status` w `products`; `custom_title`, `custom_description`, `margin_type` w `shop_products`; `updated_at` w `categories` |
+| `004_marketplace_model.sql` | Model rynkowy: `margin_value`, `selling_price`, `source_snapshot`, `status` w `shop_products`; `shop_product_id` w `cart_items` |
 
 Uruchomienie wszystkich migracji:
 ```bash
@@ -71,28 +73,35 @@ backend/
 ├── migrations/
 │   ├── migrate.js              # runner migracji
 │   ├── 001_initial_schema.sql
-│   └── 002_extended_schema.sql
+│   ├── 002_extended_schema.sql
+│   ├── 003_product_status.sql
+│   └── 004_marketplace_model.sql
 ├── src/
 │   ├── app.js                  # główna aplikacja Express
 │   ├── config/
 │   │   └── database.js         # pula połączeń PostgreSQL
+│   ├── helpers/
+│   │   └── audit.js            # fire-and-forget audit log writer
 │   ├── middleware/
 │   │   ├── auth.js             # JWT authenticate + requireRole
 │   │   └── validate.js         # express-validator wrapper
 │   └── routes/
 │       ├── users.js            # /api/users
 │       ├── stores.js           # /api/stores
+│       ├── shops.js            # /api/shops/:slug  (publiczne przeglądanie)
+│       ├── my.js               # /api/my  (panel sprzedawcy)
 │       ├── products.js         # /api/products  (centralny katalog)
 │       ├── shop-products.js    # /api/shop-products (produkt w sklepie)
 │       ├── categories.js       # /api/categories
-│       ├── cart.js             # /api/cart
+│       ├── cart.js             # /api/cart  (model shop_product_id)
 │       ├── orders.js           # /api/orders
 │       ├── payments.js         # /api/payments
 │       ├── subscriptions.js    # /api/subscriptions
 │       ├── suppliers.js        # /api/suppliers
 │       └── admin.js            # /api/admin
 └── tests/
-    └── api.test.js             # testy integracyjne (mock DB)
+│   ├── api.test.js             # testy integracyjne (mock DB)
+└── └── marketplace.test.js     # testy marketplace (shop_products, koszyk, admin)
 ```
 
 ---
@@ -163,6 +172,41 @@ Seller dodaje produkty z centralnego katalogu do swojego sklepu.
 
 ---
 
+### Publiczne przeglądanie sklepu `/api/shops`
+
+| Metoda | Ścieżka                  | Opis                               | Auth |
+|--------|--------------------------|------------------------------------|------|
+| GET    | `/:slug`                 | Profil sklepu po slugu             | nie  |
+| GET    | `/:slug/products`        | Produkty sklepu (tylko aktywne)    | nie  |
+
+Query params dla `/:slug/products`: `page`, `limit`
+
+---
+
+### Panel sprzedawcy `/api/my`
+
+| Metoda | Ścieżka                   | Opis                                         | Auth               |
+|--------|--------------------------|----------------------------------------------|--------------------|
+| GET    | `/orders`                 | Historia zamówień kupującego                 | tak                |
+| GET    | `/store/products`         | Moje produkty w sklepie                      | seller/owner/admin |
+| POST   | `/store/products`         | Dodaj produkt z katalogu do sklepu           | seller/owner/admin |
+| PATCH  | `/store/products/:id`     | Aktualizuj listing (marża, opis, status itp.)| seller/owner/admin |
+| DELETE | `/store/products/:id`     | Usuń produkt ze sklepu                       | seller/owner/admin |
+
+#### Dodanie produktu do sklepu – przykład
+```json
+POST /api/my/store/products
+{
+  "store_id": "uuid-sklepu",
+  "product_id": "uuid-produktu-z-katalogu",
+  "margin_type": "percent",
+  "margin_value": 25
+}
+// → selling_price = price_gross * 1.25, source_snapshot zapisany
+```
+
+---
+
 ### Kategorie `/api/categories`
 
 | Metoda | Ścieżka | Opis                   | Auth        |
@@ -177,15 +221,23 @@ Seller dodaje produkty z centralnego katalogu do swojego sklepu.
 
 ### Koszyk `/api/cart`
 
-| Metoda | Ścieżka              | Opis                    | Auth |
-|--------|----------------------|-------------------------|------|
-| GET    | `/`                  | Pobierz koszyk          | tak  |
-| POST   | `/items`             | Dodaj produkt do koszyka| tak  |
-| PUT    | `/items/:productId`  | Zmień ilość             | tak  |
-| DELETE | `/items/:productId`  | Usuń produkt z koszyka  | tak  |
-| DELETE | `/`                  | Wyczyść koszyk          | tak  |
+Model marketplace – produkty dodawane są przez `shop_product_id` (listing sprzedawcy).
 
-Params: `store_id` (wymagany dla GET, w body dla pozostałych)
+| Metoda | Ścieżka              | Opis                         | Auth |
+|--------|----------------------|------------------------------|------|
+| GET    | `/`                  | Pobierz aktywny koszyk       | tak  |
+| POST   | `/`                  | Dodaj produkt do koszyka     | tak  |
+| DELETE | `/items/:itemId`     | Usuń pozycję koszyka (UUID)  | tak  |
+| DELETE | `/`                  | Wyczyść koszyk               | tak  |
+
+#### Dodanie do koszyka – przykład
+```json
+POST /api/cart
+{
+  "shop_product_id": "uuid-listingu-w-sklepie",
+  "quantity": 2
+}
+```
 
 ---
 
@@ -245,13 +297,14 @@ Plany: `trial` (0 PLN / 7 dni), `basic` (49 PLN), `pro` (149 PLN), `elite` (399 
 
 ### Panel admina `/api/admin`
 
-| Metoda | Ścieżka        | Opis                      | Auth        |
-|--------|----------------|---------------------------|-------------|
-| GET    | `/stats`       | Statystyki platformy      | admin/owner |
-| GET    | `/users`       | Lista użytkowników        | admin/owner |
-| GET    | `/orders`      | Lista zamówień (wszystkie)| admin/owner |
-| GET    | `/stores`      | Lista sklepów (wszystkie) | admin/owner |
-| GET    | `/audit-logs`  | Dziennik audytu           | admin/owner |
+| Metoda | Ścieżka              | Opis                           | Auth        |
+|--------|----------------------|--------------------------------|-------------|
+| GET    | `/stats`             | Statystyki platformy           | admin/owner |
+| GET    | `/users`             | Lista użytkowników (filtr: `role`) | admin/owner |
+| GET    | `/orders`            | Wszystkie zamówienia (filtr: `status`, `store_id`) | admin/owner |
+| PATCH  | `/orders/:id/status` | Zmień status zamówienia        | admin/owner |
+| GET    | `/stores`            | Lista sklepów (wszystkie)      | admin/owner |
+| GET    | `/audit-logs`        | Dziennik audytu (filtr: `entity_type`, `actor_user_id`, `action`) | admin/owner |
 
 ---
 
@@ -285,7 +338,8 @@ npm test
 ```
 
 Testy używają mocków bazy danych – nie wymagają połączenia z PostgreSQL.
-42 testów pokrywa: users, stores, products, categories, cart, orders, payments, shop-products, admin stats, subscriptions, suppliers.
+42 testów w `api.test.js` pokrywa: users, stores, products, categories, cart, orders, payments, shop-products, admin stats, subscriptions, suppliers.
+Dodatkowe testy marketplace w `marketplace.test.js` pokrywają: przeglądanie sklepu po slugu, panel sprzedawcy (shop_products z margin_value/selling_price), koszyk z `shop_product_id`, admin aktualizację statusu zamówień, dziennik audytu.
 
 ---
 

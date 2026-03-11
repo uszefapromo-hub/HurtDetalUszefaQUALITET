@@ -17,10 +17,21 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
+const { auditLog } = require('../helpers/audit');
+
+// ─── Helper: compute selling price from base gross price + margin ──────────────
+
+function computeSellingPrice(priceGross, marginType, marginValue) {
+  const base = parseFloat(priceGross) || 0;
+  const mv   = parseFloat(marginValue) || 0;
+  if (marginType === 'fixed') return parseFloat((base + mv).toFixed(2));
+  // default: percent
+  return parseFloat((base * (1 + mv / 100)).toFixed(2));
+}
 
 const router = express.Router();
 
-// ─── GET /api/my/orders – buyer's order history ────────────────────────────────
+
 
 router.get('/orders', authenticate, async (req, res) => {
   const page   = Math.max(1, parseInt(req.query.page  || '1',  10));
@@ -82,10 +93,10 @@ router.get(
       const result = await db.query(
         `SELECT sp.id, sp.store_id, sp.product_id, sp.active, sp.sort_order,
                 sp.custom_title, sp.custom_description, sp.margin_type,
-                sp.price_override, sp.margin_override, sp.created_at, sp.updated_at,
+                sp.margin_value, sp.selling_price, sp.status,
+                sp.price_override, sp.created_at, sp.updated_at,
                 p.name, p.sku, p.description, p.category, p.image_url, p.stock,
-                p.selling_price AS base_price, p.margin AS base_margin,
-                COALESCE(sp.price_override, p.selling_price) AS price
+                p.price_gross, p.selling_price AS base_price, p.margin AS base_margin
          FROM shop_products sp
          JOIN products p ON sp.product_id = p.id
          WHERE sp.store_id = $1
@@ -114,7 +125,7 @@ router.post(
     body('custom_title').optional().trim(),
     body('custom_description').optional().trim(),
     body('margin_type').optional().isIn(['percent', 'fixed']),
-    body('margin_override').optional().isFloat({ min: 0 }),
+    body('margin_value').optional().isFloat({ min: 0 }),
     body('price_override').optional().isFloat({ min: 0 }),
     body('active').optional().isBoolean(),
     body('sort_order').optional().isInt({ min: 0 }),
@@ -124,13 +135,13 @@ router.post(
     const {
       store_id,
       product_id,
-      custom_title      = null,
+      custom_title       = null,
       custom_description = null,
-      margin_type       = 'percent',
-      margin_override   = null,
-      price_override    = null,
-      active            = true,
-      sort_order        = 0,
+      margin_type        = 'percent',
+      margin_value       = 0,
+      price_override     = null,
+      active             = true,
+      sort_order         = 0,
     } = req.body;
 
     try {
@@ -143,28 +154,57 @@ router.post(
         return res.status(403).json({ error: 'Brak uprawnień do tego sklepu' });
       }
 
-      const productResult = await db.query('SELECT id FROM products WHERE id = $1', [product_id]);
-      if (!productResult.rows[0]) return res.status(404).json({ error: 'Produkt nie znaleziony' });
+      const productResult = await db.query(
+        'SELECT id, name, sku, price_gross, price_net, tax_rate FROM products WHERE id = $1',
+        [product_id]
+      );
+      const product = productResult.rows[0];
+      if (!product) return res.status(404).json({ error: 'Produkt nie znaleziony' });
+
+      // Compute selling_price from gross price and margin
+      const effectivePrice = price_override !== null
+        ? parseFloat(price_override)
+        : computeSellingPrice(product.price_gross, margin_type, margin_value);
+
+      // Snapshot of the global product at listing time
+      const sourceSnapshot = JSON.stringify({
+        name:       product.name,
+        sku:        product.sku,
+        price_gross: product.price_gross,
+        price_net:  product.price_net,
+        tax_rate:   product.tax_rate,
+      });
 
       const id = uuidv4();
       const result = await db.query(
         `INSERT INTO shop_products
            (id, store_id, product_id, custom_title, custom_description, margin_type,
-            margin_override, price_override, active, sort_order, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+            margin_value, selling_price, source_snapshot, price_override, active, sort_order, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
          ON CONFLICT (store_id, product_id) DO UPDATE SET
            custom_title       = EXCLUDED.custom_title,
            custom_description = EXCLUDED.custom_description,
            margin_type        = EXCLUDED.margin_type,
-           margin_override    = EXCLUDED.margin_override,
+           margin_value       = EXCLUDED.margin_value,
+           selling_price      = EXCLUDED.selling_price,
+           source_snapshot    = EXCLUDED.source_snapshot,
            price_override     = EXCLUDED.price_override,
            active             = EXCLUDED.active,
            sort_order         = EXCLUDED.sort_order,
            updated_at         = NOW()
          RETURNING *`,
         [id, store_id, product_id, custom_title, custom_description, margin_type,
-         margin_override, price_override, active, sort_order]
+         margin_value, effectivePrice, sourceSnapshot, price_override, active, sort_order]
       );
+
+      auditLog({
+        actorUserId: req.user.id,
+        entityType:  'shop_product',
+        entityId:    result.rows[0].id,
+        action:      'create',
+        payload:     { store_id, product_id, margin_type, margin_value },
+      });
+
       return res.status(201).json(result.rows[0]);
     } catch (err) {
       console.error('my store add product error:', err.message);
@@ -184,18 +224,20 @@ router.patch(
     body('custom_title').optional().trim(),
     body('custom_description').optional().trim(),
     body('margin_type').optional().isIn(['percent', 'fixed']),
-    body('margin_override').optional().isFloat({ min: 0 }),
+    body('margin_value').optional().isFloat({ min: 0 }),
     body('price_override').optional().isFloat({ min: 0 }),
     body('active').optional().isBoolean(),
     body('sort_order').optional().isInt({ min: 0 }),
+    body('status').optional().isIn(['active', 'inactive', 'suspended']),
   ],
   validate,
   async (req, res) => {
     try {
       const spResult = await db.query(
-        `SELECT sp.*, s.owner_id
+        `SELECT sp.*, s.owner_id, p.price_gross
          FROM shop_products sp
          JOIN stores s ON sp.store_id = s.id
+         JOIN products p ON sp.product_id = p.id
          WHERE sp.id = $1`,
         [req.params.id]
       );
@@ -209,32 +251,55 @@ router.patch(
 
       const {
         custom_title, custom_description, margin_type,
-        margin_override, price_override, active, sort_order,
+        margin_value, price_override, active, sort_order, status,
       } = req.body;
+
+      // Recompute selling_price when margin fields change (unless price_override given)
+      let newSellingPrice = null;
+      const effectiveMarginType  = margin_type  ?? sp.margin_type  ?? 'percent';
+      const effectiveMarginValue = margin_value !== undefined ? margin_value : (sp.margin_value ?? 0);
+      if (price_override !== undefined) {
+        newSellingPrice = parseFloat(price_override);
+      } else if (margin_type !== undefined || margin_value !== undefined) {
+        newSellingPrice = computeSellingPrice(sp.price_gross, effectiveMarginType, effectiveMarginValue);
+      }
 
       const result = await db.query(
         `UPDATE shop_products SET
            custom_title       = COALESCE($1, custom_title),
            custom_description = COALESCE($2, custom_description),
            margin_type        = COALESCE($3, margin_type),
-           margin_override    = COALESCE($4, margin_override),
-           price_override     = COALESCE($5, price_override),
-           active             = COALESCE($6, active),
-           sort_order         = COALESCE($7, sort_order),
+           margin_value       = COALESCE($4, margin_value),
+           selling_price      = COALESCE($5, selling_price),
+           price_override     = COALESCE($6, price_override),
+           active             = COALESCE($7, active),
+           sort_order         = COALESCE($8, sort_order),
+           status             = COALESCE($9, status),
            updated_at         = NOW()
-         WHERE id = $8
+         WHERE id = $10
          RETURNING *`,
         [
           custom_title       ?? null,
           custom_description ?? null,
           margin_type        ?? null,
-          margin_override    ?? null,
-          price_override     ?? null,
+          margin_value       !== undefined ? margin_value : null,
+          newSellingPrice,
+          price_override     !== undefined ? price_override : null,
           active             ?? null,
           sort_order         ?? null,
+          status             ?? null,
           req.params.id,
         ]
       );
+
+      auditLog({
+        actorUserId: req.user.id,
+        entityType:  'shop_product',
+        entityId:    req.params.id,
+        action:      'update',
+        payload:     req.body,
+      });
+
       return res.json(result.rows[0]);
     } catch (err) {
       console.error('my store update product error:', err.message);
@@ -267,6 +332,14 @@ router.delete(
       }
 
       await db.query('DELETE FROM shop_products WHERE id = $1', [req.params.id]);
+
+      auditLog({
+        actorUserId: req.user.id,
+        entityType:  'shop_product',
+        entityId:    req.params.id,
+        action:      'delete',
+      });
+
       return res.json({ message: 'Produkt usunięty ze sklepu' });
     } catch (err) {
       console.error('my store delete product error:', err.message);
