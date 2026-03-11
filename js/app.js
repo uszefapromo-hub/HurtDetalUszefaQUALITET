@@ -577,7 +577,8 @@
       listing: 'sklep',
       'store-generator': 'dashboard',
       'panel-sklepu': 'dashboard',
-      'owner-panel': 'dashboard'
+      'owner-panel': 'dashboard',
+      tasks: 'dashboard'
     };
     const rawPage = document.body.dataset.page || '';
     const fallbackPath = window.location.pathname.split('/').pop() || '';
