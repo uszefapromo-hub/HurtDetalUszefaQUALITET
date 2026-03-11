@@ -58,34 +58,75 @@
       </div>
     </section>
 
-    <section class="wrap stats-grid module-stats">
-      <div class="stat-card">
-        <span>Wszystkie zadania</span>
-        <strong data-tasks-total>47</strong>
-      </div>
-      <div class="stat-card">
-        <span>Ukończone / zamknięte</span>
-        <strong data-tasks-done-today>8</strong>
-      </div>
-      <div class="stat-card">
-        <span>W realizacji</span>
-        <strong data-tasks-in-progress>14</strong>
-      </div>
-      <div class="stat-card">
-        <span>Zaległe</span>
-        <strong>3</strong>
+    <section class="wrap module-content">
+      <div class="dashboard-grid">
+        <div class="panel-card">
+          <div class="section-head">
+            <span class="eyebrow">Statystyki</span>
+            <h2>Przegląd zadań</h2>
+            <p class="hint">Aktualny stan zadań i postęp Twojego zespołu.</p>
+          </div>
+          <div class="store-summary-grid task-stats-grid">
+            <div class="store-summary-item">
+              <span>Wszystkie zadania</span>
+              <strong data-tasks-total class="task-stat-value">47</strong>
+            </div>
+            <div class="store-summary-item">
+              <span>W realizacji</span>
+              <strong data-tasks-in-progress class="task-stat-value">14</strong>
+            </div>
+            <div class="store-summary-item">
+              <span>Ukończone</span>
+              <strong data-tasks-done-today class="task-stat-value">8</strong>
+            </div>
+            <div class="store-summary-item">
+              <span>Zaległe</span>
+              <strong class="task-stat-value">3</strong>
+            </div>
+          </div>
+          <div class="cta-row">
+            <button class="btn btn-primary" type="button" data-task-new-btn style="min-height:40px;padding:0 16px;font-size:14px">+ Nowe zadanie</button>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div class="section-head">
+            <span class="eyebrow">Zespół</span>
+            <h2>Przydział zadań</h2>
+            <p class="hint">Aktywne zadania przypisane do członków Twojego zespołu.</p>
+          </div>
+          <div class="ai-insights-grid">
+            <div class="ai-insight-card">
+              <div class="ai-insight-icon">👤</div>
+              <div class="ai-insight-body">
+                <h3>Anna K.</h3>
+                <p>2 aktywne zadania — Elektronika, Przegląd marż</p>
+              </div>
+            </div>
+            <div class="ai-insight-card">
+              <div class="ai-insight-icon">👤</div>
+              <div class="ai-insight-body">
+                <h3>Marek N.</h3>
+                <p>2 aktywne zadania — Zdjęcia kolekcji, Powiadomienia</p>
+              </div>
+            </div>
+            <div class="ai-insight-card">
+              <div class="ai-insight-icon">👤</div>
+              <div class="ai-insight-body">
+                <h3>Tomasz Z.</h3>
+                <p>2 aktywne zadania — Black Friday, Raport Q3</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="wrap module-content">
+    <section class="wrap module-board">
       <div class="panel-card">
         <div class="section-head">
-          <span class="eyebrow">Zarządzanie zadaniami</span>
+          <span class="eyebrow">Kanban</span>
           <h2>Tablica zadań</h2>
           <p class="hint">Ślij, przypisuj i monitoruj postęp zadań operacyjnych sklepu.</p>
-          <div class="cta-row" style="margin-top:14px">
-            <button class="btn btn-primary" type="button" data-task-new-btn style="min-height:40px;padding:0 16px;font-size:14px">+ Nowe zadanie</button>
-          </div>
         </div>
         <div class="task-board" data-tasks-board>
           <!-- Rendered dynamically by initTasksModule() -->
