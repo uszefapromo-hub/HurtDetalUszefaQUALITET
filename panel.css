@@ -177,17 +177,16 @@ body{
   }
 }
 
-/* ── Responsive grid column helpers ── */
+/* ── Responsive grid column helpers (default = desktop column count) ── */
 .stats-g2{grid-template-columns:repeat(2,1fr)}
 .stats-g3{grid-template-columns:repeat(3,1fr)}
 .stats-g4{grid-template-columns:repeat(4,1fr)}
 
 @media(max-width:980px){
   .stats-g3,.stats-g4{grid-template-columns:repeat(2,1fr)}
-  .stats-g2{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:480px){
-  .stats-g2,.stats-g3,.stats-g4{grid-template-columns:repeat(2,1fr)}
+  .stats-g3,.stats-g4{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:360px){
   .stats-g2,.stats-g3,.stats-g4{grid-template-columns:1fr 1fr}
