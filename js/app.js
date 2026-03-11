@@ -3078,8 +3078,7 @@
     if(document.body.dataset.page !== 'linki-sprzedazowe'){
       return;
     }
-    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
-    if(!logged){
+    if(!isAppLoggedIn()){
       window.location.href = 'login.html';
       return;
     }
@@ -3417,8 +3416,7 @@
   }
 
   function getCurrentPlan(){
-    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
-    if(logged){
+    if(isAppLoggedIn()){
       startTrialIfNeeded(localStorage.getItem(STORAGE_KEYS.email));
     }
     const storedPlan = normalizePlan(localStorage.getItem(STORAGE_KEYS.plan));
@@ -3732,8 +3730,7 @@
       messageTarget.textContent = `Ta funkcja wymaga planu ${planLabel}`;
     }
     modal.toggleAttribute('data-upgrade-locked-page', Boolean(options.lockPage));
-    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
-    const backLink = modal.querySelector('[data-upgrade-back]');
+    const logged = isAppLoggedIn();
     if(backLink){
       backLink.hidden = !options.lockPage;
       backLink.href = logged ? 'dashboard.html' : 'login.html';
@@ -3782,12 +3779,19 @@
     }
   }
 
+  // ── isAppLoggedIn: checks both the API JWT token and the legacy localStorage flag ──
+  function isAppLoggedIn(){
+    try{
+      if(localStorage.getItem('qm_token')){ return true; }
+    } catch(_){}
+    return localStorage.getItem(STORAGE_KEYS.logged) === 'true';
+  }
+
   function guardDashboard(){
     if(document.body.dataset.page !== 'dashboard'){
       return;
     }
-    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
-    if(!logged){
+    if(!isAppLoggedIn()){
       window.location.href = 'login.html';
       return;
     }
@@ -3844,8 +3848,7 @@
     if(document.body.dataset.page !== 'owner-panel'){
       return false;
     }
-    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
-    if(!logged){
+    if(!isAppLoggedIn()){
       window.location.replace('login.html');
       return false;
     }
@@ -5435,111 +5438,163 @@
     const activeStore = getActiveStore(stores);
     const storeSettings = loadStoreSettings();
     const storeMargin = resolveStoreMargin({store: activeStore, settings: storeSettings, plan: activeStore && activeStore.plan});
-    let storeProducts = loadProductsBySupplier();
-    if(activeStore && activeStore.id){
-      storeProducts = storeProducts.filter(product => product.storeId === activeStore.id);
-    }
-    if(!storeProducts.length && activeStore && Array.isArray(activeStore.products)){
-      storeProducts = activeStore.products.map(product => ({...product, storeId: activeStore.id}));
-    }
-    const storeCategoryCount = new Set(storeProducts.map(p => p.category)).size;
-    if(!storeProducts.length || storeCategoryCount < 5){
-      if(!storefrontFallbackProducts){
-        const fallbackSuppliers = ensureOwnerDemoData().suppliers;
-        storefrontFallbackProducts = buildProductsFromSuppliers(fallbackSuppliers);
-      }
-      storeProducts = storefrontFallbackProducts.map(product => ({
-        ...product,
-        storeId: (activeStore && activeStore.id) || product.storeId
-      }));
-    }
-    productsGrid.innerHTML = '';
-    if(!storeProducts.length){
-      if(emptyState){
-        emptyState.hidden = false;
-      }
-      return;
-    }
-    if(emptyState){
-      emptyState.hidden = true;
-    }
-    storeProducts.forEach(product => {
-      const {cost: resolvedCost} = resolveCostAndPrice(product);
-      const pricing = calculateTieredPricing(resolvedCost, {
-        userMargin: product.margin ?? storeMargin,
-        store: activeStore,
-        settings: storeSettings,
-        product
-      });
-      const card = document.createElement('article');
-      card.className = 'product-card product-tile';
 
-      const media = document.createElement('div');
-      media.className = 'product-media';
-      const image = document.createElement('img');
-      image.src = resolveProductImage(product);
-      image.alt = product.name || 'Produkt';
-      media.appendChild(image);
-
-      const details = document.createElement('div');
-      details.className = 'product-details';
-      const category = document.createElement('span');
-      category.className = 'tag';
-      category.textContent = product.category || 'Kategoria';
-      const title = document.createElement('h3');
-      title.textContent = product.name || 'Produkt';
-      const hint = document.createElement('p');
-      hint.className = 'hint';
-      hint.textContent = product.description || 'Opis produktu w przygotowaniu.';
-      const meta = document.createElement('div');
-      meta.className = 'product-meta';
-      const price = document.createElement('span');
-      price.className = 'price';
-      price.textContent = formatCurrency(pricing.finalPrice);
-      meta.appendChild(price);
-
-      const supplier = document.createElement('div');
-      supplier.className = 'product-supplier';
-      const supplierText = document.createElement('span');
-      supplierText.textContent = product.supplier ? `Hurtownia: ${product.supplier}` : 'Hurtownia: —';
-      supplier.appendChild(supplierText);
-
-      const actions = document.createElement('div');
-      actions.className = 'cta-row product-actions';
-      const addButton = document.createElement('button');
-      addButton.className = 'btn btn-primary';
-      addButton.type = 'button';
-      addButton.textContent = 'Zamów';
-      addButton.addEventListener('click', () => {
-        const order = createOrder(product, activeStore, {amount: pricing.finalPrice});
-        if(order){
-          const original = addButton.textContent;
-          addButton.textContent = 'Zamówiono ✓';
-          addButton.disabled = true;
-          setTimeout(() => {
-            addButton.textContent = original;
-            addButton.disabled = false;
-          }, 2000);
+    // Try loading products from the backend API first; fall back to localStorage/demo data.
+    function renderProducts(storeProducts){
+      productsGrid.innerHTML = '';
+      if(!storeProducts.length){
+        if(emptyState){
+          emptyState.hidden = false;
         }
+        return;
+      }
+      if(emptyState){
+        emptyState.hidden = true;
+      }
+      storeProducts.forEach(product => {
+        const {cost: resolvedCost} = resolveCostAndPrice(product);
+        const pricing = calculateTieredPricing(resolvedCost, {
+          userMargin: product.margin ?? storeMargin,
+          store: activeStore,
+          settings: storeSettings,
+          product
+        });
+        const card = document.createElement('article');
+        card.className = 'product-card product-tile';
+
+        const media = document.createElement('div');
+        media.className = 'product-media';
+        const image = document.createElement('img');
+        image.src = resolveProductImage(product);
+        image.alt = product.name || 'Produkt';
+        media.appendChild(image);
+
+        const details = document.createElement('div');
+        details.className = 'product-details';
+        const category = document.createElement('span');
+        category.className = 'tag';
+        category.textContent = product.category || 'Kategoria';
+        const title = document.createElement('h3');
+        title.textContent = product.name || 'Produkt';
+        const hint = document.createElement('p');
+        hint.className = 'hint';
+        hint.textContent = product.description || 'Opis produktu w przygotowaniu.';
+        const meta = document.createElement('div');
+        meta.className = 'product-meta';
+        const price = document.createElement('span');
+        price.className = 'price';
+        price.textContent = formatCurrency(pricing.finalPrice);
+        meta.appendChild(price);
+
+        const supplier = document.createElement('div');
+        supplier.className = 'product-supplier';
+        const supplierText = document.createElement('span');
+        supplierText.textContent = product.supplier ? `Hurtownia: ${product.supplier}` : 'Hurtownia: —';
+        supplier.appendChild(supplierText);
+
+        const actions = document.createElement('div');
+        actions.className = 'cta-row product-actions';
+        const addButton = document.createElement('button');
+        addButton.className = 'btn btn-primary';
+        addButton.type = 'button';
+        // product.shop_product_id is used for API-based cart (logged in flow).
+        // product.id is the central catalog product ID.
+        addButton.dataset.addToCart = '';
+        addButton.dataset.productId = product.id || '';
+        addButton.dataset.productName = product.name || '';
+        addButton.dataset.productPrice = String(pricing.finalPrice);
+        addButton.dataset.productImg = resolveProductImage(product);
+        if(product.shop_product_id){
+          // When a shop_product_id is available, the cart.js global click handler
+          // will use addByShopProduct (API-backed cart when logged in).
+          addButton.dataset.shopProductId = product.shop_product_id;
+        }
+        addButton.textContent = 'Dodaj do koszyka';
+        addButton.addEventListener('click', () => {
+          const order = createOrder(product, activeStore, {amount: pricing.finalPrice});
+          if(order){
+            const original = addButton.textContent;
+            addButton.textContent = 'Dodano ✓';
+            addButton.disabled = true;
+            setTimeout(() => {
+              addButton.textContent = original;
+              addButton.disabled = false;
+            }, 2000);
+          }
+        });
+        const detailsLink = document.createElement('a');
+        detailsLink.className = 'btn btn-secondary';
+        detailsLink.href = 'listing.html';
+        detailsLink.textContent = 'Szczegóły';
+        actions.appendChild(addButton);
+        actions.appendChild(detailsLink);
+
+        details.appendChild(category);
+        details.appendChild(title);
+        details.appendChild(hint);
+        details.appendChild(meta);
+        details.appendChild(supplier);
+        details.appendChild(actions);
+
+        card.appendChild(media);
+        card.appendChild(details);
+        productsGrid.appendChild(card);
       });
-      const detailsLink = document.createElement('a');
-      detailsLink.className = 'btn btn-secondary';
-      detailsLink.href = 'listing.html';
-      detailsLink.textContent = 'Szczegóły';
-      actions.appendChild(addButton);
-      actions.appendChild(detailsLink);
+    }
 
-      details.appendChild(category);
-      details.appendChild(title);
-      details.appendChild(hint);
-      details.appendChild(meta);
-      details.appendChild(supplier);
-      details.appendChild(actions);
+    function loadLocalProducts(){
+      let storeProducts = loadProductsBySupplier();
+      if(activeStore && activeStore.id){
+        storeProducts = storeProducts.filter(product => product.storeId === activeStore.id);
+      }
+      if(!storeProducts.length && activeStore && Array.isArray(activeStore.products)){
+        storeProducts = activeStore.products.map(product => ({...product, storeId: activeStore.id}));
+      }
+      const storeCategoryCount = new Set(storeProducts.map(p => p.category)).size;
+      if(!storeProducts.length || storeCategoryCount < 5){
+        if(!storefrontFallbackProducts){
+          const fallbackSuppliers = ensureOwnerDemoData().suppliers;
+          storefrontFallbackProducts = buildProductsFromSuppliers(fallbackSuppliers);
+        }
+        storeProducts = storefrontFallbackProducts.map(product => ({
+          ...product,
+          storeId: (activeStore && activeStore.id) || product.storeId
+        }));
+      }
+      return storeProducts;
+    }
 
-      card.appendChild(media);
-      card.appendChild(details);
-      productsGrid.appendChild(card);
-    });
+    // Try API if available
+    if(window.QMApi && window.QMApi.Products){
+      const apiParams = { is_central: true, status: 'active', limit: 40 };
+      window.QMApi.Products.list(apiParams).then(function(resp){
+        const rows = (resp && resp.products) ? resp.products : (Array.isArray(resp) ? resp : []);
+        if(rows.length){
+          // Normalize API product shape to match local product shape
+          const normalized = rows.map(p => ({
+            id: p.id,
+            // shop_product_id is present when fetched via /api/shop-products;
+            // absent for central catalog (/api/products). Cart will use id as fallback.
+            shop_product_id: p.shop_product_id || null,
+            name: p.name,
+            description: p.description || '',
+            category: p.category || '',
+            price: parseFloat(p.selling_price || p.price_gross || 0),
+            cost: parseFloat(p.price_gross || 0),
+            img: p.image_url || '',
+            supplier: p.supplier_name || '',
+            margin: parseFloat(p.margin || 0)
+          }));
+          renderProducts(normalized);
+          return;
+        }
+        renderProducts(loadLocalProducts());
+      }).catch(function(){
+        renderProducts(loadLocalProducts());
+      });
+    } else {
+      renderProducts(loadLocalProducts());
+    }
   }
 
   function initStoreGenerator(){
@@ -5643,15 +5698,102 @@
     });
   }
 
+  // ── syncAuthToLegacyStorage: keeps old localStorage flags in sync after API login ──
+  function syncAuthToLegacyStorage(user, email){
+    if(email){
+      localStorage.setItem(STORAGE_KEYS.email, email);
+    }
+    if(user){
+      const role = user.role || '';
+      if(role === 'superadmin' || role === 'owner'){
+        localStorage.setItem(STORAGE_KEYS.role, 'superadmin');
+      } else if(role){
+        localStorage.removeItem(STORAGE_KEYS.role);
+      }
+      if(user.plan){
+        localStorage.setItem(STORAGE_KEYS.plan, user.plan);
+      }
+      try{
+        localStorage.setItem(STORAGE_KEYS.userProfile, JSON.stringify(user));
+      } catch(_){}
+    }
+    localStorage.setItem(STORAGE_KEYS.logged, 'true');
+  }
+
   function initLoginForm(){
     const form = document.querySelector('[data-login-form]');
     if(!form){
       return;
     }
-    form.addEventListener('submit', event => {
+
+    // "Create account" button (secondary button in the login form)
+    const createBtn = form.querySelector('.btn-secondary[type="button"]');
+    if(createBtn){
+      createBtn.addEventListener('click', async function(){
+        const emailInput = form.querySelector('input[name="email"]');
+        const passwordInput = form.querySelector('input[name="password"]');
+        const email = emailInput ? emailInput.value.trim() : '';
+        const password = passwordInput ? passwordInput.value : '';
+        if(!email || !password){
+          alert('Podaj adres e-mail i hasło, aby utworzyć konto.');
+          return;
+        }
+        const name = email.split('@')[0] || 'Użytkownik';
+        if(window.QMApi && window.QMApi.Auth){
+          try{
+            const data = await window.QMApi.Auth.register(email, password, name, 'seller');
+            syncAuthToLegacyStorage(data.user, email);
+            startTrialIfNeeded(email);
+            window.location.href = 'dashboard.html';
+            return;
+          } catch(err){
+            const msg = (err && err.body && err.body.error) || (err && err.message) || '';
+            if(msg){
+              alert('Błąd rejestracji: ' + msg);
+              return;
+            }
+          }
+        }
+        // Legacy fallback – no backend available
+        if(email){
+          localStorage.setItem(STORAGE_KEYS.email, email);
+          if(normalizeQueryParam(email) === OWNER_EMAIL_NORMALIZED){
+            localStorage.setItem(STORAGE_KEYS.role, 'superadmin');
+          } else {
+            localStorage.removeItem(STORAGE_KEYS.role);
+          }
+        }
+        localStorage.setItem(STORAGE_KEYS.logged, 'true');
+        startTrialIfNeeded(email);
+        window.location.href = 'dashboard.html';
+      });
+    }
+
+    form.addEventListener('submit', async function(event){
       event.preventDefault();
       const emailInput = form.querySelector('input[name="email"]');
+      const passwordInput = form.querySelector('input[name="password"]');
       const email = emailInput ? emailInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value : '';
+
+      if(window.QMApi && window.QMApi.Auth && email && password){
+        try{
+          const data = await window.QMApi.Auth.login(email, password);
+          syncAuthToLegacyStorage(data.user, email);
+          startTrialIfNeeded(email);
+          window.location.href = 'dashboard.html';
+          return;
+        } catch(err){
+          const msg = (err && err.body && err.body.error) || (err && err.message) || '';
+          // Only block on explicit auth errors; network errors fall through to legacy
+          if(err && err.status && err.status < 500){
+            alert('Błąd logowania: ' + (msg || 'Nieprawidłowy e-mail lub hasło'));
+            return;
+          }
+        }
+      }
+
+      // Legacy fallback – backend not available
       if(email){
         localStorage.setItem(STORAGE_KEYS.email, email);
         if(normalizeQueryParam(email) === OWNER_EMAIL_NORMALIZED){
@@ -5728,8 +5870,7 @@
     if(!links.length){
       return;
     }
-    const logged = localStorage.getItem(STORAGE_KEYS.logged) === 'true';
-    if(logged && hasOwnerAccess()){
+    if(isAppLoggedIn() && hasOwnerAccess()){
       links.forEach(link => {
         link.hidden = false;
       });

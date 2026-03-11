@@ -13,4 +13,44 @@ function validate(req, res, next) {
   next();
 }
 
-module.exports = { validate };
+/**
+ * Sanitize a string value to prevent stored XSS.
+ * Replaces HTML special characters with their entity equivalents.
+ *
+ * NOTE: For a production deployment that stores HTML-rich content,
+ * consider using a dedicated allowlist-based sanitization library such as
+ * DOMPurify (browser) or sanitize-html (Node.js) instead of this basic encoder.
+ *
+ * @param {*} value
+ * @returns {string}
+ */
+function sanitizeText(value) {
+  if (value == null) return '';
+  return String(value)
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/`/g, '&#x60;');
+}
+
+/**
+ * Recursively sanitize all string fields in an object or array.
+ * Non-string primitives and nested objects/arrays are handled recursively.
+ * @param {*} data
+ * @returns {*}
+ */
+function sanitizeDeep(data) {
+  if (typeof data === 'string') return sanitizeText(data);
+  if (Array.isArray(data)) return data.map(sanitizeDeep);
+  if (data && typeof data === 'object') {
+    const sanitized = {};
+    for (const [key, val] of Object.entries(data)) {
+      sanitized[key] = sanitizeDeep(val);
+    }
+    return sanitized;
+  }
+  return data;
+}
+
+module.exports = { validate, sanitizeText, sanitizeDeep };

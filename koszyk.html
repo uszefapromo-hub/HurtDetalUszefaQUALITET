@@ -222,6 +222,7 @@
   </nav>
 
   <script src="js/app.js" defer></script>
+  <script src="js/api.js" defer></script>
   <script src="js/cart.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function(){
@@ -326,16 +327,33 @@
             phone: fd.get('phone') || '',
             address: fd.get('address') || ''
           };
-          var order = cart.saveOrder(formData, items);
-          try{ sessionStorage.setItem('qm_last_order', order.number); }catch(e){}
-          setTimeout(function(){
+
+          // Determine store ID – from active cart item or QMApi user store
+          var storeId = null;
+          try{
+            var firstItemStoreId = items[0] && items[0].storeId;
+            storeId = firstItemStoreId || null;
+          }catch(_){}
+
+          function onOrderCreated(order){
+            try{ sessionStorage.setItem('qm_last_order', order.number || order.id); }catch(_e){}
             cart.clearCart();
             var numEl = document.querySelector('[data-order-number]');
-            if(numEl){ numEl.textContent = 'Numer zamówienia: ' + order.number; }
+            if(numEl){ numEl.textContent = 'Numer zamówienia: ' + (order.number || order.id); }
             if(contentEl) contentEl.hidden = true;
             if(successEl) successEl.hidden = false;
             window.scrollTo({top: 0, behavior: 'smooth'});
-          }, 400);
+          }
+
+          function onOrderError(){
+            if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Złóż zamówienie'; }
+          }
+
+          cart.createOrder(formData, items, storeId).then(onOrderCreated).catch(function(err){
+            // If backend fails, fall through to localStorage order
+            var order = cart.saveOrder(formData, items);
+            onOrderCreated(order);
+          });
         });
       }
 

@@ -321,6 +321,17 @@
     updateStatus(id, status, externalRef) {
       return put(`/payments/${id}/status`, { status, external_ref: externalRef });
     },
+
+    /**
+     * Initiate a payment for an order (returns redirect_url or provider payload).
+     * POST /api/payments/:orderId/initiate
+     * @param {string} orderId
+     * @param {'transfer'|'card'|'blik'|'p24'} method
+     * @param {string} [returnUrl]
+     */
+    initiate(orderId, method, returnUrl) {
+      return post(`/payments/${orderId}/initiate`, { method, return_url: returnUrl });
+    },
   };
 
   // ─── Subscriptions ────────────────────────────────────────────────────────────

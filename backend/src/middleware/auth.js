@@ -25,7 +25,7 @@ function authenticate(req, res, next) {
 
 /**
  * Middleware factory: require the requesting user to have a specific role.
- * @param {...string} roles – e.g. 'owner', 'seller', 'admin'
+ * @param {...string} roles – e.g. 'owner', 'seller', 'admin', 'superadmin'
  */
 function requireRole(...roles) {
   return (req, res, next) => {
@@ -34,6 +34,17 @@ function requireRole(...roles) {
     }
     next();
   };
+}
+
+/**
+ * Middleware: require superadmin role (alias for requireRole('superadmin', 'owner')).
+ * Owner is the platform owner and has full superadmin privileges.
+ */
+function requireSuperAdmin(req, res, next) {
+  if (!req.user || (req.user.role !== 'superadmin' && req.user.role !== 'owner')) {
+    return res.status(403).json({ error: 'Wymagane uprawnienia superadmin' });
+  }
+  next();
 }
 
 /**
@@ -48,4 +59,4 @@ function signToken(user) {
   );
 }
 
-module.exports = { authenticate, requireRole, signToken };
+module.exports = { authenticate, requireRole, requireSuperAdmin, signToken };
