@@ -136,8 +136,9 @@ router.patch(
         const tr = tax_rate  !== undefined ? tax_rate  : parseFloat(current.rows[0].tax_rate);
         const mg = margin    !== undefined ? margin    : parseFloat(current.rows[0].margin);
 
-        priceGross   = (pn * (1 + tr / 100)).toFixed(2);
-        sellingPrice = (pn * (1 + tr / 100) * (1 + mg / 100)).toFixed(2);
+        const baseGross  = pn * (1 + tr / 100);
+        priceGross   = baseGross.toFixed(2);
+        sellingPrice = (baseGross * (1 + mg / 100)).toFixed(2);
       }
 
       const result = await db.query(
