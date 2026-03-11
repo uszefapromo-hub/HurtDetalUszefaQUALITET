@@ -49,10 +49,13 @@
   <div class="dashboard-shell owner-shell">
     <aside class="sidebar">
       <nav class="sidebar-nav" aria-label="Menu właściciela">
-        <a class="active" href="owner-panel.html">Panel właściciela</a>
+        <a class="active" href="owner-panel.html" data-owner-tab="overview">Panel właściciela</a>
         <a href="dashboard.html">Dashboard</a>
         <a href="panel-sklepu.html">Panel sklepu</a>
         <a href="generator-sklepu.html">Generator sklepu</a>
+        <a href="#" data-owner-tab="partners">Partnerzy</a>
+        <a href="#" data-owner-tab="products">Produkty</a>
+        <a href="#" data-owner-tab="orders">Zamówienia</a>
         <a href="hurtownie.html">Hurtownie</a>
         <a href="crm.html">Leady i CRM</a>
         <a href="tasks.html">Zadania</a>
@@ -260,9 +263,175 @@
         </div>
         <div class="list-cards" data-owner-suppliers-list></div>
       </section>
-      </div>
+
+      <!-- ── Statystyki platformy ───────────────────────────── -->
+      <section class="panel-card" id="owner-platform-stats">
+        <div class="section-head">
+          <span class="eyebrow">Platforma</span>
+          <h2>Statystyki platformy</h2>
+        </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card">
+            <span>Przychód platformy (5%)</span>
+            <strong id="op-platform-revenue">0 zł</strong>
+          </div>
+          <div class="stat-card">
+            <span>Aktywni partnerzy (ten miesiąc)</span>
+            <strong id="op-active-partners">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Zsynchronizowane produkty</span>
+            <strong id="op-synced-products">0</strong>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Zarządzanie partnerami ─────────────────────────── -->
+      <section class="panel-card owner-section" id="owner-section-partners" hidden>
+        <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div>
+            <span class="eyebrow">Zarządzanie</span>
+            <h2 style="margin:0">Partnerzy</h2>
+          </div>
+          <button class="btn btn-primary" id="op-add-partner-btn" style="font-size:.84rem">+ Dodaj partnera</button>
+        </div>
+
+        <!-- Add partner form (hidden by default) -->
+        <div id="op-add-partner-form" class="owner-inline-form" hidden>
+          <h3 style="margin:0 0 1rem">Nowy partner</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div>
+              <label class="owner-form-label">Email</label>
+              <input class="owner-form-input" type="email" id="op-new-email" placeholder="partner@example.com">
+            </div>
+            <div>
+              <label class="owner-form-label">Imię i nazwisko</label>
+              <input class="owner-form-input" type="text" id="op-new-name" placeholder="Jan Kowalski">
+            </div>
+            <div>
+              <label class="owner-form-label">Plan</label>
+              <select class="owner-form-input" id="op-new-plan">
+                <option value="trial">Trial</option>
+                <option value="basic">Basic</option>
+                <option value="pro">Pro</option>
+                <option value="elite">Elite</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:1rem;display:flex;gap:.75rem">
+            <button class="btn btn-primary" id="op-save-partner-btn" style="font-size:.84rem">Zapisz</button>
+            <button class="btn btn-secondary" id="op-cancel-partner-btn" style="font-size:.84rem">Anuluj</button>
+          </div>
+          <div id="op-partner-form-msg" style="margin-top:.75rem;font-size:.84rem"></div>
+        </div>
+
+        <div style="display:flex;gap:.75rem;margin:.75rem 0;flex-wrap:wrap;align-items:center">
+          <input class="owner-form-input" type="search" id="op-partners-search" placeholder="Szukaj partnera…" style="flex:1;min-width:160px">
+          <select class="owner-form-input" id="op-partners-filter-plan">
+            <option value="">Wszystkie plany</option>
+            <option value="trial">Trial</option>
+            <option value="basic">Basic</option>
+            <option value="pro">Pro</option>
+            <option value="elite">Elite</option>
+          </select>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="owner-table" id="op-partners-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Imię</th>
+                <th>Plan</th>
+                <th>Sklepy</th>
+                <th>Rejestracja</th>
+                <th>Status</th>
+                <th>Akcje</th>
+              </tr>
+            </thead>
+            <tbody id="op-partners-tbody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted,#94a3b8);padding:1rem">Brak partnerów</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Zarządzanie produktami ─────────────────────────── -->
+      <section class="panel-card owner-section" id="owner-section-products" hidden>
+        <div class="section-head">
+          <span class="eyebrow">Zarządzanie</span>
+          <h2>Produkty platformy</h2>
+        </div>
+
+        <div style="display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+          <input class="owner-form-input" type="search" id="op-prod-search" placeholder="Szukaj produktu…" style="flex:1;min-width:160px">
+          <select class="owner-form-input" id="op-prod-filter-supplier">
+            <option value="">Wszyscy dostawcy</option>
+          </select>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="owner-table" id="op-products-table">
+            <thead>
+              <tr>
+                <th>Nazwa</th>
+                <th>SKU</th>
+                <th>Dostawca</th>
+                <th>Cena</th>
+                <th>Marża</th>
+                <th>Stan</th>
+                <th>Status</th>
+                <th>Akcja</th>
+              </tr>
+            </thead>
+            <tbody id="op-products-tbody">
+              <tr><td colspan="8" style="text-align:center;color:var(--text-muted,#94a3b8);padding:1rem">Brak produktów</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Zarządzanie zamówieniami ───────────────────────── -->
+      <section class="panel-card owner-section" id="owner-section-orders" hidden>
+        <div class="section-head">
+          <span class="eyebrow">Zarządzanie</span>
+          <h2>Zamówienia platformy</h2>
+        </div>
+
+        <div style="display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+          <input class="owner-form-input" type="search" id="op-ord-search" placeholder="Szukaj zamówienia…" style="flex:1;min-width:160px">
+          <select class="owner-form-input" id="op-ord-filter-status">
+            <option value="">Wszystkie statusy</option>
+            <option value="new">Nowe</option>
+            <option value="processing">W realizacji</option>
+            <option value="shipped">Wysłane</option>
+            <option value="delivered">Dostarczone</option>
+            <option value="cancelled">Anulowane</option>
+          </select>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="owner-table">
+            <thead>
+              <tr>
+                <th>Nr zamówienia</th>
+                <th>Klient</th>
+                <th>Kwota</th>
+                <th>Status</th>
+                <th>Data</th>
+                <th>Zmień status</th>
+              </tr>
+            </thead>
+            <tbody id="op-orders-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--text-muted,#94a3b8);padding:1rem">Brak zamówień</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      </div><!-- /data-owner-content -->
     </main>
-  </div>
+  </div><!-- /dashboard-shell -->
 
   <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
     <a href="index.html" rel="nofollow noreferrer" data-nav="index">
@@ -306,5 +475,320 @@
   </nav>
 
   <script src="js/app.js" defer></script>
+  <script src="stores.js" defer></script>
+  <script src="js/platform.js" defer></script>
+  <style>
+    /* ── Owner panel additions ────────────────────────────── */
+    .owner-table{width:100%;border-collapse:collapse;font-size:.85rem}
+    .owner-table th{text-align:left;padding:.5rem .75rem;color:var(--text-muted,#94a3b8);font-weight:600;font-size:.78rem;border-bottom:1px solid var(--border,#334155);white-space:nowrap}
+    .owner-table td{padding:.55rem .75rem;border-bottom:1px solid var(--border,#1e293b);color:var(--text,#f1f5f9);vertical-align:middle}
+    .owner-table tr:last-child td{border-bottom:none}
+    .owner-table select{background:var(--surface2,#0f172a);border:1px solid var(--border,#334155);color:var(--text,#f1f5f9);border-radius:.4rem;padding:.3rem .55rem;font-size:.78rem}
+    .owner-form-label{display:block;font-size:.78rem;color:var(--text-muted,#94a3b8);margin-bottom:.3rem}
+    .owner-form-input{background:var(--surface2,#0f172a);border:1px solid var(--border,#334155);color:var(--text,#f1f5f9);border-radius:.45rem;padding:.45rem .75rem;font-size:.85rem;width:100%;box-sizing:border-box}
+    .owner-inline-form{background:var(--surface2,#0f172a);border:1px solid var(--border,#334155);border-radius:.65rem;padding:1.25rem;margin-bottom:1.25rem}
+    .owner-section{animation:fadeIn .2s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .status-badge{display:inline-block;padding:.2rem .6rem;border-radius:99px;font-size:.75rem;font-weight:600}
+    .status-badge.new,.status-badge.pending{background:#1e3a5f;color:#60a5fa}
+    .status-badge.processing{background:#1c3a2f;color:#34d399}
+    .status-badge.shipped{background:#2d2a1e;color:#fbbf24}
+    .status-badge.delivered,.status-badge.paid{background:#1a3a2e;color:#4ade80}
+    .status-badge.cancelled,.status-badge.refunded{background:#3a1a1a;color:#f87171}
+    .status-badge.active{background:#1a3a2e;color:#4ade80}
+    .status-badge.inactive{background:#2a2a2a;color:#94a3b8}
+    .status-badge.trial{background:#2d2a1e;color:#fbbf24}
+    .status-badge.basic{background:#1e2a3f;color:#93c5fd}
+    .status-badge.pro{background:#2a1e3f;color:#c4b5fd}
+    .status-badge.elite{background:#3a2a0e;color:#fde68a}
+  </style>
+  <script>
+  (function () {
+    'use strict';
+
+    /* ── helpers ──────────────────────────────────────────── */
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
+    }
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleDateString('pl-PL');
+    }
+    function statusBadge(s) {
+      var map = {
+        new:'Nowe',pending:'Oczekujące',processing:'W realizacji',shipped:'Wysłane',
+        delivered:'Dostarczone',paid:'Opłacone',cancelled:'Anulowane',refunded:'Zwrócone',
+        active:'Aktywny',inactive:'Nieaktywny',trial:'Trial',basic:'Basic',pro:'Pro',elite:'Elite'
+      };
+      return '<span class="status-badge ' + esc(s) + '">' + (map[s] || esc(s)) + '</span>';
+    }
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function waitForPlatform(cb) {
+      if (window.Platform) { cb(); return; }
+      var tries = 0;
+      var t = setInterval(function () {
+        if (window.Platform) { clearInterval(t); cb(); }
+        if (++tries > 60) { clearInterval(t); cb(); }
+      }, 100);
+    }
+
+    /* ── sidebar tab switching ────────────────────────────── */
+    document.querySelectorAll('.sidebar-nav a[data-owner-tab]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        var tab = this.dataset.ownerTab;
+        if (!tab || tab === 'overview') return; // overview = normal page content
+        e.preventDefault();
+        document.querySelectorAll('.sidebar-nav a').forEach(function (a) { a.classList.remove('active'); });
+        this.classList.add('active');
+        document.querySelectorAll('.owner-section').forEach(function (s) { s.hidden = true; });
+        var sec = document.getElementById('owner-section-' + tab);
+        if (sec) {
+          sec.hidden = false;
+          if (tab === 'partners') renderPartners();
+          if (tab === 'products') renderOwnerProducts();
+          if (tab === 'orders') renderOwnerOrders();
+        }
+      });
+    });
+
+    /* ── platform stats ───────────────────────────────────── */
+    function renderPlatformStats() {
+      var orders = window.Platform ? window.Platform.getOrders() : [];
+      var products = window.Platform ? window.Platform.getProducts() : [];
+      var users = window.Platform ? window.Platform.getUsers() : [];
+
+      var platformRevenue = orders.filter(function (o) {
+        return o.status === 'delivered' || o.status === 'paid';
+      }).reduce(function (s, o) { return s + (o.total || 0) * 0.05; }, 0);
+
+      var now = new Date();
+      var activePartners = users.filter(function (u) {
+        if (!u.createdAt) return false;
+        var d = new Date(u.createdAt);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      }).length;
+
+      var el1 = document.getElementById('op-platform-revenue');
+      var el2 = document.getElementById('op-active-partners');
+      var el3 = document.getElementById('op-synced-products');
+      if (el1) el1.textContent = fmt(platformRevenue);
+      if (el2) el2.textContent = activePartners;
+      if (el3) el3.textContent = products.length;
+    }
+
+    /* ── partners ─────────────────────────────────────────── */
+    function getStoresForUser(userId) {
+      try {
+        var stores = JSON.parse(localStorage.getItem('stores') || '[]');
+        return stores.filter(function (s) { return s.userId === userId || s.ownerId === userId; }).length;
+      } catch (e) { return 0; }
+    }
+
+    function renderPartners() {
+      var users = window.Platform ? window.Platform.getUsers() : [];
+      var search = (document.getElementById('op-partners-search').value || '').toLowerCase();
+      var planFilter = document.getElementById('op-partners-filter-plan').value;
+      var filtered = users.filter(function (u) {
+        var matchSearch = !search ||
+          (u.email || '').toLowerCase().includes(search) ||
+          (u.name || '').toLowerCase().includes(search);
+        var matchPlan = !planFilter || u.plan === planFilter;
+        return matchSearch && matchPlan;
+      });
+      var tbody = document.getElementById('op-partners-tbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted,#94a3b8);padding:1rem">Brak partnerów</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(function (u) {
+        var stores = (u.storeIds && u.storeIds.length) || getStoresForUser(u.id);
+        return '<tr data-user-id="' + esc(u.id) + '">' +
+          '<td>' + esc(u.email || '—') + '</td>' +
+          '<td>' + esc(u.name || '—') + '</td>' +
+          '<td>' + statusBadge(u.plan || 'trial') + '</td>' +
+          '<td>' + stores + '</td>' +
+          '<td>' + fmtDate(u.createdAt) + '</td>' +
+          '<td>' + statusBadge(u.disabled ? 'inactive' : 'active') + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<select class="op-change-plan" data-uid="' + esc(u.id) + '" style="margin-right:.4rem;font-size:.75rem">' +
+              ['trial','basic','pro','elite'].map(function(p){ return '<option value="'+p+'"'+(u.plan===p?' selected':'')+'>'+p+'</option>'; }).join('') +
+            '</select>' +
+            '<button class="btn btn-secondary op-toggle-user" data-uid="' + esc(u.id) + '" data-disabled="' + (u.disabled ? '1' : '0') + '" style="font-size:.72rem;padding:.25rem .55rem">' +
+              (u.disabled ? 'Włącz' : 'Wyłącz') +
+            '</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
+
+      // Plan change
+      tbody.querySelectorAll('.op-change-plan').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var uid = this.dataset.uid;
+          var users2 = window.Platform.getUsers();
+          var u2 = users2.find(function (u) { return u.id === uid; });
+          if (u2) { u2.plan = this.value; window.Platform.saveUser(u2); }
+        });
+      });
+
+      // Disable toggle
+      tbody.querySelectorAll('.op-toggle-user').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var uid = this.dataset.uid;
+          var users2 = window.Platform.getUsers();
+          var u2 = users2.find(function (u) { return u.id === uid; });
+          if (u2) {
+            u2.disabled = !u2.disabled;
+            window.Platform.saveUser(u2);
+            renderPartners();
+          }
+        });
+      });
+    }
+
+    document.getElementById('op-partners-search').addEventListener('input', renderPartners);
+    document.getElementById('op-partners-filter-plan').addEventListener('change', renderPartners);
+
+    // Add partner form
+    document.getElementById('op-add-partner-btn').addEventListener('click', function () {
+      var form = document.getElementById('op-add-partner-form');
+      form.hidden = !form.hidden;
+    });
+    document.getElementById('op-cancel-partner-btn').addEventListener('click', function () {
+      document.getElementById('op-add-partner-form').hidden = true;
+    });
+    document.getElementById('op-save-partner-btn').addEventListener('click', function () {
+      var email = document.getElementById('op-new-email').value.trim();
+      var name = document.getElementById('op-new-name').value.trim();
+      var plan = document.getElementById('op-new-plan').value;
+      var msgEl = document.getElementById('op-partner-form-msg');
+      if (!email) { msgEl.textContent = 'Podaj adres e-mail.'; msgEl.style.color = '#f87171'; return; }
+      if (!window.Platform) { msgEl.textContent = 'Platforma niedostępna.'; return; }
+      var existing = window.Platform.getUsers().find(function (u) { return u.email === email; });
+      if (existing) { msgEl.textContent = 'Partner z tym emailem już istnieje.'; msgEl.style.color = '#fbbf24'; return; }
+      window.Platform.saveUser({ email: email, name: name, plan: plan, role: 'partner', storeIds: [] });
+      msgEl.textContent = 'Partner dodany.'; msgEl.style.color = '#4ade80';
+      document.getElementById('op-new-email').value = '';
+      document.getElementById('op-new-name').value = '';
+      renderPartners();
+      setTimeout(function () { document.getElementById('op-add-partner-form').hidden = true; msgEl.textContent = ''; }, 1500);
+    });
+
+    /* ── owner products ───────────────────────────────────── */
+    function renderOwnerProducts() {
+      var products = window.Platform ? window.Platform.getProducts() : [];
+      var search = (document.getElementById('op-prod-search').value || '').toLowerCase();
+      var supplierFilter = document.getElementById('op-prod-filter-supplier').value;
+
+      // Populate supplier filter
+      var suppliers = {};
+      products.forEach(function (p) { if (p.supplierName) suppliers[p.supplierName] = true; });
+      var supplierSel = document.getElementById('op-prod-filter-supplier');
+      var currentVal = supplierSel.value;
+      supplierSel.innerHTML = '<option value="">Wszyscy dostawcy</option>' +
+        Object.keys(suppliers).map(function (s) { return '<option value="' + esc(s) + '"' + (s === currentVal ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('');
+
+      var filtered = products.filter(function (p) {
+        var matchSearch = !search ||
+          (p.name || '').toLowerCase().includes(search) ||
+          (p.sku || '').toLowerCase().includes(search);
+        var matchSupplier = !supplierFilter || p.supplierName === supplierFilter;
+        return matchSearch && matchSupplier;
+      });
+
+      var tbody = document.getElementById('op-products-tbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted,#94a3b8);padding:1rem">Brak produktów</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(function (p) {
+        var margin = p.margin != null ? p.margin : (p.price && p.costPrice ? Math.round(((p.price - p.costPrice) / p.price) * 100) : 0);
+        return '<tr>' +
+          '<td>' + esc(p.name || '—') + '</td>' +
+          '<td style="font-size:.78rem;color:var(--text-muted,#94a3b8)">' + esc(p.sku || '—') + '</td>' +
+          '<td>' + esc(p.supplierName || '—') + '</td>' +
+          '<td>' + fmt(p.price) + '</td>' +
+          '<td>' + margin + '%</td>' +
+          '<td>' + (p.stock || 0) + '</td>' +
+          '<td>' + statusBadge(p.active !== false ? 'active' : 'inactive') + '</td>' +
+          '<td><button class="btn btn-secondary op-toggle-product" data-pid="' + esc(p.id) + '" data-active="' + (p.active !== false ? '1' : '0') + '" style="font-size:.72rem;padding:.25rem .55rem">' +
+            (p.active !== false ? 'Deaktywuj' : 'Aktywuj') + '</button></td>' +
+          '</tr>';
+      }).join('');
+
+      tbody.querySelectorAll('.op-toggle-product').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var pid = this.dataset.pid;
+          var products2 = window.Platform.getProducts();
+          var p2 = products2.find(function (p) { return p.id === pid; });
+          if (p2) {
+            p2.active = !p2.active;
+            window.Platform.saveProduct(p2);
+            renderOwnerProducts();
+            renderPlatformStats();
+          }
+        });
+      });
+    }
+
+    document.getElementById('op-prod-search').addEventListener('input', renderOwnerProducts);
+    document.getElementById('op-prod-filter-supplier').addEventListener('change', renderOwnerProducts);
+
+    /* ── owner orders ─────────────────────────────────────── */
+    function renderOwnerOrders() {
+      var orders = window.Platform ? window.Platform.getOrders() : [];
+      var search = (document.getElementById('op-ord-search').value || '').toLowerCase();
+      var statusFilter = document.getElementById('op-ord-filter-status').value;
+      var filtered = orders.filter(function (o) {
+        var matchSearch = !search ||
+          (o.orderNumber || '').toLowerCase().includes(search) ||
+          (o.customerName || '').toLowerCase().includes(search) ||
+          (o.email || '').toLowerCase().includes(search);
+        var matchStatus = !statusFilter || o.status === statusFilter;
+        return matchSearch && matchStatus;
+      }).sort(function (a, b) { return new Date(b.createdAt || 0) - new Date(a.createdAt || 0); });
+
+      var tbody = document.getElementById('op-orders-tbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted,#94a3b8);padding:1rem">Brak zamówień</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(function (o) {
+        return '<tr>' +
+          '<td>' + esc(o.orderNumber || o.id) + '</td>' +
+          '<td>' + esc(o.customerName || o.email || '—') + '</td>' +
+          '<td>' + fmt(o.total) + '</td>' +
+          '<td>' + statusBadge(o.status || 'new') + '</td>' +
+          '<td>' + fmtDate(o.createdAt) + '</td>' +
+          '<td><select class="op-order-status" data-oid="' + esc(o.id) + '">' +
+            ['new','processing','shipped','delivered','cancelled'].map(function (s) {
+              return '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' + s + '</option>';
+            }).join('') +
+          '</select></td>' +
+          '</tr>';
+      }).join('');
+
+      tbody.querySelectorAll('.op-order-status').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          if (window.Platform) {
+            window.Platform.updateOrderStatus(this.dataset.oid, this.value);
+            renderPlatformStats();
+          }
+        });
+      });
+    }
+
+    document.getElementById('op-ord-search').addEventListener('input', renderOwnerOrders);
+    document.getElementById('op-ord-filter-status').addEventListener('change', renderOwnerOrders);
+
+    /* ── boot ─────────────────────────────────────────────── */
+    window.addEventListener('load', function () {
+      waitForPlatform(function () {
+        renderPlatformStats();
+      });
+    });
+  }());
+  </script>
 </body>
 </html>
