@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 
   try {
     let countSql = 'SELECT COUNT(*) FROM users';
-    let listSql  = `SELECT id, email, name, phone, role, plan, trial_ends_at, created_at FROM users`;
+    let listSql  = `SELECT id, email, name, phone, role, plan, blocked, trial_ends_at, created_at FROM users`;
     const params = [];
 
     if (search) {

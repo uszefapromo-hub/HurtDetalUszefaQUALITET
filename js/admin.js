@@ -201,23 +201,38 @@ async function loadDashboard() {
     document.getElementById('s-new-users').textContent = fmt(s.new_users);
 
     const recentOrders = document.getElementById('recent-orders');
-    recentOrders.innerHTML = (data.recent_orders || []).map(o => `
-      <tr>
-        <td style="font-family:monospace;font-size:.7rem">${escHtml(o.id.slice(0,8))}…</td>
-        <td>${escHtml(o.store_name)}</td>
-        <td>${statusBadge(o.status)}</td>
-        <td>${fmtCurrency(o.total)}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="4" style="color:var(--muted);text-align:center">Brak danych</td></tr>';
+    recentOrders.innerHTML = '';
+    (data.recent_orders || []).forEach(o => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-family:monospace;font-size:.7rem"></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      `;
+      tr.cells[0].textContent = o.id.slice(0, 8) + '…';
+      tr.cells[1].textContent = o.store_name || '';
+      tr.cells[2].innerHTML   = statusBadge(o.status);
+      tr.cells[3].textContent = fmtCurrency(o.total);
+      recentOrders.appendChild(tr);
+    });
+    if (!recentOrders.children.length) {
+      recentOrders.innerHTML = '<tr><td colspan="4" style="color:var(--muted);text-align:center">Brak danych</td></tr>';
+    }
 
     const recentShops = document.getElementById('recent-shops');
-    recentShops.innerHTML = (data.recent_shops || []).map(s => `
-      <tr>
-        <td>${escHtml(s.name)}</td>
-        <td>${statusBadge(s.plan)}</td>
-        <td>${statusBadge(s.status)}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="3" style="color:var(--muted);text-align:center">Brak danych</td></tr>';
+    recentShops.innerHTML = '';
+    (data.recent_shops || []).forEach(s => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td></td><td></td><td></td>';
+      tr.cells[0].textContent = s.name || '';
+      tr.cells[1].innerHTML   = statusBadge(s.plan);
+      tr.cells[2].innerHTML   = statusBadge(s.status);
+      recentShops.appendChild(tr);
+    });
+    if (!recentShops.children.length) {
+      recentShops.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center">Brak danych</td></tr>';
+    }
   } catch (err) {
     showToast(err.message, 'error');
   }
@@ -230,30 +245,47 @@ function renderPagination(containerId, total, page, limit, onPageChange) {
   if (!el) return;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  let pagesHtml = '';
-  for (let i = 1; i <= Math.min(totalPages, 7); i++) {
-    pagesHtml += `<button class="${i === page ? 'current' : ''}" data-p="${i}">${i}</button>`;
-  }
-  if (totalPages > 7) pagesHtml += `<span style="color:var(--muted)"> … ${totalPages}</span>`;
+  el.innerHTML = '';
 
-  el.innerHTML = `
-    <span>${total} rekordów</span>
-    <div class="pages">
-      <button data-p="${page - 1}" ${page === 1 ? 'disabled' : ''}>‹</button>
-      ${pagesHtml}
-      <button data-p="${page + 1}" ${page >= totalPages ? 'disabled' : ''}>›</button>
-    </div>
-  `;
+  const info = document.createElement('span');
+  info.textContent = `${total} rekordów`;
+  el.appendChild(info);
 
-  el.querySelectorAll('button[data-p]').forEach(btn => {
+  const pages = document.createElement('div');
+  pages.className = 'pages';
+
+  const makeBtn = (label, targetPage, isCurrent, disabled) => {
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    if (isCurrent) btn.classList.add('current');
+    if (disabled) btn.disabled = true;
     btn.addEventListener('click', () => {
-      const p = parseInt(btn.dataset.p, 10);
-      if (!isNaN(p) && p >= 1 && p <= totalPages) onPageChange(p);
+      if (!disabled && targetPage >= 1 && targetPage <= totalPages) onPageChange(targetPage);
     });
-  });
+    return btn;
+  };
+
+  pages.appendChild(makeBtn('‹', page - 1, false, page === 1));
+
+  const maxVisible = Math.min(totalPages, 7);
+  for (let i = 1; i <= maxVisible; i++) {
+    pages.appendChild(makeBtn(String(i), i, i === page, false));
+  }
+  if (totalPages > 7) {
+    const dots = document.createElement('span');
+    dots.style.color = 'var(--muted)';
+    dots.textContent = ` … ${totalPages}`;
+    pages.appendChild(dots);
+  }
+
+  pages.appendChild(makeBtn('›', page + 1, false, page >= totalPages));
+  el.appendChild(pages);
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
+
+// In-memory cache of the currently displayed user rows (keyed by id)
+const userCache = new Map();
 
 async function loadUsers(page = pages.users.page) {
   pages.users.page = page;
@@ -261,34 +293,61 @@ async function loadUsers(page = pages.users.page) {
   const params = new URLSearchParams({ page, limit: 20, ...(search ? { search } : {}) });
   try {
     const data = await apiFetch(`/api/admin/users?${params}`);
+    userCache.clear();
     const tbody = document.getElementById('users-tbody');
-    tbody.innerHTML = (data.users || []).map(u => `
-      <tr>
-        <td>${escHtml(u.email)}</td>
-        <td>${escHtml(u.name)}</td>
-        <td>${statusBadge(u.role)}</td>
-        <td>${statusBadge(u.plan)}</td>
-        <td>${u.blocked ? '<span style="color:var(--danger)">✗</span>' : '<span style="color:var(--success)">✓</span>'}</td>
-        <td>${fmtDate(u.created_at)}</td>
-        <td><div class="action-btns">
-          <button onclick="openEditUser('${escHtml(u.id)}','${escHtml(u.name)}','${escHtml(u.role)}','${escHtml(u.plan)}',${!!u.blocked})">Edytuj</button>
-          <button class="del" onclick="deleteUser('${escHtml(u.id)}')">Usuń</button>
-        </div></td>
-      </tr>
-    `).join('') || '<tr><td colspan="7" style="color:var(--muted);text-align:center">Brak użytkowników</td></tr>';
+    tbody.innerHTML = '';
 
+    if (!data.users || !data.users.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center">Brak użytkowników</td></tr>';
+    } else {
+      data.users.forEach(u => {
+        userCache.set(u.id, u);
+        const tr = document.createElement('tr');
+        tr.dataset.id = u.id;
+        tr.innerHTML = `
+          <td></td><td></td><td></td><td></td>
+          <td></td><td></td>
+          <td><div class="action-btns">
+            <button data-action="edit-user">Edytuj</button>
+            <button data-action="delete-user" class="del">Usuń</button>
+          </div></td>
+        `;
+        tr.cells[0].textContent = u.email;
+        tr.cells[1].textContent = u.name;
+        tr.cells[2].innerHTML   = statusBadge(u.role);
+        tr.cells[3].innerHTML   = statusBadge(u.plan);
+        tr.cells[4].innerHTML   = u.blocked
+          ? '<span style="color:var(--danger)">✗ Zablokowany</span>'
+          : '<span style="color:var(--success)">✓</span>';
+        tr.cells[5].textContent = fmtDate(u.created_at);
+        tbody.appendChild(tr);
+      });
+    }
     renderPagination('users-pagination', data.total, page, 20, loadUsers);
   } catch (err) {
     showToast(err.message, 'error');
   }
 }
 
-function openEditUser(id, name, role, plan, blocked) {
-  document.getElementById('modal-user-id').value      = id;
-  document.getElementById('modal-user-name').value    = name;
-  document.getElementById('modal-user-role').value    = role;
-  document.getElementById('modal-user-plan').value    = plan;
-  document.getElementById('modal-user-blocked').checked = blocked;
+// Event delegation for users table
+document.getElementById('users-tbody')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const tr = btn.closest('tr[data-id]');
+  if (!tr) return;
+  const id = tr.dataset.id;
+  const user = userCache.get(id);
+  if (!user) return;
+  if (btn.dataset.action === 'edit-user') openEditUser(user);
+  if (btn.dataset.action === 'delete-user') deleteUser(id);
+});
+
+function openEditUser(user) {
+  document.getElementById('modal-user-id').value      = user.id;
+  document.getElementById('modal-user-name').value    = user.name || '';
+  document.getElementById('modal-user-role').value    = user.role || 'customer';
+  document.getElementById('modal-user-plan').value    = user.plan || 'trial';
+  document.getElementById('modal-user-blocked').checked = !!user.blocked;
   document.getElementById('modal-user-title').textContent = 'Edytuj użytkownika';
   document.getElementById('modal-user').classList.add('open');
 }
@@ -341,39 +400,62 @@ async function addUser() {
 
 // ─── Shops ────────────────────────────────────────────────────────────────────
 
+const shopCache = new Map();
+
 async function loadShops(page = pages.shops.page) {
   pages.shops.page = page;
   const status = document.getElementById('shops-status-filter')?.value || '';
   const params = new URLSearchParams({ page, limit: 20, ...(status ? { status } : {}) });
   try {
     const data = await apiFetch(`/api/admin/shops?${params}`);
+    shopCache.clear();
     const tbody = document.getElementById('shops-tbody');
-    tbody.innerHTML = (data.shops || []).map(s => `
-      <tr>
-        <td>${escHtml(s.name)}</td>
-        <td>${escHtml(s.owner_name || s.owner_email || '–')}</td>
-        <td>${statusBadge(s.plan)}</td>
-        <td>${statusBadge(s.status)}</td>
-        <td>–</td><td>–</td>
-        <td><div class="action-btns">
-          <button onclick="openEditShop('${escHtml(s.id)}','${escHtml(s.name)}','${escHtml(s.status)}','${escHtml(s.plan)}',${parseFloat(s.margin)||0})">Edytuj</button>
-          <button class="del" onclick="deleteShop('${escHtml(s.id)}')">Usuń</button>
-        </div></td>
-      </tr>
-    `).join('') || '<tr><td colspan="7" style="color:var(--muted);text-align:center">Brak sklepów</td></tr>';
+    tbody.innerHTML = '';
 
+    if (!data.shops || !data.shops.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center">Brak sklepów</td></tr>';
+    } else {
+      data.shops.forEach(s => {
+        shopCache.set(s.id, s);
+        const tr = document.createElement('tr');
+        tr.dataset.id = s.id;
+        tr.innerHTML = `
+          <td></td><td></td><td></td><td></td><td>–</td><td>–</td>
+          <td><div class="action-btns">
+            <button data-action="edit-shop">Edytuj</button>
+            <button data-action="delete-shop" class="del">Usuń</button>
+          </div></td>
+        `;
+        tr.cells[0].textContent = s.name;
+        tr.cells[1].textContent = s.owner_name || s.owner_email || '–';
+        tr.cells[2].innerHTML   = statusBadge(s.plan);
+        tr.cells[3].innerHTML   = statusBadge(s.status);
+        tbody.appendChild(tr);
+      });
+    }
     renderPagination('shops-pagination', data.total, page, 20, loadShops);
   } catch (err) {
     showToast(err.message, 'error');
   }
 }
 
-function openEditShop(id, name, status, plan, margin) {
-  document.getElementById('modal-shop-id').value     = id;
-  document.getElementById('modal-shop-name').value   = name;
-  document.getElementById('modal-shop-status').value = status;
-  document.getElementById('modal-shop-plan').value   = plan;
-  document.getElementById('modal-shop-margin').value = margin;
+document.getElementById('shops-tbody')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const tr = btn.closest('tr[data-id]');
+  if (!tr) return;
+  const shop = shopCache.get(tr.dataset.id);
+  if (!shop) return;
+  if (btn.dataset.action === 'edit-shop') openEditShop(shop);
+  if (btn.dataset.action === 'delete-shop') deleteShop(tr.dataset.id);
+});
+
+function openEditShop(shop) {
+  document.getElementById('modal-shop-id').value     = shop.id;
+  document.getElementById('modal-shop-name').value   = shop.name || '';
+  document.getElementById('modal-shop-status').value = shop.status || 'active';
+  document.getElementById('modal-shop-plan').value   = shop.plan || 'basic';
+  document.getElementById('modal-shop-margin').value = parseFloat(shop.margin) || 0;
   document.getElementById('modal-shop').classList.add('open');
 }
 
@@ -408,71 +490,115 @@ async function deleteShop(id) {
 
 // ─── Products ─────────────────────────────────────────────────────────────────
 
+const productCache = new Map();
+
 async function loadProducts(page = pages.products.page) {
   pages.products.page = page;
   const search = document.getElementById('products-search')?.value || '';
   const params = new URLSearchParams({ page, limit: 20, ...(search ? { search } : {}) });
   try {
     const data = await apiFetch(`/api/admin/products?${params}`);
+    productCache.clear();
     const tbody = document.getElementById('products-tbody');
-    tbody.innerHTML = (data.products || []).map(p => `
-      <tr>
-        <td>${escHtml(p.name)}</td>
-        <td><code style="font-size:.7rem">${escHtml(p.sku || '–')}</code></td>
-        <td>${escHtml(p.store_name || '–')}</td>
-        <td>${statusBadge(p.type || 'own')}</td>
-        <td>${fmtCurrency(p.price_gross)}</td>
-        <td>${fmt(p.stock)}</td>
-        <td><div class="action-btns">
-          <button class="del" onclick="deleteProduct('${escHtml(p.id)}')">Usuń</button>
-        </div></td>
-      </tr>
-    `).join('') || '<tr><td colspan="7" style="color:var(--muted);text-align:center">Brak produktów</td></tr>';
+    tbody.innerHTML = '';
 
+    if (!data.products || !data.products.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center">Brak produktów</td></tr>';
+    } else {
+      data.products.forEach(p => {
+        productCache.set(p.id, p);
+        const tr = document.createElement('tr');
+        tr.dataset.id = p.id;
+        tr.innerHTML = `
+          <td></td><td><code style="font-size:.7rem"></code></td>
+          <td></td><td></td><td></td><td></td>
+          <td><div class="action-btns">
+            <button data-action="delete-product" class="del">Usuń</button>
+          </div></td>
+        `;
+        tr.cells[0].textContent                   = p.name;
+        tr.cells[1].querySelector('code').textContent = p.sku || '–';
+        tr.cells[2].textContent                   = p.store_name || '–';
+        tr.cells[3].innerHTML                     = statusBadge(p.type || 'own');
+        tr.cells[4].textContent                   = fmtCurrency(p.price_gross);
+        tr.cells[5].textContent                   = fmt(p.stock);
+        tbody.appendChild(tr);
+      });
+    }
     renderPagination('products-pagination', data.total, page, 20, loadProducts);
   } catch (err) {
     showToast(err.message, 'error');
   }
 }
 
-async function deleteProduct(id) {
-  if (!confirm('Usunąć produkt?')) return;
-  try {
-    await apiFetch(`/api/admin/products/${id}`, { method: 'DELETE' });
-    showToast('Produkt usunięty');
-    loadProducts();
-  } catch (err) {
-    showToast(err.message, 'error');
+document.getElementById('products-tbody')?.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const tr = btn.closest('tr[data-id]');
+  if (!tr) return;
+  if (btn.dataset.action === 'delete-product') {
+    if (!confirm('Usunąć produkt?')) return;
+    try {
+      await apiFetch(`/api/admin/products/${tr.dataset.id}`, { method: 'DELETE' });
+      showToast('Produkt usunięty');
+      loadProducts();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   }
-}
+});
 
 // ─── Suppliers ────────────────────────────────────────────────────────────────
+
+const supplierCache = new Map();
 
 async function loadSuppliers(page = pages.suppliers.page) {
   pages.suppliers.page = page;
   const params = new URLSearchParams({ page, limit: 20 });
   try {
     const data = await apiFetch(`/api/admin/suppliers?${params}`);
+    supplierCache.clear();
     const tbody = document.getElementById('suppliers-tbody');
-    tbody.innerHTML = (data.suppliers || []).map(s => `
-      <tr>
-        <td>${escHtml(s.name)}</td>
-        <td>${statusBadge(s.integration_type)}</td>
-        <td>${escHtml(s.country || '–')}</td>
-        <td>${statusBadge(s.status || (s.active ? 'active' : 'inactive'))}</td>
-        <td>${fmtDate(s.last_sync_at)}</td>
-        <td><div class="action-btns">
-          <button onclick="openEditSupplier('${escHtml(s.id)}','${escHtml(s.name)}','${escHtml(s.integration_type)}','${escHtml(s.api_url||'')}','${escHtml(s.country||'')}',${parseFloat(s.margin)||0})">Edytuj</button>
-          <button class="del" onclick="deleteSupplier('${escHtml(s.id)}')">Usuń</button>
-        </div></td>
-      </tr>
-    `).join('') || '<tr><td colspan="6" style="color:var(--muted);text-align:center">Brak hurtowni</td></tr>';
+    tbody.innerHTML = '';
 
+    if (!data.suppliers || !data.suppliers.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center">Brak hurtowni</td></tr>';
+    } else {
+      data.suppliers.forEach(s => {
+        supplierCache.set(s.id, s);
+        const tr = document.createElement('tr');
+        tr.dataset.id = s.id;
+        tr.innerHTML = `
+          <td></td><td></td><td></td><td></td><td></td>
+          <td><div class="action-btns">
+            <button data-action="edit-supplier">Edytuj</button>
+            <button data-action="delete-supplier" class="del">Usuń</button>
+          </div></td>
+        `;
+        tr.cells[0].textContent = s.name;
+        tr.cells[1].innerHTML   = statusBadge(s.integration_type);
+        tr.cells[2].textContent = s.country || '–';
+        tr.cells[3].innerHTML   = statusBadge(s.status || (s.active ? 'active' : 'inactive'));
+        tr.cells[4].textContent = fmtDate(s.last_sync_at);
+        tbody.appendChild(tr);
+      });
+    }
     renderPagination('suppliers-pagination', data.total, page, 20, loadSuppliers);
   } catch (err) {
     showToast(err.message, 'error');
   }
 }
+
+document.getElementById('suppliers-tbody')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const tr = btn.closest('tr[data-id]');
+  if (!tr) return;
+  const supplier = supplierCache.get(tr.dataset.id);
+  if (!supplier) return;
+  if (btn.dataset.action === 'edit-supplier') openEditSupplier(supplier);
+  if (btn.dataset.action === 'delete-supplier') deleteSupplier(tr.dataset.id);
+});
 
 function openAddSupplier() {
   document.getElementById('modal-supplier-id').value      = '';
@@ -485,13 +611,13 @@ function openAddSupplier() {
   document.getElementById('modal-supplier').classList.add('open');
 }
 
-function openEditSupplier(id, name, type, url, country, margin) {
-  document.getElementById('modal-supplier-id').value      = id;
-  document.getElementById('modal-supplier-name').value    = name;
-  document.getElementById('modal-supplier-type').value    = type;
-  document.getElementById('modal-supplier-url').value     = url;
-  document.getElementById('modal-supplier-country').value = country;
-  document.getElementById('modal-supplier-margin').value  = margin;
+function openEditSupplier(supplier) {
+  document.getElementById('modal-supplier-id').value      = supplier.id;
+  document.getElementById('modal-supplier-name').value    = supplier.name || '';
+  document.getElementById('modal-supplier-type').value    = supplier.integration_type || 'manual';
+  document.getElementById('modal-supplier-url').value     = supplier.api_url || '';
+  document.getElementById('modal-supplier-country').value = supplier.country || '';
+  document.getElementById('modal-supplier-margin').value  = parseFloat(supplier.margin) || 0;
   document.getElementById('modal-supplier-title').textContent = 'Edytuj hurtownię';
   document.getElementById('modal-supplier').classList.add('open');
 }
@@ -533,35 +659,59 @@ async function deleteSupplier(id) {
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
+const orderCache = new Map();
+
 async function loadOrders(page = pages.orders.page) {
   pages.orders.page = page;
   const status = document.getElementById('orders-status-filter')?.value || '';
   const params = new URLSearchParams({ page, limit: 20, ...(status ? { status } : {}) });
   try {
     const data = await apiFetch(`/api/admin/orders?${params}`);
+    orderCache.clear();
     const tbody = document.getElementById('orders-tbody');
-    tbody.innerHTML = (data.orders || []).map(o => `
-      <tr>
-        <td style="font-family:monospace;font-size:.7rem">${escHtml(o.id.slice(0,8))}…</td>
-        <td>${escHtml(o.store_name || o.store_id)}</td>
-        <td>${statusBadge(o.status)}</td>
-        <td>${fmtCurrency(o.total)}</td>
-        <td>${fmtDate(o.created_at)}</td>
-        <td><div class="action-btns">
-          <button onclick="openEditOrder('${escHtml(o.id)}','${escHtml(o.status)}')">Status</button>
-        </div></td>
-      </tr>
-    `).join('') || '<tr><td colspan="6" style="color:var(--muted);text-align:center">Brak zamówień</td></tr>';
+    tbody.innerHTML = '';
 
+    if (!data.orders || !data.orders.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center">Brak zamówień</td></tr>';
+    } else {
+      data.orders.forEach(o => {
+        orderCache.set(o.id, o);
+        const tr = document.createElement('tr');
+        tr.dataset.id = o.id;
+        tr.innerHTML = `
+          <td style="font-family:monospace;font-size:.7rem"></td>
+          <td></td><td></td><td></td><td></td>
+          <td><div class="action-btns">
+            <button data-action="edit-order">Status</button>
+          </div></td>
+        `;
+        tr.cells[0].textContent = o.id.slice(0, 8) + '…';
+        tr.cells[1].textContent = o.store_name || o.store_id;
+        tr.cells[2].innerHTML   = statusBadge(o.status);
+        tr.cells[3].textContent = fmtCurrency(o.total);
+        tr.cells[4].textContent = fmtDate(o.created_at);
+        tbody.appendChild(tr);
+      });
+    }
     renderPagination('orders-pagination', data.total, page, 20, loadOrders);
   } catch (err) {
     showToast(err.message, 'error');
   }
 }
 
-function openEditOrder(id, status) {
-  document.getElementById('modal-order-id').value     = id;
-  document.getElementById('modal-order-status').value = status;
+document.getElementById('orders-tbody')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const tr = btn.closest('tr[data-id]');
+  if (!tr) return;
+  const order = orderCache.get(tr.dataset.id);
+  if (!order) return;
+  if (btn.dataset.action === 'edit-order') openEditOrder(order);
+});
+
+function openEditOrder(order) {
+  document.getElementById('modal-order-id').value     = order.id;
+  document.getElementById('modal-order-status').value = order.status || 'created';
   document.getElementById('modal-order').classList.add('open');
 }
 
@@ -580,34 +730,57 @@ async function saveOrder() {
 
 // ─── Subscriptions ────────────────────────────────────────────────────────────
 
+const subCache = new Map();
+
 async function loadSubscriptions(page = pages.subscriptions.page) {
   pages.subscriptions.page = page;
   const params = new URLSearchParams({ page, limit: 20 });
   try {
     const data = await apiFetch(`/api/admin/subscriptions?${params}`);
+    subCache.clear();
     const tbody = document.getElementById('subscriptions-tbody');
-    tbody.innerHTML = (data.subscriptions || []).map(s => `
-      <tr>
-        <td>${escHtml(s.email || s.user_id)}</td>
-        <td>${statusBadge(s.plan)}</td>
-        <td>${statusBadge(s.status)}</td>
-        <td>${fmtDate(s.ends_at)}</td>
-        <td><div class="action-btns">
-          <button onclick="openEditSub('${escHtml(s.id)}','${escHtml(s.plan)}','${escHtml(s.status)}')">Edytuj</button>
-        </div></td>
-      </tr>
-    `).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center">Brak subskrypcji</td></tr>';
+    tbody.innerHTML = '';
 
+    if (!data.subscriptions || !data.subscriptions.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center">Brak subskrypcji</td></tr>';
+    } else {
+      data.subscriptions.forEach(s => {
+        subCache.set(s.id, s);
+        const tr = document.createElement('tr');
+        tr.dataset.id = s.id;
+        tr.innerHTML = `
+          <td></td><td></td><td></td><td></td>
+          <td><div class="action-btns">
+            <button data-action="edit-sub">Edytuj</button>
+          </div></td>
+        `;
+        tr.cells[0].textContent = s.email || s.user_id;
+        tr.cells[1].innerHTML   = statusBadge(s.plan);
+        tr.cells[2].innerHTML   = statusBadge(s.status);
+        tr.cells[3].textContent = fmtDate(s.ends_at);
+        tbody.appendChild(tr);
+      });
+    }
     renderPagination('subscriptions-pagination', data.total, page, 20, loadSubscriptions);
   } catch (err) {
     showToast(err.message, 'error');
   }
 }
 
-function openEditSub(id, plan, status) {
-  document.getElementById('modal-sub-id').value     = id;
-  document.getElementById('modal-sub-plan').value   = plan;
-  document.getElementById('modal-sub-status').value = status;
+document.getElementById('subscriptions-tbody')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const tr = btn.closest('tr[data-id]');
+  if (!tr) return;
+  const sub = subCache.get(tr.dataset.id);
+  if (!sub) return;
+  if (btn.dataset.action === 'edit-sub') openEditSub(sub);
+});
+
+function openEditSub(sub) {
+  document.getElementById('modal-sub-id').value     = sub.id;
+  document.getElementById('modal-sub-plan').value   = sub.plan || 'trial';
+  document.getElementById('modal-sub-status').value = sub.status || 'active';
   document.getElementById('modal-subscription').classList.add('open');
 }
 
@@ -634,17 +807,23 @@ async function loadAudit(page = pages.audit.page) {
   try {
     const data = await apiFetch(`/api/admin/audit-logs?${params}`);
     const tbody = document.getElementById('audit-tbody');
-    tbody.innerHTML = (data.logs || []).map(l => `
-      <tr>
-        <td>${escHtml(l.user_email || l.user_id || '–')}</td>
-        <td><code style="font-size:.7rem">${escHtml(l.action)}</code></td>
-        <td>${escHtml(l.resource || '–')}</td>
-        <td style="font-family:monospace;font-size:.7rem">${escHtml((l.resource_id||'').slice(0,8)) || '–'}</td>
-        <td>${escHtml(l.ip_address || '–')}</td>
-        <td>${fmtDate(l.created_at)}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="6" style="color:var(--muted);text-align:center">Brak logów</td></tr>';
+    tbody.innerHTML = '';
 
+    if (!data.logs || !data.logs.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center">Brak logów</td></tr>';
+    } else {
+      data.logs.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td></td><td><code style="font-size:.7rem"></code></td><td></td><td style="font-family:monospace;font-size:.7rem"></td><td></td><td></td>';
+        tr.cells[0].textContent                   = l.user_email || l.user_id || '–';
+        tr.cells[1].querySelector('code').textContent = l.action;
+        tr.cells[2].textContent                   = l.resource || '–';
+        tr.cells[3].textContent                   = (l.resource_id || '').slice(0, 8) || '–';
+        tr.cells[4].textContent                   = l.ip_address || '–';
+        tr.cells[5].textContent                   = fmtDate(l.created_at);
+        tbody.appendChild(tr);
+      });
+    }
     renderPagination('audit-pagination', data.total, page, 20, loadAudit);
   } catch (err) {
     showToast(err.message, 'error');
