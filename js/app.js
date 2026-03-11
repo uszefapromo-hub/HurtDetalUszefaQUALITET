@@ -4521,6 +4521,83 @@
       return card;
     }, 'Brak działań operatorów.');
 
+    // ── ADD OPERATOR FORM ──
+    const addOperatorForm = document.querySelector('[data-add-operator-form]');
+    const addOperatorSuccess = document.querySelector('[data-add-operator-success]');
+    const addOperatorError = document.querySelector('[data-add-operator-error]');
+    if(addOperatorForm){
+      addOperatorForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const nameInput = addOperatorForm.querySelector('input[name="name"]');
+        const emailInput = addOperatorForm.querySelector('input[name="email"]');
+        const name = nameInput ? nameInput.value.trim() : '';
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+        if(!name || !email){
+          if(addOperatorError){
+            addOperatorError.textContent = 'Podaj imię i adres e-mail operatora.';
+            addOperatorError.hidden = false;
+          }
+          return;
+        }
+        const existingOps = getStoredList(OWNER_STORAGE_KEYS.operators);
+        const duplicate = existingOps.some(o => (o.email || '').toLowerCase() === email);
+        if(duplicate){
+          if(addOperatorError){
+            addOperatorError.textContent = 'Operator z takim adresem e-mail już istnieje.';
+            addOperatorError.hidden = false;
+          }
+          return;
+        }
+        if(addOperatorError){
+          addOperatorError.hidden = true;
+        }
+        const newOp = {
+          id: `op_${Date.now()}`,
+          name,
+          email,
+          status: 'active',
+          tasksOpen: 0,
+          activityToday: 0,
+          partners: 0,
+          lastActive: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
+        existingOps.push(newOp);
+        saveStoredList(OWNER_STORAGE_KEYS.operators, existingOps);
+        if(operatorsTbody){
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="cell-mono">${escapeHtml(newOp.id)}</td>
+            <td><strong>${escapeHtml(newOp.name)}</strong></td>
+            <td>${escapeHtml(newOp.email)}</td>
+            <td>${statusPill('active')}</td>
+            <td>0</td>
+            <td class="cell-muted">${formatDate(newOp.lastActive)}</td>
+            <td>0</td>
+          `;
+          operatorsTbody.appendChild(tr);
+        }
+        const activeCount = existingOps.filter(o => o.status === 'active').length;
+        setText('[data-op-active]', activeCount);
+        const logs = getStoredList(OWNER_STORAGE_KEYS.adminLogs);
+        logs.unshift({
+          id: `log_op_${Date.now()}`,
+          time: new Date().toISOString(),
+          user: 'Superadmin',
+          role: 'superadmin',
+          action: 'Dodano operatora',
+          object: 'operators',
+          details: `${name} (${email})`
+        });
+        saveStoredList(OWNER_STORAGE_KEYS.adminLogs, logs);
+        addOperatorForm.reset();
+        if(addOperatorSuccess){
+          addOperatorSuccess.hidden = false;
+          window.setTimeout(() => { addOperatorSuccess.hidden = true; }, 2500);
+        }
+      });
+    }
+
     // ── SECURITY TAB ──
     const adminLogsTbody = document.querySelector('[data-admin-logs-tbody]');
     if(adminLogsTbody){
@@ -4822,6 +4899,27 @@
         bar.style.borderRadius = '4px';
       }
     });
+
+    // Revenue chart by month
+    const reportRevenueChartEl = document.querySelector('[data-report-revenue-chart]');
+    if(reportRevenueChartEl){
+      const reportMonths = [];
+      for(let i = 5; i >= 0; i--){
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        reportMonths.push(d.toISOString().slice(0, 7));
+      }
+      const reportMonthlyRevenue = reportMonths.map(m => ({
+        month: m,
+        amount: orders.filter(o => (o.createdAt || '').startsWith(m)).reduce((s, o) => s + (Number.parseFloat(o.amount) || 0), 0)
+      }));
+      const reportMaxMonthly = Math.max(...reportMonthlyRevenue.map(m => m.amount), 1);
+      reportRevenueChartEl.innerHTML = reportMonthlyRevenue.map(m => {
+        const pct = Math.round((m.amount / reportMaxMonthly) * 100);
+        const label = escapeHtml(m.month.slice(5));
+        const val = escapeHtml(formatCurrency(m.amount));
+        return `<div class="chart-row"><span>${label}</span><span>${val}</span></div><div class="chart-bar"><span style="--value:${pct}%"></span></div>`;
+      }).join('');
+    }
 
     // Export buttons
     document.querySelectorAll('[data-export-report]').forEach(btn => {
