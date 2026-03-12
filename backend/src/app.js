@@ -22,6 +22,8 @@ const paymentsRouter = require('./routes/payments');
 const shopProductsRouter = require('./routes/shop-products');
 const myRouter = require('./routes/my');
 const storeRouter = require('./routes/store');
+const { importSupplierProducts } = require('./services/supplier-import');
+const db = require('./config/database');
 
 const app = express();
 
@@ -104,6 +106,32 @@ app.use((err, _req, res, _next) => {
   const status = err.status || 500;
   res.status(status).json({ error: err.message || 'Wewnętrzny błąd serwera' });
 });
+
+// ─── Supplier sync scheduler – every 12 hours ─────────────────────────────────
+// Disabled in test environment to avoid interference with mocked DB queries.
+if (process.env.NODE_ENV !== 'test') {
+  const SYNC_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+  const syncAllSuppliers = async () => {
+    try {
+      const result = await db.query(
+        `SELECT id FROM suppliers WHERE status = 'active' AND (api_url IS NOT NULL OR xml_endpoint IS NOT NULL OR csv_endpoint IS NOT NULL)`
+      );
+      for (const row of result.rows) {
+        try {
+          const count = await importSupplierProducts(row.id);
+          console.log(`[sync] Supplier ${row.id}: ${count} products synced`);
+        } catch (err) {
+          console.error(`[sync] Supplier ${row.id} error:`, err.message);
+        }
+      }
+    } catch (err) {
+      console.error('[sync] Failed to load suppliers:', err.message);
+    }
+  };
+
+  setInterval(syncAllSuppliers, SYNC_INTERVAL_MS);
+}
 
 // ─── Start server ──────────────────────────────────────────────────────────────
 const PORT = parseInt(process.env.PORT || '3000', 10);

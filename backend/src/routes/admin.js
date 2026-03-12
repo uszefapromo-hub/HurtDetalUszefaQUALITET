@@ -12,6 +12,7 @@ const db = require('../config/database');
 const { authenticate, requireRole, requireSuperAdmin } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { PLAN_CONFIG } = require('./subscriptions');
+const { upsertSupplierProducts, fetchSupplierProducts } = require('../services/supplier-import');
 
 const router = express.Router();
 
@@ -328,8 +329,11 @@ router.get('/suppliers', authenticate, requireRole('owner', 'admin'), async (req
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await db.query(
-      `SELECT * FROM suppliers ${where}
-       ORDER BY name ASC
+      `SELECT s.*,
+              (SELECT COUNT(*) FROM products p WHERE p.supplier_id = s.id) AS product_count
+       FROM suppliers s
+       ${where}
+       ORDER BY s.name ASC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, limit, offset]
     );
@@ -427,10 +431,10 @@ router.post(
         if (!apiUrl) {
           return res.status(422).json({ error: 'Brak pliku lub skonfigurowanego endpointu hurtowni' });
         }
-        rawProducts = await adminFetchApiProducts(supplier);
+        rawProducts = await fetchSupplierProducts(supplier);
       }
 
-      const imported = await upsertCentralProducts(rawProducts, supplier_id);
+      const imported = await upsertSupplierProducts(supplier_id, rawProducts);
 
       return res.json({ message: `Zaimportowano ${imported} produktów`, count: imported });
     } catch (err) {
