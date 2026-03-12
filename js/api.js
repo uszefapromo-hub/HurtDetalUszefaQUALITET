@@ -452,6 +452,10 @@
     syncSupplier(supplierId)   { return post('/admin/suppliers/sync', { supplier_id: supplierId }); },
     subscriptions(params)      { return get('/admin/subscriptions', params); },
     auditLogs(params)          { return get('/admin/audit-logs', params); },
+    /** Get platform margin tiers. GET /api/admin/platform-margins */
+    platformMargins(params)    { return get('/admin/platform-margins', params); },
+    /** Replace platform margin tiers. PUT /api/admin/platform-margins */
+    updatePlatformMargins(data){ return put('/admin/platform-margins', data); },
   };
 
   // ─── My Store (seller convenience) ──────────────────────────────────────────
@@ -475,6 +479,11 @@
     products(storeId, params)  { return get('/my/store/products', { store_id: storeId, ...params }); },
     /** Add a product to seller's store. */
     addProduct(data)           { return post('/my/store/products', data); },
+    /**
+     * Add multiple products to seller's store in one request.
+     * @param {{ store_id: string, product_ids: string[] }} data
+     */
+    bulkAddProducts(data)      { return post('/my/store/products/bulk', data); },
     /** Update a shop product in seller's store. */
     updateProduct(id, data)    { return patch(`/my/store/products/${id}`, data); },
     /** Remove a product from seller's store. */

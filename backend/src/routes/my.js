@@ -3,14 +3,15 @@
 /**
  * "My" routes – user-facing endpoints for the currently authenticated user.
  *
- * GET    /api/my/store                 – seller's primary store
- * GET    /api/my/store/stats           – seller's store dashboard stats
- * GET    /api/my/store/orders          – orders for the seller's store
- * GET    /api/my/orders                – buyer's order history
- * GET    /api/my/store/products        – list my store's shop products
- * POST   /api/my/store/products        – add a product to my store
- * PATCH  /api/my/store/products/:id   – update a shop product in my store
- * DELETE /api/my/store/products/:id   – remove a product from my store
+ * GET    /api/my/store                       – seller's primary store
+ * GET    /api/my/store/stats                 – seller's store dashboard stats
+ * GET    /api/my/store/orders                – orders for the seller's store
+ * GET    /api/my/orders                      – buyer's order history
+ * GET    /api/my/store/products              – list my store's shop products
+ * POST   /api/my/store/products              – add a product to my store
+ * POST   /api/my/store/products/bulk         – add multiple products to my store at once
+ * PATCH  /api/my/store/products/:id          – update a shop product in my store
+ * DELETE /api/my/store/products/:id          – remove a product from my store
  */
 
 const express = require('express');
@@ -184,11 +185,11 @@ router.patch(
          WHERE id = $6
          RETURNING *`,
         [
-          name      !== undefined ? name      : null,
+          name        !== undefined ? name        : null,
           description !== undefined ? description : null,
-          logo_url  !== undefined ? logo_url  : null,
-          banner_url !== undefined ? banner_url : null,
-          margin    !== undefined ? margin    : null,
+          logo_url    !== undefined ? logo_url    : null,
+          banner_url  !== undefined ? banner_url  : null,
+          margin      !== undefined ? margin      : null,
           store.id,
         ]
       );
@@ -338,8 +339,25 @@ router.post(
         }
       }
 
-      const productResult = await db.query('SELECT id FROM products WHERE id = $1', [product_id]);
+      const productResult = await db.query(
+        'SELECT id, platform_price, min_selling_price, selling_price FROM products WHERE id = $1',
+        [product_id]
+      );
       if (!productResult.rows[0]) return res.status(404).json({ error: 'Produkt nie znaleziony' });
+
+      const product = productResult.rows[0];
+      const basePlatformPrice = parseFloat(product.platform_price || product.selling_price || 0);
+      const minPrice = parseFloat(product.min_selling_price || product.platform_price || product.selling_price || 0);
+
+      if (price_override !== null && price_override < minPrice) {
+        return res.status(422).json({ error: 'Cena nie może być niższa niż cena platformy', min_selling_price: minPrice });
+      }
+      if (margin_type === 'fixed' && margin_override !== null) {
+        const computedPrice = parseFloat((basePlatformPrice + parseFloat(margin_override)).toFixed(2));
+        if (computedPrice < minPrice) {
+          return res.status(422).json({ error: 'Cena sprzedaży nie może być niższa niż cena platformy', min_selling_price: minPrice });
+        }
+      }
 
       const id = uuidv4();
       const result = await db.query(
@@ -368,6 +386,90 @@ router.post(
   }
 );
 
+// ─── POST /api/my/store/products/bulk – add multiple products to my store ──────
+
+router.post(
+  '/store/products/bulk',
+  authenticate,
+  requireRole('seller', 'owner', 'admin'),
+  [
+    body('store_id').isUUID(),
+    body('product_ids').isArray({ min: 1 }),
+    body('product_ids.*').isUUID(),
+  ],
+  validate,
+  requireActiveSubscription,
+  async (req, res) => {
+    const { store_id, product_ids } = req.body;
+
+    try {
+      const storeResult = await db.query('SELECT owner_id FROM stores WHERE id = $1', [store_id]);
+      const store = storeResult.rows[0];
+      if (!store) return res.status(404).json({ error: 'Sklep nie znaleziony' });
+
+      const isAdmin = ['owner', 'admin'].includes(req.user.role);
+      if (!isAdmin && store.owner_id !== req.user.id) {
+        return res.status(403).json({ error: 'Brak uprawnień do tego sklepu' });
+      }
+
+      // Check product limit from subscription (set by requireActiveSubscription middleware)
+      const sub = req.subscription;
+      if (sub && sub.product_limit !== null && sub.product_limit !== undefined) {
+        const countResult = await db.query(
+          'SELECT COUNT(*) FROM shop_products WHERE store_id = $1',
+          [store_id]
+        );
+        const currentCount = parseInt(countResult.rows[0].count, 10);
+        if (currentCount + product_ids.length > sub.product_limit) {
+          return res.status(403).json({ error: 'product_limit_reached' });
+        }
+      }
+
+      const DEFAULT_MARGIN = 20;
+      const added = [];
+      const skipped = [];
+
+      // Fetch all requested products in one query to avoid N+1 lookups
+      const productsResult = await db.query(
+        'SELECT id, selling_price FROM products WHERE id = ANY($1)',
+        [product_ids]
+      );
+      const foundProducts = new Set(productsResult.rows.map((p) => p.id));
+
+      for (const product_id of product_ids) {
+        if (!foundProducts.has(product_id)) {
+          skipped.push({ product_id, reason: 'not_found' });
+          continue;
+        }
+
+        const id = uuidv4();
+        const result = await db.query(
+          `INSERT INTO shop_products
+             (id, store_id, product_id, margin_type, margin_override, active, sort_order, created_at)
+           VALUES ($1, $2, $3, 'percent', $4, true, 0, NOW())
+           ON CONFLICT (store_id, product_id) DO UPDATE SET
+             margin_type     = EXCLUDED.margin_type,
+             margin_override = EXCLUDED.margin_override,
+             updated_at      = NOW()
+           RETURNING *`,
+          [id, store_id, product_id, DEFAULT_MARGIN]
+        );
+        added.push(result.rows[0]);
+      }
+
+      return res.status(201).json({
+        added: added.length,
+        skipped: skipped.length,
+        results: added,
+        skipped_ids: skipped,
+      });
+    } catch (err) {
+      console.error('my store bulk add products error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
 // ─── PATCH /api/my/store/products/:id – update a shop product ─────────────────
 
 router.patch(
@@ -388,9 +490,11 @@ router.patch(
   async (req, res) => {
     try {
       const spResult = await db.query(
-        `SELECT sp.*, s.owner_id
+        `SELECT sp.*, s.owner_id,
+                p.platform_price, p.min_selling_price, p.selling_price AS product_selling_price
          FROM shop_products sp
          JOIN stores s ON sp.store_id = s.id
+         JOIN products p ON sp.product_id = p.id
          WHERE sp.id = $1`,
         [req.params.id]
       );
@@ -406,6 +510,20 @@ router.patch(
         custom_title, custom_description, margin_type,
         margin_override, price_override, active, sort_order,
       } = req.body;
+
+      const basePlatformPrice = parseFloat(sp.platform_price || sp.product_selling_price || 0);
+      const minPrice = parseFloat(sp.min_selling_price || sp.platform_price || sp.product_selling_price || 0);
+
+      if (price_override !== undefined && price_override !== null && price_override < minPrice) {
+        return res.status(422).json({ error: 'Cena nie może być niższa niż cena platformy', min_selling_price: minPrice });
+      }
+      const effectiveMarginType = margin_type ?? sp.margin_type;
+      if (effectiveMarginType === 'fixed' && margin_override !== undefined && margin_override !== null) {
+        const computedPrice = parseFloat((basePlatformPrice + parseFloat(margin_override)).toFixed(2));
+        if (computedPrice < minPrice) {
+          return res.status(422).json({ error: 'Cena sprzedaży nie może być niższa niż cena platformy', min_selling_price: minPrice });
+        }
+      }
 
       const result = await db.query(
         `UPDATE shop_products SET

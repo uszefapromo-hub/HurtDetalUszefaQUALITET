@@ -127,12 +127,14 @@
             <span class="eyebrow">Produkty</span>
             <h2>Produkty w sklepie</h2>
             <p class="hint">Zarządzaj produktami: zmień marżę, cenę lub wyłącz produkt.</p>
+            <div class="cta-row" style="margin-top:12px">
+              <button class="btn btn-primary" type="button" data-add-store-product>Dodaj produkt</button>
+            </div>
           </section>
 
-          <!-- Products already in store -->
           <section class="panel-card">
             <p data-products-loading class="hint">Ładowanie produktów…</p>
-            <p data-products-empty class="hint" hidden>Brak produktów w sklepie. Dodaj produkty z katalogu poniżej.</p>
+            <p data-products-empty class="hint" hidden>Brak produktów w sklepie. Dodaj produkty z katalogu.</p>
             <div class="owner-table-wrap">
               <table class="owner-table" aria-label="Produkty sklepu">
                 <thead>
@@ -319,9 +321,11 @@
   </nav>
 
   <script src="js/api.js" defer></script>
+  <script src="js/pwa-connect.js" defer></script>
   <script src="js/flow.js" defer></script>
   <script src="js/app.js" defer></script>
   <script src="stores.js" defer></script>
+  <script src="shop.js" defer></script>
   <script>
     // ─── Seller tab navigation ────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
