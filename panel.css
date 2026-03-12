@@ -7,8 +7,7 @@ body{
 
 /* ── Owner tab navigation ── */
 .sidebar-sep{border:none;border-top:1px solid var(--stroke);margin:10px 0}
-.owner-tab-panel[hidden]{display:none}
-.operator-tab-panel[hidden]{display:none}
+.owner-tab-panel[hidden],.operator-tab-panel[hidden]{display:none}
 .sidebar-operator-link{color:var(--accent-cyan,#35d9ff)!important;font-weight:700}
 
 /* ── Owner quick navigation tiles ── */
