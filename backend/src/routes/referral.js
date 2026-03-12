@@ -8,6 +8,7 @@
  * POST /api/referral/use          – record a referral use when a new user registers with a ref_code
  */
 
+const crypto = require('crypto');
 const express = require('express');
 const { body, query } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
@@ -36,8 +37,16 @@ router.get('/my', authenticate, async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      // Auto-create a referral code
-      const code = _generateCode(req.user.id);
+      // Auto-create a referral code with collision detection
+      let code;
+      let attempts = 0;
+      do {
+        code = _generateCode();
+        const existing = await db.query('SELECT id FROM referral_codes WHERE code = $1', [code]);
+        if (existing.rows.length === 0) break;
+        attempts++;
+      } while (attempts < 5);
+
       const id = uuidv4();
       await db.query(
         `INSERT INTO referral_codes (id, user_id, code, created_at)
@@ -156,13 +165,24 @@ router.get('/admin', authenticate, requireRole('owner', 'admin'), async (req, re
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Generate a short alphanumeric referral code derived from the user ID.
- * Format: QM-XXXXXX  (6 uppercase chars)
+ * Generate a cryptographically random referral code using unbiased selection.
+ * Format: QM-XXXXXXXX  (8 uppercase alphanumeric chars from unambiguous alphabet)
+ *
+ * Uses rejection sampling so each character is drawn with equal probability,
+ * regardless of whether the alphabet length divides 256 evenly.
  */
-function _generateCode(userId) {
-  const raw = userId.replace(/-/g, '').slice(0, 6).toUpperCase();
-  const suffix = Date.now().toString(36).slice(-3).toUpperCase();
-  return `QM-${raw}${suffix}`;
+function _generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 unambiguous chars (no I/O/1/0)
+  const limit  = 256 - (256 % chars.length);         // rejection threshold for uniform dist.
+  let code = 'QM-';
+  let remaining = 8;
+  while (remaining > 0) {
+    const byte = crypto.randomBytes(1)[0];
+    if (byte >= limit) continue;                      // reject to avoid modulo bias
+    code += chars[byte % chars.length];
+    remaining--;
+  }
+  return code;
 }
 
 module.exports = router;

@@ -3702,9 +3702,10 @@ describe('GET /api/referral/my', () => {
     // First query returns empty (no existing code)
     db.query
       .mockResolvedValueOnce({ rows: [] })          // SELECT referral_codes WHERE user_id
+      .mockResolvedValueOnce({ rows: [] })           // SELECT collision check (code is free)
       .mockResolvedValueOnce({ rows: [] })           // INSERT referral_codes
       .mockResolvedValueOnce({                       // SELECT new code
-        rows: [{ id: 'new-ref-id', code: 'QM-NEW001', user_id: SELLER_ID, total_referred: 0, bonus_months_given: 0 }],
+        rows: [{ id: 'new-ref-id', code: 'QM-ABCD1234', user_id: SELLER_ID, total_referred: 0, bonus_months_given: 0 }],
       });
 
     const res = await request(app)
