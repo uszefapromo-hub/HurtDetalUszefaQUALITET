@@ -21,7 +21,7 @@
   }
 
   function escapeHtml(str) {
-    return String(str)
+    return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -72,8 +72,16 @@
         })
         .catch(function (err) {
           restoreButton(submitBtn, origText);
-          var msg = (err.body && err.body.error) || 'Błąd logowania. Sprawdź e-mail i hasło.';
-          showFormError(form, msg);
+          // Show error only for real API responses (wrong credentials, etc.)
+          // When the backend is unreachable fall back to the localStorage flow.
+          if (err && err.status) {
+            var msg = (err.body && err.body.error) || 'Błąd logowania. Sprawdź e-mail i hasło.';
+            showFormError(form, msg);
+          } else {
+            try { localStorage.setItem('app_user_logged', 'true'); } catch (_) {}
+            try { localStorage.setItem('app_user_email', email); } catch (_) {}
+            window.location.href = 'dashboard.html';
+          }
         });
     }, true /* capture */);
 
@@ -82,7 +90,7 @@
       var loginCard = document.querySelector('[data-login-form]');
       if (!loginCard) return;
 
-      var registerBtn = loginCard.querySelector('button.btn-secondary');
+      var registerBtn = loginCard.querySelector('[data-register-btn]') || loginCard.querySelector('button.btn-secondary');
       if (registerBtn) {
         registerBtn.addEventListener('click', function () {
           showRegisterPanel();
@@ -121,8 +129,15 @@
         })
         .catch(function (err) {
           restoreButton(submitBtn, origText);
-          var msg = (err.body && err.body.error) || 'Rejestracja nie powiodła się. Spróbuj ponownie.';
-          showFormError(form, msg);
+          // Show API error (e.g. email already exists); fall back to localStorage if offline
+          if (err && err.status) {
+            var msg = (err.body && err.body.error) || 'Rejestracja nie powiodła się. Spróbuj ponownie.';
+            showFormError(form, msg);
+          } else {
+            try { localStorage.setItem('app_user_logged', 'true'); } catch (_) {}
+            try { localStorage.setItem('app_user_email', email); } catch (_) {}
+            window.location.href = 'dashboard.html';
+          }
         });
     }, true /* capture */);
   }
@@ -214,14 +229,14 @@
 
     var imgHtml = img
       ? '<img src="' + escapeHtml(img) + '" alt="' + escapeHtml(name) + '" loading="lazy">'
-      : '<span style="font-size:42px">📦</span>';
+      : '<span role="img" aria-label="Brak zdjęcia produktu" style="font-size:42px">📦</span>';
 
     card.innerHTML =
       '<div class="product-media">' + imgHtml + '</div>' +
       '<div class="product-details">' +
         '<span class="tag">' + escapeHtml(category) + '</span>' +
         '<h3>' + escapeHtml(name) + '</h3>' +
-        (description ? '<p class="hint">' + escapeHtml(description.slice(0, 80)) + '</p>' : '') +
+        (description ? '<p class="hint">' + escapeHtml(description.slice(0, 80)) + (description.length > 80 ? '\u2026' : '') + '</p>' : '') +
         '<div class="product-meta"><span class="price">' + formatPrice(price) + '</span></div>' +
         '<div class="cta-row product-actions">' +
           '<button class="btn btn-primary" type="button"' +
@@ -404,7 +419,8 @@
         renderDashboardOrders(ordersSection, orders);
       })
       .catch(function () {
-        ordersSection.querySelector('[data-orders-loading]') && (ordersSection.querySelector('[data-orders-loading]').hidden = true);
+        var loadingEl = ordersSection.querySelector('[data-orders-loading]');
+        if (loadingEl) loadingEl.hidden = true;
       });
   }
 
