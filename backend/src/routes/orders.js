@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const db = require('../config/database');
 const { authenticate, requireRole } = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
+const { validate, sanitizeText } = require('../middleware/validate');
 const { PLAN_CONFIG } = require('./subscriptions');
 
 const router = express.Router();
@@ -81,6 +81,9 @@ router.post(
   validate,
   async (req, res) => {
     const { store_id, items, shipping_address, notes = '' } = req.body;
+    // Sanitize user-supplied free-text to prevent stored XSS
+    const safeAddress = sanitizeText(shipping_address);
+    const safeNotes = sanitizeText(notes);
 
     try {
       // Validate store exists
@@ -155,7 +158,7 @@ router.post(
               shipping_address, notes, created_at)
            VALUES ($1,$2,$3,$4,'created',$5,$6,$7,$8,$9,$10,$11,NOW())`,
           [orderId, store_id, store.owner_id, req.user.id, subtotal.toFixed(2), platformFee,
-           platform_commission, seller_revenue, total, shipping_address, notes]
+           platform_commission, seller_revenue, total, safeAddress, safeNotes]
         );
 
         for (const oi of orderItems) {

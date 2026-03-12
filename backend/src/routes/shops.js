@@ -14,7 +14,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const db = require('../config/database');
 const { authenticate, requireRole } = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
+const { validate, sanitizeText } = require('../middleware/validate');
 const { PLAN_CONFIG } = require('./subscriptions');
 
 const router = express.Router();
@@ -41,6 +41,9 @@ router.post(
       margin = 30,   // default 30 % margin for new shops
       plan = 'basic',
     } = req.body;
+    // Sanitize free-text fields to prevent stored XSS
+    const safeName = sanitizeText(name);
+    const safeDescription = description ? sanitizeText(description) : null;
 
     try {
       const slugCheck = await db.query('SELECT id FROM stores WHERE slug = $1', [slug]);
@@ -53,7 +56,7 @@ router.post(
         `INSERT INTO stores (id, owner_id, name, slug, description, margin, plan, status, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', NOW())
          RETURNING *`,
-        [id, req.user.id, name, slug, description, margin, plan]
+        [id, req.user.id, safeName, slug, safeDescription, margin, plan]
       );
 
       // Auto-create trial subscription for the new shop

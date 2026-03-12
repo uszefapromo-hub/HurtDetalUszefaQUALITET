@@ -4,7 +4,7 @@ const express = require('express');
 const { body, param } = require('express-validator');
 
 const db = require('../config/database');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requireSuperAdmin } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { PLAN_CONFIG } = require('./subscriptions');
 
