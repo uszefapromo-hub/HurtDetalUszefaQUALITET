@@ -47,7 +47,7 @@ async function ensureReferralCode(userId) {
     const collision = await db.query('SELECT id FROM referral_codes WHERE code = $1', [code]);
     if (collision.rows.length === 0) break;
     // Append random alphanumeric suffix (grows with each retry)
-    const suffix = Math.random().toString(36).slice(2, 2 + attempts + 2).toUpperCase();
+    const suffix = Math.random().toString(36).slice(2, 4 + attempts).toUpperCase();
     code = generateCode(userId).slice(0, 8 - suffix.length) + suffix;
     attempts++;
   }

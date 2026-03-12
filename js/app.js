@@ -4489,18 +4489,16 @@
       const baseUrl = window.location.origin + window.location.pathname.replace('owner-panel.html', 'index.html');
       ownerRefLink.value = `${baseUrl}?ref=OWNER2026`;
       // Load actual referral code from backend API
-      const refApi = window.QMApi;
-      if(refApi && refApi.Referral && typeof refApi.Referral.myCode === 'function'){
-        refApi.Referral.myCode().then(function(data){
+      if(api && api.Referral && typeof api.Referral.myCode === 'function'){
+        api.Referral.myCode().then(function(data){
           if(data && data.referral_link) ownerRefLink.value = data.referral_link;
         }).catch(function(){/* keep fallback */});
       }
     }
 
     // Load referral stats from backend API
-    const refApiForStats = window.QMApi;
-    if(refApiForStats && refApiForStats.Admin && typeof refApiForStats.Admin.referrals === 'function'){
-      refApiForStats.Admin.referrals().then(function(data){
+    if(api && api.Admin && typeof api.Admin.referrals === 'function'){
+      api.Admin.referrals().then(function(data){
         if(!data) return;
         setText('[data-ref-total-referrers]', data.total_referrers || 0);
         setText('[data-ref-total-referred]', data.total_uses || 0);
