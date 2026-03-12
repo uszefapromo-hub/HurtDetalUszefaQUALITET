@@ -33,7 +33,7 @@ async function auditLog({ actorUserId, action, resource = null, resourceId = nul
         action,
         resource,
         resourceId || null,
-        metadata ? JSON.stringify(metadata) : null,
+        metadata || null,
         ipAddress || null,
       ]
     );

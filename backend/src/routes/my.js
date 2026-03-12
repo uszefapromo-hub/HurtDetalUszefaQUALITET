@@ -270,16 +270,21 @@ router.get(
                 p.selling_price AS base_price, p.margin AS base_margin,
                 p.supplier_price, p.platform_price, p.min_selling_price,
                 CASE
+                  -- Seller set an explicit price override: use it directly
                   WHEN sp.price_override IS NOT NULL
                     THEN sp.price_override
+                  -- selling_price pre-computed from seller_margin on POST/PUT
                   WHEN sp.selling_price IS NOT NULL
                     THEN sp.selling_price
+                  -- Dynamic margin: applied on-the-fly to platform_price (falls back
+                  -- to legacy selling_price for products predating the price-tier migration)
                   WHEN sp.margin_type = 'percent' AND sp.margin_override IS NOT NULL
                     THEN ROUND(COALESCE(p.platform_price, p.selling_price, 0)
                                * (1 + sp.margin_override / 100), 2)
                   WHEN sp.margin_type = 'fixed' AND sp.margin_override IS NOT NULL
                     THEN ROUND(COALESCE(p.platform_price, p.selling_price, 0)
                                + sp.margin_override, 2)
+                  -- No seller margin configured: expose the platform price as the base
                   ELSE COALESCE(p.platform_price, p.selling_price)
                 END AS price
          FROM shop_products sp

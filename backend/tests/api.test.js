@@ -358,6 +358,7 @@ function setupDbMock() {
       return { rows: mockDb.audit_logs };
     }
     if (s.startsWith('insert into audit_logs')) {
+      // params: [$1=id, $2=user_id, $3=action, $4=resource, $5=resource_id, $6=metadata, $7=ip_address]
       const entry = { id: uuidv4(), user_id: params[1], action: params[2], resource: params[3], resource_id: params[4], metadata: params[5], ip_address: params[6], created_at: new Date().toISOString() };
       mockDb.audit_logs.push(entry);
       return { rows: [] };
