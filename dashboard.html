@@ -235,6 +235,49 @@
         <div class="orders-list" data-orders-list></div>
       </section>
 
+      <section class="panel-card" data-profile-section>
+        <span class="eyebrow">Moje konto</span>
+        <h2>Dane profilu</h2>
+        <p class="hint">Zaktualizuj swoje imię i nazwisko oraz numer telefonu.</p>
+        <form data-profile-form style="margin-top:16px">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="form-field">
+              <label for="profile-name">Imię i nazwisko</label>
+              <input id="profile-name" type="text" name="name" placeholder="Twoje imię i nazwisko" autocomplete="name" data-profile-name>
+            </div>
+            <div class="form-field">
+              <label for="profile-phone">Telefon</label>
+              <input id="profile-phone" type="tel" name="phone" placeholder="+48 600 000 000" autocomplete="tel" data-profile-phone>
+            </div>
+            <div class="cta-row">
+              <button class="btn btn-primary" type="submit" data-profile-save>Zapisz profil</button>
+            </div>
+            <p data-profile-msg class="hint" hidden></p>
+          </div>
+        </form>
+
+        <hr style="margin:24px 0;border:none;border-top:1px solid var(--border,#e2e8f0)">
+
+        <h3>Zmiana hasła</h3>
+        <p class="hint">Wprowadź aktualne hasło i nowe hasło (min. 8 znaków).</p>
+        <form data-password-form style="margin-top:16px">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="form-field">
+              <label for="profile-cur-password">Aktualne hasło</label>
+              <input id="profile-cur-password" type="password" name="currentPassword" placeholder="••••••••" autocomplete="current-password" data-profile-cur-password>
+            </div>
+            <div class="form-field">
+              <label for="profile-new-password">Nowe hasło</label>
+              <input id="profile-new-password" type="password" name="newPassword" placeholder="Min. 8 znaków" autocomplete="new-password" data-profile-new-password>
+            </div>
+            <div class="cta-row">
+              <button class="btn btn-secondary" type="submit" data-password-save>Zmień hasło</button>
+            </div>
+            <p data-password-msg class="hint" hidden></p>
+          </div>
+        </form>
+      </section>
+
       <section class="helper-grid dashboard-helpers">
         <article class="helper-card tip" data-helper>
           <h3>TIP</h3>

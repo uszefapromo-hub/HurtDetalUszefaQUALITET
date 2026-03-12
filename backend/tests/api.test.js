@@ -1798,6 +1798,79 @@ describe('GET /api/auth/me', () => {
   });
 });
 
+// ─── PUT /api/auth/me – update user profile ───────────────────────────────────
+
+describe('PUT /api/auth/me', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).put('/api/auth/me').send({ name: 'Nowe Imię' });
+    expect(res.status).toBe(401);
+  });
+
+  it('updates name and phone', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: SELLER_ID, email: 'seller@test.pl', name: 'Nowe Imię', phone: '+48600000000', role: 'seller', plan: 'basic' }],
+    });
+
+    const res = await request(app)
+      .put('/api/auth/me')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ name: 'Nowe Imię', phone: '+48600000000' });
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Nowe Imię');
+    expect(res.body.phone).toBe('+48600000000');
+  });
+
+  it('rejects empty name', async () => {
+    const res = await request(app)
+      .put('/api/auth/me')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ name: '' });
+    expect(res.status).toBe(422);
+  });
+});
+
+// ─── PUT /api/users/me/password – change password ────────────────────────────
+
+describe('PUT /api/users/me/password', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).put('/api/users/me/password').send({ currentPassword: 'old', newPassword: 'newpassword' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects wrong current password', async () => {
+    const wrongHash = await require('bcryptjs').hash('correctpassword', 12);
+    db.query.mockResolvedValueOnce({ rows: [{ password_hash: wrongHash }] });
+
+    const res = await request(app)
+      .put('/api/users/me/password')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ currentPassword: 'wrongpassword', newPassword: 'newpassword8' });
+    expect(res.status).toBe(401);
+  });
+
+  it('changes password successfully', async () => {
+    const correctHash = await require('bcryptjs').hash('correctpassword', 12);
+    db.query
+      .mockResolvedValueOnce({ rows: [{ password_hash: correctHash }] })
+      .mockResolvedValueOnce({ rows: [] }); // UPDATE
+
+    const res = await request(app)
+      .put('/api/users/me/password')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ currentPassword: 'correctpassword', newPassword: 'newpassword8' });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe('Hasło zmienione');
+  });
+
+  it('rejects new password shorter than 8 characters', async () => {
+    const res = await request(app)
+      .put('/api/users/me/password')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ currentPassword: 'correctpassword', newPassword: 'short' });
+    expect(res.status).toBe(422);
+  });
+});
+
 // ─── POST /api/shops – create a new shop ──────────────────────────────────────
 
 describe('POST /api/shops', () => {

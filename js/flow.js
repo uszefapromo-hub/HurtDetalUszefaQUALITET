@@ -209,6 +209,106 @@
         renderDashboardOrders(orders);
       })
       .catch(function () {});
+
+    // Flow 8: user profile edit form
+    initProfileForm(a);
+  }
+
+  function initProfileForm(a) {
+    var profileForm   = document.querySelector('[data-profile-form]');
+    var passwordForm  = document.querySelector('[data-password-form]');
+    if (!profileForm && !passwordForm) return;
+
+    // Pre-populate profile fields from API
+    a.Auth.me()
+      .then(function (user) {
+        if (!user) return;
+        var nameInput  = profileForm && profileForm.querySelector('[data-profile-name]');
+        var phoneInput = profileForm && profileForm.querySelector('[data-profile-phone]');
+        if (nameInput  && user.name)  nameInput.value  = user.name;
+        if (phoneInput && user.phone) phoneInput.value = user.phone;
+      })
+      .catch(function () { /* not logged in or network error – leave fields empty */ });
+
+    // Profile update form submission
+    if (profileForm) {
+      profileForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var nameInput  = profileForm.querySelector('[data-profile-name]');
+        var phoneInput = profileForm.querySelector('[data-profile-phone]');
+        var saveBtn    = profileForm.querySelector('[data-profile-save]');
+        var msgEl      = profileForm.querySelector('[data-profile-msg]');
+
+        var payload = {};
+        if (nameInput  && nameInput.value.trim())  payload.name  = nameInput.value.trim();
+        if (phoneInput && phoneInput.value.trim()) payload.phone = phoneInput.value.trim();
+
+        if (!payload.name && !payload.phone) {
+          if (msgEl) { msgEl.textContent = 'Podaj imię lub numer telefonu.'; msgEl.hidden = false; }
+          return;
+        }
+
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Zapisywanie…'; }
+        if (msgEl)   { msgEl.hidden = true; }
+
+        a.Auth.updateProfile(payload)
+          .then(function (user) {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Zapisz profil'; }
+            if (msgEl)   { msgEl.textContent = '✅ Profil zaktualizowany.'; msgEl.hidden = false; }
+            // Update local cache
+            try {
+              var stored = JSON.parse(localStorage.getItem('qm_user') || '{}');
+              if (user.name  !== undefined) stored.name  = user.name;
+              if (user.phone !== undefined) stored.phone = user.phone;
+              localStorage.setItem('qm_user', JSON.stringify(stored));
+            } catch (_) {}
+          })
+          .catch(function (err) {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Zapisz profil'; }
+            var errMsg = (err && err.body && err.body.error) || 'Błąd zapisu. Spróbuj ponownie.';
+            if (msgEl) { msgEl.textContent = errMsg; msgEl.hidden = false; }
+          });
+      });
+    }
+
+    // Password change form submission
+    if (passwordForm) {
+      passwordForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var curInput  = passwordForm.querySelector('[data-profile-cur-password]');
+        var newInput  = passwordForm.querySelector('[data-profile-new-password]');
+        var saveBtn   = passwordForm.querySelector('[data-password-save]');
+        var msgEl     = passwordForm.querySelector('[data-password-msg]');
+
+        var curPassword = curInput  ? curInput.value  : '';
+        var newPassword = newInput  ? newInput.value  : '';
+
+        if (!curPassword || !newPassword) {
+          if (msgEl) { msgEl.textContent = 'Podaj aktualne i nowe hasło.'; msgEl.hidden = false; }
+          return;
+        }
+        if (newPassword.length < 8) {
+          if (msgEl) { msgEl.textContent = 'Nowe hasło musi mieć co najmniej 8 znaków.'; msgEl.hidden = false; }
+          return;
+        }
+
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Zmienianie…'; }
+        if (msgEl)   { msgEl.hidden = true; }
+
+        a.Auth.changePassword(curPassword, newPassword)
+          .then(function () {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Zmień hasło'; }
+            if (msgEl)   { msgEl.textContent = '✅ Hasło zostało zmienione.'; msgEl.hidden = false; }
+            if (curInput)  curInput.value  = '';
+            if (newInput)  newInput.value  = '';
+          })
+          .catch(function (err) {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Zmień hasło'; }
+            var errMsg = (err && err.body && err.body.error) || 'Błąd zmiany hasła. Sprawdź aktualne hasło.';
+            if (msgEl) { msgEl.textContent = errMsg; msgEl.hidden = false; }
+          });
+      });
+    }
   }
 
   function renderDashboardOrders(orders) {
