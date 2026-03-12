@@ -389,6 +389,70 @@ router.patch(
   }
 );
 
+// ─── PATCH /api/admin/stores/:id/slug – change store slug ────────────────────
+
+router.patch(
+  '/stores/:id/slug',
+  authenticate,
+  requireRole('owner', 'admin'),
+  [
+    param('id').isUUID(),
+    body('slug').trim().matches(/^[a-z0-9-]+$/i).isLength({ max: 80 }),
+  ],
+  validate,
+  async (req, res) => {
+    const { slug } = req.body;
+
+    try {
+      const conflict = await db.query(
+        'SELECT id FROM stores WHERE slug = $1 AND id != $2',
+        [slug, req.params.id]
+      );
+      if (conflict.rows.length > 0) {
+        return res.status(409).json({ error: 'Slug jest już zajęty' });
+      }
+
+      const result = await db.query(
+        `UPDATE stores SET slug = $1, updated_at = NOW() WHERE id = $2
+         RETURNING id, name, slug, status, plan, margin, subdomain_blocked, owner_id, updated_at`,
+        [slug, req.params.id]
+      );
+      if (!result.rows[0]) return res.status(404).json({ error: 'Sklep nie znaleziony' });
+      return res.json(result.rows[0]);
+    } catch (err) {
+      console.error('admin update store slug error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── PATCH /api/admin/stores/:id/subdomain – block or unblock subdomain ───────
+
+router.patch(
+  '/stores/:id/subdomain',
+  authenticate,
+  requireRole('owner', 'admin'),
+  [
+    param('id').isUUID(),
+    body('subdomain_blocked').isBoolean(),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const result = await db.query(
+        `UPDATE stores SET subdomain_blocked = $1, updated_at = NOW() WHERE id = $2
+         RETURNING id, name, slug, status, plan, margin, subdomain_blocked, owner_id, updated_at`,
+        [req.body.subdomain_blocked, req.params.id]
+      );
+      if (!result.rows[0]) return res.status(404).json({ error: 'Sklep nie znaleziony' });
+      return res.json(result.rows[0]);
+    } catch (err) {
+      console.error('admin update store subdomain error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
 // ─── GET /api/admin/subscriptions – all subscriptions (paginated) ─────────────
 
 router.get('/subscriptions', authenticate, requireRole('owner', 'admin'), async (req, res) => {

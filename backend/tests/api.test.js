@@ -1861,3 +1861,202 @@ describe('PATCH /api/admin/subscriptions/:id', () => {
     expect(res.body.commission_rate).toBe(0.08);
   });
 });
+
+// ─── Subdomain store routes (GET /api/store) ──────────────────────────────────
+
+describe('GET /api/store (subdomain)', () => {
+  it('returns 404 when no subdomain is present', async () => {
+    const res = await request(app).get('/api/store');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 for unknown subdomain slug', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // store not found
+
+    const res = await request(app)
+      .get('/api/store')
+      .set('Host', 'unknown.qualitetmarket.pl');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns store data for valid subdomain', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: STORE_ID, name: 'Mój Sklep', slug: 'moj-sklep', status: 'active', subdomain_blocked: false }],
+    });
+
+    const res = await request(app)
+      .get('/api/store')
+      .set('Host', 'moj-sklep.qualitetmarket.pl');
+    expect(res.status).toBe(200);
+    expect(res.body.slug).toBe('moj-sklep');
+    expect(res.body.name).toBe('Mój Sklep');
+  });
+
+  it('returns 404 for blocked subdomain', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // blocked stores are filtered by query
+
+    const res = await request(app)
+      .get('/api/store')
+      .set('Host', 'moj-sklep.qualitetmarket.pl');
+    expect(res.status).toBe(404);
+  });
+
+  it('ignores non-platform hostnames', async () => {
+    // No db.query call should be made for unrelated hosts
+    const res = await request(app).get('/api/store').set('Host', 'localhost:3000');
+    expect(res.status).toBe(404);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/store/products (subdomain)', () => {
+  it('returns 404 when no subdomain', async () => {
+    const res = await request(app).get('/api/store/products');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns product listing for valid subdomain', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID, name: 'Mój Sklep', slug: 'moj-sklep', status: 'active', subdomain_blocked: false }] }) // store
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] })
+      .mockResolvedValueOnce({ rows: [{ id: SHOP_PROD_ID, name: 'Fotel', price: 141.45 }] });
+
+    const res = await request(app)
+      .get('/api/store/products')
+      .set('Host', 'moj-sklep.qualitetmarket.pl');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('products');
+    expect(res.body.total).toBe(1);
+  });
+});
+
+describe('GET /api/store/categories (subdomain)', () => {
+  it('returns 404 when no subdomain', async () => {
+    const res = await request(app).get('/api/store/categories');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns categories for valid subdomain', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID, name: 'Mój Sklep', slug: 'moj-sklep', status: 'active', subdomain_blocked: false }] }) // store
+      .mockResolvedValueOnce({ rows: [{ name: 'Meble' }, { name: 'Sport' }] });
+
+    const res = await request(app)
+      .get('/api/store/categories')
+      .set('Host', 'moj-sklep.qualitetmarket.pl');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('categories');
+    expect(res.body.categories).toContain('Meble');
+  });
+});
+
+// ─── Admin: store slug management ─────────────────────────────────────────────
+
+describe('PATCH /api/admin/stores/:id/slug', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/slug`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ slug: 'nowy-slug' });
+    expect(res.status).toBe(403);
+  });
+
+  it('rejects invalid slug format', async () => {
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/slug`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ slug: 'invalid slug!' });
+    expect(res.status).toBe(422);
+  });
+
+  it('rejects duplicate slug with 409', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 'other-store' }] }); // slug taken
+
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/slug`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ slug: 'other-slug' });
+    expect(res.status).toBe(409);
+  });
+
+  it('updates slug successfully', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] }) // no conflict
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID, slug: 'nowy-slug', subdomain_blocked: false }] }); // update
+
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/slug`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ slug: 'nowy-slug' });
+    expect(res.status).toBe(200);
+    expect(res.body.slug).toBe('nowy-slug');
+  });
+
+  it('returns 404 for non-existent store', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] }) // no conflict
+      .mockResolvedValueOnce({ rows: [] }); // store not found
+
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/slug`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ slug: 'some-slug' });
+    expect(res.status).toBe(404);
+  });
+});
+
+// ─── Admin: subdomain block/unblock ───────────────────────────────────────────
+
+describe('PATCH /api/admin/stores/:id/subdomain', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/subdomain`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ subdomain_blocked: true });
+    expect(res.status).toBe(403);
+  });
+
+  it('rejects missing subdomain_blocked field', async () => {
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/subdomain`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+    expect(res.status).toBe(422);
+  });
+
+  it('blocks subdomain successfully', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: STORE_ID, slug: 'moj-sklep', subdomain_blocked: true }],
+    });
+
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/subdomain`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ subdomain_blocked: true });
+    expect(res.status).toBe(200);
+    expect(res.body.subdomain_blocked).toBe(true);
+  });
+
+  it('unblocks subdomain successfully', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: STORE_ID, slug: 'moj-sklep', subdomain_blocked: false }],
+    });
+
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/subdomain`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ subdomain_blocked: false });
+    expect(res.status).toBe(200);
+    expect(res.body.subdomain_blocked).toBe(false);
+  });
+
+  it('returns 404 for non-existent store', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .patch(`/api/admin/stores/${STORE_ID}/subdomain`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ subdomain_blocked: true });
+    expect(res.status).toBe(404);
+  });
+});
