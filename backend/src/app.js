@@ -22,6 +22,9 @@ const paymentsRouter = require('./routes/payments');
 const shopProductsRouter = require('./routes/shop-products');
 const myRouter = require('./routes/my');
 const storeRouter = require('./routes/store');
+const referralsRouter = require('./routes/referrals');
+const scriptsRouter = require('./routes/scripts');
+const analyticsRouter = require('./routes/analytics');
 const { importSupplierProducts } = require('./services/supplier-import');
 const db = require('./config/database');
 
@@ -129,6 +132,26 @@ app.get('/api/readiness', async (_req, res) => {
     create:      'POST /api/subscriptions',
   };
 
+  // Referral system
+  checks.referral_system = {
+    create_code:  'POST /api/referrals',
+    redeem_code:  'POST /api/referrals/redeem',
+    list_uses:    'GET  /api/referrals/:id/uses',
+  };
+
+  // Scripts (seller storefront scripts)
+  checks.scripts_system = {
+    create:       'POST /api/scripts',
+    store_scripts: 'GET  /api/scripts/store/:storeId',
+  };
+
+  // Analytics snapshots
+  checks.analytics_system = {
+    capture:      'POST /api/analytics/capture',
+    latest:       'GET  /api/analytics/latest',
+    list:         'GET  /api/analytics',
+  };
+
   const status = allOk ? 'ready' : 'degraded';
   return res.status(allOk ? 200 : 503).json({
     status,
@@ -156,6 +179,9 @@ app.use('/api/payments', paymentsRouter);
 app.use('/api/shop-products', shopProductsRouter);
 app.use('/api/my', myRouter);
 app.use('/api/store', storeRouter);
+app.use('/api/referrals', referralsRouter);
+app.use('/api/scripts', scriptsRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // ─── 404 ───────────────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: 'Nie znaleziono zasobu' }));

@@ -3608,3 +3608,459 @@ describe('E2E – full user flow', () => {
     expect(payRes.body).toHaveProperty('instructions');
   });
 });
+
+// ─── Referral codes ───────────────────────────────────────────────────────────
+
+const REFERRAL_CODE_ID = 'b0000000-0000-4000-8000-000000000001';
+
+describe('GET /api/referrals', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/referrals');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns seller own referral codes', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: REFERRAL_CODE_ID, owner_id: SELLER_ID, code: 'TEST8CODE', active: true }],
+    });
+    const res = await request(app)
+      .get('/api/referrals')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('admin sees all referral codes with owner_email', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: REFERRAL_CODE_ID, owner_id: SELLER_ID, code: 'TEST8CODE', owner_email: 'seller@test.pl', active: true }],
+    });
+    const res = await request(app)
+      .get('/api/referrals')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+});
+
+describe('POST /api/referrals', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/referrals').send({ discount_type: 'none' });
+    expect(res.status).toBe(401);
+  });
+
+  it('creates a referral code without explicit code (auto-generated)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] })  // uniqueness check
+      .mockResolvedValueOnce({ rows: [{ id: REFERRAL_CODE_ID, code: 'AUTOCODE1', owner_id: SELLER_ID, active: true }] });
+
+    const res = await request(app)
+      .post('/api/referrals')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ discount_type: 'percent', discount_value: 10 });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('id');
+    expect(res.body).toHaveProperty('code');
+  });
+
+  it('creates a referral code with explicit code', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] })  // uniqueness check
+      .mockResolvedValueOnce({ rows: [{ id: REFERRAL_CODE_ID, code: 'MYCODE', owner_id: SELLER_ID, active: true }] });
+
+    const res = await request(app)
+      .post('/api/referrals')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ code: 'MYCODE', discount_type: 'fixed', discount_value: 5 });
+
+    expect(res.status).toBe(201);
+    expect(res.body.code).toBe('MYCODE');
+  });
+
+  it('validates discount_type', async () => {
+    const res = await request(app)
+      .post('/api/referrals')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ discount_type: 'invalid' });
+    expect(res.status).toBe(422);
+  });
+});
+
+describe('POST /api/referrals/redeem', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/referrals/redeem').send({ code: 'TEST8CODE' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects an unknown code', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // no active code found
+    const res = await request(app)
+      .post('/api/referrals/redeem')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ code: 'BADCODE' });
+    expect(res.status).toBe(404);
+  });
+
+  it('rejects self-referral', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: REFERRAL_CODE_ID, owner_id: SELLER_ID, code: 'MYCODE', discount_type: 'none', discount_value: 0 }],
+    });
+    const res = await request(app)
+      .post('/api/referrals/redeem')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ code: 'MYCODE' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/własnego/);
+  });
+
+  it('records a valid redemption', async () => {
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{ id: REFERRAL_CODE_ID, owner_id: ADMIN_ID, code: 'VALID01', discount_type: 'percent', discount_value: 10 }],
+      })  // SELECT active code
+      .mockResolvedValueOnce({ rows: [] })  // INSERT referral_uses
+      .mockResolvedValueOnce({ rows: [] }); // UPDATE uses_count
+
+    const res = await request(app)
+      .post('/api/referrals/redeem')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ code: 'VALID01' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.discount_type).toBe('percent');
+    expect(res.body.discount_value).toBe(10);
+  });
+
+  it('requires code field', async () => {
+    const res = await request(app)
+      .post('/api/referrals/redeem')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({});
+    expect(res.status).toBe(422);
+  });
+});
+
+describe('GET /api/referrals/:id/uses', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get(`/api/referrals/${REFERRAL_CODE_ID}/uses`);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 for unknown code id', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .get(`/api/referrals/${REFERRAL_CODE_ID}/uses`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('returns uses list for own code', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] }) // ownership check
+      .mockResolvedValueOnce({ rows: [{ id: 'use-1', code_id: REFERRAL_CODE_ID, reward_amount: 0 }] });
+
+    const res = await request(app)
+      .get(`/api/referrals/${REFERRAL_CODE_ID}/uses`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+});
+
+describe('DELETE /api/referrals/:id', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).delete(`/api/referrals/${REFERRAL_CODE_ID}`);
+    expect(res.status).toBe(401);
+  });
+
+  it('deactivates own referral code (204)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] }) // ownership check
+      .mockResolvedValueOnce({ rows: [] }); // update active=false
+
+    const res = await request(app)
+      .delete(`/api/referrals/${REFERRAL_CODE_ID}`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(204);
+  });
+});
+
+// ─── Scripts ─────────────────────────────────────────────────────────────────
+
+const SCRIPT_ID = 'b0000000-0000-4000-8000-000000000002';
+
+describe('GET /api/scripts/store/:storeId', () => {
+  it('returns active scripts for a store (no auth required)', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: SCRIPT_ID, name: 'GA4', type: 'analytics', placement: 'head', content: '<script></script>' }],
+    });
+    const res = await request(app).get(`/api/scripts/store/${STORE_ID}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns 422 for invalid storeId', async () => {
+    const res = await request(app).get('/api/scripts/store/not-a-uuid');
+    expect(res.status).toBe(422);
+  });
+});
+
+describe('POST /api/scripts', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/scripts').send({
+      store_id: STORE_ID, name: 'GA4', type: 'analytics', placement: 'head', content: '<script></script>',
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('creates a script for own store', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] }) // store ownership
+      .mockResolvedValueOnce({ rows: [{ id: SCRIPT_ID, store_id: STORE_ID, name: 'GA4', type: 'analytics', placement: 'head', content: '<script></script>' }] });
+
+    const res = await request(app)
+      .post('/api/scripts')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, name: 'GA4', type: 'analytics', placement: 'head', content: '<script></script>' });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.name).toBe('GA4');
+  });
+
+  it('validates type field', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] });
+    const res = await request(app)
+      .post('/api/scripts')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, name: 'Bad', type: 'unknown', placement: 'head', content: 'x' });
+    expect(res.status).toBe(422);
+  });
+
+  it('validates placement field', async () => {
+    const res = await request(app)
+      .post('/api/scripts')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, name: 'Bad', type: 'custom', placement: 'footer', content: 'x' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 403 when seller tries to create script for another store', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ owner_id: ADMIN_ID }] }); // store owned by ADMIN
+    const res = await request(app)
+      .post('/api/scripts')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, name: 'X', type: 'custom', placement: 'head', content: 'x' });
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('PATCH /api/scripts/:id', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).patch(`/api/scripts/${SCRIPT_ID}`).send({ active: false });
+    expect(res.status).toBe(401);
+  });
+
+  it('updates a script', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: SCRIPT_ID, owner_id: SELLER_ID }] }) // ownership
+      .mockResolvedValueOnce({ rows: [{ id: SCRIPT_ID, active: false }] }); // update
+
+    const res = await request(app)
+      .patch(`/api/scripts/${SCRIPT_ID}`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ active: false });
+
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 404 for unknown script', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .patch(`/api/scripts/${SCRIPT_ID}`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ active: false });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('DELETE /api/scripts/:id', () => {
+  it('deletes own script (204)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: SCRIPT_ID, owner_id: SELLER_ID }] }) // ownership
+      .mockResolvedValueOnce({ rows: [] }); // DELETE
+
+    const res = await request(app)
+      .delete(`/api/scripts/${SCRIPT_ID}`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(204);
+  });
+
+  it('returns 404 for unknown script', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .delete(`/api/scripts/${SCRIPT_ID}`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /api/scripts', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/scripts');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns seller scripts', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: SCRIPT_ID, name: 'GA4', store_name: 'Mój Sklep' }] });
+    const res = await request(app)
+      .get('/api/scripts')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+});
+
+// ─── Analytics snapshots ──────────────────────────────────────────────────────
+
+const SNAPSHOT_ID = 'b0000000-0000-4000-8000-000000000003';
+
+describe('GET /api/analytics', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/analytics');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns platform-wide snapshots for admin', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: SNAPSHOT_ID, store_id: null, period: 'daily', snapshot_date: '2026-03-12', total_orders: 5 }],
+    });
+    const res = await request(app)
+      .get('/api/analytics')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns seller store snapshots', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: SNAPSHOT_ID, store_id: STORE_ID, period: 'daily', snapshot_date: '2026-03-12', total_orders: 2 }],
+    });
+    const res = await request(app)
+      .get('/api/analytics')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('validates period query param', async () => {
+    const res = await request(app)
+      .get('/api/analytics?period=yearly')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(422);
+  });
+});
+
+describe('GET /api/analytics/latest', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/analytics/latest');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns latest snapshot for admin (platform-wide)', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: SNAPSHOT_ID, store_id: null, period: 'daily', snapshot_date: '2026-03-12', total_orders: 10, total_revenue: 1234.56 }],
+    });
+    const res = await request(app)
+      .get('/api/analytics/latest')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total_orders');
+  });
+
+  it('returns null when no snapshot exists', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .get('/api/analytics/latest')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toBeNull();
+  });
+});
+
+describe('POST /api/analytics/capture', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .post('/api/analytics/capture')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({});
+    expect(res.status).toBe(403);
+  });
+
+  it('captures a platform-wide daily snapshot', async () => {
+    // Mock: order stats, user stats, product count, then upsert insert
+    db.query
+      .mockResolvedValueOnce({ rows: [{ total_orders: '12', total_revenue: '2500.00', platform_commission: '200.00', avg_order_value: '208.33', new_orders: '3', new_revenue: '600.00' }] })
+      .mockResolvedValueOnce({ rows: [{ total_users: '50', new_users: '2' }] })
+      .mockResolvedValueOnce({ rows: [{ total_products: '100' }] })
+      .mockResolvedValueOnce({ rows: [{ id: SNAPSHOT_ID, store_id: null, period: 'daily', total_orders: 12, total_revenue: 2500 }] });
+
+    const res = await request(app)
+      .post('/api/analytics/capture')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ period: 'daily' });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.total_orders).toBe(12);
+  });
+
+  it('captures a store-specific snapshot', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID }] }) // store exists check
+      .mockResolvedValueOnce({ rows: [{ total_orders: '3', total_revenue: '450.00', platform_commission: '36.00', avg_order_value: '150.00', new_orders: '1', new_revenue: '150.00' }] })
+      .mockResolvedValueOnce({ rows: [{ total_products: '20' }] })
+      .mockResolvedValueOnce({ rows: [{ id: SNAPSHOT_ID, store_id: STORE_ID, period: 'daily', total_orders: 3 }] });
+
+    const res = await request(app)
+      .post('/api/analytics/capture')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ store_id: STORE_ID, period: 'daily' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.store_id).toBe(STORE_ID);
+  });
+
+  it('returns 422 for invalid period', async () => {
+    const res = await request(app)
+      .post('/api/analytics/capture')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ period: 'hourly' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 404 when store_id does not exist', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // store not found
+    const res = await request(app)
+      .post('/api/analytics/capture')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ store_id: STORE_ID, period: 'daily' });
+    expect(res.status).toBe(404);
+  });
+});
+
+// ─── /api/readiness includes new subsystem checks ─────────────────────────────
+
+describe('GET /api/readiness – new subsystem checks', () => {
+  it('includes referral, scripts, and analytics checks', async () => {
+    const res = await request(app).get('/api/readiness');
+    expect(res.status).toBe(200);
+    expect(res.body.checks).toHaveProperty('referral_system');
+    expect(res.body.checks).toHaveProperty('scripts_system');
+    expect(res.body.checks).toHaveProperty('analytics_system');
+  });
+});
