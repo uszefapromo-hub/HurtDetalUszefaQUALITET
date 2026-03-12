@@ -14,6 +14,7 @@ const { validate } = require('../middleware/validate');
 const { PLAN_CONFIG } = require('./subscriptions');
 const { upsertSupplierProducts, fetchSupplierProducts } = require('../services/supplier-import');
 const { computePlatformPrice, dbTiersToArray, DEFAULT_PLATFORM_TIERS } = require('../helpers/pricing');
+const { auditLog } = require('../helpers/audit');
 
 const router = express.Router();
 
@@ -186,6 +187,14 @@ router.patch(
         [role || null, plan || null, name || null, req.params.id]
       );
       if (!result.rows[0]) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+      await auditLog({
+        actorUserId: req.user.id,
+        action: 'user.updated',
+        resource: 'user',
+        resourceId: req.params.id,
+        metadata: { role, plan, name },
+        ipAddress: req.ip,
+      });
       return res.json(result.rows[0]);
     } catch (err) {
       console.error('admin update user error:', err.message);
@@ -200,6 +209,13 @@ router.delete('/users/:id', authenticate, requireRole('owner', 'admin'), async (
   try {
     const result = await db.query('DELETE FROM users WHERE id = $1 RETURNING id', [req.params.id]);
     if (!result.rows[0]) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    await auditLog({
+      actorUserId: req.user.id,
+      action: 'user.deleted',
+      resource: 'user',
+      resourceId: req.params.id,
+      ipAddress: req.ip,
+    });
     return res.json({ message: 'Użytkownik usunięty' });
   } catch (err) {
     console.error('admin delete user error:', err.message);
@@ -504,6 +520,14 @@ router.patch(
         [req.body.status, req.params.id]
       );
       if (!result.rows[0]) return res.status(404).json({ error: 'Sklep nie znaleziony' });
+      await auditLog({
+        actorUserId: req.user.id,
+        action: 'store.status_changed',
+        resource: 'store',
+        resourceId: req.params.id,
+        metadata: { status: req.body.status },
+        ipAddress: req.ip,
+      });
       return res.json(result.rows[0]);
     } catch (err) {
       console.error('admin update store status error:', err.message);
@@ -820,6 +844,14 @@ router.patch(
         [platform_price ?? null, req.params.id]
       );
       if (!result.rows[0]) return res.status(404).json({ error: 'Produkt nie znaleziony' });
+      await auditLog({
+        actorUserId: req.user.id,
+        action: 'product.platform_price_changed',
+        resource: 'product',
+        resourceId: req.params.id,
+        metadata: { platform_price: platform_price ?? null },
+        ipAddress: req.ip,
+      });
       return res.json(result.rows[0]);
     } catch (err) {
       console.error('admin update product platform_price error:', err.message);

@@ -264,10 +264,24 @@ router.get(
       const result = await db.query(
         `SELECT sp.id, sp.store_id, sp.product_id, sp.active, sp.sort_order,
                 sp.custom_title, sp.custom_description, sp.margin_type,
-                sp.price_override, sp.margin_override, sp.created_at, sp.updated_at,
+                sp.price_override, sp.margin_override, sp.seller_margin,
+                sp.selling_price, sp.created_at, sp.updated_at,
                 p.name, p.sku, p.description, p.category, p.image_url, p.stock,
                 p.selling_price AS base_price, p.margin AS base_margin,
-                COALESCE(sp.price_override, p.selling_price) AS price
+                p.supplier_price, p.platform_price, p.min_selling_price,
+                CASE
+                  WHEN sp.price_override IS NOT NULL
+                    THEN sp.price_override
+                  WHEN sp.selling_price IS NOT NULL
+                    THEN sp.selling_price
+                  WHEN sp.margin_type = 'percent' AND sp.margin_override IS NOT NULL
+                    THEN ROUND(COALESCE(p.platform_price, p.selling_price, 0)
+                               * (1 + sp.margin_override / 100), 2)
+                  WHEN sp.margin_type = 'fixed' AND sp.margin_override IS NOT NULL
+                    THEN ROUND(COALESCE(p.platform_price, p.selling_price, 0)
+                               + sp.margin_override, 2)
+                  ELSE COALESCE(p.platform_price, p.selling_price)
+                END AS price
          FROM shop_products sp
          JOIN products p ON sp.product_id = p.id
          WHERE sp.store_id = $1

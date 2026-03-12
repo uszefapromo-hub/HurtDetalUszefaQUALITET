@@ -9,6 +9,7 @@
 
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 
 // ─── Mock database ─────────────────────────────────────────────────────────────
 const mockDb = {
@@ -355,6 +356,11 @@ function setupDbMock() {
     }
     if (s.startsWith('select') && s.includes('from audit_logs')) {
       return { rows: mockDb.audit_logs };
+    }
+    if (s.startsWith('insert into audit_logs')) {
+      const entry = { id: uuidv4(), user_id: params[1], action: params[2], resource: params[3], resource_id: params[4], metadata: params[5], ip_address: params[6], created_at: new Date().toISOString() };
+      mockDb.audit_logs.push(entry);
+      return { rows: [] };
     }
 
     // Catch-all
@@ -3222,5 +3228,150 @@ describe('POST /api/orders – central catalog products (store_id IS NULL)', () 
     expect(res.status).toBe(201);
     expect(res.body).toHaveProperty('platform_commission', 8.00);
     expect(res.body).toHaveProperty('seller_revenue', 92.00);
+  });
+});
+
+// ─── GET /api/my/store/products – price fields ────────────────────────────────
+
+describe('GET /api/my/store/products – enriched price fields', () => {
+  it('returns platform_price, min_selling_price, seller_margin and computed price', async () => {
+    const spId = uuidv4();
+    const productId = uuidv4();
+
+    // store ownership check
+    db.query
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })            // store
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] })                      // count
+      .mockResolvedValueOnce({ rows: [
+        {
+          id: spId,
+          store_id: STORE_ID,
+          product_id: productId,
+          active: true,
+          sort_order: 0,
+          custom_title: null,
+          custom_description: null,
+          margin_type: 'percent',
+          price_override: null,
+          margin_override: null,
+          seller_margin: 20,
+          selling_price: 36.00,
+          created_at: new Date().toISOString(),
+          updated_at: null,
+          name: 'Test Product',
+          sku: 'TST-001',
+          description: 'Desc',
+          category: 'test',
+          image_url: null,
+          stock: 10,
+          base_price: 30.00,
+          base_margin: 15,
+          supplier_price: 25.00,
+          platform_price: 30.00,
+          min_selling_price: 30.00,
+          price: 36.00,
+        },
+      ] });
+
+    const res = await request(app)
+      .get(`/api/my/store/products?store_id=${STORE_ID}`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('products');
+    const product = res.body.products[0];
+    expect(product).toHaveProperty('platform_price', 30.00);
+    expect(product).toHaveProperty('min_selling_price', 30.00);
+    expect(product).toHaveProperty('supplier_price', 25.00);
+    expect(product).toHaveProperty('seller_margin', 20);
+    expect(product).toHaveProperty('selling_price', 36.00);
+    expect(product).toHaveProperty('price', 36.00);
+  });
+});
+
+// ─── Audit logging ────────────────────────────────────────────────────────────
+
+describe('Admin audit logging', () => {
+  beforeEach(() => {
+    mockDb.audit_logs = [];
+  });
+
+  it('creates audit log entry on user deletion', async () => {
+    const targetId = uuidv4();
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: targetId }] }); // DELETE users
+
+    const res = await request(app)
+      .delete(`/api/admin/users/${targetId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(mockDb.audit_logs.length).toBe(1);
+    expect(mockDb.audit_logs[0].action).toBe('user.deleted');
+    expect(mockDb.audit_logs[0].resource).toBe('user');
+    expect(mockDb.audit_logs[0].resource_id).toBe(targetId);
+  });
+
+  it('creates audit log entry on store status change', async () => {
+    const storeId = uuidv4();
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: storeId, status: 'suspended' }] }); // UPDATE stores
+
+    const res = await request(app)
+      .patch(`/api/admin/stores/${storeId}/status`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'suspended' });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.audit_logs.length).toBe(1);
+    expect(mockDb.audit_logs[0].action).toBe('store.status_changed');
+    expect(mockDb.audit_logs[0].resource).toBe('store');
+  });
+
+  it('creates audit log entry on product platform-price change', async () => {
+    const productId = uuidv4();
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: productId, platform_price: 49.99 }] }); // UPDATE products
+
+    const res = await request(app)
+      .patch(`/api/admin/products/${productId}/platform-price`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ platform_price: 49.99 });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.audit_logs.length).toBe(1);
+    expect(mockDb.audit_logs[0].action).toBe('product.platform_price_changed');
+    expect(mockDb.audit_logs[0].resource).toBe('product');
+  });
+
+  it('creates audit log entry on user role update', async () => {
+    const targetId = uuidv4();
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: targetId, role: 'admin' }] }); // UPDATE users
+
+    const res = await request(app)
+      .patch(`/api/admin/users/${targetId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ role: 'admin' });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.audit_logs.length).toBe(1);
+    expect(mockDb.audit_logs[0].action).toBe('user.updated');
+    expect(mockDb.audit_logs[0].resource).toBe('user');
+  });
+
+  it('returns audit logs from GET /api/admin/audit-logs', async () => {
+    mockDb.audit_logs = [
+      { id: uuidv4(), user_id: ADMIN_ID, action: 'user.deleted', resource: 'user', resource_id: uuidv4(), created_at: new Date().toISOString() },
+    ];
+
+    const res = await request(app)
+      .get('/api/admin/audit-logs')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('logs');
+    expect(res.body.logs.length).toBe(1);
+    expect(res.body.logs[0].action).toBe('user.deleted');
   });
 });
