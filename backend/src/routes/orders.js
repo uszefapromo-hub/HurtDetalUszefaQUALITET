@@ -142,7 +142,6 @@ router.post(
         const platformMargin = store.margin || parseFloat(process.env.PLATFORM_MARGIN_DEFAULT || '15');
         const platformFee = parseFloat((subtotal * (platformMargin / 100)).toFixed(2));
         const orderTotal = parseFloat(subtotal.toFixed(2));
-        const total = orderTotal;
 
         const platform_commission = parseFloat((orderTotal * commissionRate).toFixed(2));
         const seller_revenue = parseFloat((orderTotal - platform_commission).toFixed(2));
@@ -154,7 +153,7 @@ router.post(
               shipping_address, notes, created_at)
            VALUES ($1,$2,$3,$4,'created',$5,$6,$7,$8,$9,$10,$11,$12,NOW())`,
           [orderId, store_id, store.owner_id, req.user.id, subtotal.toFixed(2), platformFee,
-           orderTotal, platform_commission, seller_revenue, total, safeAddress, safeNotes]
+           orderTotal, platform_commission, seller_revenue, orderTotal, safeAddress, safeNotes]
         );
 
         for (const oi of orderItems) {

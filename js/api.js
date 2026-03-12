@@ -452,6 +452,10 @@
     syncSupplier(supplierId)   { return post('/admin/suppliers/sync', { supplier_id: supplierId }); },
     subscriptions(params)      { return get('/admin/subscriptions', params); },
     auditLogs(params)          { return get('/admin/audit-logs', params); },
+    /** Get global platform settings. GET /api/admin/settings */
+    getSettings()              { return get('/admin/settings'); },
+    /** Update global platform settings (e.g. commission_rate). PATCH /api/admin/settings */
+    updateSettings(data)       { return patch('/admin/settings', data); },
   };
 
   // ─── My Store (seller convenience) ──────────────────────────────────────────

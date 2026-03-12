@@ -4369,13 +4369,17 @@
 
     // ── FINANCES TAB ──
     const partnerSales = orders.reduce((sum, o) => sum + (Number.parseFloat(o.amount) || 0), 0);
-    const platformCommissionRate = 0.10;
-    const platformCommission = partnerSales * platformCommissionRate;
-    const totalRevenue = revenue + platformCommission;
-    setText('[data-fin-partner-sales]', formatCurrency(partnerSales));
-    setText('[data-fin-platform-margin]', formatCurrency(platformMargin));
-    setText('[data-fin-platform-commission]', formatCurrency(platformCommission));
-    setText('[data-fin-total-revenue]', formatCurrency(totalRevenue));
+    // Render finances figures; called with actual commission rate once settings are loaded
+    function renderFinances(commissionRate){
+      const commRate = typeof commissionRate === 'number' ? commissionRate : 0.08;
+      const commission = partnerSales * commRate;
+      const totalRev = revenue + commission;
+      setText('[data-fin-partner-sales]', formatCurrency(partnerSales));
+      setText('[data-fin-platform-margin]', formatCurrency(platformMargin));
+      setText('[data-fin-platform-commission]', formatCurrency(commission));
+      setText('[data-fin-total-revenue]', formatCurrency(totalRev));
+    }
+    renderFinances(0.08);
 
     const dailyChartEl = document.querySelector('[data-fin-daily-chart]');
     if(dailyChartEl){
@@ -4928,38 +4932,74 @@
     const settingsSaved = document.querySelector('[data-settings-saved]');
     const PLATFORM_SETTINGS_KEY = 'qm_platform_settings';
     if(settingsForm){
-      // Load saved settings
-      try {
-        const saved = JSON.parse(localStorage.getItem(PLATFORM_SETTINGS_KEY) || '{}');
-        Object.entries(saved).forEach(([k, v]) => {
-          const el = settingsForm.elements[k];
-          if(el){
-            el.value = v;
+      // Load commission_rate from backend API (with localStorage fallback)
+      const loadSettingsIntoForm = (settings) => {
+        try {
+          const saved = JSON.parse(localStorage.getItem(PLATFORM_SETTINGS_KEY) || '{}');
+          const merged = Object.assign({}, saved, settings || {});
+          Object.entries(merged).forEach(([k, v]) => {
+            const el = settingsForm.elements[k];
+            if(el) el.value = v;
+          });
+          // Map commission_rate (decimal) → orderCommission (percent)
+          if(settings && settings.commission_rate != null){
+            const rate = parseFloat(settings.commission_rate);
+            const el = settingsForm.elements['orderCommission'];
+            if(el) el.value = parseFloat((rate * 100).toFixed(2));
+            // Update finances tab with actual rate
+            renderFinances(rate);
           }
-        });
-      } catch(_e){/* ignore */}
+        } catch(_e){/* ignore */}
+      };
+      // Try backend first
+      const qmApi = window.QMApi || null;
+      if(qmApi && qmApi.Auth.isLoggedIn()){
+        qmApi.Admin.getSettings()
+          .then(settings => { loadSettingsIntoForm(settings); })
+          .catch(() => { loadSettingsIntoForm(null); });
+      } else {
+        loadSettingsIntoForm(null);
+      }
       settingsForm.addEventListener('submit', event => {
         event.preventDefault();
         const formData = new FormData(settingsForm);
         const settings = {};
         formData.forEach((v, k) => { settings[k] = v; });
+        // Map orderCommission (percent) → commission_rate (decimal) for backend
+        const commissionPct = parseFloat(settings['orderCommission']);
+        const commissionRate = !Number.isNaN(commissionPct) ? parseFloat((commissionPct / 100).toFixed(4)) : null;
         localStorage.setItem(PLATFORM_SETTINGS_KEY, JSON.stringify(settings));
-        if(settingsSaved){
-          settingsSaved.hidden = false;
-          window.setTimeout(() => { settingsSaved.hidden = true; }, 2500);
+        const showSaved = () => {
+          if(settingsSaved){
+            settingsSaved.hidden = false;
+            window.setTimeout(() => { settingsSaved.hidden = true; }, 2500);
+          }
+          // Log the change
+          const logsForSave = getStoredList(OWNER_STORAGE_KEYS.adminLogs);
+          logsForSave.unshift({
+            id: `log_settings_${Date.now()}`,
+            time: new Date().toISOString(),
+            user: 'Superadmin',
+            role: 'superadmin',
+            action: 'Zmiana ustawień platformy',
+            object: 'settings',
+            details: `Zaktualizowano ${Object.keys(settings).length} parametrów`
+          });
+          saveStoredList(OWNER_STORAGE_KEYS.adminLogs, logsForSave);
+        };
+        // Save commission_rate to backend API when available
+        if(commissionRate != null){
+          const qmApiSave = window.QMApi || null;
+          if(qmApiSave && qmApiSave.Auth.isLoggedIn()){
+            qmApiSave.Admin.updateSettings({ commission_rate: commissionRate })
+              .then(showSaved)
+              .catch(showSaved);
+          } else {
+            showSaved();
+          }
+        } else {
+          showSaved();
         }
-        // Log the change
-        const logsForSave = getStoredList(OWNER_STORAGE_KEYS.adminLogs);
-        logsForSave.unshift({
-          id: `log_settings_${Date.now()}`,
-          time: new Date().toISOString(),
-          user: 'Superadmin',
-          role: 'superadmin',
-          action: 'Zmiana ustawień platformy',
-          object: 'settings',
-          details: `Zaktualizowano ${Object.keys(settings).length} parametrów`
-        });
-        saveStoredList(OWNER_STORAGE_KEYS.adminLogs, logsForSave);
       });
     }
   }
