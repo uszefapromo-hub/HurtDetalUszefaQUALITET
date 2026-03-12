@@ -867,6 +867,20 @@ describe('GET /api/admin/suppliers', () => {
     expect(res.body).toHaveProperty('total', 1);
     expect(Array.isArray(res.body.suppliers)).toBe(true);
   });
+
+  it('includes product_count per supplier', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] })
+      .mockResolvedValueOnce({ rows: [{ id: SUPPLIER_ID, name: 'BigBuy', status: 'active', product_count: '5', last_sync_at: null }] });
+
+    const res = await request(app)
+      .get('/api/admin/suppliers')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.suppliers[0]).toHaveProperty('product_count', '5');
+    expect(res.body.suppliers[0]).toHaveProperty('status', 'active');
+    expect(res.body.suppliers[0]).toHaveProperty('last_sync_at', null);
+  });
 });
 
 describe('POST /api/admin/suppliers/import', () => {
