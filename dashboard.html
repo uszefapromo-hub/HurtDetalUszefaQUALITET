@@ -221,26 +221,18 @@
         </div>
       </section>
 
-      <section class="panel-card" data-api-orders-panel hidden>
+      <section class="panel-card" data-api-orders style="margin-top:24px">
         <div class="store-summary-head">
           <div>
-            <span class="eyebrow">Historia zamówień</span>
+            <span class="eyebrow">Historia zakupów</span>
             <h2>Moje zamówienia</h2>
-            <p class="hint">Zamówienia pobrane z API backendu.</p>
+            <p class="hint">Ostatnie zamówienia złożone przez Twoje konto.</p>
           </div>
-          <a class="btn btn-secondary" href="koszyk.html">Koszyk</a>
+          <a class="btn btn-secondary" href="koszyk.html">Przejdź do koszyka</a>
         </div>
-        <table class="owner-table" style="width:100%;border-collapse:collapse;font-size:14px">
-          <thead>
-            <tr>
-              <th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--stroke)">Nr zamówienia</th>
-              <th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--stroke)">Data</th>
-              <th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--stroke)">Kwota</th>
-              <th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--stroke)">Status</th>
-            </tr>
-          </thead>
-          <tbody data-api-orders-tbody></tbody>
-        </table>
+        <p class="hint orders-loading" data-orders-loading>Wczytywanie zamówień&hellip;</p>
+        <p class="hint orders-empty" data-orders-empty hidden>Brak zamówień. <a href="sklep.html">Przejdź do sklepu</a> i złóż pierwsze zamówienie.</p>
+        <div class="orders-list" data-orders-list></div>
       </section>
 
       <section class="helper-grid dashboard-helpers">
@@ -317,6 +309,7 @@
   </nav>
 
   <script src="js/api.js" defer></script>
+  <script src="js/pwa-connect.js" defer></script>
   <script src="js/flow.js" defer></script>
   <script src="js/app.js" defer></script>
 </body>

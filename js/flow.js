@@ -118,9 +118,15 @@
             setLegacyLoggedIn(email, role);
             window.location.href = 'dashboard.html';
           })
-          .catch(function () {
-            // API unreachable or wrong credentials — degrade gracefully
+          .catch(function (err) {
             done();
+            // Only fall back to localStorage when the API is completely unreachable.
+            // A status code means the API responded (e.g. 401 wrong credentials) —
+            // in that case do NOT grant access via localStorage.
+            if (err && err.status) {
+              return; // pwa-connect.js will show an inline error; do nothing here
+            }
+            // Network/API unreachable – graceful degradation to localStorage
             fallbackLogin();
           });
       } else {
@@ -206,35 +212,39 @@
   }
 
   function renderDashboardOrders(orders) {
-    var panel = document.querySelector('[data-api-orders-panel]');
+    var panel = document.querySelector('[data-api-orders]');
     if (!panel) return;
 
-    panel.hidden = false;
+    var loadingEl = panel.querySelector('[data-orders-loading]');
+    if (loadingEl) loadingEl.hidden = true;
 
-    var tbody = panel.querySelector('[data-api-orders-tbody]');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
+    var listEl = panel.querySelector('[data-orders-list]');
+    var emptyEl = panel.querySelector('[data-orders-empty]');
 
     if (!orders.length) {
-      var tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Brak zamówień</td>';
-      tbody.appendChild(tr);
+      if (emptyEl) emptyEl.hidden = false;
       return;
     }
 
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+
     orders.forEach(function (o) {
-      var tr = document.createElement('tr');
+      var row = document.createElement('div');
+      row.className = 'order-row';
       var date = o.created_at ? new Date(o.created_at).toLocaleDateString('pl-PL') : '—';
       var total = o.total_amount != null ? formatPrice(o.total_amount) : '—';
       var status = escHtml(o.status || '—');
-      tr.innerHTML =
-        '<td>' + escHtml(o.order_number || o.id || '—') + '</td>' +
-        '<td>' + escHtml(date) + '</td>' +
-        '<td>' + escHtml(total) + '</td>' +
-        '<td><span class="status-pill">' + status + '</span></td>';
-      tbody.appendChild(tr);
+      row.innerHTML =
+        '<span class="order-num">' + escHtml(o.order_number || (o.id || '').slice(0, 8) || '—') + '</span>' +
+        '<span class="order-date">' + escHtml(date) + '</span>' +
+        '<span class="order-total">' + escHtml(total) + '</span>' +
+        '<span class="order-status badge-pill">' + status + '</span>';
+      listEl.appendChild(row);
     });
+
+    if (emptyEl) emptyEl.hidden = true;
   }
 
   // ─── 3. Product catalogue ─────────────────────────────────────────────────────
