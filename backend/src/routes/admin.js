@@ -947,7 +947,8 @@ async function upsertCentralProducts(rawProducts, supplierId) {
 
       if (existing.rows.length > 0) {
         // Update price, stock, description and image; preserve category/description
-        // if not provided by the supplier (COALESCE keeps existing value when null)
+        // if not provided by the supplier (COALESCE keeps existing value when null).
+        // supplier_price mirrors price_gross (same value, semantically named field per spec).
         await db.query(
           `UPDATE products SET
              name              = $1,
@@ -973,13 +974,11 @@ async function upsertCentralProducts(rawProducts, supplierId) {
       }
     }
 
+    // Insert new central-catalogue product.
+    // supplier_price mirrors price_gross (same value, semantically named field per spec).
+    // $7 is reused for both price_gross and supplier_price; $8 for platform_price,
+    // min_selling_price, and selling_price (platform controls the floor).
     await db.query(
-      `INSERT INTO products
-         (id, store_id, supplier_id, name, sku, price_net, tax_rate, price_gross,
-          supplier_price, platform_price, min_selling_price, selling_price, margin,
-          stock, category, description, image_url,
-          is_central, status, created_at)
-       VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $7, $8, $8, $8, 0, $9, $10, $11, $12, true, 'active', NOW())`,
       [uuidv4(), supplierId, raw.name, raw.sku || null,
        priceNet, DEFAULT_TAX_RATE, formattedPriceGross, platformPrice,
        raw.stock, raw.category, raw.description, raw.image_url]

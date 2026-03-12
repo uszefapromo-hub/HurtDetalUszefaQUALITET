@@ -169,7 +169,8 @@ async function upsertSupplierProducts(supplierId, rawProducts) {
       );
 
       if (existing.rows.length > 0) {
-        // Update mutable fields per spec (section 4)
+        // Update mutable fields per spec (section 4).
+        // supplier_price mirrors price_gross (same value, semantically named field per spec).
         await db.query(
           `UPDATE products SET
              price_gross       = $1,
@@ -198,7 +199,10 @@ async function upsertSupplierProducts(supplierId, rawProducts) {
       }
     }
 
-    // Insert new central-catalogue product
+    // Insert new central-catalogue product.
+    // supplier_price mirrors price_gross (same value, semantically named field per spec).
+    // $6 is reused for both price_gross and supplier_price; $7 for platform_price,
+    // min_selling_price, and selling_price (platform controls the floor).
     await db.query(
       `INSERT INTO products
          (id, store_id, supplier_id, name, sku, price_net, tax_rate, price_gross,
