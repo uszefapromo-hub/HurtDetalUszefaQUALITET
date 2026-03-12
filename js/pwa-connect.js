@@ -17,6 +17,8 @@
   var CURRENCY_FMT = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 });
 
   var MS_PER_DAY = 86400000;
+
+  function formatPrice(value) {
     return CURRENCY_FMT.format(Number(value) || 0);
   }
 

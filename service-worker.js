@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'app-shell-v2';
+const CACHE_VERSION = 'app-shell-v3';
 const PRECACHE_ASSETS = [
   './',
   'index.html',
