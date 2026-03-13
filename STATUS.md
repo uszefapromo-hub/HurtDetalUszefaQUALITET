@@ -1,6 +1,253 @@
-# STATUS PLATFORMY QUALITET
+# RAPORT PROJEKTU – QUALITET PLATFORM
 
-> Data przeglądu: 2026-03-12
+> Data przeglądu: 2026-03-13
+
+---
+
+## INFORMACJE O PROJEKCIE
+
+- **Nazwa repozytorium:** `uszefapromo-hub/HurtDetalUszefaQUALITET`
+- **Link do repozytorium:** https://github.com/uszefapromo-hub/HurtDetalUszefaQUALITET
+- **Strona produkcyjna:** https://uszefaqualitet.pl
+- **Architektura:** REST API (Node.js/Express) + PWA frontend (HTML5/Vanilla JS) + Next.js frontend + React Native mobile
+
+---
+
+## CO JUŻ JEST ZROBIONE ✅
+
+### Backend API (Node.js/Express)
+
+Wszystkie endpointy zaimplementowane i przetestowane (~540 testów Jest/supertest):
+
+| Moduł | Endpointy | Status |
+|---|---|---|
+| Autentykacja | POST /register, POST /login, GET /me, PUT /me | ✅ GOTOWE |
+| Użytkownicy | CRUD + zmiana hasła | ✅ GOTOWE |
+| Sklepy | CRUD, subdomeny, auto-seed produktów | ✅ GOTOWE |
+| Produkty (katalog centralny) | CRUD + import CSV/XML/API | ✅ GOTOWE |
+| Produkty sklepu | `shop_products` z marżami i ceną minimalną | ✅ GOTOWE |
+| Koszyk | Dodawanie/usuwanie/aktualizacja pozycji | ✅ GOTOWE |
+| Zamówienia | Tworzenie, statusy, order_items, prowizja | ✅ GOTOWE |
+| Płatności | Stripe, P24, BLIK, przelew, webhook HMAC | ✅ GOTOWE |
+| Hurtownie | CRUD + sync CSV/XML/API + auto-sync co 12h | ✅ GOTOWE |
+| Subskrypcje | trial/basic/pro/elite, limity produktów | ✅ GOTOWE |
+| Kategorie | GET / POST / DELETE | ✅ GOTOWE |
+| Panel admina | Użytkownicy, sklepy, produkty, zamówienia, subskrypcje, audit-log, import, prowizja, tiery marży | ✅ GOTOWE |
+| Panel sprzedawcy | `/api/my/*` – sklep, produkty, zamówienia, statystyki | ✅ GOTOWE |
+| System polecający promo | Kody QM-, tiery 0–3, bonus miesięcy | ✅ GOTOWE |
+| Affiliate/Creator | Linki sprzedażowe, prowizje 2%, rejestracja creatorów | ✅ GOTOWE |
+| Creator Referrals | `/api/creator/referrals` – generowanie linków, statystyki | ✅ GOTOWE |
+| Social Commerce | `/api/social` – feed, posty, polubienia, komentarze, udostępnienia | ✅ GOTOWE |
+| Live Commerce | `/api/live` – streamy, wiadomości, przypięte produkty, zamówienia z live | ✅ GOTOWE |
+| Gamifikacja | `/api/gamification` – punkty, odznaki, poziomy, tabela rankingowa | ✅ GOTOWE |
+| Kolaboracja | `/api/collaboration` + `/api/store/team` – role w sklepie, podział przychodów | ✅ GOTOWE |
+| AI Module | `/api/ai` – chat, opis produktu, opis sklepu, generator sklepu, paczka marketingowa | ✅ GOTOWE |
+| Analytics | `/api/analytics` – snapshoty, zdarzenia | ✅ GOTOWE |
+| Scripts | Skrypty śledzenia, pixel | ✅ GOTOWE |
+
+**Łańcuch cenowy:**
+```
+supplier_price → [tiery marży platformy] → platform_price = min_selling_price
+                                           → [marża sprzedawcy] → selling_price
+```
+
+**Migracje bazy danych:** 23 pliki SQL (001–023), obejmujące pełną historię schematu.
+
+**Testy:** ~540 testów Jest/supertest — wszystkie przechodzą.
+
+---
+
+### Frontend PWA (HTML5/Vanilla JS)
+
+| Strona | Opis | Status |
+|---|---|---|
+| `login.html` | Logowanie i rejestracja | ✅ GOTOWE |
+| `dashboard.html` | Dashboard użytkownika | ✅ GOTOWE |
+| `sklep.html` | Strona sklepu detalisty | ✅ GOTOWE |
+| `koszyk.html` | Koszyk zakupowy | ✅ GOTOWE |
+| `panel-sklepu.html` | Panel sprzedawcy | ✅ GOTOWE |
+| `owner-panel.html` | Panel właściciela platformy | ✅ GOTOWE |
+| `listing.html` | Lista produktów/sklepów | ✅ GOTOWE |
+| `generator-sklepu.html` | Generator sklepu AI | ✅ GOTOWE |
+| `affiliate.html` | Panel afiliacyjny/creator | ✅ GOTOWE |
+| `live.html` | Live commerce | ✅ GOTOWE |
+| `qualitetverse.html` | Strona QualitetVerse | ✅ GOTOWE |
+| `qualitetmarket.html` | Marketplace | ✅ GOTOWE |
+| `brand.html` | Brand guide | ✅ GOTOWE |
+| `cennik.html` | Strona cennika | ✅ GOTOWE |
+| `zarabiaj.html` | Strona zarabiania | ✅ GOTOWE |
+| `zostan-dostawca.html` | Strona dla dostawców | ✅ GOTOWE |
+| `hurtownie.html` | Lista hurtowni | ✅ GOTOWE |
+| `linki-sprzedazowe.html` | Linki sprzedażowe | ✅ GOTOWE |
+| `intelligence.html` | AI intelligence panel | ✅ GOTOWE |
+| `crm.html` | CRM panel | ✅ GOTOWE |
+| `tasks.html` | System zadań | ✅ GOTOWE |
+
+**Klient API:** `js/api.js` – pełny `window.QMApi` z obsługą: Auth, Users, Stores, Products, ShopProducts, Cart, Orders, Payments, Admin, Social, Live, Gamification, StoreTeam, CreatorReferrals, Affiliate.
+
+**Service Worker:** tryb offline/PWA aktywny.
+
+---
+
+### Frontend Next.js (TypeScript/Tailwind/Radix UI)
+
+| Strona | Opis | Status |
+|---|---|---|
+| `/` (page.tsx) | Strona główna marketplace | ✅ GOTOWE |
+| `/stores` | Lista sklepów | ✅ GOTOWE |
+| `/product/[id]` | Szczegóły produktu | ✅ GOTOWE |
+| `/profile` | Profil użytkownika | ✅ GOTOWE |
+| `/admin` | Panel admina | ✅ GOTOWE |
+| `/cart` | Koszyk | ✅ GOTOWE |
+| `/checkout` | Checkout | ✅ GOTOWE |
+| `/creator` | Panel creatora | ✅ GOTOWE |
+| `/ai` | Asystent AI | ✅ GOTOWE |
+| `/seller` | Panel sprzedawcy | ✅ GOTOWE |
+| `/trending` | Trending produkty/sklepy | ✅ GOTOWE |
+
+**Komponenty UI:** GlassCard, ProductCard, StatCard, shadcn/ui (Radix UI).
+
+---
+
+### Aplikacja mobilna (React Native/Expo)
+
+| Ekran | Opis | Status |
+|---|---|---|
+| `index.tsx` | Strona główna (feed, produkty) | ✅ GOTOWE |
+| `stores.tsx` | Lista sklepów | ✅ GOTOWE |
+| `profile.tsx` | Profil użytkownika | ✅ GOTOWE |
+| `creator.tsx` | Panel creatora | ✅ GOTOWE |
+| `trending.tsx` | Trendy | ✅ GOTOWE |
+
+**Komponenty:** GlassCard, ProductCard, StatCard.  
+**Stack:** Expo SDK 51, React Native 0.74, Expo Router, TypeScript.
+
+---
+
+## CO JEST W TRAKCIE 🔄
+
+| Obszar | Co jest częściowo zrobione | Uwagi |
+|---|---|---|
+| **Frontend Next.js** | Strony UI są zbudowane, ale brak pełnej integracji z backend API | Brak klienta API – dane hardcoded/mockowane |
+| **Aplikacja mobilna** | Podstawowe ekrany działają, ale brak połączenia z backend API | Brak auth, brak koszyka, brak zamówień |
+| **Subdomenowe sklepy** | Schema DB gotowa (`subdomain` w `stores`), middleware brak | Wymaga konfiguracji DNS i reverse-proxy |
+| **WebSocket (Live)** | Serwis `services/websocket.js` istnieje, ale integracja z frontendem niepełna | WS endpoint gotowy, brak UI chatu live |
+| **System powiadomień** | Migracja `notifications` istnieje w migration 020, trasa obecna | UI powiadomień niepełne |
+| **Bramki płatności** | Kod Stripe/P24 gotowy, ale wymaga kluczy API | Bez `.env` działa tylko przelew tradycyjny |
+
+---
+
+## CZEGO JESZCZE BRAKUJE ❌
+
+| Obszar | Brakujące funkcje |
+|---|---|
+| **Aplikacja mobilna** | Ekran koszyka i checkout, ekran zamówień, panel sprzedawcy, logowanie/rejestracja, admin panel |
+| **Frontend Next.js** | Integracja z API backendowym (klient HTTP / React Query), obsługa JWT, stany ładowania i błędów |
+| **Email notifications** | System powiadomień email do zamówień, rejestracji, subskrypcji (brak integracji SMTP/SendGrid) |
+| **Push notifications** | Mobilne powiadomienia push (Expo Notifications niezaimplementowane) |
+| **Subdomeny sklepów** | Routing DNS dla `*.qualitetmarket.pl`, konfiguracja reverse-proxy (np. Nginx/Caddy) |
+| **Testy E2E** | Brak testów end-to-end (Cypress/Playwright) dla frontendu |
+| **Testy mobilne** | Brak testów dla aplikacji mobilnej |
+| **Admin UI w Next.js** | Panel admina w Next.js jest statyczny – brak połączenia z `/api/admin` |
+| **Seller UI w Next.js** | Panel sprzedawcy w Next.js niepodłączony do `/api/my/*` |
+| **Paginacja UI** | Paginacja produktów/zamówień w frontendzie jest uproszczona |
+| **Real-time live** | Pełny live streaming z kamerą (WebRTC) – obecne tylko zarządzanie streamami |
+| **Analytics dashboard** | Wizualizacja danych analitycznych (wykresy, raporty) |
+| **Marketplace search** | Zaawansowane filtrowanie i wyszukiwanie pełnotekstowe produktów |
+
+---
+
+## BŁĘDY DO NAPRAWY 🐛
+
+### Frontend (PWA)
+
+| # | Problem | Lokalizacja |
+|---|---|---|
+| 1 | Niektóre strony mogą używać starych danych z `localStorage` zamiast wywołań API | `js/app.js`, `js/pwa-connect.js` |
+| 2 | Service Worker może cache'ować stare wersje stron po aktualizacji | `service-worker.js` |
+| 3 | Brak obsługi wygasłego tokenu JWT (brak auto-refresh lub przekierowania) | `js/api.js` |
+
+### Frontend (Next.js)
+
+| # | Problem | Lokalizacja |
+|---|---|---|
+| 1 | Dane w stronach są mockowane/hardcoded – brak połączenia z backendem | `frontend/src/app/` |
+| 2 | Brak obsługi stanu auth (login/logout) w Next.js | `frontend/src/` |
+| 3 | Brak error boundaries i fallback UI | `frontend/src/app/` |
+| 4 | `eslint-config-next` w wersji 14.x przy Next.js 15 – potencjalna niezgodność | `frontend/package.json` |
+
+### Backend
+
+| # | Problem | Lokalizacja |
+|---|---|---|
+| 1 | Zduplikowane numery migracji: `003_*.sql`, `007_*.sql`, `009_*.sql`, `020_*.sql` – dwa pliki z tym samym numerem | `backend/migrations/` |
+| 2 | Brak walidacji rozmiaru pliku przy imporcie CSV/XML | `backend/src/routes/admin.js` |
+| 3 | `TODO` w pliku `referral.js` – potencjalnie niepełna logika | `backend/src/routes/referral.js` |
+
+### Mobile
+
+| # | Problem | Lokalizacja |
+|---|---|---|
+| 1 | Brak ekranu logowania – użytkownik nie może się autentykować | `mobile/app/` |
+| 2 | Brak koszyka i procesu zamówienia | `mobile/app/` |
+| 3 | Dane produktów są statyczne (brak połączenia z API) | `mobile/app/index.tsx`, `stores.tsx` |
+| 4 | Brak obsługi błędów sieci (offline/timeout) | `mobile/` |
+| 5 | `expo-router` v3.5 przy Expo SDK 51 – może wymagać aktualizacji | `mobile/package.json` |
+
+---
+
+## NASTĘPNE ZADANIA 📋
+
+### Priorytet 1 – Krytyczne (przed wdrożeniem produkcyjnym)
+
+1. **Konfiguracja `.env` produkcyjnego** – `JWT_SECRET`, `DB_PASSWORD`, `STRIPE_SECRET_KEY`/`P24_MERCHANT_ID`, `PAYMENT_WEBHOOK_SECRET`, `ALLOWED_ORIGINS`
+2. **Naprawa zduplikowanych migracji** – zrenumerowanie plików `003a`, `007_stores`, `007_suppliers`, `009_price_tiers`, `020_live_commerce`
+3. **Połączenie Next.js z backendem** – dodanie klienta API (fetch/axios + React Query/SWR), obsługi JWT
+4. **Ekran logowania w aplikacji mobilnej** – `login.tsx` z JWT auth
+5. **Koszyk i checkout w aplikacji mobilnej** – pełny przepływ zakupu
+
+### Priorytet 2 – Ważne (pierwsze 2 tygodnie po wdrożeniu)
+
+6. **Email notifications** – integracja SMTP (np. Resend/SendGrid) dla powiadomień o zamówieniach i rejestracji
+7. **Panel admina w Next.js** – podłączenie `/api/admin/*` do UI admina
+8. **Panel sprzedawcy w Next.js** – podłączenie `/api/my/*` do UI sprzedawcy
+9. **Obsługa subdomen** – konfiguracja Nginx/Caddy dla `*.qualitetmarket.pl`
+10. **Testy E2E** – Playwright dla krytycznych ścieżek (logowanie, zakup, płatność)
+
+### Priorytet 3 – Usprawnienia (roadmap)
+
+11. **Push notifications** – Expo Notifications dla aplikacji mobilnej
+12. **Live streaming WebRTC** – prawdziwy live video (np. LiveKit/Agora)
+13. **Zaawansowane wyszukiwanie** – PostgreSQL full-text search lub ElasticSearch
+14. **Analytics dashboard** – wykresy przychodów, konwersji, ruchu (Recharts/Chart.js)
+15. **Marketplace B2B** – widok hurtowni z cenami zbiorczymi
+16. **Wielojęzyczność** – i18n (polski/angielski/ukraiński)
+17. **Testy aplikacji mobilnej** – Jest/Detox dla kluczowych ekranów
+18. **CDN dla zasobów statycznych** – obrazy produktów, ikony
+
+---
+
+## PODSUMOWANIE GOTOWOŚCI
+
+| Komponent | Gotowość | Uwagi |
+|---|---|---|
+| Backend API | **95%** | Wszystkie moduły działają, drobne poprawki migracji |
+| Baza danych | **90%** | Kompletny schemat, zduplikowane numery migracji do naprawy |
+| Frontend PWA | **80%** | Strony gotowe, drobne problemy z JWT refresh i localStorage legacy |
+| Frontend Next.js | **50%** | UI zbudowane, brak połączenia z API |
+| Aplikacja mobilna | **30%** | Podstawowe ekrany, brak auth, koszyka i zamówień |
+| Testy | **70%** | 540 testów backend, brak testów frontend i mobile |
+| DevOps/Deployment | **40%** | Docker compose gotowy, brak konfiguracji produkcyjnej |
+
+### Czy platforma jest gotowa na pierwszych sprzedawców?
+
+**TAK** – backend i PWA są gotowe na pierwszych użytkowników. Przed wdrożeniem produkcyjnym należy skonfigurować zmienne środowiskowe i bramki płatności.
+
+---
+
+# STATUS PLATFORMY QUALITET (Szczegóły Techniczne)
+
+> Data przeglądu: 2026-03-13
 
 ---
 
