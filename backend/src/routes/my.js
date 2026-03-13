@@ -668,15 +668,21 @@ router.post(
 
 // ─── Store generator & promotion helpers (exported for testing) ──────────────
 
+// ─── Store generator constants ───────────────────────────────────────────────
+
+const STORE_ADJ_PL   = ['Prestiżowy', 'Elegancki', 'Nowoczesny', 'Wyjątkowy', 'Premium', 'Unikalny'];
+const STORE_NOUNS_PL = ['Sklep', 'Market', 'Boutique', 'Store', 'Shop', 'Hub'];
+const STORE_THEMES   = { modern: '#35d9ff', premium: '#c9a84c', market: '#22c55e' };
+const PL_CHARS       = { ą:'a', ć:'c', ę:'e', ł:'l', ń:'n', ó:'o', ś:'s', ź:'z', ż:'z' };
+const PLATFORM_EMOJI = { facebook: '🛍️', instagram: '✨', tiktok: '🎬', twitter: '🔥' };
+
 /**
  * Generate store name, description and theme suggestions based on user input.
  * Pure function – no DB access, so it can run offline / in tests.
  */
-function generateStoreContent({ interests = '', productTypes = '', style = 'modern', language = 'pl' }) {
-  const adjPL   = ['Prestiżowy', 'Elegancki', 'Nowoczesny', 'Wyjątkowy', 'Premium', 'Unikalny'];
-  const nounsPL = ['Sklep', 'Market', 'Boutique', 'Store', 'Shop', 'Hub'];
-  const adj  = adjPL[Math.floor(Math.random() * adjPL.length)];
-  const noun = nounsPL[Math.floor(Math.random() * nounsPL.length)];
+function generateStoreContent({ interests = '', productTypes = '', style = 'modern' }) {
+  const adj  = STORE_ADJ_PL[Math.floor(Math.random() * STORE_ADJ_PL.length)];
+  const noun = STORE_NOUNS_PL[Math.floor(Math.random() * STORE_NOUNS_PL.length)];
 
   const topic  = (interests || productTypes || 'produktów').split(/[,\s]+/)[0];
   const topicCapitalized = topic.charAt(0).toUpperCase() + topic.slice(1).toLowerCase();
@@ -685,14 +691,13 @@ function generateStoreContent({ interests = '', productTypes = '', style = 'mode
   const slug = name
     .toLowerCase()
     .replace(/\s+/g, '-')
-    .replace(/[ąćęłńóśźż]/g, (c) => ({ ą:'a',ć:'c',ę:'e',ł:'l',ń:'n',ó:'o',ś:'s',ź:'z',ż:'z' }[c] || c))
+    .replace(/[ąćęłńóśźż]/g, (c) => PL_CHARS[c] || c)
     .replace(/[^a-z0-9-]/g, '')
     .slice(0, 64);
 
   const description = `Witaj w ${name}! Oferujemy starannie wyselekcjonowane ${productTypes || interests || 'produkty'} najwyższej jakości. Szybka wysyłka, bezpieczne zakupy i doskonała obsługa klienta.`;
 
-  const themes = { modern: '#35d9ff', premium: '#c9a84c', market: '#22c55e' };
-  const primaryColor = themes[style] || themes.modern;
+  const primaryColor = STORE_THEMES[style] || STORE_THEMES.modern;
 
   return { name, slug, description, primaryColor, style };
 }
@@ -701,7 +706,7 @@ function generateStoreContent({ interests = '', productTypes = '', style = 'mode
  * Generate social-media post and product description copy.
  */
 function generatePromotionContent({ productName = '', price = null, storeUrl = '', platform = 'facebook' }) {
-  const emoji = { facebook: '🛍️', instagram: '✨', tiktok: '🎬', twitter: '🔥' }[platform] || '🛍️';
+  const emoji    = PLATFORM_EMOJI[platform] || '🛍️';
   const priceStr = price != null ? ` za jedyne ${price} zł` : '';
   const urlLine  = storeUrl ? `\n🔗 Kup teraz: ${storeUrl}` : '';
 

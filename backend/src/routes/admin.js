@@ -16,6 +16,11 @@ const { upsertSupplierProducts, fetchSupplierProducts } = require('../services/s
 const { computePlatformPrice, dbTiersToArray, DEFAULT_PLATFORM_TIERS } = require('../helpers/pricing');
 const { getPromoSlots } = require('../helpers/promo');
 
+// Optional nodemailer for SMTP mail dispatch (e.g. Proton Mail Bridge).
+// Loaded once at startup; null when the package is not installed.
+let nodemailer = null;
+try { nodemailer = require('nodemailer'); } catch (_) { /* non-critical */ }
+
 const router = express.Router();
 
 const MAX_UPLOAD_MB = parseInt(process.env.UPLOAD_MAX_SIZE_MB || '10', 10);
@@ -1227,6 +1232,12 @@ router.patch(
       const existing = await db.query('SELECT id FROM announcements WHERE id = $1', [req.params.id]);
       if (!existing.rows[0]) return res.status(404).json({ error: 'Ogłoszenie nie znalezione' });
 
+      const pTitle      = title       != null ? title      : null;
+      const pBody       = msgBody     != null ? msgBody     : null;
+      const pType       = type        != null ? type        : null;
+      const pTargetRole = target_role !== undefined ? target_role : null;
+      const pIsActive   = is_active   != null ? is_active  : null;
+
       const result = await db.query(
         `UPDATE announcements SET
            title       = COALESCE($1, title),
@@ -1237,7 +1248,7 @@ router.patch(
            updated_at  = NOW()
          WHERE id = $6
          RETURNING *`,
-        [title || null, msgBody || null, type || null, target_role !== undefined ? target_role : null, is_active != null ? is_active : null, req.params.id]
+        [pTitle, pBody, pType, pTargetRole, pIsActive, req.params.id]
       );
       return res.json(result.rows[0]);
     } catch (err) {
@@ -1304,26 +1315,23 @@ router.post(
       let sent = false;
       try {
         const smtpHost = process.env.SMTP_HOST;
-        if (smtpHost) {
-          const nodemailer = (() => { try { return require('nodemailer'); } catch (_) { return null; } })();
-          if (nodemailer) {
-            const transporter = nodemailer.createTransport({
-              host: smtpHost,
-              port: parseInt(process.env.SMTP_PORT || '587', 10),
-              secure: process.env.SMTP_SECURE === 'true',
-              auth: {
-                user: process.env.SMTP_USER || '',
-                pass: process.env.SMTP_PASS || '',
-              },
-            });
-            await transporter.sendMail({
-              from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@uszefaqualitet.pl',
-              to,
-              subject,
-              text: msgBody,
-            });
-            sent = true;
-          }
+        if (smtpHost && nodemailer) {
+          const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: parseInt(process.env.SMTP_PORT || '587', 10),
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: {
+              user: process.env.SMTP_USER || '',
+              pass: process.env.SMTP_PASS || '',
+            },
+          });
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@uszefaqualitet.pl',
+            to,
+            subject,
+            text: msgBody,
+          });
+          sent = true;
         }
       } catch (sendErr) {
         console.error('mail send error (non-critical):', sendErr.message);
