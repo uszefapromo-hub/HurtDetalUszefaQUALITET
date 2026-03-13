@@ -32,7 +32,7 @@ router.post(
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 8 }),
     body('name').trim().notEmpty(),
-    body('role').optional().isIn(['seller', 'buyer']),
+    body('role').optional().isIn(['seller', 'buyer', 'creator']),
     body('ref_code').optional().trim(),
   ],
   validate,
