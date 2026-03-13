@@ -451,3 +451,65 @@ pm2 start backend/src/app.js --name hurtdetal-api
 pm2 startup && pm2 save
 ```
 
+
+---
+
+## Nowe moduły (faza MVP)
+
+### Social Commerce (`/api/social`)
+
+| Endpoint | Metoda | Opis |
+|----------|--------|------|
+| `/api/social/feed` | GET | Feed postów (paginowany) |
+| `/api/social/trending` | GET | Trending posty wg viral score |
+| `/api/social/posts` | POST | Utwórz post (wymaga auth) |
+| `/api/social/posts/:id` | GET | Szczegóły posta + komentarze |
+| `/api/social/posts/:id` | DELETE | Usuń własny post |
+| `/api/social/posts/:id/like` | POST | Polub/odpolub post |
+| `/api/social/posts/:id/comment` | POST | Dodaj komentarz |
+| `/api/social/posts/:id/share` | POST | Udostępnij post |
+
+### Gamification (`/api/gamification`)
+
+| Endpoint | Metoda | Opis |
+|----------|--------|------|
+| `/api/gamification/leaderboard` | GET | Ranking globalny/tygodniowy/miesięczny |
+| `/api/gamification/my/level` | GET | Aktualny poziom i punkty użytkownika |
+| `/api/gamification/my/badges` | GET | Odznaki użytkownika |
+| `/api/gamification/my/points` | GET | Historia punktów |
+| `/api/gamification/points` | POST | Przyznaj punkty (admin) |
+| `/api/gamification/badges/award` | POST | Przyznaj odznakę (admin) |
+| `/api/gamification/leaderboard/refresh` | POST | Odśwież ranking (admin) |
+
+### Collaborative Stores (`/api/collaboration`)
+
+| Endpoint | Metoda | Opis |
+|----------|--------|------|
+| `/api/collaboration/invite` | POST | Zaproś użytkownika do współpracy |
+| `/api/collaboration/accept/:token` | POST | Zaakceptuj zaproszenie |
+| `/api/collaboration/stores/:storeId/team` | GET | Lista współpracowników sklepu |
+| `/api/collaboration/stores/:storeId/members/:userId` | DELETE | Usuń współpracownika |
+| `/api/collaboration/my-stores` | GET | Sklepy, gdzie jestem współpracownikiem |
+| `/api/collaboration/stores/:storeId/revenue-split` | GET | Podział przychodów |
+| `/api/collaboration/stores/:storeId/revenue-split` | PUT | Ustaw podział przychodów |
+
+Role: `owner`, `manager`, `creator`, `marketer`
+
+### AI Extended (`/api/ai`)
+
+Nowe endpointy dodane do istniejącego modułu AI:
+
+| Endpoint | Metoda | Opis |
+|----------|--------|------|
+| `/api/ai/generate-store` | POST | Wygeneruj pełny sklep (nazwa, opis, slogan, pomysły na produkty) |
+| `/api/ai/marketing-pack` | POST | Wygeneruj pakiet marketingowy (post, email, reklama, hashtagi) |
+
+Przykład – `POST /api/ai/generate-store`:
+```json
+{ "niche": "moda damska", "target_audience": "kobiety 25-45", "style": "elegancki" }
+```
+
+Przykład – `POST /api/ai/marketing-pack`:
+```json
+{ "product_name": "Sukienka wieczorowa", "price": 299.99, "platform": "instagram" }
+```
