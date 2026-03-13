@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Rankingi i Odznaki – Gamifikacja | UszefaQualitet</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    /* ── Gamification page styles ── */
+    :root {
+      --gold:   #f59e0b;
+      --silver: #94a3b8;
+      --bronze: #b45309;
+      --green:  #22c55e;
+      --accent: #6366f1;
+      --bg:     #0f172a;
+      --card:   #1e293b;
+      --stroke: rgba(148,163,184,.22);
+      --text:   #f8fafc;
+      --muted:  #94a3b8;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; margin: 0; }
+
+    /* ── Layout shell ── */
+    .gami-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* ── Page hero ── */
+    .gami-hero {
+      text-align: center;
+      padding: 40px 20px 20px;
+    }
+    .gami-hero h1 {
+      font-size: clamp(26px, 5vw, 42px);
+      font-weight: 900;
+      margin: 0 0 10px;
+      background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .gami-hero p {
+      color: var(--muted);
+      font-size: 16px;
+      margin: 0;
+    }
+
+    /* ── Tab navigation ── */
+    .gami-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--stroke);
+      padding-bottom: 12px;
+    }
+    .gami-tab {
+      padding: 10px 22px;
+      border-radius: 12px 12px 0 0;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all .15s;
+    }
+    .gami-tab:hover  { color: #fff; }
+    .gami-tab.active {
+      background: var(--card);
+      color: #fff;
+      border-color: var(--stroke);
+      border-bottom-color: var(--card);
+    }
+    .gami-pane { display: none; }
+    .gami-pane.active { display: block; }
+
+    /* ── Section heading ── */
+    .section-heading {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ── Period selector ── */
+    .period-pills {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .period-pill {
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .period-pill:hover  { color: #fff; border-color: var(--accent); }
+    .period-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ── Board selector ── */
+    .board-pills {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .board-pill {
+      padding: 8px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .board-pill:hover  { color: #fff; border-color: rgba(99,102,241,.5); }
+    .board-pill.active { background: rgba(99,102,241,.2); color: var(--accent); border-color: var(--accent); }
+
+    /* ── Ranking card ── */
+    .rank-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .rank-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 16px 20px;
+      transition: border-color .15s, transform .12s;
+    }
+    .rank-card:hover { border-color: rgba(99,102,241,.4); transform: translateX(4px); }
+    .rank-card.rank-1 { border-color: rgba(245,158,11,.4); background: rgba(245,158,11,.06); }
+    .rank-card.rank-2 { border-color: rgba(148,163,184,.4); background: rgba(148,163,184,.04); }
+    .rank-card.rank-3 { border-color: rgba(180,83,9,.4); background: rgba(180,83,9,.04); }
+
+    .rank-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .rank-badge.r1 { background: rgba(245,158,11,.2); color: var(--gold); }
+    .rank-badge.r2 { background: rgba(148,163,184,.15); color: var(--silver); }
+    .rank-badge.r3 { background: rgba(180,83,9,.2); color: var(--bronze); }
+    .rank-badge.rN { background: rgba(148,163,184,.08); color: var(--muted); font-size: 14px; }
+
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name { font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .rank-score {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .rank-score-val { font-size: 20px; font-weight: 800; color: var(--accent); }
+    .rank-score-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; margin: 0; }
+
+    /* ── Badge grid ── */
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .badge-card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      transition: border-color .15s, transform .12s;
+    }
+    .badge-card:hover { border-color: rgba(99,102,241,.4); transform: translateY(-3px); }
+    .badge-card.earned { border-color: rgba(99,102,241,.5); background: rgba(99,102,241,.08); }
+    .badge-card.locked { opacity: .45; filter: grayscale(60%); }
+
+    .badge-icon { font-size: 40px; margin-bottom: 12px; }
+    .badge-name { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .badge-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .badge-date { font-size: 11px; color: var(--accent); margin-top: 8px; font-weight: 600; }
+
+    /* ── Level progress card ── */
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .level-card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 20px;
+      padding: 24px;
+    }
+    .level-card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .level-icon { font-size: 36px; }
+    .level-title { font-size: 18px; font-weight: 800; color: #fff; }
+    .level-subtitle { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .level-name-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,.15);
+      color: var(--accent);
+      border: 1px solid rgba(99,102,241,.35);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .progress-bar-wrap {
+      background: rgba(148,163,184,.12);
+      border-radius: 999px;
+      height: 10px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #a855f7);
+      transition: width .6s ease;
+    }
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Loader ── */
+    .loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .loader::before {
+      content: '';
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--stroke);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Nav link ── */
+    .nav-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: color .15s;
+    }
+    .nav-back:hover { color: #fff; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .rank-card { flex-wrap: wrap; }
+      .rank-score { width: 100%; text-align: left; margin-top: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="gami-shell">
+
+  <!-- Navigation -->
+  <div>
+    <a href="dashboard.html" class="nav-back">← Dashboard</a>
+  </div>
+
+  <!-- Hero -->
+  <div class="gami-hero">
+    <h1>🏆 Rankingi &amp; Odznaki</h1>
+    <p>Zdobywaj punkty, awansuj na wyższe poziomy i rywalizuj z innymi sprzedawcami i twórcami.</p>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="gami-tabs" id="gamiTabs">
+    <button class="gami-tab active" data-pane="leaderboard">🏅 Rankingi</button>
+    <button class="gami-tab" data-pane="badges">🎖️ Odznaki</button>
+    <button class="gami-tab" data-pane="levels">📈 Moje Poziomy</button>
+  </div>
+
+  <!-- ── LEADERBOARD PANE ── -->
+  <div class="gami-pane active" id="pane-leaderboard">
+
+    <div class="board-pills" id="boardPills">
+      <button class="board-pill active" data-board="top_sellers">🛒 Top Sprzedawcy</button>
+      <button class="board-pill" data-board="top_creators">🎬 Top Twórcy</button>
+      <button class="board-pill" data-board="top_stores">🏪 Top Sklepy</button>
+      <button class="board-pill" data-board="top_products">📦 Top Produkty</button>
+    </div>
+
+    <div class="period-pills" id="periodPills">
+      <button class="period-pill" data-period="week">Tydzień</button>
+      <button class="period-pill active" data-period="month">Miesiąc</button>
+      <button class="period-pill" data-period="all_time">Wszystko</button>
+    </div>
+
+    <div id="leaderboardContent">
+      <div class="loader">Ładowanie rankingu…</div>
+    </div>
+  </div>
+
+  <!-- ── BADGES PANE ── -->
+  <div class="gami-pane" id="pane-badges">
+    <div class="section-heading">🎖️ Twoje Odznaki</div>
+    <div id="badgesContent">
+      <div class="loader">Ładowanie odznak…</div>
+    </div>
+  </div>
+
+  <!-- ── LEVELS PANE ── -->
+  <div class="gami-pane" id="pane-levels">
+    <div class="section-heading">📈 Twoje Poziomy</div>
+    <div id="levelsContent">
+      <div class="loader">Ładowanie poziomów…</div>
+    </div>
+  </div>
+
+</div><!-- /.gami-shell -->
+
+<script src="js/api.js"></script>
+<script>
+'use strict';
+
+// ─── State ───────────────────────────────────────────────────────────────────
+
+const state = {
+  activeBoard:  'top_sellers',
+  activePeriod: 'month',
+  activePane:   'leaderboard',
+};
+
+const LEVEL_NAMES = { 1: 'Starter', 2: 'Seller', 3: 'Pro Seller', 4: 'Elite', 5: 'Legend' };
+
+const ALL_BADGES = [
+  { slug: 'first_sale',       name: 'Pierwsza Sprzedaż',  description: 'Dokonaj swojej pierwszej sprzedaży',               icon: '🏆' },
+  { slug: '100_sales',        name: '100 Sprzedaży',       description: 'Osiągnij 100 sprzedaży',                           icon: '💯' },
+  { slug: 'top_creator_week', name: 'Twórca Tygodnia',     description: 'Zostań najlepszym twórcą tygodnia',                icon: '⭐' },
+  { slug: 'top_store_month',  name: 'Sklep Miesiąca',      description: 'Zostań najlepszym sklepem miesiąca',               icon: '🥇' },
+  { slug: 'viral_product',    name: 'Viralowy Produkt',    description: 'Jeden z Twoich produktów osiągnął 1000+ kliknięć', icon: '🔥' },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function rankBadgeClass(rank) {
+  if (rank === 1) return 'r1';
+  if (rank === 2) return 'r2';
+  if (rank === 3) return 'r3';
+  return 'rN';
+}
+
+function rankCardClass(rank) {
+  if (rank <= 3) return ` rank-${rank}`;
+  return '';
+}
+
+function rankEmoji(rank) {
+  if (rank === 1) return '🥇';
+  if (rank === 2) return '🥈';
+  if (rank === 3) return '🥉';
+  return `#${rank}`;
+}
+
+function formatScore(score) {
+  const n = parseFloat(score);
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(Math.round(n));
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('pl-PL', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+
+document.getElementById('gamiTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.gami-tab');
+  if (!btn) return;
+  document.querySelectorAll('.gami-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.gami-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const pane = btn.dataset.pane;
+  state.activePane = pane;
+  document.getElementById(`pane-${pane}`).classList.add('active');
+  if (pane === 'badges')   loadBadges();
+  if (pane === 'levels')   loadLevels();
+});
+
+// ─── Board & period pills ─────────────────────────────────────────────────────
+
+document.getElementById('boardPills').addEventListener('click', e => {
+  const btn = e.target.closest('.board-pill');
+  if (!btn) return;
+  document.querySelectorAll('.board-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.activeBoard = btn.dataset.board;
+  loadLeaderboard();
+});
+
+document.getElementById('periodPills').addEventListener('click', e => {
+  const btn = e.target.closest('.period-pill');
+  if (!btn) return;
+  document.querySelectorAll('.period-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.activePeriod = btn.dataset.period;
+  loadLeaderboard();
+});
+
+// ─── Load leaderboard ─────────────────────────────────────────────────────────
+
+async function loadLeaderboard() {
+  const el = document.getElementById('leaderboardContent');
+  el.innerHTML = '<div class="loader">Ładowanie rankingu…</div>';
+
+  try {
+    const api = window.QMApi || window.QualitetAPI;
+    const token = api ? api.getToken() : localStorage.getItem('token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const url = `/api/gamification/leaderboard?board_type=${state.activeBoard}&period=${state.activePeriod}&limit=20`;
+    const resp = await fetch(url, { headers });
+    const data = await resp.json();
+
+    if (!resp.ok) throw new Error(data.error || 'Błąd serwera');
+
+    const entries = data.entries || [];
+    if (!entries.length) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🏁</div>
+          <p>Brak danych dla tego rankingu w wybranym okresie.</p>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="rank-list">
+        ${entries.map(e => `
+          <div class="rank-card${rankCardClass(e.rank)}">
+            <div class="rank-badge ${rankBadgeClass(e.rank)}">${rankEmoji(e.rank)}</div>
+            <div class="rank-info">
+              <div class="rank-name">${escHtml(e.entity_name || 'Nieznany')}</div>
+              <div class="rank-sub">Miejsce #${e.rank}</div>
+            </div>
+            <div class="rank-score">
+              <div class="rank-score-val">${formatScore(e.score)}</div>
+              <div class="rank-score-lbl">pkt</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  } catch (err) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${escHtml(err.message)}</p></div>`;
+  }
+}
+
+// ─── Load badges ──────────────────────────────────────────────────────────────
+
+async function loadBadges() {
+  const el = document.getElementById('badgesContent');
+  el.innerHTML = '<div class="loader">Ładowanie odznak…</div>';
+
+  try {
+    const api = window.QMApi || window.QualitetAPI;
+    const token = api ? api.getToken() : localStorage.getItem('token');
+
+    if (!token) {
+      renderBadges([], el);
+      return;
+    }
+
+    const resp = await fetch('/api/gamification/my/badges', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Błąd serwera');
+
+    renderBadges(data.badges || [], el);
+  } catch (err) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${escHtml(err.message)}</p></div>`;
+  }
+}
+
+function renderBadges(earned, el) {
+  const earnedSlugs = new Set(earned.map(b => b.badge_slug));
+  el.innerHTML = `
+    <div class="badge-grid">
+      ${ALL_BADGES.map(b => {
+        const earnedEntry = earned.find(e => e.badge_slug === b.slug);
+        const isEarned = earnedSlugs.has(b.slug);
+        return `
+          <div class="badge-card ${isEarned ? 'earned' : 'locked'}">
+            <div class="badge-icon">${b.icon}</div>
+            <div class="badge-name">${escHtml(b.name)}</div>
+            <div class="badge-desc">${escHtml(b.description)}</div>
+            ${isEarned ? `<div class="badge-date">✓ Zdobyta ${formatDate(earnedEntry.awarded_at)}</div>` : '<div class="badge-date" style="color:var(--muted)">🔒 Zablokowana</div>'}
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ─── Load levels ──────────────────────────────────────────────────────────────
+
+async function loadLevels() {
+  const el = document.getElementById('levelsContent');
+  el.innerHTML = '<div class="loader">Ładowanie poziomów…</div>';
+
+  try {
+    const api = window.QMApi || window.QualitetAPI;
+    const token = api ? api.getToken() : localStorage.getItem('token');
+
+    if (!token) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔐</div><p>Zaloguj się, aby zobaczyć swoje poziomy.</p></div>`;
+      return;
+    }
+
+    const resp = await fetch('/api/gamification/my/level', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Błąd serwera');
+
+    renderLevels(data.levels, el);
+  } catch (err) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${escHtml(err.message)}</p></div>`;
+  }
+}
+
+function renderLevels(levels, el) {
+  const categories = [
+    { key: 'store',   icon: '🏪', title: 'Poziom Sklepu',   subtitle: 'Aktywność sprzedażowa' },
+    { key: 'creator', icon: '🎬', title: 'Poziom Twórcy',   subtitle: 'Aktywność twórcza i afiliacyjna' },
+  ];
+
+  el.innerHTML = `
+    <div class="level-grid">
+      ${categories.map(cat => {
+        const lvl = levels[cat.key] || { level_number: 1, total_points: 0, next_level_points: 300, progress_percent: 0 };
+        const lvlName = LEVEL_NAMES[lvl.level_number] || 'Starter';
+        const pct = Math.min(100, Math.max(0, lvl.progress_percent || 0));
+        const nextPts = lvl.next_level_points;
+        return `
+          <div class="level-card">
+            <div class="level-card-header">
+              <div class="level-icon">${cat.icon}</div>
+              <div>
+                <div class="level-title">${cat.title}</div>
+                <div class="level-subtitle">${cat.subtitle}</div>
+              </div>
+            </div>
+            <div class="level-name-badge">⚡ ${lvlName} (Poziom ${lvl.level_number}/5)</div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" style="width:${pct}%"></div>
+            </div>
+            <div class="progress-labels">
+              <span>${lvl.total_points} pkt</span>
+              ${nextPts ? `<span>${nextPts} pkt do następnego poziomu</span>` : '<span>🏆 Poziom MAX!</span>'}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+
+    <div style="margin-top:32px">
+      <div class="section-heading" style="font-size:16px">🗺️ Mapa poziomów</div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        ${[1,2,3,4,5].map(n => `
+          <div style="flex:1; min-width:140px; background:var(--card); border:1px solid var(--stroke);
+                      border-radius:16px; padding:16px; text-align:center;
+                      ${levels.store && levels.store.level_number >= n ? 'border-color:rgba(99,102,241,.5); background:rgba(99,102,241,.08);' : ''}">
+            <div style="font-size:24px; margin-bottom:6px;">${['🌱','🛒','⚡','💎','👑'][n-1]}</div>
+            <div style="font-weight:800; color:#fff; font-size:14px;">${LEVEL_NAMES[n]}</div>
+            <div style="font-size:11px; color:var(--muted); margin-top:4px;">Poziom ${n}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ─── XSS-safe HTML escape ─────────────────────────────────────────────────────
+
+function escHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+loadLeaderboard();
+</script>
+</body>
+</html>

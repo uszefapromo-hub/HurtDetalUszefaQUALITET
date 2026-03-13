@@ -5790,3 +5790,315 @@ describe('POST /api/creator/payouts', () => {
     expect(res.body.amount).toBe(50);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Gamification module tests
+// /api/gamification/*
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GAMI_USER_ID = 'c0000000-0000-4000-8000-000000000010';
+
+describe('GET /api/gamification/leaderboard', () => {
+  it('returns 422 when board_type is missing', async () => {
+    const res = await request(app).get('/api/gamification/leaderboard');
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 422 for invalid board_type', async () => {
+    const res = await request(app).get('/api/gamification/leaderboard?board_type=invalid');
+    expect(res.status).toBe(422);
+  });
+
+  it('returns leaderboard entries', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ rank: 1, entity_id: GAMI_USER_ID, entity_name: 'Top Seller', score: 500, metadata: null }],
+    });
+    const res = await request(app).get('/api/gamification/leaderboard?board_type=top_sellers&period=month');
+    expect(res.status).toBe(200);
+    expect(res.body.board_type).toBe('top_sellers');
+    expect(res.body.entries).toHaveLength(1);
+    expect(res.body.entries[0].rank).toBe(1);
+  });
+
+  it('returns empty entries when no snapshot exists', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app).get('/api/gamification/leaderboard?board_type=top_creators&period=week');
+    expect(res.status).toBe(200);
+    expect(res.body.entries).toEqual([]);
+  });
+});
+
+describe('GET /api/gamification/my/level', () => {
+  let sellerTok;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    sellerTok = signToken({ id: GAMI_USER_ID, email: 'gami@test.pl', role: 'seller' });
+  });
+
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/gamification/my/level');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns default levels when no progress yet', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .get('/api/gamification/my/level')
+      .set('Authorization', `Bearer ${sellerTok}`);
+    expect(res.status).toBe(200);
+    expect(res.body.levels.store.level_number).toBe(1);
+    expect(res.body.levels.creator.level_number).toBe(1);
+  });
+
+  it('returns progress for existing store level', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ category: 'store', level_number: 2, total_points: 800 }],
+    });
+    const res = await request(app)
+      .get('/api/gamification/my/level')
+      .set('Authorization', `Bearer ${sellerTok}`);
+    expect(res.status).toBe(200);
+    expect(res.body.levels.store.level_number).toBe(2);
+    expect(res.body.levels.store.total_points).toBe(800);
+    expect(res.body.levels.store.progress_percent).toBeGreaterThan(0);
+  });
+});
+
+describe('GET /api/gamification/my/badges', () => {
+  let sellerTok;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    sellerTok = signToken({ id: GAMI_USER_ID, email: 'gami@test.pl', role: 'seller' });
+  });
+
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/gamification/my/badges');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns user badges', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ badge_slug: 'first_sale', awarded_at: new Date().toISOString(), name: 'Pierwsza Sprzedaż', description: 'opis', icon: '🏆' }],
+    });
+    const res = await request(app)
+      .get('/api/gamification/my/badges')
+      .set('Authorization', `Bearer ${sellerTok}`);
+    expect(res.status).toBe(200);
+    expect(res.body.badges).toHaveLength(1);
+    expect(res.body.badges[0].badge_slug).toBe('first_sale');
+  });
+});
+
+describe('GET /api/gamification/my/points', () => {
+  let sellerTok;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    sellerTok = signToken({ id: GAMI_USER_ID, email: 'gami@test.pl', role: 'seller' });
+  });
+
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/gamification/my/points');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns paginated points history', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '2' }] })
+      .mockResolvedValueOnce({
+        rows: [
+          { id: 'pt-1', source: 'product_sale', points: 10, reference_id: null, created_at: new Date().toISOString() },
+          { id: 'pt-2', source: 'referral',     points: 5,  reference_id: null, created_at: new Date().toISOString() },
+        ],
+      });
+    const res = await request(app)
+      .get('/api/gamification/my/points')
+      .set('Authorization', `Bearer ${sellerTok}`);
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(2);
+    expect(res.body.points).toHaveLength(2);
+  });
+});
+
+describe('POST /api/gamification/points', () => {
+  let adminTok;
+  let sellerTok;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    adminTok  = signToken({ id: ADMIN_ID,     email: 'admin@test.pl', role: 'owner'  });
+    sellerTok = signToken({ id: GAMI_USER_ID, email: 'gami@test.pl',  role: 'seller' });
+  });
+
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/gamification/points').send({});
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects non-admin role', async () => {
+    const res = await request(app)
+      .post('/api/gamification/points')
+      .set('Authorization', `Bearer ${sellerTok}`)
+      .send({ user_id: GAMI_USER_ID, source: 'product_sale', points: 10 });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 422 for invalid source', async () => {
+    const res = await request(app)
+      .post('/api/gamification/points')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ user_id: GAMI_USER_ID, source: 'bad_source', points: 10 });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 404 when user not found', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // user check
+    const res = await request(app)
+      .post('/api/gamification/points')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ user_id: GAMI_USER_ID, source: 'product_sale', points: 10 });
+    expect(res.status).toBe(404);
+  });
+
+  it('awards points and returns updated level', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: GAMI_USER_ID }] })  // user check
+      .mockResolvedValueOnce({ rows: [{ id: 'pt-new', user_id: GAMI_USER_ID, source: 'product_sale', points: 50, reference_id: null, created_at: new Date().toISOString() }] })  // insert points
+      .mockResolvedValueOnce({ rows: [{ total_points: 550 }] })  // upsert user_levels
+      .mockResolvedValueOnce({ rows: [] });                       // update level_number
+    const res = await request(app)
+      .post('/api/gamification/points')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ user_id: GAMI_USER_ID, source: 'product_sale', points: 50, category: 'store' });
+    expect(res.status).toBe(201);
+    expect(res.body.point_entry.points).toBe(50);
+    expect(res.body.level.level_number).toBe(2);  // 550 points → Seller level
+    expect(res.body.level.total_points).toBe(550);
+  });
+});
+
+describe('POST /api/gamification/badges/award', () => {
+  let adminTok;
+  let sellerTok;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    adminTok  = signToken({ id: ADMIN_ID,     email: 'admin@test.pl', role: 'owner'  });
+    sellerTok = signToken({ id: GAMI_USER_ID, email: 'gami@test.pl',  role: 'seller' });
+  });
+
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/gamification/badges/award').send({});
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects non-admin role', async () => {
+    const res = await request(app)
+      .post('/api/gamification/badges/award')
+      .set('Authorization', `Bearer ${sellerTok}`)
+      .send({ user_id: GAMI_USER_ID, badge_slug: 'first_sale' });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 when user not found', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] })  // user check
+      .mockResolvedValueOnce({ rows: [{ slug: 'first_sale', name: 'Pierwsza Sprzedaż', icon: '🏆' }] });  // badge check
+    const res = await request(app)
+      .post('/api/gamification/badges/award')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ user_id: GAMI_USER_ID, badge_slug: 'first_sale' });
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 when badge not found', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: GAMI_USER_ID }] })  // user check
+      .mockResolvedValueOnce({ rows: [] });                       // badge check
+    const res = await request(app)
+      .post('/api/gamification/badges/award')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ user_id: GAMI_USER_ID, badge_slug: 'nonexistent' });
+    expect(res.status).toBe(404);
+  });
+
+  it('awards a badge successfully', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: GAMI_USER_ID }] })  // user check
+      .mockResolvedValueOnce({ rows: [{ slug: 'first_sale', name: 'Pierwsza Sprzedaż', icon: '🏆' }] })  // badge check
+      .mockResolvedValueOnce({ rows: [{ id: 'ub-1', user_id: GAMI_USER_ID, badge_slug: 'first_sale', awarded_at: new Date().toISOString() }] });  // insert
+    const res = await request(app)
+      .post('/api/gamification/badges/award')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ user_id: GAMI_USER_ID, badge_slug: 'first_sale' });
+    expect(res.status).toBe(201);
+    expect(res.body.awarded.badge_slug).toBe('first_sale');
+    expect(res.body.badge.name).toBe('Pierwsza Sprzedaż');
+  });
+
+  it('returns 409 when badge already awarded', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: GAMI_USER_ID }] })  // user check
+      .mockResolvedValueOnce({ rows: [{ slug: 'first_sale', name: 'Pierwsza Sprzedaż', icon: '🏆' }] })  // badge check
+      .mockResolvedValueOnce({ rows: [] });  // ON CONFLICT DO NOTHING → no row returned
+    const res = await request(app)
+      .post('/api/gamification/badges/award')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ user_id: GAMI_USER_ID, badge_slug: 'first_sale' });
+    expect(res.status).toBe(409);
+  });
+});
+
+describe('POST /api/gamification/leaderboard/refresh', () => {
+  let adminTok;
+  let sellerTok;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    adminTok  = signToken({ id: ADMIN_ID,     email: 'admin@test.pl', role: 'owner'  });
+    sellerTok = signToken({ id: GAMI_USER_ID, email: 'gami@test.pl',  role: 'seller' });
+  });
+
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/gamification/leaderboard/refresh').send({});
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects non-admin role', async () => {
+    const res = await request(app)
+      .post('/api/gamification/leaderboard/refresh')
+      .set('Authorization', `Bearer ${sellerTok}`)
+      .send({ board_type: 'top_sellers' });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 422 for invalid board_type', async () => {
+    const res = await request(app)
+      .post('/api/gamification/leaderboard/refresh')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ board_type: 'invalid' });
+    expect(res.status).toBe(422);
+  });
+
+  it('refreshes leaderboard with no entries', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] })  // aggregate query
+      .mockResolvedValueOnce({ rows: [] });  // delete old snapshot
+    const res = await request(app)
+      .post('/api/gamification/leaderboard/refresh')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ board_type: 'top_sellers', period: 'month' });
+    expect(res.status).toBe(200);
+    expect(res.body.refreshed).toBe(true);
+    expect(res.body.entries_written).toBe(0);
+  });
+
+  it('refreshes leaderboard and writes entries', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ entity_id: GAMI_USER_ID, entity_name: 'Top Seller', score: 200 }] })  // aggregate
+      .mockResolvedValueOnce({ rows: [] })  // delete old
+      .mockResolvedValueOnce({ rows: [] });  // insert rank 1
+    const res = await request(app)
+      .post('/api/gamification/leaderboard/refresh')
+      .set('Authorization', `Bearer ${adminTok}`)
+      .send({ board_type: 'top_sellers', period: 'week' });
+    expect(res.status).toBe(200);
+    expect(res.body.entries_written).toBe(1);
+  });
+});
