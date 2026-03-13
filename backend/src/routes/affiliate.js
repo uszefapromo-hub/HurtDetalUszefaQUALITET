@@ -437,6 +437,8 @@ router.get('/click/:code', async (req, res) => {
 });
 
 function _buildRedirectUrl(link) {
+  // link.product_id and link.store_id are UUIDs fetched from the database;
+  // they are never derived from user input, so there is no open-redirect risk.
   const base = process.env.FRONTEND_URL || 'https://uszefaqualitet.pl';
   if (link.product_id) {
     const store = link.store_id ? `?store=${link.store_id}` : '';
@@ -491,6 +493,9 @@ router.put(
   [
     param('pid').isUUID(),
     body('commission_percent').isFloat({ min: 0, max: 80 }).withMessage('commission_percent must be between 0 and 80'),
+    // Max 80% commission prevents sellers from setting unsustainable rates that
+    // exceed their own margin. Platform-wide cap enforced here alongside the
+    // subscription plan's own margin constraints.
     body('is_affiliate_enabled').isBoolean(),
   ],
   validate,

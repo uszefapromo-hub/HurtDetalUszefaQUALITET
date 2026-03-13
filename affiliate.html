@@ -737,7 +737,7 @@
         empty.hidden = false;
         return;
       }
-      empty.hidden = false; // keep hidden
+      empty.hidden = true;
       wrap.hidden  = false;
 
       tbody.innerHTML = earnings.earnings.map((e) => `
@@ -959,8 +959,12 @@
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
   function buildAffUrl(code) {
-    const base = (window.QM_API_BASE || 'http://localhost:3000/api').replace(/\/api\/?$/, '');
-    return `${base}/api/affiliate/click/${code}`;
+    // Use QM_API_BASE if set (strips /api suffix to get the root URL),
+    // otherwise fall back to a relative path that works in any deployment.
+    const base = (window.QM_API_BASE || '')
+      .replace(/\/api\/?$/, '');
+    const root = base || window.location.origin;
+    return `${root}/api/affiliate/click/${code}`;
   }
 
   function copyAffLink(url) {
