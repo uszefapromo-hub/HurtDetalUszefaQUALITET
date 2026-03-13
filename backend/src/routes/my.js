@@ -589,4 +589,131 @@ router.delete(
   }
 );
 
+// ─── POST /api/my/store/generate – AI-style store generator ──────────────────
+
+router.post(
+  '/store/generate',
+  authenticate,
+  [
+    body('interests').optional().trim().isLength({ max: 200 }),
+    body('product_types').optional().trim().isLength({ max: 200 }),
+    body('style').optional().isIn(['modern', 'premium', 'market']),
+    body('margin').optional().isFloat({ min: 0, max: 100 }),
+  ],
+  validate,
+  async (req, res) => {
+    const { interests = '', product_types = '', style = 'modern', margin = 15 } = req.body;
+
+    const content = generateStoreContent({ interests, productTypes: product_types, style });
+
+    // Look up a few products from the central catalog matching the interests
+    let suggestedProducts = [];
+    try {
+      const keyword = (interests || product_types || '').split(/[,\s]+/)[0] || '';
+      const limit = 5;
+      const q = keyword
+        ? await db.query(
+            `SELECT id, name, selling_price FROM products
+              WHERE is_central = TRUE AND name ILIKE $1
+              ORDER BY created_at DESC LIMIT $2`,
+            [`%${keyword}%`, limit]
+          )
+        : await db.query(
+            `SELECT id, name, selling_price FROM products
+              WHERE is_central = TRUE
+              ORDER BY RANDOM() LIMIT $1`,
+            [limit]
+          );
+      suggestedProducts = q.rows;
+    } catch (_err) {
+      // Non-critical — skip if products table isn't available
+    }
+
+    const base = process.env.APP_URL || 'https://uszefaqualitet.pl';
+    const salesLink = `${base}/sklep.html?slug=${content.slug}`;
+
+    return res.json({
+      name:               content.name,
+      slug:               content.slug,
+      description:        content.description,
+      primary_color:      content.primaryColor,
+      style:              content.style,
+      margin,
+      suggested_products: suggestedProducts,
+      sales_link:         salesLink,
+    });
+  }
+);
+
+// ─── POST /api/my/promotion/generate – promotion content generator ────────────
+
+router.post(
+  '/promotion/generate',
+  authenticate,
+  [
+    body('product_name').trim().notEmpty().isLength({ max: 255 }),
+    body('price').optional({ nullable: true }).isFloat({ min: 0 }),
+    body('store_url').optional().trim().isURL({ require_tld: false }),
+    body('platform').optional().isIn(['facebook', 'instagram', 'tiktok', 'twitter']),
+  ],
+  validate,
+  async (req, res) => {
+    const { product_name, price = null, store_url = '', platform = 'facebook' } = req.body;
+
+    const content = generatePromotionContent({ productName: product_name, price, storeUrl: store_url, platform });
+
+    return res.json(content);
+  }
+);
+
+// ─── Store generator & promotion helpers (exported for testing) ──────────────
+
+// ─── Store generator constants ───────────────────────────────────────────────
+
+const STORE_ADJ_PL   = ['Prestiżowy', 'Elegancki', 'Nowoczesny', 'Wyjątkowy', 'Premium', 'Unikalny'];
+const STORE_NOUNS_PL = ['Sklep', 'Market', 'Boutique', 'Store', 'Shop', 'Hub'];
+const STORE_THEMES   = { modern: '#35d9ff', premium: '#c9a84c', market: '#22c55e' };
+const PL_CHARS       = { ą:'a', ć:'c', ę:'e', ł:'l', ń:'n', ó:'o', ś:'s', ź:'z', ż:'z' };
+const PLATFORM_EMOJI = { facebook: '🛍️', instagram: '✨', tiktok: '🎬', twitter: '🔥' };
+
+/**
+ * Generate store name, description and theme suggestions based on user input.
+ * Pure function – no DB access, so it can run offline / in tests.
+ */
+function generateStoreContent({ interests = '', productTypes = '', style = 'modern' }) {
+  const adj  = STORE_ADJ_PL[Math.floor(Math.random() * STORE_ADJ_PL.length)];
+  const noun = STORE_NOUNS_PL[Math.floor(Math.random() * STORE_NOUNS_PL.length)];
+
+  const topic  = (interests || productTypes || 'produktów').split(/[,\s]+/)[0];
+  const topicCapitalized = topic.charAt(0).toUpperCase() + topic.slice(1).toLowerCase();
+
+  const name = `${adj} ${topicCapitalized} ${noun}`;
+  const slug = name
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[ąćęłńóśźż]/g, (c) => PL_CHARS[c] || c)
+    .replace(/[^a-z0-9-]/g, '')
+    .slice(0, 64);
+
+  const description = `Witaj w ${name}! Oferujemy starannie wyselekcjonowane ${productTypes || interests || 'produkty'} najwyższej jakości. Szybka wysyłka, bezpieczne zakupy i doskonała obsługa klienta.`;
+
+  const primaryColor = STORE_THEMES[style] || STORE_THEMES.modern;
+
+  return { name, slug, description, primaryColor, style };
+}
+
+/**
+ * Generate social-media post and product description copy.
+ */
+function generatePromotionContent({ productName = '', price = null, storeUrl = '', platform = 'facebook' }) {
+  const emoji    = PLATFORM_EMOJI[platform] || '🛍️';
+  const priceStr = price != null ? ` za jedyne ${price} zł` : '';
+  const urlLine  = storeUrl ? `\n🔗 Kup teraz: ${storeUrl}` : '';
+
+  const post = `${emoji} ${productName}${priceStr}!\n\nSprawdź naszą ofertę – szybka wysyłka, najlepsza jakość!${urlLine}\n\n#qualitet #dropshipping #uszefa`;
+  const productDescription = `${productName} to doskonały wybór dla wymagających klientów. Wysoka jakość wykonania, atrakcyjna cena${priceStr}. Zamów już dziś i ciesz się szybką dostawą!`;
+
+  return { post, productDescription, platform, emoji };
+}
+
 module.exports = router;
