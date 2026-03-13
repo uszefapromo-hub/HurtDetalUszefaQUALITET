@@ -618,6 +618,90 @@
     adminStats()                           { return get('/affiliate/admin/stats'); },
   };
 
+  // ─── Profile ──────────────────────────────────────────────────────────────────
+
+  const Profile = {
+    /** Get the current user's profile. GET /api/users/profile */
+    get()                      { return get('/users/profile'); },
+    /** Update the current user's profile. PUT /api/users/profile */
+    update(data)               { return put('/users/profile', data); },
+  };
+
+  // ─── Notifications ────────────────────────────────────────────────────────────
+
+  const Notifications = {
+    /** List notifications for the current user. GET /api/notifications */
+    list(params)               { return get('/notifications', params); },
+    /** Mark a notification as read. PATCH /api/notifications/:id/read */
+    markRead(id)               { return patch(`/notifications/${id}/read`, {}); },
+    /** Mark all notifications as read. POST /api/notifications/read-all */
+    markAllRead()              { return post('/notifications/read-all', {}); },
+  };
+
+  // ─── Social Commerce ──────────────────────────────────────────────────────────
+
+  const Social = {
+    /** Get the social commerce feed. GET /api/social/feed */
+    getFeed(params)            { return get('/social/feed', params); },
+    /** Get trending posts. GET /api/social/trending */
+    getTrending()              { return get('/social/trending'); },
+    /** Create a new social post. POST /api/social/posts */
+    createPost(data)           { return post('/social/posts', data); },
+    /** Like or unlike a post. POST /api/social/posts/:id/like */
+    likePost(id)               { return post(`/social/posts/${id}/like`, {}); },
+    /** Add a comment to a post. POST /api/social/posts/:id/comments */
+    commentPost(id, content)   { return post(`/social/posts/${id}/comments`, { content }); },
+    /** Get comments for a post. GET /api/social/posts/:id/comments */
+    getComments(id)            { return get(`/social/posts/${id}/comments`); },
+  };
+
+  // ─── Live Commerce ────────────────────────────────────────────────────────────
+
+  const Live = {
+    /** List live/upcoming streams. GET /api/live/streams */
+    getStreams(params)         { return get('/live/streams', params); },
+    /** Create a new stream. POST /api/live/streams */
+    createStream(data)         { return post('/live/streams', data); },
+    /** Get a stream by ID. GET /api/live/streams/:id */
+    getStream(id)              { return get(`/live/streams/${id}`); },
+    /** Update stream status. PATCH /api/live/streams/:id/status */
+    updateStatus(id, status)   { return patch(`/live/streams/${id}/status`, { status }); },
+    /** Send a chat message to a stream. POST /api/live/streams/:id/messages */
+    sendMessage(id, message)   { return post(`/live/streams/${id}/messages`, { message }); },
+    /** Get chat messages for a stream. GET /api/live/streams/:id/messages */
+    getMessages(id)            { return get(`/live/streams/${id}/messages`); },
+    /** Pin a product to a stream. POST /api/live/streams/:id/products */
+    pinProduct(id, data)       { return post(`/live/streams/${id}/products`, data); },
+    /** Get pinned products for a stream. GET /api/live/streams/:id/products */
+    getPinnedProducts(id)      { return get(`/live/streams/${id}/products`); },
+  };
+
+  // ─── Gamification ─────────────────────────────────────────────────────────────
+
+  const Gamification = {
+    /** Get the platform leaderboard. GET /api/gamification/leaderboard */
+    getLeaderboard()           { return get('/gamification/leaderboard'); },
+    /** Get the current user's level and points. GET /api/gamification/my/level */
+    getMyLevel()               { return get('/gamification/my/level'); },
+    /** Get the current user's badges. GET /api/gamification/my/badges */
+    getMyBadges()              { return get('/gamification/my/badges'); },
+    /** Award points to a user (admin). POST /api/gamification/award */
+    awardPoints(data)          { return post('/gamification/award', data); },
+  };
+
+  // ─── Creator Referrals ────────────────────────────────────────────────────────
+
+  const CreatorReferrals = {
+    /** Get the current user's referral code. GET /api/creator-referrals/my-code */
+    getMyCode()                { return get('/creator-referrals/my-code'); },
+    /** Use a referral code. POST /api/creator-referrals/use */
+    useCode(code)              { return post('/creator-referrals/use', { code }); },
+    /** Get referral stats for the current user. GET /api/creator-referrals/stats */
+    getStats()                 { return get('/creator-referrals/stats'); },
+    /** List referrals made by the current user. GET /api/creator-referrals/list */
+    getList()                  { return get('/creator-referrals/list'); },
+  };
+
   // ─── Public API surface ───────────────────────────────────────────────────────
 
   return {
@@ -637,6 +721,12 @@
     Referral,
     Announcements,
     Affiliate,
+    Profile,
+    Notifications,
+    Social,
+    Live,
+    Gamification,
+    CreatorReferrals,
     health,
     /** Expose for advanced use cases. */
     _request: request,

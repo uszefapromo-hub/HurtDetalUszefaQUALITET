@@ -233,6 +233,50 @@ app.get('/api/readiness', async (_req, res) => {
     conversations:          'GET  /api/ai/conversations',
   };
 
+  // Social commerce system
+  checks.social_commerce_system = {
+    feed:           'GET  /api/social/feed',
+    trending:       'GET  /api/social/trending',
+    create_post:    'POST /api/social/posts',
+    like_post:      'POST /api/social/posts/:id/like',
+    comment:        'POST /api/social/posts/:id/comments',
+    get_comments:   'GET  /api/social/posts/:id/comments',
+  };
+
+  // Live commerce system
+  checks.live_commerce_system = {
+    list_streams:     'GET  /api/live/streams',
+    create_stream:    'POST /api/live/streams',
+    get_stream:       'GET  /api/live/streams/:id',
+    update_status:    'PATCH /api/live/streams/:id/status',
+    send_message:     'POST /api/live/streams/:id/messages',
+    get_messages:     'GET  /api/live/streams/:id/messages',
+    pin_product:      'POST /api/live/streams/:id/products',
+    pinned_products:  'GET  /api/live/streams/:id/products',
+  };
+
+  // Gamification system
+  checks.gamification_system = {
+    leaderboard:  'GET  /api/gamification/leaderboard',
+    my_level:     'GET  /api/gamification/my/level',
+    my_badges:    'GET  /api/gamification/my/badges',
+    award_points: 'POST /api/gamification/award',
+  };
+
+  // Creator referral system
+  checks.creator_referral_system = {
+    my_code:   'GET  /api/creator-referrals/my-code',
+    use_code:  'POST /api/creator-referrals/use',
+    stats:     'GET  /api/creator-referrals/stats',
+    list:      'GET  /api/creator-referrals/list',
+  };
+
+  // Profile system
+  checks.profile_system = {
+    get_profile:    'GET /api/users/profile',
+    update_profile: 'PUT /api/users/profile',
+  };
+
   const status = allOk ? 'ready' : 'degraded';
   return res.status(allOk ? 200 : 503).json({
     status,

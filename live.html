@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Live Commerce | UszefaQualitet</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    .live-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .live-tab  { padding:10px 20px; border-radius:12px; border:1px solid var(--stroke);
+                 background:var(--card); cursor:pointer; font-size:14px; font-weight:600;
+                 color:var(--muted); transition:all .15s; }
+    .live-tab:hover  { color:#fff; border-color:var(--accent); }
+    .live-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+    .live-pane { display:none; }
+    .live-pane.active { display:block; }
+
+    /* Stream cards */
+    .streams-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); }
+    .stream-card { background:var(--card); border:1px solid var(--stroke); border-radius:20px;
+                   padding:20px; display:flex; flex-direction:column; gap:12px; position:relative; }
+    .stream-badge { position:absolute; top:14px; right:14px; padding:3px 10px; border-radius:20px;
+                    font-size:11px; font-weight:700; }
+    .stream-badge.live     { background:rgba(239,68,68,.2); color:#ef4444; }
+    .stream-badge.upcoming { background:rgba(245,158,11,.2); color:#f59e0b; }
+    .stream-badge.ended    { background:rgba(107,114,128,.2); color:#6b7280; }
+    .stream-title  { font-weight:700; font-size:16px; color:#f1f5f9; padding-right:80px; }
+    .stream-host   { font-size:13px; color:var(--muted); }
+    .stream-stats  { display:flex; gap:12px; font-size:13px; color:var(--muted); }
+    .stream-stat   { display:flex; align-items:center; gap:4px; }
+
+    /* Detail view */
+    .stream-detail { display:none; }
+    .stream-detail.open { display:block; }
+    .stream-detail-header { background:var(--card); border:1px solid var(--stroke);
+                            border-radius:20px; padding:20px; margin-bottom:16px; }
+    .detail-layout { display:grid; gap:16px; grid-template-columns:1fr 340px; }
+    @media(max-width:768px){ .detail-layout { grid-template-columns:1fr; } }
+
+    /* Pinned products */
+    .pinned-grid { display:grid; gap:12px; grid-template-columns:1fr 1fr; margin-top:12px; }
+    .pinned-card { background:var(--input); border:1px solid var(--stroke); border-radius:14px;
+                   padding:14px; display:flex; flex-direction:column; gap:6px; }
+    .pinned-name  { font-size:13px; font-weight:700; color:#f1f5f9; }
+    .pinned-price { font-size:16px; font-weight:800; color:var(--green); }
+
+    /* Chat */
+    .chat-box   { background:var(--card); border:1px solid var(--stroke); border-radius:20px;
+                  padding:0; display:flex; flex-direction:column; height:500px; }
+    .chat-title { padding:14px 18px; font-weight:700; font-size:15px; color:#f1f5f9;
+                  border-bottom:1px solid var(--stroke); }
+    .chat-msgs  { flex:1; overflow-y:auto; padding:14px 18px; display:flex;
+                  flex-direction:column; gap:8px; }
+    .chat-msg   { font-size:13px; color:#cbd5e1; }
+    .chat-msg strong { color:var(--accent); }
+    .chat-input-row { padding:12px 16px; border-top:1px solid var(--stroke);
+                      display:flex; gap:8px; }
+    .chat-input-row input { flex:1; background:var(--input); border:1px solid var(--stroke);
+                             border-radius:10px; padding:8px 12px; color:#f1f5f9; font-size:13px;
+                             outline:none; }
+    .chat-input-row input:focus { border-color:var(--accent); }
+
+    /* Create stream form */
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; font-weight:600; }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%; background:var(--input); border:1px solid var(--stroke); border-radius:10px;
+      padding:10px 14px; color:#f1f5f9; font-size:14px; outline:none; font-family:inherit; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--accent); }
+
+    .empty-state { text-align:center; padding:48px 20px; color:var(--muted); }
+    .empty-state .icon { font-size:40px; margin-bottom:12px; }
+    .hint { color:var(--muted); font-size:14px; }
+  </style>
+</head>
+<body data-page="live" class="dashboard-page has-bottom-nav">
+
+  <!-- Splash -->
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="UszefaQualitet">
+      </div>
+      <div class="app-splash-title">
+        <strong>UszefaQualitet</strong>
+        <span>Live Commerce</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="zarabiaj.html">Zarabiaj</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <!-- Dashboard shell -->
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <nav class="sidebar-nav" aria-label="Menu panelu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="generator-sklepu.html">Mój sklep</a>
+        <a href="hurtownie.html" data-require="pro">Hurtownie</a>
+        <a href="linki-sprzedazowe.html">Linki sprzedażowe</a>
+        <a href="affiliate.html">Afiliacja</a>
+        <a href="social.html">Social Commerce</a>
+        <a href="live.html" class="active">Live Commerce</a>
+        <a href="gamification.html">Punkty i nagrody</a>
+        <a href="qualitetmarket.html" data-require="pro">QualitetMarket</a>
+        <a href="cennik.html">Subskrypcja</a>
+        <a href="owner-panel.html" data-superadmin-link hidden>Panel Superadmina</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-main">
+      <!-- Page header -->
+      <section class="panel-card" style="margin-bottom:0">
+        <span class="eyebrow">Sprzedaż na żywo</span>
+        <h1 style="font-size:clamp(22px,4vw,32px);margin:8px 0 6px">Live Commerce</h1>
+        <p class="hint">Oglądaj transmisje na żywo, kupuj polecane produkty, rozmawiaj ze sprzedawcami.</p>
+      </section>
+
+      <!-- Feedback -->
+      <div id="msg-bar" style="display:none" class="panel-card" role="alert"></div>
+
+      <!-- Stream detail (hidden by default) -->
+      <div class="stream-detail" id="stream-detail">
+        <div class="stream-detail-header">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-sm" id="btn-back-list">← Wróć do listy</button>
+            <span class="stream-badge" id="detail-badge"></span>
+          </div>
+          <h2 id="detail-title" style="margin:10px 0 4px;font-size:20px;color:#f1f5f9"></h2>
+          <p id="detail-host" style="color:var(--muted);font-size:13px"></p>
+        </div>
+        <div class="detail-layout">
+          <div>
+            <div class="panel-card">
+              <strong style="font-size:15px;color:#f1f5f9">📦 Przypięte produkty</strong>
+              <div id="pinned-products" class="pinned-grid">
+                <p style="color:var(--muted);font-size:13px">Brak przypiętych produktów.</p>
+              </div>
+              <div id="pin-product-section" style="margin-top:16px;display:none">
+                <strong style="font-size:13px;color:var(--muted)">Przypnij produkt:</strong>
+                <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                  <input type="text" id="pin-product-id" placeholder="ID produktu"
+                    style="flex:1;min-width:140px;background:var(--input);border:1px solid var(--stroke);border-radius:10px;padding:8px 12px;color:#f1f5f9;font-size:13px;outline:none">
+                  <input type="number" id="pin-product-price" placeholder="Cena (PLN)" step="0.01"
+                    style="width:130px;background:var(--input);border:1px solid var(--stroke);border-radius:10px;padding:8px 12px;color:#f1f5f9;font-size:13px;outline:none">
+                  <button class="btn btn-primary btn-sm" id="btn-pin-product">Przypnij</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-box">
+            <div class="chat-title">💬 Chat</div>
+            <div class="chat-msgs" id="chat-msgs">
+              <p style="color:var(--muted);font-size:13px;text-align:center">Zacznij rozmowę!</p>
+            </div>
+            <div class="chat-input-row">
+              <input type="text" id="chat-input" placeholder="Napisz wiadomość…" maxlength="300">
+              <button class="btn btn-primary btn-sm" id="btn-chat-send">Wyślij</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Streams list -->
+      <div id="streams-section">
+        <!-- Tabs -->
+        <div class="live-tabs" role="tablist">
+          <button class="live-tab active" data-tab="all"      role="tab">📡 Wszystkie</button>
+          <button class="live-tab"        data-tab="live"     role="tab">🔴 Na żywo</button>
+          <button class="live-tab"        data-tab="upcoming" role="tab">⏰ Nadchodzące</button>
+          <button class="live-tab"        data-tab="create"   role="tab" id="tab-create" style="margin-left:auto">+ Nowa transmisja</button>
+        </div>
+
+        <div class="live-pane active" id="pane-all">
+          <div class="streams-grid" id="streams-all">
+            <div class="empty-state"><div class="icon">📡</div><p>Ładowanie…</p></div>
+          </div>
+        </div>
+        <div class="live-pane" id="pane-live">
+          <div class="streams-grid" id="streams-live">
+            <div class="empty-state"><div class="icon">🔴</div><p>Ładowanie…</p></div>
+          </div>
+        </div>
+        <div class="live-pane" id="pane-upcoming">
+          <div class="streams-grid" id="streams-upcoming">
+            <div class="empty-state"><div class="icon">⏰</div><p>Ładowanie…</p></div>
+          </div>
+        </div>
+        <div class="live-pane" id="pane-create">
+          <div class="panel-card" style="max-width:500px">
+            <h2 style="font-size:18px;margin-bottom:20px;color:#f1f5f9">Utwórz nową transmisję</h2>
+            <div class="form-group">
+              <label for="stream-title-input">Tytuł transmisji</label>
+              <input type="text" id="stream-title-input" placeholder="Np. Wyprzedaż sezonu – live!" maxlength="120">
+            </div>
+            <div class="form-group">
+              <label for="stream-desc-input">Opis (opcjonalnie)</label>
+              <textarea id="stream-desc-input" placeholder="O czym będzie transmisja?" rows="3" maxlength="500"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="stream-scheduled-input">Data i godzina (opcjonalnie)</label>
+              <input type="datetime-local" id="stream-scheduled-input">
+            </div>
+            <button class="btn btn-primary" id="btn-create-stream">Utwórz transmisję</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /.dashboard-shell -->
+
+  <script src="js/api.js"></script>
+  <script>
+  'use strict';
+
+  const API = window.QMApi;
+  let currentUser = null;
+  let currentStreamId = null;
+  let chatPollInterval = null;
+
+  // ─── Init ──────────────────────────────────────────────────────────────────
+
+  async function init() {
+    hideSplash();
+    currentUser = getCachedUser();
+    if (!currentUser || !getToken()) return redirectLogin();
+
+    document.querySelectorAll('.live-tab').forEach((btn) => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    document.getElementById('btn-back-list').addEventListener('click', closeDetail);
+    document.getElementById('btn-chat-send').addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+    document.getElementById('btn-create-stream').addEventListener('click', createStream);
+    document.getElementById('btn-pin-product').addEventListener('click', pinProduct);
+
+    if (currentUser.role === 'seller' || currentUser.role === 'admin' || currentUser.role === 'owner') {
+      document.getElementById('tab-create').hidden = false;
+    } else {
+      document.getElementById('tab-create').hidden = true;
+    }
+
+    loadStreams('all');
+  }
+
+  // ─── Tabs ──────────────────────────────────────────────────────────────────
+
+  function switchTab(name) {
+    document.querySelectorAll('.live-tab').forEach((b) => {
+      b.classList.toggle('active', b.dataset.tab === name);
+    });
+    document.querySelectorAll('.live-pane').forEach((p) => {
+      p.classList.toggle('active', p.id === `pane-${name}`);
+    });
+    if (name === 'all')      loadStreams('all');
+    if (name === 'live')     loadStreams('live');
+    if (name === 'upcoming') loadStreams('upcoming');
+  }
+
+  // ─── Stream list ───────────────────────────────────────────────────────────
+
+  async function loadStreams(filter) {
+    const containerId = `streams-${filter}`;
+    const container = document.getElementById(containerId);
+    container.innerHTML = '<div class="empty-state"><div class="icon">📡</div><p>Ładowanie…</p></div>';
+    try {
+      const params = filter === 'all' ? {} : { status: filter };
+      const res = await API.Live.getStreams(params);
+      const streams = res.streams || [];
+      if (streams.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📡</div><p>Brak transmisji.</p></div>';
+        return;
+      }
+      container.innerHTML = streams.map((s) => streamCardHTML(s)).join('');
+    } catch (_) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">📡</div><p>Nie udało się załadować.</p></div>';
+    }
+  }
+
+  function streamCardHTML(s) {
+    const badgeClass = s.status === 'live' ? 'live' : s.status === 'upcoming' ? 'upcoming' : 'ended';
+    const badgeLabel = s.status === 'live' ? '🔴 NA ŻYWO' : s.status === 'upcoming' ? '⏰ Planowana' : '✓ Zakończona';
+    const viewerCount = s.viewer_count || s.viewers || 0;
+    return `
+      <div class="stream-card">
+        <span class="stream-badge ${badgeClass}">${badgeLabel}</span>
+        <div class="stream-title">${escHtml(s.title)}</div>
+        <div class="stream-host">Prowadzi: ${escHtml(s.host_name || s.seller_name || 'Sprzedawca')}</div>
+        <div class="stream-stats">
+          <div class="stream-stat">👁 ${viewerCount}</div>
+          ${s.scheduled_at ? `<div class="stream-stat">📅 ${formatDate(s.scheduled_at)}</div>` : ''}
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openDetail('${escHtml(s.id)}')">Dołącz →</button>
+      </div>`;
+  }
+
+  // ─── Stream detail ─────────────────────────────────────────────────────────
+
+  async function openDetail(id) {
+    currentStreamId = id;
+    document.getElementById('streams-section').style.display = 'none';
+    const det = document.getElementById('stream-detail');
+    det.classList.add('open');
+    document.getElementById('pinned-products').innerHTML = '<p style="color:var(--muted);font-size:13px">Ładowanie…</p>';
+    document.getElementById('chat-msgs').innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center">Ładowanie…</p>';
+    try {
+      const res = await API.Live.getStream(id);
+      const s = res.stream || res;
+      const badgeClass = s.status === 'live' ? 'live' : s.status === 'upcoming' ? 'upcoming' : 'ended';
+      const badgeLabel = s.status === 'live' ? '🔴 NA ŻYWO' : s.status === 'upcoming' ? '⏰ Planowana' : '✓ Zakończona';
+      document.getElementById('detail-badge').textContent = badgeLabel;
+      document.getElementById('detail-badge').className = `stream-badge ${badgeClass}`;
+      document.getElementById('detail-title').textContent = s.title;
+      document.getElementById('detail-host').textContent = `Prowadzi: ${s.host_name || s.seller_name || 'Sprzedawca'}`;
+
+      // Show pin form for owner of stream
+      const isOwner = currentUser.role === 'seller' || currentUser.role === 'admin' || currentUser.role === 'owner';
+      document.getElementById('pin-product-section').style.display = isOwner ? 'block' : 'none';
+
+      loadPinnedProducts(id);
+      loadChatMessages(id);
+      if (s.status === 'live') {
+        chatPollInterval = setInterval(() => loadChatMessages(id), 5000);
+      }
+    } catch (_) {
+      showMsg('Nie udało się załadować transmisji.', 'error');
+      closeDetail();
+    }
+  }
+
+  function closeDetail() {
+    if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
+    currentStreamId = null;
+    document.getElementById('stream-detail').classList.remove('open');
+    document.getElementById('streams-section').style.display = '';
+  }
+
+  async function loadPinnedProducts(id) {
+    const container = document.getElementById('pinned-products');
+    try {
+      const res = await API.Live.getPinnedProducts(id);
+      const products = res.products || res.pinned_products || [];
+      if (products.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);font-size:13px">Brak przypiętych produktów.</p>';
+        return;
+      }
+      container.innerHTML = products.map((p) => `
+        <div class="pinned-card">
+          <div class="pinned-name">${escHtml(p.name || p.product_name)}</div>
+          <div class="pinned-price">${formatPLN(p.price || p.live_price)}</div>
+        </div>`).join('');
+    } catch (_) {
+      container.innerHTML = '<p style="color:var(--muted);font-size:13px">Brak przypiętych produktów.</p>';
+    }
+  }
+
+  async function pinProduct() {
+    const productId = document.getElementById('pin-product-id').value.trim();
+    const price = document.getElementById('pin-product-price').value;
+    if (!productId) return showMsg('Podaj ID produktu.', 'error');
+    try {
+      await API.Live.pinProduct(currentStreamId, { product_id: productId, live_price: price || undefined });
+      document.getElementById('pin-product-id').value = '';
+      document.getElementById('pin-product-price').value = '';
+      loadPinnedProducts(currentStreamId);
+      showMsg('Produkt przypięty!', 'success');
+    } catch (_) { showMsg('Nie udało się przypiąć produktu.', 'error'); }
+  }
+
+  // ─── Chat ──────────────────────────────────────────────────────────────────
+
+  async function loadChatMessages(id) {
+    try {
+      const res = await API.Live.getMessages(id);
+      const msgs = res.messages || [];
+      const container = document.getElementById('chat-msgs');
+      const wasAtBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 10;
+      container.innerHTML = msgs.length === 0
+        ? '<p style="color:var(--muted);font-size:13px;text-align:center">Zacznij rozmowę!</p>'
+        : msgs.map((m) => `
+            <div class="chat-msg">
+              <strong>${escHtml(m.author_name || m.user_name || 'Użytkownik')}</strong>:
+              ${escHtml(m.content || m.message)}
+            </div>`).join('');
+      if (wasAtBottom) container.scrollTop = container.scrollHeight;
+    } catch (_) {}
+  }
+
+  async function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (!message || !currentStreamId) return;
+    try {
+      await API.Live.sendMessage(currentStreamId, message);
+      input.value = '';
+      loadChatMessages(currentStreamId);
+    } catch (_) { showMsg('Nie udało się wysłać wiadomości.', 'error'); }
+  }
+
+  // ─── Create stream ─────────────────────────────────────────────────────────
+
+  async function createStream() {
+    const title = document.getElementById('stream-title-input').value.trim();
+    if (!title) return showMsg('Tytuł transmisji jest wymagany.', 'error');
+    const desc = document.getElementById('stream-desc-input').value.trim();
+    const scheduled = document.getElementById('stream-scheduled-input').value;
+    try {
+      const data = { title, description: desc || undefined, scheduled_at: scheduled || undefined };
+      await API.Live.createStream(data);
+      document.getElementById('stream-title-input').value = '';
+      document.getElementById('stream-desc-input').value = '';
+      document.getElementById('stream-scheduled-input').value = '';
+      showMsg('Transmisja utworzona!', 'success');
+      switchTab('all');
+    } catch (_) { showMsg('Nie udało się utworzyć transmisji.', 'error'); }
+  }
+
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+
+  function showMsg(msg, type) {
+    const el = document.getElementById('msg-bar');
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.style.borderColor = type === 'error' ? '#ef4444' : '#10b981';
+    el.style.color = type === 'error' ? '#ef4444' : '#10b981';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  function formatPLN(n) {
+    return parseFloat(n || 0).toLocaleString('pl-PL', { style:'currency', currency:'PLN' });
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function hideSplash() {
+    const splash = document.querySelector('[data-app-splash]');
+    if (splash) splash.style.display = 'none';
+  }
+
+  function getToken() {
+    try { return localStorage.getItem('qm_token'); } catch { return null; }
+  }
+
+  function getCachedUser() {
+    try { return JSON.parse(localStorage.getItem('qm_user') || 'null'); } catch { return null; }
+  }
+
+  function redirectLogin() {
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+  }
+
+  init();
+  </script>
+</body>
+</html>

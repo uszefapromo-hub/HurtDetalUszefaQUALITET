@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Social Commerce – Feed | UszefaQualitet</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    .soc-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .soc-tab  { padding:10px 20px; border-radius:12px; border:1px solid var(--stroke);
+                background:var(--card); cursor:pointer; font-size:14px; font-weight:600;
+                color:var(--muted); transition:all .15s; }
+    .soc-tab:hover  { color:#fff; border-color:var(--accent); }
+    .soc-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+    .soc-pane { display:none; }
+    .soc-pane.active { display:block; }
+
+    /* Create post form */
+    .post-form { background:var(--card); border:1px solid var(--stroke); border-radius:20px;
+                 padding:20px; margin-bottom:24px; }
+    .post-form textarea { width:100%; background:var(--input); border:1px solid var(--stroke);
+                          border-radius:10px; padding:12px 14px; color:#f1f5f9; font-size:14px;
+                          outline:none; resize:vertical; min-height:80px; font-family:inherit; }
+    .post-form textarea:focus { border-color:var(--accent); }
+    .post-form-row { display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+
+    /* Post card */
+    .post-card { background:var(--card); border:1px solid var(--stroke); border-radius:20px;
+                 padding:20px; margin-bottom:16px; }
+    .post-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .post-avatar { width:40px; height:40px; border-radius:50%; background:var(--accent);
+                   display:flex; align-items:center; justify-content:center;
+                   font-weight:700; font-size:16px; color:#fff; flex-shrink:0; }
+    .post-author { font-weight:700; font-size:15px; color:#f1f5f9; }
+    .post-time   { font-size:12px; color:var(--muted); margin-top:2px; }
+    .post-body   { font-size:14px; color:#cbd5e1; line-height:1.6; margin-bottom:14px; }
+    .post-actions { display:flex; gap:12px; }
+    .post-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+                border-radius:10px; border:1px solid var(--stroke); background:transparent;
+                color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+    .post-btn:hover  { color:#fff; border-color:var(--accent); }
+    .post-btn.liked  { color:var(--accent); border-color:var(--accent); background:rgba(99,102,241,.1); }
+    .post-btn.liked:hover { background:rgba(99,102,241,.2); }
+
+    /* Comments */
+    .comments-section { margin-top:16px; padding-top:16px; border-top:1px solid var(--stroke); display:none; }
+    .comments-section.open { display:block; }
+    .comment-item { display:flex; gap:10px; margin-bottom:12px; }
+    .comment-avatar { width:30px; height:30px; border-radius:50%; background:var(--accent);
+                      display:flex; align-items:center; justify-content:center;
+                      font-size:12px; font-weight:700; color:#fff; flex-shrink:0; }
+    .comment-body { background:var(--input); border-radius:10px; padding:8px 12px; flex:1; }
+    .comment-author { font-size:12px; font-weight:700; color:var(--accent); margin-bottom:3px; }
+    .comment-text { font-size:13px; color:#cbd5e1; }
+    .comment-input-row { display:flex; gap:8px; margin-top:10px; }
+    .comment-input-row input { flex:1; background:var(--input); border:1px solid var(--stroke);
+                                border-radius:10px; padding:8px 12px; color:#f1f5f9; font-size:13px;
+                                outline:none; }
+    .comment-input-row input:focus { border-color:var(--accent); }
+
+    /* Trending */
+    .trending-item { background:var(--card); border:1px solid var(--stroke); border-radius:16px;
+                     padding:16px; margin-bottom:12px; display:flex; align-items:center; gap:14px; }
+    .trending-rank { font-size:22px; font-weight:800; color:var(--accent); width:36px; text-align:center; flex-shrink:0; }
+    .trending-info { flex:1; }
+    .trending-title { font-weight:700; font-size:15px; color:#f1f5f9; margin-bottom:4px; }
+    .trending-meta  { font-size:12px; color:var(--muted); }
+
+    /* Empty state */
+    .empty-state { text-align:center; padding:48px 20px; color:var(--muted); }
+    .empty-state .icon { font-size:40px; margin-bottom:12px; }
+
+    .hint { color:var(--muted); font-size:14px; }
+  </style>
+</head>
+<body data-page="social" class="dashboard-page has-bottom-nav">
+
+  <!-- Splash -->
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="UszefaQualitet">
+      </div>
+      <div class="app-splash-title">
+        <strong>UszefaQualitet</strong>
+        <span>Social Commerce</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="zarabiaj.html">Zarabiaj</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <!-- Dashboard shell -->
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <nav class="sidebar-nav" aria-label="Menu panelu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="generator-sklepu.html">Mój sklep</a>
+        <a href="hurtownie.html" data-require="pro">Hurtownie</a>
+        <a href="linki-sprzedazowe.html">Linki sprzedażowe</a>
+        <a href="affiliate.html">Afiliacja</a>
+        <a href="social.html" class="active">Social Commerce</a>
+        <a href="live.html">Live Commerce</a>
+        <a href="gamification.html">Punkty i nagrody</a>
+        <a href="qualitetmarket.html" data-require="pro">QualitetMarket</a>
+        <a href="cennik.html">Subskrypcja</a>
+        <a href="owner-panel.html" data-superadmin-link hidden>Panel Superadmina</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-main">
+      <!-- Page header -->
+      <section class="panel-card" style="margin-bottom:0">
+        <span class="eyebrow">Społeczność</span>
+        <h1 style="font-size:clamp(22px,4vw,32px);margin:8px 0 6px">Social Commerce</h1>
+        <p class="hint">Obserwuj co dzieje się na platformie. Lajkuj, komentuj i dziel się ofertami.</p>
+      </section>
+
+      <!-- Feedback -->
+      <div id="msg-bar" style="display:none" class="panel-card" role="alert"></div>
+
+      <!-- Tabs -->
+      <div class="soc-tabs" role="tablist">
+        <button class="soc-tab active" data-tab="feed"     role="tab">📰 Feed</button>
+        <button class="soc-tab"        data-tab="trending" role="tab">🔥 Na topie</button>
+      </div>
+
+      <!-- ── Feed pane ── -->
+      <div class="soc-pane active" id="pane-feed">
+
+        <!-- Create post (logged in) -->
+        <div class="post-form" id="create-post-form">
+          <strong style="font-size:15px;color:#f1f5f9">Utwórz post</strong>
+          <textarea id="post-content" placeholder="Co chcesz podzielić się ze społecznością?"></textarea>
+          <div class="post-form-row">
+            <button class="btn btn-primary btn-sm" id="btn-publish">Opublikuj</button>
+            <span id="post-char" style="font-size:12px;color:var(--muted)">0 / 500</span>
+          </div>
+        </div>
+
+        <!-- Posts list -->
+        <div id="posts-list">
+          <div class="empty-state">
+            <div class="icon">📰</div>
+            <p>Ładowanie postów…</p>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin-top:16px">
+          <button class="btn" id="btn-load-more" style="display:none">Załaduj więcej</button>
+        </div>
+      </div>
+
+      <!-- ── Trending pane ── -->
+      <div class="soc-pane" id="pane-trending">
+        <div id="trending-list">
+          <div class="empty-state">
+            <div class="icon">🔥</div>
+            <p>Ładowanie trendów…</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /.dashboard-shell -->
+
+  <script src="js/api.js"></script>
+  <script>
+  'use strict';
+
+  const API = window.QMApi;
+  let currentUser = null;
+  let feedPage = 1;
+  let feedLoading = false;
+
+  // ─── Init ──────────────────────────────────────────────────────────────────
+
+  async function init() {
+    hideSplash();
+    currentUser = getCachedUser();
+    if (!currentUser || !getToken()) return redirectLogin();
+
+    document.querySelectorAll('.soc-tab').forEach((btn) => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    const ta = document.getElementById('post-content');
+    ta.addEventListener('input', () => {
+      document.getElementById('post-char').textContent = `${ta.value.length} / 500`;
+    });
+
+    document.getElementById('btn-publish').addEventListener('click', publishPost);
+    document.getElementById('btn-load-more').addEventListener('click', () => loadFeed(true));
+
+    switchTab('feed');
+  }
+
+  // ─── Tabs ──────────────────────────────────────────────────────────────────
+
+  function switchTab(name) {
+    document.querySelectorAll('.soc-tab').forEach((b) => {
+      b.classList.toggle('active', b.dataset.tab === name);
+    });
+    document.querySelectorAll('.soc-pane').forEach((p) => {
+      p.classList.toggle('active', p.id === `pane-${name}`);
+    });
+    if (name === 'feed')     loadFeed();
+    if (name === 'trending') loadTrending();
+  }
+
+  // ─── Feed ──────────────────────────────────────────────────────────────────
+
+  async function loadFeed(append = false) {
+    if (feedLoading) return;
+    feedLoading = true;
+    if (!append) feedPage = 1;
+    try {
+      const res = await API.Social.getFeed({ page: feedPage, limit: 10 });
+      const posts = res.posts || [];
+      if (!append) {
+        document.getElementById('posts-list').innerHTML = '';
+      }
+      if (posts.length === 0 && !append) {
+        document.getElementById('posts-list').innerHTML =
+          '<div class="empty-state"><div class="icon">📰</div><p>Brak postów. Bądź pierwszy!</p></div>';
+      }
+      posts.forEach((p) => renderPost(p, true));
+      document.getElementById('btn-load-more').style.display =
+        posts.length === 10 ? 'inline-block' : 'none';
+      if (append) feedPage++;
+    } catch (_) {
+      showMsg('Nie udało się załadować feedu.', 'error');
+    } finally {
+      feedLoading = false;
+    }
+  }
+
+  function renderPost(p, append = false) {
+    const container = document.getElementById('posts-list');
+    const initials = (p.author_name || 'U').charAt(0).toUpperCase();
+    const div = document.createElement('div');
+    div.className = 'post-card';
+    div.dataset.postId = p.id;
+    div.innerHTML = `
+      <div class="post-header">
+        <div class="post-avatar">${escHtml(initials)}</div>
+        <div>
+          <div class="post-author">${escHtml(p.author_name || 'Użytkownik')}</div>
+          <div class="post-time">${formatDate(p.created_at)}</div>
+        </div>
+      </div>
+      <div class="post-body">${escHtml(p.content)}</div>
+      <div class="post-actions">
+        <button class="post-btn ${p.liked_by_me ? 'liked' : ''}" data-action="like" data-id="${escHtml(p.id)}">
+          ❤️ <span class="like-count">${p.likes_count || 0}</span>
+        </button>
+        <button class="post-btn" data-action="comments" data-id="${escHtml(p.id)}">
+          💬 <span class="comment-count">${p.comments_count || 0}</span>
+        </button>
+      </div>
+      <div class="comments-section" id="comments-${escHtml(p.id)}">
+        <div class="comments-list" id="comments-list-${escHtml(p.id)}"></div>
+        <div class="comment-input-row">
+          <input type="text" placeholder="Dodaj komentarz…" id="comment-input-${escHtml(p.id)}" maxlength="300">
+          <button class="btn btn-primary btn-sm" data-action="send-comment" data-id="${escHtml(p.id)}">Wyślij</button>
+        </div>
+      </div>`;
+    if (append) container.appendChild(div);
+    else container.prepend(div);
+  }
+
+  // ─── Post actions (event delegation) ──────────────────────────────────────
+
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+
+    if (action === 'like') {
+      try {
+        const res = await API.Social.likePost(id);
+        const card = btn.closest('.post-card');
+        const liked = res.liked;
+        btn.classList.toggle('liked', liked);
+        card.querySelector('.like-count').textContent = res.likes_count;
+      } catch (_) { showMsg('Nie udało się zlajkować.', 'error'); }
+    }
+
+    if (action === 'comments') {
+      const sec = document.getElementById(`comments-${id}`);
+      if (sec.classList.toggle('open')) {
+        loadComments(id);
+      }
+    }
+
+    if (action === 'send-comment') {
+      const input = document.getElementById(`comment-input-${id}`);
+      const content = input.value.trim();
+      if (!content) return;
+      try {
+        const c = await API.Social.commentPost(id, content);
+        input.value = '';
+        appendComment(id, c.comment || { author_name: currentUser.name, content });
+        const card = document.querySelector(`[data-post-id="${id}"]`);
+        if (card) {
+          const cnt = card.querySelector('.comment-count');
+          cnt.textContent = parseInt(cnt.textContent || 0) + 1;
+        }
+      } catch (_) { showMsg('Nie udało się dodać komentarza.', 'error'); }
+    }
+  });
+
+  async function loadComments(postId) {
+    const list = document.getElementById(`comments-list-${postId}`);
+    list.innerHTML = '<p style="color:var(--muted);font-size:13px">Ładowanie…</p>';
+    try {
+      const res = await API.Social.getComments(postId);
+      list.innerHTML = '';
+      (res.comments || []).forEach((c) => appendComment(postId, c));
+    } catch (_) { list.innerHTML = ''; }
+  }
+
+  function appendComment(postId, c) {
+    const list = document.getElementById(`comments-list-${postId}`);
+    if (!list) return;
+    const initials = (c.author_name || 'U').charAt(0).toUpperCase();
+    const div = document.createElement('div');
+    div.className = 'comment-item';
+    div.innerHTML = `
+      <div class="comment-avatar">${escHtml(initials)}</div>
+      <div class="comment-body">
+        <div class="comment-author">${escHtml(c.author_name || 'Użytkownik')}</div>
+        <div class="comment-text">${escHtml(c.content)}</div>
+      </div>`;
+    list.appendChild(div);
+  }
+
+  // ─── Publish post ──────────────────────────────────────────────────────────
+
+  async function publishPost() {
+    const ta = document.getElementById('post-content');
+    const content = ta.value.trim();
+    if (!content) return showMsg('Wpisz treść posta.', 'error');
+    if (content.length > 500) return showMsg('Post może mieć max. 500 znaków.', 'error');
+    try {
+      const res = await API.Social.createPost({ content });
+      ta.value = '';
+      document.getElementById('post-char').textContent = '0 / 500';
+      renderPost(res.post || { id: Date.now(), content, author_name: currentUser.name, created_at: new Date().toISOString(), likes_count: 0, comments_count: 0 }, false);
+      showMsg('Post opublikowany!', 'success');
+    } catch (_) { showMsg('Nie udało się opublikować posta.', 'error'); }
+  }
+
+  // ─── Trending ─────────────────────────────────────────────────────────────
+
+  async function loadTrending() {
+    const list = document.getElementById('trending-list');
+    list.innerHTML = '<div class="empty-state"><div class="icon">🔥</div><p>Ładowanie…</p></div>';
+    try {
+      const res = await API.Social.getTrending();
+      const items = res.trending || res.posts || [];
+      if (items.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">🔥</div><p>Brak trendów.</p></div>';
+        return;
+      }
+      list.innerHTML = items.map((p, i) => `
+        <div class="trending-item">
+          <div class="trending-rank">#${i + 1}</div>
+          <div class="trending-info">
+            <div class="trending-title">${escHtml(p.content ? p.content.substring(0, 80) : 'Post')}</div>
+            <div class="trending-meta">❤️ ${p.likes_count || 0} · 💬 ${p.comments_count || 0} · ${escHtml(p.author_name || '')}</div>
+          </div>
+        </div>`).join('');
+    } catch (_) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">🔥</div><p>Nie udało się załadować.</p></div>';
+    }
+  }
+
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+
+  function showMsg(msg, type) {
+    const el = document.getElementById('msg-bar');
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.style.borderColor = type === 'error' ? '#ef4444' : '#10b981';
+    el.style.color = type === 'error' ? '#ef4444' : '#10b981';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  function hideSplash() {
+    const splash = document.querySelector('[data-app-splash]');
+    if (splash) splash.style.display = 'none';
+  }
+
+  function getToken() {
+    try { return localStorage.getItem('qm_token'); } catch { return null; }
+  }
+
+  function getCachedUser() {
+    try { return JSON.parse(localStorage.getItem('qm_user') || 'null'); } catch { return null; }
+  }
+
+  function redirectLogin() {
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+  }
+
+  init();
+  </script>
+</body>
+</html>
