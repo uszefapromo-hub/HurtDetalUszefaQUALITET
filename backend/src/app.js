@@ -183,6 +183,20 @@ app.get('/api/readiness', async (_req, res) => {
     slots_endpoint: 'GET /api/promo/slots',
   };
 
+  // Announcements & communications
+  checks.announcements_system = {
+    list_public:  'GET  /api/announcements',
+    admin_list:   'GET  /api/admin/announcements',
+    admin_create: 'POST /api/admin/announcements',
+    admin_mail:   'POST /api/admin/mail',
+  };
+
+  // Store generator & promotions
+  checks.generator_system = {
+    generate_store:    'POST /api/my/store/generate',
+    generate_promo:    'POST /api/my/promotion/generate',
+  };
+
   const status = allOk ? 'ready' : 'degraded';
   return res.status(allOk ? 200 : 503).json({
     status,
@@ -226,6 +240,26 @@ app.get('/api/promo/slots', async (_req, res) => {
   } catch (_err) {
     // Return static data if DB is unavailable
     return res.json({ slots: getPromoSlots(0), totalSellers: 0 });
+  }
+});
+
+// ─── Public announcements feed ─────────────────────────────────────────────────
+// Active platform announcements visible to all authenticated users.
+app.get('/api/announcements', async (req, res) => {
+  const roleFilter = req.query.role || null;
+  try {
+    const result = await db.query(
+      `SELECT id, title, body, type, target_role, created_at
+         FROM announcements
+        WHERE is_active = TRUE
+          AND ($1::text IS NULL OR target_role IS NULL OR target_role = $1)
+        ORDER BY created_at DESC
+        LIMIT 20`,
+      [roleFilter]
+    );
+    return res.json({ announcements: result.rows });
+  } catch (_err) {
+    return res.json({ announcements: [] });
   }
 });
 
