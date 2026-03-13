@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Współpraca i sklepy zespołowe – Qualitet</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    /* ── Collaboration page specific styles ── */
+
+    /* Tabs */
+    .col-tabs { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+    .col-tab  { padding:10px 20px; border-radius:12px; border:1px solid var(--stroke);
+                background:var(--card); cursor:pointer; font-size:14px; font-weight:600;
+                color:var(--muted); transition:all .15s; }
+    .col-tab:hover  { color:#fff; border-color:var(--accent); }
+    .col-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .col-pane { display:none; }
+    .col-pane.active { display:block; }
+
+    /* Store cards */
+    .store-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); }
+    .collab-store-card { background:var(--card); border:1px solid var(--stroke); border-radius:20px;
+                         padding:20px; display:flex; flex-direction:column; gap:14px;
+                         transition:transform .15s, border-color .15s; cursor:pointer; }
+    .collab-store-card:hover { transform:translateY(-2px); border-color:rgba(99,102,241,.4); }
+    .collab-store-card.selected { border-color:var(--accent); background:rgba(99,102,241,.06); }
+    .store-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .store-card-name { font-weight:800; font-size:16px; color:#f1f5f9; }
+    .store-card-desc { font-size:13px; color:var(--muted); margin-top:3px; line-height:1.4; }
+    .store-card-meta { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .role-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; }
+    .role-badge.owner  { background:rgba(250,204,21,.15); color:var(--yellow); border:1px solid rgba(250,204,21,.3); }
+    .role-badge.admin  { background:rgba(99,102,241,.15); color:var(--accent); border:1px solid rgba(99,102,241,.3); }
+    .role-badge.member { background:rgba(148,163,184,.12); color:var(--muted); border:1px solid var(--stroke); }
+    .store-card-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+    /* Team members */
+    .members-list { display:flex; flex-direction:column; gap:0; }
+    .member-row { display:flex; align-items:center; gap:14px; padding:14px 0;
+                  border-bottom:1px solid var(--stroke); }
+    .member-row:last-child { border-bottom:none; }
+    .member-avatar { width:40px; height:40px; border-radius:50%;
+                     background:rgba(99,102,241,.2); display:flex; align-items:center;
+                     justify-content:center; font-size:20px; flex-shrink:0; }
+    .member-info { flex:1; min-width:0; }
+    .member-name  { font-weight:700; font-size:14px; color:#f1f5f9; }
+    .member-email { font-size:12px; color:var(--muted); margin-top:2px; }
+    .member-role  { font-size:12px; font-weight:700; }
+    .member-joined { font-size:12px; color:var(--muted); }
+    .member-actions { display:flex; gap:6px; }
+
+    /* Revenue sharing */
+    .revenue-row { display:flex; align-items:center; gap:14px; padding:12px 0;
+                   border-bottom:1px solid var(--stroke); }
+    .revenue-row:last-child { border-bottom:none; }
+    .revenue-pct { font-size:22px; font-weight:900; color:var(--green); min-width:60px; text-align:right; }
+    .revenue-edit { display:flex; gap:8px; align-items:center; }
+    .revenue-input { width:70px; background:rgba(15,23,42,.6); border:1px solid var(--stroke);
+                     border-radius:8px; padding:6px 10px; color:#f1f5f9; font-size:14px;
+                     text-align:right; outline:none; }
+    .revenue-input:focus { border-color:var(--accent); }
+
+    /* Activity log */
+    .activity-list { display:flex; flex-direction:column; gap:0; }
+    .activity-item { display:flex; align-items:flex-start; gap:14px; padding:12px 0;
+                     border-bottom:1px solid var(--stroke); }
+    .activity-item:last-child { border-bottom:none; }
+    .activity-icon { width:36px; height:36px; border-radius:12px;
+                     background:rgba(99,102,241,.15); display:flex; align-items:center;
+                     justify-content:center; font-size:16px; flex-shrink:0; }
+    .activity-info { flex:1; }
+    .activity-action { font-weight:600; font-size:14px; color:#e2e8f0; }
+    .activity-meta   { font-size:12px; color:var(--muted); margin-top:2px; }
+    .activity-date   { font-size:12px; color:var(--muted); white-space:nowrap; }
+
+    /* Create store form */
+    .create-form { display:flex; flex-direction:column; gap:16px; max-width:540px; }
+    .form-group label { display:block; font-size:13px; font-weight:700; color:var(--muted); margin-bottom:6px; }
+    .form-group input, .form-group textarea, .form-group select {
+      width:100%; background:rgba(15,23,42,.6); border:1px solid var(--stroke);
+      border-radius:10px; padding:10px 14px; color:#f1f5f9; font-size:14px;
+      outline:none; box-sizing:border-box; font-family:inherit; }
+    .form-group input:focus, .form-group textarea:focus { border-color:var(--accent); }
+    .form-group textarea { min-height:90px; resize:vertical; }
+
+    /* Section header */
+    .section-head { display:flex; align-items:center; justify-content:space-between;
+                    margin-bottom:20px; gap:12px; flex-wrap:wrap; }
+    .section-head h2 { margin:0; font-size:18px; }
+
+    /* Empty state */
+    .empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
+    .empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
+
+    /* Login prompt */
+    .login-prompt { background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.25);
+                    border-radius:16px; padding:20px; text-align:center; color:var(--muted); }
+    .login-prompt a { color:var(--accent); font-weight:700; text-decoration:none; }
+
+    /* Error / success banners */
+    .alert { border-radius:10px; padding:10px 14px; font-size:14px; margin-bottom:12px; display:none; }
+    .alert.error   { background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#ef4444; }
+    .alert.success { background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.3); color:#22c55e; }
+
+    /* Stat cards */
+    .stat-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); margin-bottom:28px; }
+    .stat-card { background:var(--card); border:1px solid var(--stroke); border-radius:20px;
+                 padding:20px; display:flex; flex-direction:column; gap:8px; }
+    .stat-label { font-size:12px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:var(--muted); }
+    .stat-value { font-size:28px; font-weight:800; color:#fff; }
+    .stat-value.accent { color:var(--accent); }
+    .stat-value.green  { color:var(--green); }
+
+    /* Store detail panel */
+    #store-detail { display:none; }
+    .detail-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+    .detail-back   { background:none; border:1px solid var(--stroke); border-radius:10px;
+                     padding:8px 14px; color:var(--muted); font-size:14px; cursor:pointer; font-weight:600; }
+    .detail-back:hover { color:#fff; border-color:rgba(255,255,255,.3); }
+
+    /* Invite form */
+    .invite-form { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px; }
+    .invite-form .form-group { flex:1; min-width:200px; margin-bottom:0; }
+
+    /* Pill */
+    .pill { border-radius:20px; padding:3px 10px; font-size:12px; font-weight:700; }
+    .pill.active   { background:rgba(34,197,94,.12); color:#22c55e; border:1px solid rgba(34,197,94,.3); }
+    .pill.inactive { background:rgba(107,114,128,.12); color:#6b7280; border:1px solid var(--stroke); }
+    .pill.pending  { background:rgba(245,158,11,.12); color:#f59e0b; border:1px solid rgba(245,158,11,.3); }
+
+    /* Toast */
+    #col-toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#f1f5f9;
+                 border:1px solid var(--stroke); border-radius:12px; padding:12px 20px;
+                 font-size:14px; font-weight:600; opacity:0; pointer-events:none;
+                 transition:opacity .25s; z-index:9999; }
+    #col-toast.show { opacity:1; }
+
+    @media (max-width:680px) {
+      .store-grid { grid-template-columns:1fr; }
+      .stat-grid  { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-page="collaboration" class="dashboard-page has-bottom-nav">
+
+  <!-- Splash -->
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="UszefaQualitet">
+      </div>
+      <div class="app-splash-title">
+        <strong>UszefaQualitet</strong>
+        <span>Współpraca</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="zarabiaj.html">Zarabiaj</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <!-- Dashboard shell -->
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <nav class="sidebar-nav" aria-label="Menu panelu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="generator-sklepu.html">Mój sklep</a>
+        <a href="hurtownie.html" data-require="pro">Hurtownie</a>
+        <a href="linki-sprzedazowe.html">Linki sprzedażowe</a>
+        <a href="affiliate.html">Afiliacja</a>
+        <a href="social.html">Social Feed</a>
+        <a href="gamification.html">Osiągnięcia</a>
+        <a href="collaboration.html" class="active">Współpraca</a>
+        <a href="qualitetmarket.html" data-require="pro">QualitetMarket</a>
+        <a href="listing.html" data-require="pro">Listing</a>
+        <a href="crm.html" data-require="pro">CRM</a>
+        <a href="cennik.html">Subskrypcja</a>
+        <a href="owner-panel.html" data-superadmin-link hidden>Panel Superadmina</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-main">
+      <!-- Page header -->
+      <section class="panel-card" style="margin-bottom:0">
+        <span class="eyebrow">Sklepy zespołowe</span>
+        <h1 style="font-size:clamp(22px,4vw,32px);margin:8px 0 6px">Współpraca</h1>
+        <p class="hint">Twórz sklepy z zespołem, zapraszaj współpracowników i dziel się przychodami.</p>
+      </section>
+
+      <!-- Not logged in -->
+      <div id="guest-screen" style="display:none">
+        <div class="login-prompt" style="padding:32px">
+          <p style="font-size:28px;margin:0 0 12px">🤝</p>
+          <strong style="color:#f1f5f9;font-size:16px">Wymagane logowanie</strong>
+          <p style="margin:10px 0 20px">Zaloguj się, aby zarządzać sklepami zespołowymi i zapraszać współpracowników.</p>
+          <a href="login.html" class="btn btn-primary" style="display:inline-flex">Zaloguj się</a>
+        </div>
+      </div>
+
+      <!-- Logged in content -->
+      <div id="auth-screen" style="display:none">
+        <!-- Tabs -->
+        <div class="col-tabs" role="tablist">
+          <button class="col-tab active" data-tab="stores"  role="tab">🏪 Moje sklepy</button>
+          <button class="col-tab"        data-tab="create"  role="tab">➕ Utwórz sklep</button>
+          <button class="col-tab"        data-tab="invite-accept" role="tab">📩 Zaproszenia</button>
+        </div>
+
+        <!-- ── My Stores ── -->
+        <div class="col-pane active" id="pane-stores">
+
+          <!-- Stats -->
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">Sklepy</div>
+              <div class="stat-value accent" id="stat-stores">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Jako właściciel</div>
+              <div class="stat-value green" id="stat-owned">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Jako członek</div>
+              <div class="stat-value" id="stat-member">0</div>
+            </div>
+          </div>
+
+          <!-- Stores list -->
+          <div id="stores-list">
+            <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+          </div>
+
+          <!-- Store detail panel (shown when a store is selected) -->
+          <div id="store-detail">
+            <div class="detail-header">
+              <button class="detail-back" id="btn-back-stores">← Wróć do listy</button>
+              <h2 style="margin:0;font-size:20px" id="detail-store-name">Sklep</h2>
+              <span class="role-badge" id="detail-my-role">member</span>
+            </div>
+
+            <!-- Detail tabs -->
+            <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+              <button class="col-tab active" data-detail-tab="team">👥 Zespół</button>
+              <button class="col-tab" data-detail-tab="revenue">💰 Przychody</button>
+              <button class="col-tab" data-detail-tab="activity">📋 Aktywność</button>
+            </div>
+
+            <!-- Team -->
+            <div id="detail-pane-team" class="detail-pane">
+              <!-- Invite form (owner/admin only) -->
+              <div id="invite-form-wrap" style="display:none">
+                <div class="section-head">
+                  <h2>Zaproś do zespołu</h2>
+                </div>
+                <div class="invite-form">
+                  <div class="form-group">
+                    <label>Email użytkownika</label>
+                    <input id="invite-email" type="email" placeholder="jan@example.com">
+                  </div>
+                  <div class="form-group" style="max-width:150px">
+                    <label>Rola</label>
+                    <select id="invite-role" style="background:rgba(15,23,42,.6);border:1px solid var(--stroke);border-radius:10px;padding:10px 14px;color:#f1f5f9;font-size:14px;outline:none;width:100%">
+                      <option value="admin">Admin</option>
+                      <option value="member" selected>Członek</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-primary" id="btn-send-invite" style="align-self:flex-end;margin-bottom:1px">Wyślij zaproszenie</button>
+                </div>
+                <div class="alert error" id="invite-error"></div>
+                <div class="alert success" id="invite-success"></div>
+              </div>
+
+              <div class="section-head">
+                <h2>Członkowie zespołu</h2>
+              </div>
+              <div class="panel-card" style="padding:4px 20px">
+                <div class="members-list" id="team-members-list">
+                  <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Revenue -->
+            <div id="detail-pane-revenue" class="detail-pane" style="display:none">
+              <div class="section-head">
+                <h2>💰 Podział przychodów</h2>
+                <button class="btn btn-secondary btn-sm" id="btn-save-revenue" style="display:none">Zapisz zmiany</button>
+              </div>
+              <p class="hint" style="margin:0 0 16px">Określ procent przychodów dla każdego członka zespołu. Suma powinna wynosić 100%.</p>
+              <div class="panel-card" style="padding:4px 20px">
+                <div id="revenue-list">
+                  <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity -->
+            <div id="detail-pane-activity" class="detail-pane" style="display:none">
+              <div class="section-head">
+                <h2>📋 Ostatnia aktywność</h2>
+              </div>
+              <div class="panel-card" style="padding:4px 20px">
+                <div class="activity-list" id="activity-list">
+                  <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Create store ── -->
+        <div class="col-pane" id="pane-create">
+          <div class="panel-card">
+            <div class="section-head">
+              <h2>➕ Nowy sklep zespołowy</h2>
+            </div>
+            <div class="create-form">
+              <div class="form-group">
+                <label>Nazwa sklepu *</label>
+                <input id="new-store-name" type="text" placeholder="Np. Sklep Electronics Team" maxlength="100">
+              </div>
+              <div class="form-group">
+                <label>Opis sklepu</label>
+                <textarea id="new-store-desc" placeholder="Krótki opis sklepu..." maxlength="500"></textarea>
+              </div>
+              <div class="alert error" id="create-error"></div>
+              <div class="alert success" id="create-success"></div>
+              <div>
+                <button class="btn btn-primary" id="btn-create-store">Utwórz sklep zespołowy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Accept invitations ── -->
+        <div class="col-pane" id="pane-invite-accept">
+          <div class="panel-card">
+            <div class="section-head">
+              <h2>📩 Przyjmij zaproszenie</h2>
+            </div>
+            <p class="hint">Wklej token zaproszenia, który otrzymałeś od właściciela sklepu.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:16px">
+              <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
+                <label>Token zaproszenia</label>
+                <input id="accept-token" type="text" placeholder="abc123..." style="font-family:monospace">
+              </div>
+              <button class="btn btn-primary" id="btn-accept-invite" style="align-self:flex-end;margin-bottom:1px">Przyjmij zaproszenie</button>
+            </div>
+            <div class="alert error" id="accept-error" style="margin-top:12px"></div>
+            <div class="alert success" id="accept-success" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+      </div><!-- /auth-screen -->
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="col-toast"></div>
+
+  <script src="js/api.js"></script>
+  <script>
+  'use strict';
+
+  // ─── Constants ────────────────────────────────────────────────────────────────
+  const API_BASE = (window.QM_API_BASE || 'http://localhost:3000/api');
+
+  // ─── State ────────────────────────────────────────────────────────────────────
+  let isLoggedIn = false;
+  let myStores = [];
+  let selectedStore = null;
+  let teamMembers = [];
+
+  // ─── Init ─────────────────────────────────────────────────────────────────────
+  async function init() {
+    isLoggedIn = !!getToken();
+    hideSplash();
+
+    if (!isLoggedIn) {
+      document.getElementById('guest-screen').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('auth-screen').style.display = 'block';
+    setupTabs();
+    setupDetailTabs();
+    setupCreateStore();
+    setupAcceptInvite();
+
+    await loadStores();
+  }
+
+  // ─── API helpers ──────────────────────────────────────────────────────────────
+  function authHeaders() {
+    const t = getToken();
+    return { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' };
+  }
+
+  async function apiFetch(path, opts = {}) {
+    const res = await fetch(API_BASE + path, { headers: authHeaders(), ...opts });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw Object.assign(new Error(data.error || 'Błąd API'), { status: res.status, body: data });
+    return data;
+  }
+
+  // ─── Stores ───────────────────────────────────────────────────────────────────
+  async function loadStores() {
+    const container = document.getElementById('stores-list');
+    try {
+      const data = await apiFetch('/collaboration/stores');
+      myStores = data.stores || [];
+
+      // Stats
+      const owned  = myStores.filter(s => s.my_role === 'owner').length;
+      const member = myStores.filter(s => s.my_role !== 'owner').length;
+      document.getElementById('stat-stores').textContent = myStores.length;
+      document.getElementById('stat-owned').textContent  = owned;
+      document.getElementById('stat-member').textContent = member;
+
+      if (myStores.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🏪</div>
+            <p>Nie masz jeszcze żadnych sklepów zespołowych.</p>
+            <button class="btn btn-primary" style="margin-top:14px" onclick="switchTab('create')">➕ Utwórz sklep</button>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = `<div class="store-grid">${myStores.map(s => renderStoreCard(s)).join('')}</div>`;
+      container.querySelectorAll('.collab-store-card').forEach(card => {
+        card.addEventListener('click', () => openStoreDetail(card.dataset.storeId));
+      });
+    } catch (err) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Błąd ładowania sklepów: ${escHtml(err.message)}</p></div>`;
+    }
+  }
+
+  function renderStoreCard(s) {
+    const roleClass = s.my_role === 'owner' ? 'owner' : s.my_role === 'admin' ? 'admin' : 'member';
+    const roleLabel = s.my_role === 'owner' ? '👑 Właściciel' : s.my_role === 'admin' ? '⚙️ Admin' : '👤 Członek';
+    return `
+      <div class="collab-store-card" data-store-id="${escHtml(s.id)}">
+        <div class="store-card-header">
+          <div>
+            <div class="store-card-name">${escHtml(s.name)}</div>
+            ${s.description ? `<div class="store-card-desc">${escHtml(s.description)}</div>` : ''}
+          </div>
+          <span class="pill ${s.is_active ? 'active' : 'inactive'}">${s.is_active ? 'Aktywny' : 'Nieaktywny'}</span>
+        </div>
+        <div class="store-card-meta">
+          <span class="role-badge ${roleClass}">${roleLabel}</span>
+          <span style="font-size:12px;color:var(--muted)">Założony ${formatDate(s.created_at)}</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted)">Kliknij, aby zarządzać →</div>
+      </div>`;
+  }
+
+  // ─── Store detail ─────────────────────────────────────────────────────────────
+  async function openStoreDetail(storeId) {
+    selectedStore = myStores.find(s => s.id === storeId);
+    if (!selectedStore) return;
+
+    document.getElementById('stores-list').style.display = 'none';
+    document.querySelector('.stat-grid').style.display = 'none';
+    document.getElementById('store-detail').style.display = 'block';
+
+    document.getElementById('detail-store-name').textContent = selectedStore.name;
+    const roleEl = document.getElementById('detail-my-role');
+    roleEl.textContent = selectedStore.my_role;
+    roleEl.className = 'role-badge ' + (selectedStore.my_role === 'owner' ? 'owner' : selectedStore.my_role === 'admin' ? 'admin' : 'member');
+
+    // Show invite form for owner/admin
+    const canManage = selectedStore.my_role === 'owner' || selectedStore.my_role === 'admin';
+    document.getElementById('invite-form-wrap').style.display = canManage ? 'block' : 'none';
+    document.getElementById('btn-save-revenue').style.display = canManage ? 'inline-flex' : 'none';
+
+    switchDetailTab('team');
+    await loadTeam(storeId);
+  }
+
+  document.getElementById('btn-back-stores').addEventListener('click', () => {
+    document.getElementById('store-detail').style.display = 'none';
+    document.getElementById('stores-list').style.display = 'block';
+    document.querySelector('.stat-grid').style.display = 'grid';
+    selectedStore = null;
+  });
+
+  function setupDetailTabs() {
+    document.querySelectorAll('[data-detail-tab]').forEach(btn => {
+      btn.addEventListener('click', () => switchDetailTab(btn.dataset.detailTab));
+    });
+  }
+
+  function switchDetailTab(name) {
+    document.querySelectorAll('[data-detail-tab]').forEach(b => b.classList.toggle('active', b.dataset.detailTab === name));
+    document.querySelectorAll('.detail-pane').forEach(p => { p.style.display = p.id === 'detail-pane-' + name ? 'block' : 'none'; });
+
+    if (name === 'revenue' && selectedStore) loadRevenue(selectedStore.id);
+    if (name === 'activity' && selectedStore) loadActivity(selectedStore.id);
+  }
+
+  // ─── Team ─────────────────────────────────────────────────────────────────────
+  async function loadTeam(storeId) {
+    const list = document.getElementById('team-members-list');
+    try {
+      const data = await apiFetch(`/collaboration/stores/${storeId}/team`);
+      teamMembers = data.members || data.team || [];
+
+      if (teamMembers.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>Brak członków zespołu.</p></div>`;
+        return;
+      }
+
+      const canManage = selectedStore?.my_role === 'owner' || selectedStore?.my_role === 'admin';
+      list.innerHTML = teamMembers.map(m => {
+        const roleClass = m.role === 'owner' ? 'owner' : m.role === 'admin' ? 'admin' : 'member';
+        const roleLabel = m.role === 'owner' ? '👑 Właściciel' : m.role === 'admin' ? '⚙️ Admin' : '👤 Członek';
+        const removeBtn = (canManage && m.role !== 'owner')
+          ? `<button class="btn btn-sm" style="color:#ef4444;font-size:12px" onclick="removeMember('${escHtml(storeId)}','${escHtml(m.user_id || m.id)}')">Usuń</button>`
+          : '';
+        return `
+          <div class="member-row">
+            <div class="member-avatar">👤</div>
+            <div class="member-info">
+              <div class="member-name">${escHtml(m.name || m.username || 'Użytkownik')}</div>
+              <div class="member-email">${escHtml(m.email || '')}</div>
+            </div>
+            <span class="role-badge ${roleClass} member-role">${roleLabel}</span>
+            <span class="member-joined">${formatDate(m.joined_at || m.created_at)}</span>
+            <div class="member-actions">${removeBtn}</div>
+          </div>`;
+      }).join('');
+
+      // Setup invite
+      document.getElementById('btn-send-invite').onclick = () => sendInvite(storeId);
+    } catch (err) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Błąd: ${escHtml(err.message)}</p></div>`;
+    }
+  }
+
+  async function removeMember(storeId, userId) {
+    if (!confirm('Czy na pewno usunąć tego członka zespołu?')) return;
+    try {
+      await apiFetch(`/collaboration/stores/${storeId}/members/${userId}`, { method: 'DELETE' });
+      showToast('✅ Członek usunięty.');
+      await loadTeam(storeId);
+    } catch (err) {
+      showToast('❌ Błąd: ' + (err.body?.error || err.message));
+    }
+  }
+
+  async function sendInvite(storeId) {
+    const email = document.getElementById('invite-email').value.trim();
+    const role  = document.getElementById('invite-role').value;
+    const errEl = document.getElementById('invite-error');
+    const okEl  = document.getElementById('invite-success');
+    errEl.style.display = 'none';
+    okEl.style.display  = 'none';
+
+    if (!email) { errEl.textContent = 'Podaj adres email.'; errEl.style.display = 'block'; return; }
+
+    const btn = document.getElementById('btn-send-invite');
+    btn.textContent = 'Wysyłanie...';
+    btn.disabled = true;
+    try {
+      const data = await apiFetch(`/collaboration/stores/${storeId}/invite`, {
+        method: 'POST',
+        body: JSON.stringify({ email, role })
+      });
+      document.getElementById('invite-email').value = '';
+      okEl.textContent = 'Zaproszenie wysłane! Token: ' + (data.token || data.invite_token || '—');
+      okEl.style.display = 'block';
+      showToast('📩 Zaproszenie wysłane!');
+    } catch (err) {
+      errEl.textContent = err.body?.error || err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Wyślij zaproszenie';
+      btn.disabled = false;
+    }
+  }
+
+  // ─── Revenue ──────────────────────────────────────────────────────────────────
+  async function loadRevenue(storeId) {
+    const container = document.getElementById('revenue-list');
+    try {
+      const data = await apiFetch(`/collaboration/stores/${storeId}/revenue`);
+      const shares = data.shares || data.revenue_shares || [];
+      const canEdit = selectedStore?.my_role === 'owner' || selectedStore?.my_role === 'admin';
+
+      if (shares.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💰</div><p>Brak zdefiniowanych zasad podziału.</p></div>`;
+        return;
+      }
+
+      container.innerHTML = shares.map(s => `
+        <div class="revenue-row" data-user-id="${escHtml(s.user_id)}">
+          <div class="member-avatar">👤</div>
+          <div class="member-info">
+            <div class="member-name">${escHtml(s.name || s.username || 'Użytkownik')}</div>
+            <div class="member-email">${escHtml(s.role || '')}</div>
+          </div>
+          ${canEdit
+            ? `<div class="revenue-edit">
+                <input class="revenue-input" type="number" min="0" max="100" step="0.1"
+                       value="${escHtml(String(s.share_percent || 0))}" data-uid="${escHtml(s.user_id)}"> %
+               </div>`
+            : `<div class="revenue-pct">${parseFloat(s.share_percent || 0).toFixed(1)}%</div>`
+          }
+        </div>`).join('');
+
+      if (canEdit) {
+        document.getElementById('btn-save-revenue').onclick = () => saveRevenue(storeId);
+      }
+    } catch (err) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Błąd: ${escHtml(err.message)}</p></div>`;
+    }
+  }
+
+  async function saveRevenue(storeId) {
+    const inputs = document.querySelectorAll('.revenue-input[data-uid]');
+    const btn = document.getElementById('btn-save-revenue');
+    btn.textContent = 'Zapisywanie...';
+    btn.disabled = true;
+    try {
+      for (const inp of inputs) {
+        await apiFetch(`/collaboration/stores/${storeId}/revenue/${inp.dataset.uid}`, {
+          method: 'PUT',
+          body: JSON.stringify({ share_percent: parseFloat(inp.value) || 0 })
+        });
+      }
+      showToast('✅ Podział przychodów zapisany!');
+    } catch (err) {
+      showToast('❌ Błąd: ' + (err.body?.error || err.message));
+    } finally {
+      btn.textContent = 'Zapisz zmiany';
+      btn.disabled = false;
+    }
+  }
+
+  // ─── Activity ─────────────────────────────────────────────────────────────────
+  async function loadActivity(storeId) {
+    const list = document.getElementById('activity-list');
+    try {
+      const data = await apiFetch(`/collaboration/stores/${storeId}/activity`);
+      const logs = data.activity || data.logs || [];
+
+      if (logs.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Brak aktywności.</p></div>`;
+        return;
+      }
+
+      list.innerHTML = logs.map(item => {
+        const icon = activityIcon(item.action);
+        return `
+          <div class="activity-item">
+            <div class="activity-icon">${icon}</div>
+            <div class="activity-info">
+              <div class="activity-action">${escHtml(activityLabel(item.action))}</div>
+              <div class="activity-meta">${escHtml(item.actor_name || 'Użytkownik')}${item.resource ? ' · ' + escHtml(item.resource) : ''}</div>
+            </div>
+            <div class="activity-date">${formatDate(item.created_at)}</div>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Błąd: ${escHtml(err.message)}</p></div>`;
+    }
+  }
+
+  function activityIcon(action) {
+    const m = { member_invited:'📩', member_joined:'✅', member_removed:'❌',
+                store_updated:'⚙️', revenue_updated:'💰', product_added:'🛍️',
+                order_placed:'📦', admin_promoted:'👑' };
+    return m[action] || '📋';
+  }
+
+  function activityLabel(action) {
+    const m = { member_invited:'Zaproszono członka', member_joined:'Dołączono do zespołu',
+                member_removed:'Usunięto członka', store_updated:'Zaktualizowano sklep',
+                revenue_updated:'Zaktualizowano podział przychodów', product_added:'Dodano produkt',
+                order_placed:'Złożono zamówienie', admin_promoted:'Przyznano uprawnienia admina' };
+    return m[action] || action;
+  }
+
+  // ─── Create store ─────────────────────────────────────────────────────────────
+  function setupCreateStore() {
+    document.getElementById('btn-create-store').addEventListener('click', async () => {
+      const name = document.getElementById('new-store-name').value.trim();
+      const desc = document.getElementById('new-store-desc').value.trim();
+      const errEl = document.getElementById('create-error');
+      const okEl  = document.getElementById('create-success');
+      errEl.style.display = 'none';
+      okEl.style.display  = 'none';
+
+      if (!name) { errEl.textContent = 'Nazwa sklepu jest wymagana.'; errEl.style.display = 'block'; return; }
+
+      const btn = document.getElementById('btn-create-store');
+      btn.textContent = 'Tworzenie...';
+      btn.disabled = true;
+      try {
+        await apiFetch('/collaboration/stores', {
+          method: 'POST',
+          body: JSON.stringify({ name, description: desc || null })
+        });
+        document.getElementById('new-store-name').value = '';
+        document.getElementById('new-store-desc').value = '';
+        okEl.textContent = '✅ Sklep zespołowy utworzony pomyślnie!';
+        okEl.style.display = 'block';
+        showToast('✅ Sklep created!');
+        await loadStores();
+        switchTab('stores');
+      } catch (err) {
+        errEl.textContent = err.body?.error || err.message;
+        errEl.style.display = 'block';
+      } finally {
+        btn.textContent = 'Utwórz sklep zespołowy';
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // ─── Accept invite ────────────────────────────────────────────────────────────
+  function setupAcceptInvite() {
+    document.getElementById('btn-accept-invite').addEventListener('click', async () => {
+      const token = document.getElementById('accept-token').value.trim();
+      const errEl = document.getElementById('accept-error');
+      const okEl  = document.getElementById('accept-success');
+      errEl.style.display = 'none';
+      okEl.style.display  = 'none';
+
+      if (!token) { errEl.textContent = 'Podaj token zaproszenia.'; errEl.style.display = 'block'; return; }
+
+      const btn = document.getElementById('btn-accept-invite');
+      btn.textContent = 'Przyjmowanie...';
+      btn.disabled = true;
+      try {
+        await apiFetch('/collaboration/invite/accept', {
+          method: 'POST',
+          body: JSON.stringify({ token })
+        });
+        document.getElementById('accept-token').value = '';
+        okEl.textContent = '🎉 Dołączyłeś do sklepu zespołowego!';
+        okEl.style.display = 'block';
+        showToast('🎉 Dołączyłeś do sklepu!');
+        await loadStores();
+      } catch (err) {
+        errEl.textContent = err.body?.error || err.message;
+        errEl.style.display = 'block';
+      } finally {
+        btn.textContent = 'Przyjmij zaproszenie';
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // ─── Tabs ─────────────────────────────────────────────────────────────────────
+  function setupTabs() {
+    document.querySelectorAll('.col-tab:not([data-detail-tab])').forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.col-tab:not([data-detail-tab])').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.col-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+  function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit', year:'numeric' });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('col-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function hideSplash() {
+    const s = document.querySelector('[data-app-splash]');
+    if (s) s.style.display = 'none';
+  }
+
+  function getToken() {
+    try { return localStorage.getItem('qm_token'); } catch { return null; }
+  }
+
+  // Start
+  init();
+  </script>
+</body>
+</html>

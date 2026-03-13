@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Feed społecznościowy – Qualitet</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    /* ── Social page specific styles ── */
+
+    /* Tab navigation */
+    .soc-tabs { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+    .soc-tab  { padding:10px 20px; border-radius:12px; border:1px solid var(--stroke);
+                background:var(--card); cursor:pointer; font-size:14px; font-weight:600;
+                color:var(--muted); transition:all .15s; }
+    .soc-tab:hover  { color:#fff; border-color:var(--accent); }
+    .soc-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+    /* Tab panes */
+    .soc-pane { display:none; }
+    .soc-pane.active { display:block; }
+
+    /* Feed layout */
+    .feed-layout { display:grid; gap:20px; grid-template-columns:1fr; }
+    @media (min-width:900px) {
+      .feed-layout { grid-template-columns:1fr 360px; }
+    }
+
+    .feed-col { display:flex; flex-direction:column; gap:16px; }
+
+    /* Post card */
+    .post-card { background:var(--card); border:1px solid var(--stroke); border-radius:20px; padding:20px; }
+    .post-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+    .post-avatar { width:42px; height:42px; border-radius:50%; background:rgba(99,102,241,.25);
+                   border:1px solid rgba(99,102,241,.4); display:flex; align-items:center;
+                   justify-content:center; font-size:18px; flex-shrink:0; }
+    .post-meta { flex:1; min-width:0; }
+    .post-author { font-weight:700; font-size:14px; color:#f1f5f9; }
+    .post-date   { font-size:12px; color:var(--muted); }
+    .post-type-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px;
+                       background:rgba(99,102,241,.15); color:var(--accent); border:1px solid rgba(99,102,241,.3); }
+    .post-content { font-size:15px; color:#e2e8f0; line-height:1.65; margin-bottom:14px; white-space:pre-wrap; word-break:break-word; }
+    .post-media { width:100%; max-height:320px; object-fit:cover; border-radius:14px;
+                  border:1px solid var(--stroke); margin-bottom:14px; display:block; }
+    .post-actions { display:flex; align-items:center; gap:16px; padding-top:10px;
+                    border-top:1px solid var(--stroke); }
+    .post-action-btn { display:flex; align-items:center; gap:6px; background:none; border:none;
+                       color:var(--muted); cursor:pointer; font-size:14px; font-weight:600;
+                       padding:6px 10px; border-radius:10px; transition:all .15s; }
+    .post-action-btn:hover { background:rgba(255,255,255,.06); color:#f1f5f9; }
+    .post-action-btn.liked { color:#ef4444; }
+    .post-action-btn.liked:hover { background:rgba(239,68,68,.12); }
+
+    /* Comments section */
+    .comments-section { margin-top:14px; padding-top:14px; border-top:1px solid var(--stroke);
+                        display:none; flex-direction:column; gap:10px; }
+    .comments-section.open { display:flex; }
+    .comment-item { display:flex; gap:10px; }
+    .comment-avatar { width:30px; height:30px; border-radius:50%; background:rgba(99,102,241,.2);
+                      display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+    .comment-bubble { background:rgba(255,255,255,.04); border:1px solid var(--stroke);
+                      border-radius:12px; padding:8px 12px; flex:1; }
+    .comment-author { font-size:12px; font-weight:700; color:#e2e8f0; margin-bottom:2px; }
+    .comment-text   { font-size:13px; color:var(--muted); line-height:1.5; word-break:break-word; }
+    .comment-form   { display:flex; gap:8px; margin-top:4px; }
+    .comment-input  { flex:1; background:var(--input,rgba(15,23,42,.6)); border:1px solid var(--stroke);
+                      border-radius:10px; padding:8px 12px; color:#f1f5f9; font-size:13px; outline:none; }
+    .comment-input:focus { border-color:var(--accent); }
+    .comment-send { background:var(--accent); color:#fff; border:none; border-radius:10px;
+                    padding:8px 14px; cursor:pointer; font-weight:700; font-size:13px; }
+
+    /* Create post form */
+    .create-post-box { background:var(--card); border:1px solid var(--stroke); border-radius:20px; padding:20px; }
+    .create-post-box textarea { width:100%; min-height:80px; background:rgba(15,23,42,.6);
+                                 border:1px solid var(--stroke); border-radius:12px; padding:12px 14px;
+                                 color:#f1f5f9; font-size:14px; outline:none; resize:vertical;
+                                 font-family:inherit; box-sizing:border-box; }
+    .create-post-box textarea:focus { border-color:var(--accent); }
+    .create-post-footer { display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+    .post-type-select { background:rgba(15,23,42,.6); border:1px solid var(--stroke); border-radius:10px;
+                        padding:8px 12px; color:#f1f5f9; font-size:13px; cursor:pointer; outline:none; }
+
+    /* Trending card */
+    .trending-card { background:var(--card); border:1px solid var(--stroke); border-radius:20px; overflow:hidden; }
+    .trending-header { padding:16px 20px; border-bottom:1px solid var(--stroke);
+                       font-weight:800; font-size:15px; color:#f1f5f9; }
+    .trending-item { display:flex; align-items:center; gap:12px; padding:14px 20px;
+                     border-bottom:1px solid var(--stroke); transition:background .15s; }
+    .trending-item:last-child { border-bottom:none; }
+    .trending-item:hover { background:rgba(255,255,255,.03); }
+    .trending-rank { font-size:20px; font-weight:800; color:var(--muted); min-width:28px; text-align:center; }
+    .trending-rank.top { color:var(--yellow); }
+    .trending-info { flex:1; min-width:0; }
+    .trending-title { font-weight:700; font-size:14px; color:#f1f5f9;
+                      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .trending-meta  { font-size:12px; color:var(--muted); margin-top:2px; }
+    .trending-likes { font-size:13px; font-weight:700; color:#ef4444; }
+
+    /* Rankings */
+    .rank-item { display:flex; align-items:center; gap:14px; padding:14px 20px;
+                 border-bottom:1px solid var(--stroke); transition:background .15s; }
+    .rank-item:last-child { border-bottom:none; }
+    .rank-item:hover { background:rgba(255,255,255,.03); }
+    .rank-num { font-size:22px; font-weight:900; min-width:32px; text-align:center; }
+    .rank-num.gold   { color:var(--yellow); }
+    .rank-num.silver { color:#94a3b8; }
+    .rank-num.bronze { color:#d97706; }
+    .rank-info { flex:1; min-width:0; }
+    .rank-name  { font-weight:700; font-size:14px; color:#f1f5f9; white-space:nowrap;
+                  overflow:hidden; text-overflow:ellipsis; }
+    .rank-score { font-size:12px; color:var(--muted); margin-top:2px; }
+    .rank-score strong { color:var(--green); }
+
+    /* Period filter */
+    .period-btns { display:flex; gap:6px; margin-bottom:14px; }
+    .period-btn  { padding:6px 14px; border-radius:10px; border:1px solid var(--stroke);
+                   background:transparent; color:var(--muted); font-size:13px; font-weight:600;
+                   cursor:pointer; transition:all .15s; }
+    .period-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+    /* Stat cards */
+    .stat-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); margin-bottom:28px; }
+    .stat-card { background:var(--card); border:1px solid var(--stroke); border-radius:20px;
+                 padding:20px; display:flex; flex-direction:column; gap:8px; }
+    .stat-label { font-size:12px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:var(--muted); }
+    .stat-value { font-size:28px; font-weight:800; color:#fff; }
+    .stat-value.red    { color:#ef4444; }
+    .stat-value.green  { color:var(--green); }
+    .stat-value.accent { color:var(--accent); }
+    .stat-value.yellow { color:var(--yellow); }
+
+    /* Section header */
+    .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; flex-wrap:wrap; }
+    .section-head h2 { margin:0; font-size:18px; }
+
+    /* Login prompt */
+    .login-prompt { background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.25);
+                    border-radius:16px; padding:16px 20px; text-align:center; color:var(--muted); font-size:14px; }
+    .login-prompt a { color:var(--accent); font-weight:700; text-decoration:none; }
+
+    /* Empty state */
+    .empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
+    .empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
+
+    /* Load more */
+    .load-more-wrap { text-align:center; margin-top:8px; }
+
+    /* Sidebar widgets */
+    .sidebar-widget { background:var(--card); border:1px solid var(--stroke); border-radius:20px; overflow:hidden; }
+    .widget-title { padding:14px 18px; font-weight:800; font-size:14px; border-bottom:1px solid var(--stroke);
+                    color:#f1f5f9; display:flex; align-items:center; gap:8px; }
+
+    /* Toast */
+    #soc-toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#f1f5f9;
+                 border:1px solid var(--stroke); border-radius:12px; padding:12px 20px;
+                 font-size:14px; font-weight:600; opacity:0; pointer-events:none;
+                 transition:opacity .25s; z-index:9999; }
+    #soc-toast.show { opacity:1; }
+
+    @media (max-width:680px) {
+      .stat-grid { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-page="social" class="dashboard-page has-bottom-nav">
+
+  <!-- Splash -->
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="UszefaQualitet">
+      </div>
+      <div class="app-splash-title">
+        <strong>UszefaQualitet</strong>
+        <span>Social</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="zarabiaj.html">Zarabiaj</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <!-- Dashboard shell -->
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <nav class="sidebar-nav" aria-label="Menu panelu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="generator-sklepu.html">Mój sklep</a>
+        <a href="hurtownie.html" data-require="pro">Hurtownie</a>
+        <a href="linki-sprzedazowe.html">Linki sprzedażowe</a>
+        <a href="affiliate.html">Afiliacja</a>
+        <a href="social.html" class="active">Social Feed</a>
+        <a href="gamification.html">Osiągnięcia</a>
+        <a href="collaboration.html">Współpraca</a>
+        <a href="qualitetmarket.html" data-require="pro">QualitetMarket</a>
+        <a href="listing.html" data-require="pro">Listing</a>
+        <a href="crm.html" data-require="pro">CRM</a>
+        <a href="cennik.html">Subskrypcja</a>
+        <a href="owner-panel.html" data-superadmin-link hidden>Panel Superadmina</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-main">
+      <!-- Page header -->
+      <section class="panel-card" style="margin-bottom:0">
+        <span class="eyebrow">Społeczność</span>
+        <h1 style="font-size:clamp(22px,4vw,32px);margin:8px 0 6px">Feed społecznościowy</h1>
+        <p class="hint">Odkrywaj produkty, śledź trendy i angażuj się w społeczność Qualitet.</p>
+      </section>
+
+      <!-- Tabs -->
+      <div class="soc-tabs" role="tablist">
+        <button class="soc-tab active" data-tab="feed"     role="tab">📰 Feed</button>
+        <button class="soc-tab"        data-tab="trending" role="tab">🔥 Trendy</button>
+        <button class="soc-tab"        data-tab="rankings" role="tab">🏆 Rankingi</button>
+      </div>
+
+      <!-- ── Feed ── -->
+      <div class="soc-pane active" id="pane-feed">
+        <div class="feed-layout">
+          <!-- Main feed column -->
+          <div class="feed-col">
+            <!-- Create post (logged in only) -->
+            <div id="create-post-area"></div>
+
+            <!-- Feed posts -->
+            <div id="feed-list">
+              <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+            </div>
+
+            <div class="load-more-wrap" id="feed-load-more" style="display:none">
+              <button class="btn btn-secondary" id="btn-feed-more">Załaduj więcej</button>
+            </div>
+          </div>
+
+          <!-- Sidebar widgets -->
+          <div class="feed-col">
+            <!-- Quick trending widget -->
+            <div class="sidebar-widget" id="side-trending">
+              <div class="widget-title">🔥 Teraz na topie</div>
+              <div id="side-trending-list">
+                <div style="padding:20px;color:var(--muted);text-align:center;font-size:13px">Ładowanie...</div>
+              </div>
+            </div>
+
+            <!-- Quick rankings widget -->
+            <div class="sidebar-widget" id="side-rankings">
+              <div class="widget-title">🏆 Top produkty</div>
+              <div id="side-rankings-list">
+                <div style="padding:20px;color:var(--muted);text-align:center;font-size:13px">Ładowanie...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Trending ── -->
+      <div class="soc-pane" id="pane-trending">
+        <section class="panel-card" style="margin-bottom:0;padding:0;overflow:hidden">
+          <div class="trending-header">🔥 Najpopularniejsze posty (ostatnie 7 dni)</div>
+          <div id="trending-list">
+            <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── Rankings ── -->
+      <div class="soc-pane" id="pane-rankings">
+        <div class="section-head">
+          <h2>🏆 Ranking produktów</h2>
+          <div class="period-btns">
+            <button class="period-btn active" data-period="week">Tydzień</button>
+            <button class="period-btn" data-period="month">Miesiąc</button>
+            <button class="period-btn" data-period="all">Wszystko</button>
+          </div>
+        </div>
+        <section class="panel-card" style="margin-bottom:0;padding:0;overflow:hidden">
+          <div id="rankings-list">
+            <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+          </div>
+        </section>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="soc-toast"></div>
+
+  <!-- Create Post Modal -->
+  <div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center">
+    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:24px;padding:28px;width:min(540px,92vw);max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h3 style="margin:0;font-size:18px">✍️ Nowy post</h3>
+        <button id="modal-close" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px 8px">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px">Typ posta</label>
+          <select id="new-post-type" class="post-type-select" style="width:100%;padding:10px 14px">
+            <option value="general">💬 Ogólny</option>
+            <option value="product">🛍️ Produkt</option>
+            <option value="store">🏪 Sklep</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px">Treść <span style="color:var(--muted);font-weight:400">(max 500 znaków)</span></label>
+          <textarea id="new-post-content" placeholder="Co chcesz podzielić się ze społecznością?" style="width:100%;min-height:120px;background:rgba(15,23,42,.6);border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;color:#f1f5f9;font-size:14px;outline:none;resize:vertical;font-family:inherit;box-sizing:border-box" maxlength="500"></textarea>
+          <div id="char-count" style="text-align:right;font-size:12px;color:var(--muted);margin-top:4px">0 / 500</div>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px">URL zdjęcia <span style="color:var(--muted);font-weight:400">(opcjonalnie)</span></label>
+          <input id="new-post-media" type="url" placeholder="https://..." style="width:100%;background:rgba(15,23,42,.6);border:1px solid var(--stroke);border-radius:10px;padding:10px 14px;color:#f1f5f9;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <div id="modal-error" style="display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 14px;color:#ef4444;font-size:14px"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-secondary" id="modal-cancel">Anuluj</button>
+          <button class="btn btn-primary" id="btn-submit-post">Opublikuj post</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+  'use strict';
+
+  // ─── Constants ────────────────────────────────────────────────────────────────
+  const API_BASE = (window.QM_API_BASE || 'http://localhost:3000/api');
+
+  // ─── State ────────────────────────────────────────────────────────────────────
+  let feedOffset = 0;
+  const FEED_LIMIT = 10;
+  let currentPeriod = 'week';
+  let currentUser = null;
+  let isLoggedIn = false;
+
+  // ─── Init ─────────────────────────────────────────────────────────────────────
+  async function init() {
+    currentUser = getCachedUser();
+    isLoggedIn = !!getToken();
+
+    setupTabs();
+    setupModal();
+    setupPeriodBtns();
+
+    hideSplash();
+    renderCreatePostArea();
+    await Promise.all([loadFeed(true), loadSideTrending(), loadSideRankings()]);
+  }
+
+  // ─── API helpers ──────────────────────────────────────────────────────────────
+  function authHeaders() {
+    const t = getToken();
+    return t ? { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' }
+             : { 'Content-Type': 'application/json' };
+  }
+
+  async function apiFetch(path, opts = {}) {
+    const res = await fetch(API_BASE + path, {
+      headers: authHeaders(),
+      ...opts
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw Object.assign(new Error(data.error || 'Błąd API'), { status: res.status, body: data });
+    return data;
+  }
+
+  // ─── Feed ─────────────────────────────────────────────────────────────────────
+  async function loadFeed(reset = false) {
+    if (reset) { feedOffset = 0; }
+
+    try {
+      const data = await apiFetch(`/social/feed?limit=${FEED_LIMIT}&offset=${feedOffset}`);
+      const posts = data.posts || [];
+
+      const container = document.getElementById('feed-list');
+      if (reset) container.innerHTML = '';
+
+      if (posts.length === 0 && reset) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>Brak postów w feedzie. Bądź pierwszy!</p></div>`;
+        document.getElementById('feed-load-more').style.display = 'none';
+        return;
+      }
+
+      posts.forEach(p => container.insertAdjacentHTML('beforeend', renderPost(p)));
+      feedOffset += posts.length;
+      document.getElementById('feed-load-more').style.display = posts.length === FEED_LIMIT ? 'block' : 'none';
+
+      attachPostHandlers(container);
+    } catch (err) {
+      console.error('loadFeed', err);
+      if (feedOffset === 0) {
+        document.getElementById('feed-list').innerHTML =
+          `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Nie można załadować feedu.</p></div>`;
+      }
+    }
+  }
+
+  function renderPost(p) {
+    const typeLabel = { product:'🛍️ Produkt', store:'🏪 Sklep', general:'💬 Ogólny' }[p.post_type] || p.post_type;
+    const media = p.media_url
+      ? `<img class="post-media" src="${escHtml(p.media_url)}" alt="Media" loading="lazy" onerror="this.style.display='none'">`
+      : '';
+    const likedClass = p.user_liked ? 'liked' : '';
+    return `
+      <div class="post-card" data-post-id="${escHtml(p.id)}">
+        <div class="post-header">
+          <div class="post-avatar">👤</div>
+          <div class="post-meta">
+            <div class="post-author">${escHtml(p.author_name || 'Użytkownik')}</div>
+            <div class="post-date">${formatDate(p.created_at)}</div>
+          </div>
+          <span class="post-type-badge">${escHtml(typeLabel)}</span>
+        </div>
+        ${media}
+        <div class="post-content">${escHtml(p.content)}</div>
+        <div class="post-actions">
+          <button class="post-action-btn btn-like ${likedClass}" data-post-id="${escHtml(p.id)}">
+            ❤️ <span class="like-count">${escHtml(String(p.like_count || 0))}</span>
+          </button>
+          <button class="post-action-btn btn-comment-toggle" data-post-id="${escHtml(p.id)}">
+            💬 <span class="comment-count">${escHtml(String(p.comment_count || 0))}</span>
+          </button>
+        </div>
+        <div class="comments-section" id="comments-${escHtml(p.id)}">
+          <div class="comments-list" id="comments-list-${escHtml(p.id)}">
+            <div style="color:var(--muted);font-size:13px;padding:4px 0">Ładowanie komentarzy...</div>
+          </div>
+          ${isLoggedIn ? `
+          <div class="comment-form">
+            <input class="comment-input" type="text" placeholder="Dodaj komentarz..." maxlength="300" data-comment-post="${escHtml(p.id)}">
+            <button class="comment-send" data-comment-submit="${escHtml(p.id)}">Wyślij</button>
+          </div>` : `<div class="login-prompt" style="margin-top:4px">
+            <a href="login.html">Zaloguj się</a>, aby dodać komentarz.
+          </div>`}
+        </div>
+      </div>`;
+  }
+
+  function attachPostHandlers(container) {
+    container.querySelectorAll('.btn-like:not([data-bound])').forEach(btn => {
+      btn.setAttribute('data-bound', '1');
+      btn.addEventListener('click', () => toggleLike(btn.dataset.postId, btn));
+    });
+    container.querySelectorAll('.btn-comment-toggle:not([data-bound])').forEach(btn => {
+      btn.setAttribute('data-bound', '1');
+      btn.addEventListener('click', () => toggleComments(btn.dataset.postId));
+    });
+    container.querySelectorAll('.comment-send:not([data-bound])').forEach(btn => {
+      btn.setAttribute('data-bound', '1');
+      btn.addEventListener('click', () => submitComment(btn.dataset.commentSubmit));
+    });
+    container.querySelectorAll('.comment-input:not([data-bound])').forEach(inp => {
+      inp.setAttribute('data-bound', '1');
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          submitComment(inp.dataset.commentPost);
+        }
+      });
+    });
+  }
+
+  async function toggleLike(postId, btn) {
+    if (!isLoggedIn) { redirectLogin(); return; }
+    try {
+      const data = await apiFetch(`/social/posts/${postId}/like`, { method: 'POST' });
+      const countEl = btn.querySelector('.like-count');
+      if (data.liked) {
+        btn.classList.add('liked');
+        if (countEl) countEl.textContent = String(parseInt(countEl.textContent || '0') + 1);
+      } else {
+        btn.classList.remove('liked');
+        if (countEl) countEl.textContent = String(Math.max(0, parseInt(countEl.textContent || '0') - 1));
+      }
+    } catch (err) {
+      showToast('❌ Błąd: ' + (err.body?.error || err.message));
+    }
+  }
+
+  async function toggleComments(postId) {
+    const section = document.getElementById('comments-' + postId);
+    if (!section) return;
+    const isOpen = section.classList.contains('open');
+    if (isOpen) { section.classList.remove('open'); return; }
+    section.classList.add('open');
+    await loadComments(postId);
+  }
+
+  async function loadComments(postId) {
+    const list = document.getElementById('comments-list-' + postId);
+    if (!list) return;
+    try {
+      const data = await apiFetch(`/social/posts/${postId}/comments`);
+      const comments = data.comments || [];
+      if (comments.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted);font-size:13px">Brak komentarzy. Bądź pierwszy!</div>`;
+        return;
+      }
+      list.innerHTML = comments.map(c => `
+        <div class="comment-item">
+          <div class="comment-avatar">👤</div>
+          <div class="comment-bubble">
+            <div class="comment-author">${escHtml(c.author_name || 'Użytkownik')}</div>
+            <div class="comment-text">${escHtml(c.content)}</div>
+          </div>
+        </div>`).join('');
+    } catch {
+      list.innerHTML = `<div style="color:var(--muted);font-size:13px">Błąd ładowania komentarzy.</div>`;
+    }
+  }
+
+  async function submitComment(postId) {
+    if (!isLoggedIn) { redirectLogin(); return; }
+    const input = document.querySelector(`.comment-input[data-comment-post="${postId}"]`);
+    if (!input) return;
+    const content = input.value.trim();
+    if (!content) return;
+    try {
+      await apiFetch(`/social/posts/${postId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+      });
+      input.value = '';
+      await loadComments(postId);
+      // Update comment count
+      const countEl = document.querySelector(`[data-post-id="${postId}"].btn-comment-toggle .comment-count`);
+      if (countEl) countEl.textContent = String(parseInt(countEl.textContent || '0') + 1);
+      showToast('💬 Komentarz dodany!');
+    } catch (err) {
+      showToast('❌ ' + (err.body?.error || err.message));
+    }
+  }
+
+  // ─── Trending ─────────────────────────────────────────────────────────────────
+  async function loadTrending(target) {
+    const container = document.getElementById(target);
+    if (!container) return;
+    try {
+      const data = await apiFetch('/social/trending?limit=10');
+      const posts = data.posts || [];
+      if (posts.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔥</div><p>Brak trendów.</p></div>`;
+        return;
+      }
+      const isFull = target === 'trending-list';
+      container.innerHTML = posts.map((p, i) => {
+        const rankClass = i < 3 ? 'top' : '';
+        if (isFull) {
+          return `
+            <div class="trending-item">
+              <div class="trending-rank ${rankClass}">${i + 1}</div>
+              <div class="trending-info">
+                <div class="trending-title">${escHtml(p.content || '').substring(0, 80)}${(p.content || '').length > 80 ? '…' : ''}</div>
+                <div class="trending-meta">${formatDate(p.created_at)}</div>
+              </div>
+              <div class="trending-likes">❤️ ${escHtml(String(p.like_count || 0))}</div>
+            </div>`;
+        } else {
+          return `
+            <div class="trending-item" style="cursor:pointer" onclick="switchTab('trending')">
+              <div class="trending-rank ${rankClass}">${i + 1}</div>
+              <div class="trending-info">
+                <div class="trending-title">${escHtml(p.content || '').substring(0, 50)}${(p.content || '').length > 50 ? '…' : ''}</div>
+                <div class="trending-meta">❤️ ${escHtml(String(p.like_count || 0))}</div>
+              </div>
+            </div>`;
+        }
+      }).join('');
+    } catch {
+      container.innerHTML = `<div style="padding:20px;color:var(--muted);text-align:center;font-size:13px">Błąd ładowania.</div>`;
+    }
+  }
+
+  async function loadSideTrending() { await loadTrending('side-trending-list'); }
+  async function loadFullTrending()  { await loadTrending('trending-list'); }
+
+  // ─── Rankings ─────────────────────────────────────────────────────────────────
+  async function loadRankings(period, target) {
+    const container = document.getElementById(target);
+    if (!container) return;
+    try {
+      const data = await apiFetch(`/social/rankings?period=${period}&limit=10`);
+      const items = data.rankings || data.products || [];
+      if (items.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><p>Brak danych rankingowych.</p></div>`;
+        return;
+      }
+      const isFull = target === 'rankings-list';
+      container.innerHTML = items.map((item, i) => {
+        const numClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        if (isFull) {
+          return `
+            <div class="rank-item">
+              <div class="rank-num ${numClass}">${i + 1}</div>
+              <div class="rank-info">
+                <div class="rank-name">${escHtml(item.name || item.product_name || 'Produkt')}</div>
+                <div class="rank-score">Wynik: <strong>${escHtml(String(item.score || item.total_score || 0))}</strong></div>
+              </div>
+            </div>`;
+        } else {
+          return `
+            <div class="rank-item" style="cursor:pointer" onclick="switchTab('rankings')">
+              <div class="rank-num ${numClass}" style="font-size:16px">${i + 1}</div>
+              <div class="rank-info">
+                <div class="rank-name" style="font-size:13px">${escHtml(item.name || item.product_name || 'Produkt')}</div>
+                <div class="rank-score" style="font-size:11px">Wynik: <strong>${escHtml(String(item.score || item.total_score || 0))}</strong></div>
+              </div>
+            </div>`;
+        }
+      }).join('');
+    } catch {
+      container.innerHTML = `<div style="padding:20px;color:var(--muted);text-align:center;font-size:13px">Błąd ładowania.</div>`;
+    }
+  }
+
+  async function loadSideRankings()   { await loadRankings('week',  'side-rankings-list'); }
+  async function loadFullRankings()   { await loadRankings(currentPeriod, 'rankings-list'); }
+
+  // ─── Create post ──────────────────────────────────────────────────────────────
+  function renderCreatePostArea() {
+    const area = document.getElementById('create-post-area');
+    if (isLoggedIn) {
+      area.innerHTML = `
+        <div class="create-post-box">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <div class="post-avatar">👤</div>
+            <button class="btn btn-primary" id="btn-open-create" style="flex:1">✍️ Utwórz nowy post</button>
+          </div>
+        </div>`;
+      document.getElementById('btn-open-create').addEventListener('click', openModal);
+    } else {
+      area.innerHTML = `
+        <div class="login-prompt">
+          <a href="login.html">Zaloguj się</a>, aby tworzyć posty i angażować się w społeczność.
+        </div>`;
+    }
+  }
+
+  // ─── Modal ────────────────────────────────────────────────────────────────────
+  function setupModal() {
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+    const content = document.getElementById('new-post-content');
+    const counter = document.getElementById('char-count');
+    content.addEventListener('input', () => { counter.textContent = content.value.length + ' / 500'; });
+
+    document.getElementById('btn-submit-post').addEventListener('click', submitPost);
+  }
+
+  function openModal() {
+    document.getElementById('modal-overlay').style.display = 'flex';
+    document.getElementById('new-post-content').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').style.display = 'none';
+    document.getElementById('modal-error').style.display = 'none';
+    document.getElementById('new-post-content').value = '';
+    document.getElementById('new-post-media').value = '';
+    document.getElementById('char-count').textContent = '0 / 500';
+  }
+
+  async function submitPost() {
+    const content = document.getElementById('new-post-content').value.trim();
+    const post_type = document.getElementById('new-post-type').value;
+    const media_url = document.getElementById('new-post-media').value.trim() || null;
+    const errEl = document.getElementById('modal-error');
+
+    if (!content) {
+      errEl.textContent = 'Treść posta jest wymagana.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('btn-submit-post');
+    btn.textContent = 'Publikowanie...';
+    btn.disabled = true;
+
+    try {
+      await apiFetch('/social/posts', {
+        method: 'POST',
+        body: JSON.stringify({ content, post_type, media_url })
+      });
+      closeModal();
+      showToast('✅ Post opublikowany!');
+      await loadFeed(true);
+    } catch (err) {
+      errEl.textContent = err.body?.error || err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = 'Opublikuj post';
+      btn.disabled = false;
+    }
+  }
+
+  // ─── Tabs ─────────────────────────────────────────────────────────────────────
+  function setupTabs() {
+    document.querySelectorAll('.soc-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.soc-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.soc-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
+
+    if (name === 'trending') loadFullTrending();
+    if (name === 'rankings') loadFullRankings();
+  }
+
+  // ─── Period buttons ───────────────────────────────────────────────────────────
+  function setupPeriodBtns() {
+    document.querySelectorAll('.period-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPeriod = btn.dataset.period;
+        loadFullRankings();
+      });
+    });
+  }
+
+  // ─── Load more ────────────────────────────────────────────────────────────────
+  document.getElementById('btn-feed-more').addEventListener('click', () => loadFeed(false));
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+  function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 1000);
+    if (diff < 60) return 'przed chwilą';
+    if (diff < 3600) return Math.floor(diff / 60) + ' min temu';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' godz. temu';
+    return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('soc-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function hideSplash() {
+    const s = document.querySelector('[data-app-splash]');
+    if (s) s.style.display = 'none';
+  }
+
+  function getToken() {
+    try { return localStorage.getItem('qm_token'); } catch { return null; }
+  }
+
+  function getCachedUser() {
+    try { return JSON.parse(localStorage.getItem('qm_user') || 'null'); } catch { return null; }
+  }
+
+  function redirectLogin() {
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+  }
+
+  // Start
+  init();
+  </script>
+</body>
+</html>

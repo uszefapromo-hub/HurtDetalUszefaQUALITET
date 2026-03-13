@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Osiągnięcia i grywalizacja – Qualitet</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    /* ── Gamification page specific styles ── */
+
+    /* Tabs */
+    .gam-tabs { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+    .gam-tab  { padding:10px 20px; border-radius:12px; border:1px solid var(--stroke);
+                background:var(--card); cursor:pointer; font-size:14px; font-weight:600;
+                color:var(--muted); transition:all .15s; }
+    .gam-tab:hover  { color:#fff; border-color:var(--accent); }
+    .gam-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .gam-pane { display:none; }
+    .gam-pane.active { display:block; }
+
+    /* Stat cards */
+    .stat-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); margin-bottom:28px; }
+    .stat-card { background:var(--card); border:1px solid var(--stroke); border-radius:20px;
+                 padding:20px; display:flex; flex-direction:column; gap:8px; }
+    .stat-label { font-size:12px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:var(--muted); }
+    .stat-value { font-size:28px; font-weight:800; color:#fff; }
+    .stat-value.yellow { color:var(--yellow); }
+    .stat-value.green  { color:var(--green); }
+    .stat-value.accent { color:var(--accent); }
+
+    /* Level card */
+    .level-card { background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(34,197,94,.12));
+                  border:1px solid rgba(99,102,241,.3); border-radius:24px; padding:28px; margin-bottom:24px; }
+    .level-header { display:flex; align-items:center; gap:20px; margin-bottom:20px; flex-wrap:wrap; }
+    .level-badge { width:80px; height:80px; border-radius:50%;
+                   background:linear-gradient(135deg,var(--accent-blue-dark),var(--accent-green-dark));
+                   display:flex; align-items:center; justify-content:center;
+                   font-size:32px; font-weight:900; color:#fff; flex-shrink:0;
+                   box-shadow:0 0 24px rgba(99,102,241,.4); }
+    .level-info { flex:1; }
+    .level-title { font-size:24px; font-weight:800; color:#f1f5f9; }
+    .level-subtitle { color:var(--muted); font-size:15px; margin-top:4px; }
+    .level-pts { font-size:36px; font-weight:900; color:var(--yellow); line-height:1; }
+    .level-pts-label { font-size:13px; color:var(--muted); }
+
+    /* Progress bar */
+    .progress-wrap { margin-top:6px; }
+    .progress-labels { display:flex; justify-content:space-between; font-size:12px; color:var(--muted);
+                       margin-bottom:6px; font-weight:600; }
+    .progress-bar { height:12px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden; }
+    .progress-fill { height:100%; border-radius:999px;
+                     background:linear-gradient(90deg,var(--accent-blue-dark),var(--accent-green-dark));
+                     transition:width .6s ease; min-width:4px; }
+    .progress-pct { text-align:right; font-size:12px; color:var(--muted); margin-top:4px; font-weight:600; }
+
+    /* Badge grid */
+    .badge-grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+    .badge-card { background:var(--card); border:1px solid var(--stroke); border-radius:18px;
+                  padding:18px; text-align:center; display:flex; flex-direction:column;
+                  align-items:center; gap:10px; transition:transform .15s; }
+    .badge-card:hover { transform:translateY(-2px); }
+    .badge-card.earned { border-color:rgba(250,204,21,.4); background:rgba(250,204,21,.06); }
+    .badge-card.locked { opacity:.5; filter:grayscale(.6); }
+    .badge-icon { font-size:40px; line-height:1; }
+    .badge-name { font-weight:700; font-size:13px; color:#f1f5f9; }
+    .badge-desc { font-size:12px; color:var(--muted); line-height:1.4; }
+    .badge-pts  { font-size:12px; font-weight:700; color:var(--yellow); }
+    .badge-earned-label { font-size:11px; font-weight:700; color:var(--green);
+                          background:rgba(34,197,94,.12); border-radius:999px;
+                          padding:2px 10px; border:1px solid rgba(34,197,94,.3); }
+
+    /* Leaderboard */
+    .leaderboard-table { width:100%; border-collapse:collapse; font-size:14px; }
+    .leaderboard-table th { text-align:left; padding:10px 14px; color:var(--muted); font-weight:700;
+                             font-size:12px; text-transform:uppercase; letter-spacing:.5px;
+                             border-bottom:1px solid var(--stroke); }
+    .leaderboard-table td { padding:12px 14px; border-bottom:1px solid var(--stroke);
+                             color:#e2e8f0; vertical-align:middle; }
+    .leaderboard-table tr:last-child td { border-bottom:none; }
+    .leaderboard-table tr:hover td { background:rgba(255,255,255,.025); }
+    .leaderboard-table .me td { background:rgba(99,102,241,.08); }
+
+    .lb-rank { font-weight:800; font-size:16px; min-width:36px; }
+    .lb-rank.gold   { color:var(--yellow); }
+    .lb-rank.silver { color:#94a3b8; }
+    .lb-rank.bronze { color:#d97706; }
+
+    .lb-user { display:flex; align-items:center; gap:10px; }
+    .lb-avatar { width:34px; height:34px; border-radius:50%; background:rgba(99,102,241,.2);
+                 display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+    .lb-pts  { font-weight:800; font-size:15px; color:var(--yellow); }
+    .lb-lvl  { font-size:12px; color:var(--muted); }
+
+    /* Points log */
+    .points-log { display:flex; flex-direction:column; gap:0; }
+    .log-item { display:flex; align-items:center; gap:14px; padding:12px 0;
+                border-bottom:1px solid var(--stroke); }
+    .log-item:last-child { border-bottom:none; }
+    .log-pts  { font-size:18px; font-weight:800; min-width:60px; text-align:right; }
+    .log-pts.pos { color:var(--green); }
+    .log-info { flex:1; min-width:0; }
+    .log-action { font-weight:600; font-size:14px; color:#f1f5f9; }
+    .log-date   { font-size:12px; color:var(--muted); margin-top:2px; }
+
+    /* Section header */
+    .section-head { display:flex; align-items:center; justify-content:space-between;
+                    margin-bottom:20px; gap:12px; flex-wrap:wrap; }
+    .section-head h2 { margin:0; font-size:18px; }
+
+    /* Empty state */
+    .empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
+    .empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
+
+    /* Login prompt */
+    .login-prompt { background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.25);
+                    border-radius:16px; padding:20px; text-align:center; color:var(--muted); font-size:14px; }
+    .login-prompt a { color:var(--accent); font-weight:700; text-decoration:none; }
+
+    /* Pill filters */
+    .filter-btns { display:flex; gap:6px; flex-wrap:wrap; }
+    .filter-btn  { padding:6px 14px; border-radius:10px; border:1px solid var(--stroke);
+                   background:transparent; color:var(--muted); font-size:13px; font-weight:600;
+                   cursor:pointer; transition:all .15s; }
+    .filter-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+    @media (max-width:680px) {
+      .stat-grid  { grid-template-columns:1fr 1fr; }
+      .badge-grid { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:400px) {
+      .badge-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body data-page="gamification" class="dashboard-page has-bottom-nav">
+
+  <!-- Splash -->
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="UszefaQualitet">
+      </div>
+      <div class="app-splash-title">
+        <strong>UszefaQualitet</strong>
+        <span>Osiągnięcia</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>UszefaQualitet</strong>
+          <span>QualitetMarket</span>
+          <span class="brand-tag">U SZEFA</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="zarabiaj.html">Zarabiaj</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <!-- Dashboard shell -->
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <nav class="sidebar-nav" aria-label="Menu panelu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="generator-sklepu.html">Mój sklep</a>
+        <a href="hurtownie.html" data-require="pro">Hurtownie</a>
+        <a href="linki-sprzedazowe.html">Linki sprzedażowe</a>
+        <a href="affiliate.html">Afiliacja</a>
+        <a href="social.html">Social Feed</a>
+        <a href="gamification.html" class="active">Osiągnięcia</a>
+        <a href="collaboration.html">Współpraca</a>
+        <a href="qualitetmarket.html" data-require="pro">QualitetMarket</a>
+        <a href="listing.html" data-require="pro">Listing</a>
+        <a href="crm.html" data-require="pro">CRM</a>
+        <a href="cennik.html">Subskrypcja</a>
+        <a href="owner-panel.html" data-superadmin-link hidden>Panel Superadmina</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-main">
+      <!-- Page header -->
+      <section class="panel-card" style="margin-bottom:0">
+        <span class="eyebrow">Grywalizacja</span>
+        <h1 style="font-size:clamp(22px,4vw,32px);margin:8px 0 6px">Osiągnięcia i nagrody</h1>
+        <p class="hint">Zbieraj punkty, zdobywaj odznaki i wspinaj się po liście rankingowej.</p>
+      </section>
+
+      <!-- Tabs -->
+      <div class="gam-tabs" role="tablist">
+        <button class="gam-tab active" data-tab="overview"   role="tab">📊 Przegląd</button>
+        <button class="gam-tab"        data-tab="badges"     role="tab">🏅 Odznaki</button>
+        <button class="gam-tab"        data-tab="leaderboard" role="tab">🏆 Ranking</button>
+        <button class="gam-tab"        data-tab="history"    role="tab">📜 Historia punktów</button>
+      </div>
+
+      <!-- ── Overview ── -->
+      <div class="gam-pane active" id="pane-overview">
+
+        <!-- Not logged in -->
+        <div id="guest-overview" style="display:none">
+          <div class="login-prompt">
+            <p style="font-size:22px;margin:0 0 12px">🎮</p>
+            <strong style="color:#f1f5f9;font-size:16px">Dołącz do grywalizacji!</strong>
+            <p style="margin:8px 0 16px">Zarejestruj się lub <a href="login.html">zaloguj</a>, aby zbierać punkty i zdobywać odznaki.</p>
+            <a href="login.html" class="btn btn-primary" style="display:inline-flex">Zaloguj się</a>
+          </div>
+        </div>
+
+        <!-- Logged in: Level card -->
+        <div id="user-level-card" style="display:none">
+          <div class="level-card">
+            <div class="level-header">
+              <div class="level-badge" id="level-num">1</div>
+              <div class="level-info">
+                <div class="level-title" id="level-title">Poziom 1</div>
+                <div class="level-subtitle">Kontynuuj aktywność, aby awansować!</div>
+              </div>
+              <div style="text-align:right">
+                <div class="level-pts" id="total-pts">0</div>
+                <div class="level-pts-label">punktów łącznie</div>
+              </div>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-labels">
+                <span id="prog-current">0 pkt</span>
+                <span id="prog-next">Następny poziom: 100 pkt</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+              </div>
+              <div class="progress-pct" id="progress-pct">0%</div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">Punkty</div>
+              <div class="stat-value yellow" id="stat-pts">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Poziom</div>
+              <div class="stat-value accent" id="stat-level">1</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Odznaki</div>
+              <div class="stat-value green" id="stat-badges">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Pozycja w rankingu</div>
+              <div class="stat-value" id="stat-rank">—</div>
+            </div>
+          </div>
+
+          <!-- Recent earned badges -->
+          <div class="section-head">
+            <h2>🏅 Ostatnio zdobyte odznaki</h2>
+            <a href="#" onclick="switchTab('badges');return false" style="font-size:13px;color:var(--accent);font-weight:700;text-decoration:none">Wszystkie →</a>
+          </div>
+          <div id="recent-badges">
+            <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Badges ── -->
+      <div class="gam-pane" id="pane-badges">
+        <div class="section-head">
+          <h2>🏅 Katalog odznak</h2>
+          <div class="filter-btns">
+            <button class="filter-btn active" data-filter="all">Wszystkie</button>
+            <button class="filter-btn" data-filter="earned">Zdobyte</button>
+            <button class="filter-btn" data-filter="locked">Do zdobycia</button>
+          </div>
+        </div>
+        <div class="badge-grid" id="badges-grid">
+          <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+        </div>
+      </div>
+
+      <!-- ── Leaderboard ── -->
+      <div class="gam-pane" id="pane-leaderboard">
+        <div class="section-head">
+          <h2>🏆 Tabela liderów</h2>
+          <span class="eyebrow" style="font-size:12px">Top 20 użytkowników</span>
+        </div>
+        <div class="panel-card" style="padding:0;overflow:hidden">
+          <div id="leaderboard-container">
+            <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── History ── -->
+      <div class="gam-pane" id="pane-history">
+        <div class="section-head">
+          <h2>📜 Historia punktów</h2>
+        </div>
+        <div id="history-area">
+          <div class="login-prompt" id="history-guest" style="display:none">
+            <a href="login.html">Zaloguj się</a>, aby zobaczyć historię punktów.
+          </div>
+          <div class="panel-card" id="history-card" style="padding:20px 24px;display:none">
+            <div class="points-log" id="history-list">
+              <div class="empty-state"><div class="empty-icon">⏳</div><p>Ładowanie...</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+  'use strict';
+
+  // ─── Constants ────────────────────────────────────────────────────────────────
+  const API_BASE = (window.QM_API_BASE || 'http://localhost:3000/api');
+
+  // ─── State ────────────────────────────────────────────────────────────────────
+  let currentUser = null;
+  let isLoggedIn  = false;
+  let allBadges = [];
+  let earnedBadgeIds = new Set();
+  let currentBadgeFilter = 'all';
+
+  // ─── Init ─────────────────────────────────────────────────────────────────────
+  async function init() {
+    currentUser = getCachedUser();
+    isLoggedIn  = !!getToken();
+
+    setupTabs();
+    setupBadgeFilters();
+    hideSplash();
+
+    // Always load public data
+    const [badgesData, leaderboardData] = await Promise.all([
+      apiFetch('/gamification/badges').catch(() => ({ badges: [] })),
+      apiFetch('/gamification/leaderboard').catch(() => ({ users: [] }))
+    ]);
+    allBadges = badgesData.badges || [];
+
+    if (isLoggedIn) {
+      const [pointsData, myBadgesData] = await Promise.all([
+        apiFetch('/gamification/my/points').catch(() => null),
+        apiFetch('/gamification/my/badges').catch(() => ({ badges: [] }))
+      ]);
+
+      const myBadges = myBadgesData.badges || [];
+      earnedBadgeIds = new Set(myBadges.map(b => b.badge_id || b.id));
+
+      renderOverviewLoggedIn(pointsData, myBadges, leaderboardData.users || []);
+      renderHistory(pointsData?.recent || []);
+      document.getElementById('history-card').style.display = 'block';
+    } else {
+      document.getElementById('guest-overview').style.display = 'block';
+      document.getElementById('history-guest').style.display = 'block';
+    }
+
+    renderBadgeGrid(allBadges);
+    renderLeaderboard(leaderboardData.users || [], leaderboardData.leaderboard || leaderboardData.users || []);
+  }
+
+  // ─── API helpers ──────────────────────────────────────────────────────────────
+  function authHeaders() {
+    const t = getToken();
+    return t ? { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' }
+             : { 'Content-Type': 'application/json' };
+  }
+
+  async function apiFetch(path, opts = {}) {
+    const res = await fetch(API_BASE + path, { headers: authHeaders(), ...opts });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw Object.assign(new Error(data.error || 'Błąd API'), { status: res.status, body: data });
+    return data;
+  }
+
+  // ─── Overview (logged in) ─────────────────────────────────────────────────────
+  function renderOverviewLoggedIn(pointsData, myBadges, leaderboard) {
+    document.getElementById('user-level-card').style.display = 'block';
+
+    const total = parseInt(pointsData?.total_points || '0');
+    const level = parseInt(pointsData?.level || '1');
+    const nextLvlPts = parseInt(pointsData?.next_level_points || '100');
+    const prevLvlPts = (level - 1) * 100;
+    const progress = nextLvlPts > prevLvlPts
+      ? Math.min(100, Math.round(((total - prevLvlPts) / (nextLvlPts - prevLvlPts)) * 100))
+      : 100;
+
+    document.getElementById('level-num').textContent = level;
+    document.getElementById('level-title').textContent = 'Poziom ' + level;
+    document.getElementById('total-pts').textContent = total.toLocaleString('pl-PL');
+    document.getElementById('prog-current').textContent = total.toLocaleString('pl-PL') + ' pkt';
+    document.getElementById('prog-next').textContent = 'Następny poziom: ' + nextLvlPts.toLocaleString('pl-PL') + ' pkt';
+    document.getElementById('progress-fill').style.width = progress + '%';
+    document.getElementById('progress-pct').textContent = progress + '%';
+
+    document.getElementById('stat-pts').textContent = total.toLocaleString('pl-PL');
+    document.getElementById('stat-level').textContent = level;
+    document.getElementById('stat-badges').textContent = myBadges.length;
+
+    // Rank in leaderboard
+    const uid = currentUser?.id;
+    const rankIdx = leaderboard.findIndex(u => u.user_id === uid || u.id === uid);
+    document.getElementById('stat-rank').textContent = rankIdx >= 0 ? '#' + (rankIdx + 1) : '—';
+
+    // Recent badges (last 3 earned)
+    const recentEl = document.getElementById('recent-badges');
+    if (myBadges.length === 0) {
+      recentEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🏅</div><p>Nie masz jeszcze żadnych odznak. Zacznij działać!</p></div>`;
+    } else {
+      const recent = myBadges.slice(0, 6);
+      recentEl.innerHTML = `<div class="badge-grid">${recent.map(b => renderBadgeCard(b, true)).join('')}</div>`;
+    }
+  }
+
+  // ─── Badge grid ───────────────────────────────────────────────────────────────
+  function renderBadgeCard(badge, isEarned) {
+    const icon = badge.icon || '🏅';
+    const earnedClass = isEarned ? 'earned' : 'locked';
+    const earnedLabel = isEarned
+      ? `<span class="badge-earned-label">✓ Zdobyta</span>`
+      : `<span style="font-size:11px;color:var(--muted)">Wymagane: ${escHtml(String(badge.requirement_value || 0))} ${escHtml(badge.requirement_type || '')}</span>`;
+    return `
+      <div class="badge-card ${earnedClass}">
+        <div class="badge-icon">${escHtml(icon)}</div>
+        <div class="badge-name">${escHtml(badge.name || badge.slug)}</div>
+        <div class="badge-desc">${escHtml(badge.description || '')}</div>
+        <div class="badge-pts">+${escHtml(String(badge.points_reward || 0))} pkt</div>
+        ${earnedLabel}
+      </div>`;
+  }
+
+  function renderBadgeGrid(badges) {
+    const grid = document.getElementById('badges-grid');
+    let filtered = badges;
+    if (currentBadgeFilter === 'earned') filtered = badges.filter(b => earnedBadgeIds.has(b.id));
+    if (currentBadgeFilter === 'locked') filtered = badges.filter(b => !earnedBadgeIds.has(b.id));
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏅</div><p>Brak odznak w tej kategorii.</p></div>`;
+      return;
+    }
+    grid.innerHTML = filtered.map(b => renderBadgeCard(b, earnedBadgeIds.has(b.id))).join('');
+  }
+
+  function setupBadgeFilters() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentBadgeFilter = btn.dataset.filter;
+        renderBadgeGrid(allBadges);
+      });
+    });
+  }
+
+  // ─── Leaderboard ─────────────────────────────────────────────────────────────
+  function renderLeaderboard(users, leaderboard) {
+    const container = document.getElementById('leaderboard-container');
+    const rows = (leaderboard.length > 0 ? leaderboard : users);
+
+    if (rows.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><p>Brak danych rankingowych.</p></div>`;
+      return;
+    }
+
+    const myId = currentUser?.id;
+    const tbody = rows.map((u, i) => {
+      const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      const isMe = u.user_id === myId || u.id === myId;
+      const name = escHtml(u.name || u.username || u.email || ('Użytkownik ' + (i + 1)));
+      const pts  = parseInt(u.total_points || u.points || 0).toLocaleString('pl-PL');
+      const level = u.level || Math.floor(parseInt(u.total_points || 0) / 100) + 1;
+      return `
+        <tr${isMe ? ' class="me"' : ''}>
+          <td><span class="lb-rank ${rankClass}">${i + 1}</span></td>
+          <td>
+            <div class="lb-user">
+              <div class="lb-avatar">${isMe ? '👤' : '🧑'}</div>
+              <div>
+                <div style="font-weight:700;color:#f1f5f9">${name}${isMe ? ' <span style="font-size:11px;color:var(--accent)">(Ty)</span>' : ''}</div>
+                <div class="lb-lvl">Poziom ${level}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="lb-pts">${pts} pkt</span></td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Użytkownik</th>
+            <th>Punkty</th>
+          </tr>
+        </thead>
+        <tbody>${tbody}</tbody>
+      </table>`;
+  }
+
+  // ─── History ──────────────────────────────────────────────────────────────────
+  function renderHistory(recent) {
+    const list = document.getElementById('history-list');
+    if (!recent || recent.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">📜</div><p>Brak historii punktów.</p></div>`;
+      return;
+    }
+    list.innerHTML = recent.map(item => `
+      <div class="log-item">
+        <div class="log-pts pos">+${escHtml(String(item.points || 0))}</div>
+        <div class="log-info">
+          <div class="log-action">${escHtml(actionLabel(item.action))}</div>
+          <div class="log-date">${formatDate(item.created_at)}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function actionLabel(action) {
+    const map = {
+      'register': 'Rejestracja konta',
+      'login': 'Logowanie',
+      'purchase': 'Zakup produktu',
+      'review': 'Wystawienie opinii',
+      'referral': 'Polecenie użytkownika',
+      'post_created': 'Opublikowanie posta',
+      'post_liked': 'Polubienie posta',
+      'comment_added': 'Dodanie komentarza',
+      'badge_earned': 'Zdobycie odznaki',
+      'admin_award': 'Nagroda od administratora'
+    };
+    return map[action] || action;
+  }
+
+  // ─── Tabs ─────────────────────────────────────────────────────────────────────
+  function setupTabs() {
+    document.querySelectorAll('.gam-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.gam-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.gam-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+  function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit', year:'numeric' });
+  }
+
+  function hideSplash() {
+    const s = document.querySelector('[data-app-splash]');
+    if (s) s.style.display = 'none';
+  }
+
+  function getToken() {
+    try { return localStorage.getItem('qm_token'); } catch { return null; }
+  }
+
+  function getCachedUser() {
+    try { return JSON.parse(localStorage.getItem('qm_user') || 'null'); } catch { return null; }
+  }
+
+  // Start
+  init();
+  </script>
+</body>
+</html>
