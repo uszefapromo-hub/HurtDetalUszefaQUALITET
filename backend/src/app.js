@@ -27,6 +27,7 @@ const referralsRouter = require('./routes/referrals');
 const scriptsRouter = require('./routes/scripts');
 const analyticsRouter = require('./routes/analytics');
 const affiliateRouter = require('./routes/affiliate');
+const creatorRouter = require('./routes/creator');
 const { importSupplierProducts } = require('./services/supplier-import');
 const { getPromoSlots } = require('./helpers/promo');
 const db = require('./config/database');
@@ -199,6 +200,18 @@ app.get('/api/readiness', async (_req, res) => {
     admin_withdrawals:  'GET  /api/affiliate/admin/withdrawals',
   };
 
+  // Creator / affiliate module
+  checks.creator_system = {
+    register:       'POST /api/creator/register',
+    create_link:    'POST /api/creator/links',
+    track_click:    'POST /api/creator/click',
+    stats:          'GET  /api/creator/stats',
+    commissions:    'GET  /api/creator/commissions',
+    payouts:        'POST /api/creator/payouts',
+    top_products:   'GET  /api/creator/top-products',
+    leaderboard:    'GET  /api/creator/leaderboard',
+  };
+
   // Subscription plan listing
   checks.subscription_plans = {
     list: 'GET /api/subscriptions/plans',
@@ -236,6 +249,7 @@ app.use('/api/referrals', referralsRouter);
 app.use('/api/scripts', scriptsRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/affiliate', affiliateRouter);
+app.use('/api/creator', creatorRouter);
 
 // ─── Public promo slots feed ───────────────────────────────────────────────────
 // Shows how many early-access slots remain at each promotional tier.
