@@ -220,7 +220,7 @@ app.use('/api/analytics', analyticsRouter);
 const { getPromoSlots } = require('./helpers/promo');
 app.get('/api/promo/slots', async (_req, res) => {
   try {
-    const result = await db.query(`SELECT COUNT(*) FROM users WHERE role = 'seller'`);
+    const result = await db.query(`SELECT COUNT(*) FROM users WHERE role = $1`, ['seller']);
     const totalSellers = parseInt(result.rows[0].count, 10);
     return res.json({ slots: getPromoSlots(totalSellers), totalSellers });
   } catch (_err) {

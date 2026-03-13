@@ -557,7 +557,17 @@
                   cards[cardIdx].appendChild(badge);
                 }
               } else {
-                textEl.textContent = left + ' ' + (left === 1 ? 'miejsce' : left < 5 ? 'miejsca' : 'miejsc') + ' dostępnych';
+                var lastTwo = left % 100;
+                var lastOne = left % 10;
+                var plural;
+                if (left === 1) {
+                  plural = 'miejsce';
+                } else if (lastOne >= 2 && lastOne <= 4 && (lastTwo < 10 || lastTwo > 20)) {
+                  plural = 'miejsca';
+                } else {
+                  plural = 'miejsc';
+                }
+                textEl.textContent = left + ' ' + plural + ' dostępnych';
               }
             });
           })

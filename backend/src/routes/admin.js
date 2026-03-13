@@ -1166,29 +1166,30 @@ router.post(
   async (req, res) => {
     const { subject, message, role_filter = 'all' } = req.body;
     try {
-      const whereClause = role_filter === 'all'
-        ? ''
-        : `WHERE role = '${role_filter}'`;
-      const result = await db.query(
-        `SELECT id, email, name FROM users ${whereClause} ORDER BY created_at DESC LIMIT 500`
-      );
+      const result = role_filter === 'all'
+        ? await db.query(
+            'SELECT id, email, name FROM users ORDER BY created_at DESC LIMIT 500'
+          )
+        : await db.query(
+            'SELECT id, email, name FROM users WHERE role = $1 ORDER BY created_at DESC LIMIT 500',
+            [role_filter]
+          );
       const users = result.rows;
 
       // Fire-and-forget: send all emails asynchronously, do not block the response
-      let sent = 0;
       for (const user of users) {
         sendAnnouncementEmail({
           to:      user.email,
           name:    user.name,
           subject,
           message,
-        }).then(() => { sent++; }).catch((err) => console.error(`[broadcast] email to ${user.email} failed:`, err.message));
+        }).catch((err) => console.error(`[broadcast] email to ${user.email} failed:`, err.message));
       }
 
       return res.json({
-        ok:       true,
-        queued:   users.length,
-        message:  `Wysłano wiadomość do ${users.length} użytkownik${users.length === 1 ? 'a' : 'ów'}.`,
+        ok:      true,
+        queued:  users.length,
+        message: `Wysłano wiadomość do ${users.length} użytkownik${users.length === 1 ? 'a' : 'ów'}.`,
       });
     } catch (err) {
       console.error('admin broadcast error:', err.message);
