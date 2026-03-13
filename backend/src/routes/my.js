@@ -666,6 +666,236 @@ router.post(
   }
 );
 
+// ─── GET /api/my/affiliate/products – list store's affiliate-eligible products ─
+
+router.get(
+  '/affiliate/products',
+  authenticate,
+  requireRole('seller', 'owner', 'admin'),
+  async (req, res) => {
+    const page   = Math.max(1, parseInt(req.query.page  || '1',  10));
+    const limit  = Math.min(100, parseInt(req.query.limit || '20', 10));
+    const offset = (page - 1) * limit;
+
+    try {
+      const storeResult = await db.query(
+        'SELECT id FROM stores WHERE owner_id = $1 ORDER BY created_at ASC LIMIT 1',
+        [req.user.id]
+      );
+      const store = storeResult.rows[0];
+      if (!store) {
+        return res.status(404).json({ error: 'Nie masz jeszcze sklepu' });
+      }
+
+      const countResult = await db.query(
+        'SELECT COUNT(*) FROM shop_products WHERE store_id = $1 AND active = TRUE',
+        [store.id]
+      );
+      const total = parseInt(countResult.rows[0].count, 10);
+
+      const result = await db.query(
+        `SELECT sp.id, sp.affiliate_enabled, sp.commission_rate,
+                p.name, p.image_url, p.category,
+                sp.price_override,
+                COUNT(DISTINCT al.id) AS affiliate_links_count,
+                COALESCE(SUM(acom.amount) FILTER (WHERE acom.status = 'pending'), 0)  AS pending_commissions,
+                COALESCE(SUM(acom.amount) FILTER (WHERE acom.status = 'paid'), 0)     AS paid_commissions
+         FROM shop_products sp
+         JOIN products p ON p.id = sp.product_id
+         LEFT JOIN affiliate_links al       ON al.shop_product_id = sp.id
+         LEFT JOIN affiliate_commissions acom ON acom.link_id = al.id
+         WHERE sp.store_id = $1 AND sp.active = TRUE
+         GROUP BY sp.id, p.name, p.image_url, p.category, sp.price_override
+         ORDER BY sp.created_at DESC
+         LIMIT $2 OFFSET $3`,
+        [store.id, limit, offset]
+      );
+
+      return res.json({ total, page, limit, products: result.rows });
+    } catch (err) {
+      console.error('affiliate products error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── PATCH /api/my/affiliate/products/:id – toggle affiliate settings ─────────
+
+router.patch(
+  '/affiliate/products/:id',
+  authenticate,
+  requireRole('seller', 'owner', 'admin'),
+  [
+    param('id').isUUID(),
+    body('affiliate_enabled').optional().isBoolean(),
+    body('commission_rate').optional().isFloat({ min: 0, max: 80 }),
+  ],
+  validate,
+  async (req, res) => {
+    const { id } = req.params;
+    const { affiliate_enabled, commission_rate } = req.body;
+    try {
+      // Ensure the product belongs to the seller's store
+      const storeResult = await db.query(
+        'SELECT id FROM stores WHERE owner_id = $1 ORDER BY created_at ASC LIMIT 1',
+        [req.user.id]
+      );
+      const store = storeResult.rows[0];
+      if (!store) {
+        return res.status(404).json({ error: 'Nie masz jeszcze sklepu' });
+      }
+
+      const spResult = await db.query(
+        'SELECT id FROM shop_products WHERE id = $1 AND store_id = $2',
+        [id, store.id]
+      );
+      if (!spResult.rows[0]) {
+        return res.status(404).json({ error: 'Produkt nie istnieje w twoim sklepie' });
+      }
+
+      const result = await db.query(
+        `UPDATE shop_products SET
+           affiliate_enabled = COALESCE($1, affiliate_enabled),
+           commission_rate   = COALESCE($2, commission_rate),
+           updated_at        = NOW()
+         WHERE id = $3
+         RETURNING id, affiliate_enabled, commission_rate`,
+        [
+          affiliate_enabled !== undefined ? affiliate_enabled : null,
+          commission_rate   !== undefined ? commission_rate   : null,
+          id,
+        ]
+      );
+
+      return res.json(result.rows[0]);
+    } catch (err) {
+      console.error('update affiliate product error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── GET /api/my/affiliate/stats – seller affiliate performance ───────────────
+
+router.get(
+  '/affiliate/stats',
+  authenticate,
+  requireRole('seller', 'owner', 'admin'),
+  async (req, res) => {
+    try {
+      const storeResult = await db.query(
+        'SELECT id FROM stores WHERE owner_id = $1 ORDER BY created_at ASC LIMIT 1',
+        [req.user.id]
+      );
+      const store = storeResult.rows[0];
+      if (!store) {
+        return res.status(404).json({ error: 'Nie masz jeszcze sklepu' });
+      }
+
+      const [linksResult, commissionsResult, clicksResult] = await Promise.all([
+        db.query(
+          `SELECT COUNT(*) AS total_links, SUM(al.clicks) AS total_clicks
+           FROM affiliate_links al
+           JOIN shop_products sp ON sp.id = al.shop_product_id
+           WHERE sp.store_id = $1`,
+          [store.id]
+        ),
+        db.query(
+          `SELECT
+             COALESCE(SUM(acom.amount), 0) AS total_commissions,
+             COALESCE(SUM(acom.amount) FILTER (WHERE acom.status = 'pending'), 0)  AS pending,
+             COALESCE(SUM(acom.amount) FILTER (WHERE acom.status = 'approved'), 0) AS approved,
+             COALESCE(SUM(acom.amount) FILTER (WHERE acom.status = 'paid'), 0)     AS paid
+           FROM affiliate_commissions acom
+           JOIN affiliate_links al ON al.id = acom.link_id
+           JOIN shop_products sp   ON sp.id = al.shop_product_id
+           WHERE sp.store_id = $1`,
+          [store.id]
+        ),
+        db.query(
+          `SELECT COUNT(*) AS clicks_30d
+           FROM affiliate_clicks ac
+           JOIN affiliate_links al ON al.id = ac.link_id
+           JOIN shop_products sp   ON sp.id = al.shop_product_id
+           WHERE sp.store_id = $1
+             AND ac.created_at > NOW() - INTERVAL '30 days'`,
+          [store.id]
+        ),
+      ]);
+
+      return res.json({
+        total_links:        parseInt(linksResult.rows[0].total_links || 0, 10),
+        total_clicks:       parseInt(linksResult.rows[0].total_clicks || 0, 10),
+        clicks_30d:         parseInt(clicksResult.rows[0].clicks_30d || 0, 10),
+        total_commissions:  parseFloat(commissionsResult.rows[0].total_commissions),
+        pending_commission: parseFloat(commissionsResult.rows[0].pending),
+        approved_commission: parseFloat(commissionsResult.rows[0].approved),
+        paid_commission:    parseFloat(commissionsResult.rows[0].paid),
+      });
+    } catch (err) {
+      console.error('my affiliate stats error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── GET /api/my/affiliate/commissions – commissions owed to creators ─────────
+
+router.get(
+  '/affiliate/commissions',
+  authenticate,
+  requireRole('seller', 'owner', 'admin'),
+  async (req, res) => {
+    const page   = Math.max(1, parseInt(req.query.page  || '1',  10));
+    const limit  = Math.min(100, parseInt(req.query.limit || '20', 10));
+    const offset = (page - 1) * limit;
+    const status = req.query.status || null;
+
+    try {
+      const storeResult = await db.query(
+        'SELECT id FROM stores WHERE owner_id = $1 ORDER BY created_at ASC LIMIT 1',
+        [req.user.id]
+      );
+      const store = storeResult.rows[0];
+      if (!store) {
+        return res.status(404).json({ error: 'Nie masz jeszcze sklepu' });
+      }
+
+      const countResult = await db.query(
+        `SELECT COUNT(*) FROM affiliate_commissions acom
+         JOIN affiliate_links al ON al.id = acom.link_id
+         JOIN shop_products sp   ON sp.id = al.shop_product_id
+         WHERE sp.store_id = $1 ${status ? 'AND acom.status = $2' : ''}`,
+        status ? [store.id, status] : [store.id]
+      );
+      const total = parseInt(countResult.rows[0].count, 10);
+
+      const result = await db.query(
+        `SELECT acom.id, acom.amount, acom.rate, acom.status, acom.created_at,
+                u.name AS creator_name,
+                p.name AS product_name,
+                o.id AS order_id
+         FROM affiliate_commissions acom
+         JOIN affiliate_links al ON al.id = acom.link_id
+         JOIN shop_products sp   ON sp.id = al.shop_product_id
+         JOIN products p         ON p.id  = sp.product_id
+         JOIN users u            ON u.id  = acom.creator_id
+         JOIN orders o           ON o.id  = acom.order_id
+         WHERE sp.store_id = $1
+           ${status ? 'AND acom.status = $4' : ''}
+         ORDER BY acom.created_at DESC
+         LIMIT $2 OFFSET $3`,
+        status ? [store.id, limit, offset, status] : [store.id, limit, offset]
+      );
+
+      return res.json({ total, page, limit, commissions: result.rows });
+    } catch (err) {
+      console.error('my affiliate commissions error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
 // ─── Store generator & promotion helpers (exported for testing) ──────────────
 
 // ─── Store generator constants ───────────────────────────────────────────────

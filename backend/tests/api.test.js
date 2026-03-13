@@ -4779,3 +4779,446 @@ describe('POST /api/payments/stripe/webhook', () => {
     if (savedKey) process.env.STRIPE_SECRET_KEY = savedKey;
   });
 });
+
+// ─── Affiliate Creator Module ──────────────────────────────────────────────────
+
+const CREATOR_ID    = 'c0000000-0000-4000-8000-000000000001';
+const AFF_LINK_ID   = 'c0000000-0000-4000-8000-000000000002';
+const AFF_CODE      = 'TESTCODE';
+
+let creatorToken;
+
+// Set up creator user before affiliate tests
+beforeAll(async () => {
+  const { signToken } = require('../src/middleware/auth');
+  creatorToken = signToken({ id: CREATOR_ID, email: 'creator@test.pl', role: 'creator' });
+  const bcrypt = require('bcryptjs');
+  const hash = await bcrypt.hash('Password123!', 12);
+  mockDb.users.push({ id: CREATOR_ID, email: 'creator@test.pl', password_hash: hash, name: 'Creator', role: 'creator', plan: 'trial' });
+});
+
+// ─── POST /api/creator/register ───────────────────────────────────────────────
+
+describe('POST /api/creator/register', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/creator/register');
+    expect(res.status).toBe(401);
+  });
+
+  it('upgrades user to creator role', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: SELLER_ID, role: 'seller' }] }) // SELECT user
+      .mockResolvedValueOnce({ rows: [{ id: SELLER_ID, email: 'seller@test.pl', name: 'Seller', role: 'creator' }] }); // UPDATE
+
+    const res = await request(app)
+      .post('/api/creator/register')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('user');
+    expect(res.body.message).toContain('kreatora');
+  });
+});
+
+// ─── POST /api/creator/links ──────────────────────────────────────────────────
+
+describe('POST /api/creator/links', () => {
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .post('/api/creator/links')
+      .send({ shop_product_id: SHOP_PROD_ID });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects missing shop_product_id', async () => {
+    const res = await request(app)
+      .post('/api/creator/links')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({});
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 404 for non-existent product', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // product not found
+    const res = await request(app)
+      .post('/api/creator/links')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({ shop_product_id: SHOP_PROD_ID });
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 403 for non-affiliate-enabled product', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: SHOP_PROD_ID, affiliate_enabled: false, commission_rate: 10, name: 'Test', image_url: null, price_override: null, store_name: 'Sklep', store_slug: 'sklep' }],
+    });
+    const res = await request(app)
+      .post('/api/creator/links')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({ shop_product_id: SHOP_PROD_ID });
+    expect(res.status).toBe(403);
+  });
+
+  it('creates affiliate link for affiliate-enabled product', async () => {
+    const product = { id: SHOP_PROD_ID, affiliate_enabled: true, commission_rate: 10, name: 'Test', image_url: null, price_override: null, store_name: 'Sklep', store_slug: 'sklep' };
+    db.query
+      .mockResolvedValueOnce({ rows: [product] })            // product check
+      .mockResolvedValueOnce({ rows: [] })                   // existing link check
+      .mockResolvedValueOnce({ rows: [] })                   // code collision check
+      .mockResolvedValueOnce({ rows: [{ id: AFF_LINK_ID, creator_id: CREATOR_ID, shop_product_id: SHOP_PROD_ID, code: 'ABCD1234', clicks: 0, active: true }] }); // insert
+
+    const res = await request(app)
+      .post('/api/creator/links')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({ shop_product_id: SHOP_PROD_ID });
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('link');
+    expect(res.body.link).toHaveProperty('code');
+  });
+});
+
+// ─── GET /api/creator/links ───────────────────────────────────────────────────
+
+describe('GET /api/creator/links', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/creator/links');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns affiliate links list for creator', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] })  // count
+      .mockResolvedValueOnce({ rows: [{ id: AFF_LINK_ID, code: AFF_CODE, clicks: 5, active: true, product_name: 'Test', commission_rate: 10, store_slug: 'sklep', clicks_30d: '3', pending_commission: '0', paid_commission: '0' }] });
+
+    const res = await request(app)
+      .get('/api/creator/links')
+      .set('Authorization', `Bearer ${creatorToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('links');
+    expect(res.body.total).toBe(1);
+  });
+});
+
+// ─── POST /api/creator/click ──────────────────────────────────────────────────
+
+describe('POST /api/creator/click', () => {
+  it('rejects missing code', async () => {
+    const res = await request(app)
+      .post('/api/creator/click')
+      .send({});
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 404 for unknown code', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .post('/api/creator/click')
+      .send({ code: 'UNKNOWN1' });
+    expect(res.status).toBe(404);
+  });
+
+  it('tracks click for valid code', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: AFF_LINK_ID }] }) // link lookup
+      .mockResolvedValueOnce({ rows: [] })                     // insert click
+      .mockResolvedValueOnce({ rows: [] });                    // increment counter
+
+    const res = await request(app)
+      .post('/api/creator/click')
+      .send({ code: AFF_CODE });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('tracked', true);
+  });
+});
+
+// ─── GET /api/creator/stats ───────────────────────────────────────────────────
+
+describe('GET /api/creator/stats', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/creator/stats');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns creator dashboard stats', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ total_links: '3', total_clicks: '42' }] })
+      .mockResolvedValueOnce({ rows: [{ total_commissions: '5', total_earned: '150.00', pending: '50.00', approved: '75.00', paid: '25.00' }] })
+      .mockResolvedValueOnce({ rows: [{ clicks_30d: '12' }] });
+
+    const res = await request(app)
+      .get('/api/creator/stats')
+      .set('Authorization', `Bearer ${creatorToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total_links', 3);
+    expect(res.body).toHaveProperty('total_clicks', 42);
+    expect(res.body).toHaveProperty('pending_commission', 50);
+  });
+});
+
+// ─── GET /api/creator/commissions ────────────────────────────────────────────
+
+describe('GET /api/creator/commissions', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/creator/commissions');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns commissions list for creator', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '2' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'comm-1', amount: '75.00', rate: '10', status: 'approved', created_at: new Date(), order_id: ORDER_ID, order_total: '750.00', affiliate_code: AFF_CODE, product_name: 'Test' }] });
+
+    const res = await request(app)
+      .get('/api/creator/commissions')
+      .set('Authorization', `Bearer ${creatorToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('commissions');
+    expect(res.body.total).toBe(2);
+  });
+});
+
+// ─── POST /api/creator/payouts ────────────────────────────────────────────────
+
+describe('POST /api/creator/payouts', () => {
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .post('/api/creator/payouts')
+      .send({ amount: 50 });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects amount exceeding balance', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ approved_balance: '30.00' }] });
+    const res = await request(app)
+      .post('/api/creator/payouts')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({ amount: 100 });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('available_balance');
+  });
+
+  it('creates payout request', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ approved_balance: '200.00' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'payout-1', creator_id: CREATOR_ID, amount: '100.00', status: 'pending' }] });
+
+    const res = await request(app)
+      .post('/api/creator/payouts')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({ amount: 100 });
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('payout');
+    expect(res.body.payout.status).toBe('pending');
+  });
+});
+
+// ─── GET /api/creator/payouts ─────────────────────────────────────────────────
+
+describe('GET /api/creator/payouts', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/creator/payouts');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns payout history', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'payout-1', amount: '100.00', status: 'pending', created_at: new Date() }] });
+
+    const res = await request(app)
+      .get('/api/creator/payouts')
+      .set('Authorization', `Bearer ${creatorToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('payouts');
+    expect(res.body.total).toBe(1);
+  });
+});
+
+// ─── GET /api/creator/top-products ───────────────────────────────────────────
+
+describe('GET /api/creator/top-products', () => {
+  it('returns top affiliate products without auth', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ shop_product_id: SHOP_PROD_ID, name: 'Test', commission_rate: 10, store_slug: 'sklep', affiliate_count: '2', order_count: '5' }] });
+    const res = await request(app).get('/api/creator/top-products');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('products');
+    expect(res.body.products.length).toBe(1);
+  });
+});
+
+// ─── GET /api/creator/leaderboard ────────────────────────────────────────────
+
+describe('GET /api/creator/leaderboard', () => {
+  it('returns leaderboard without auth', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: CREATOR_ID, name: 'Creator', links_count: '3', total_clicks: '42', orders_referred: '5', total_earned: '150.00' }] });
+    const res = await request(app).get('/api/creator/leaderboard');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('leaderboard');
+    expect(res.body.leaderboard.length).toBe(1);
+  });
+});
+
+// ─── POST /api/creator/generate/copy ─────────────────────────────────────────
+
+describe('POST /api/creator/generate/copy', () => {
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .post('/api/creator/generate/copy')
+      .send({ shop_product_id: SHOP_PROD_ID });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 for non-affiliate product', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .post('/api/creator/generate/copy')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({ shop_product_id: SHOP_PROD_ID });
+    expect(res.status).toBe(404);
+  });
+
+  it('generates promotional copy', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ name: 'Fotel', description: 'Wygodny fotel', category: 'meble', price_override: 299.99, commission_rate: 10, store_name: 'Sklep' }],
+    });
+    const res = await request(app)
+      .post('/api/creator/generate/copy')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({ shop_product_id: SHOP_PROD_ID, style: 'tiktok' });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('copy');
+    expect(res.body).toHaveProperty('style', 'tiktok');
+    expect(typeof res.body.copy).toBe('string');
+  });
+});
+
+// ─── POST /api/creator/generate/hook ─────────────────────────────────────────
+
+describe('POST /api/creator/generate/hook', () => {
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .post('/api/creator/generate/hook')
+      .send({ shop_product_id: SHOP_PROD_ID });
+    expect(res.status).toBe(401);
+  });
+
+  it('generates video hook', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ name: 'Fotel', description: 'Wygodny fotel', category: 'meble', price_override: 299.99 }],
+    });
+    const res = await request(app)
+      .post('/api/creator/generate/hook')
+      .set('Authorization', `Bearer ${creatorToken}`)
+      .send({ shop_product_id: SHOP_PROD_ID, platform: 'tiktok' });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('hook');
+    expect(res.body).toHaveProperty('platform', 'tiktok');
+    expect(typeof res.body.hook).toBe('string');
+  });
+});
+
+// ─── GET /api/my/affiliate/products ──────────────────────────────────────────
+
+describe('GET /api/my/affiliate/products', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/my/affiliate/products');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns affiliate products for seller', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID }] })              // store lookup
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] })                // count
+      .mockResolvedValueOnce({ rows: [{ id: SHOP_PROD_ID, affiliate_enabled: false, commission_rate: 10, name: 'Fotel', image_url: null, category: 'meble', price_override: null, affiliate_links_count: '0', pending_commissions: '0', paid_commissions: '0' }] });
+
+    const res = await request(app)
+      .get('/api/my/affiliate/products')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('products');
+    expect(res.body.total).toBe(1);
+  });
+});
+
+// ─── PATCH /api/my/affiliate/products/:id ────────────────────────────────────
+
+describe('PATCH /api/my/affiliate/products/:id', () => {
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .patch(`/api/my/affiliate/products/${SHOP_PROD_ID}`)
+      .send({ affiliate_enabled: true });
+    expect(res.status).toBe(401);
+  });
+
+  it('enables affiliate for a product', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID }] })              // store lookup
+      .mockResolvedValueOnce({ rows: [{ id: SHOP_PROD_ID }] })          // product in store
+      .mockResolvedValueOnce({ rows: [{ id: SHOP_PROD_ID, affiliate_enabled: true, commission_rate: 15 }] }); // update
+
+    const res = await request(app)
+      .patch(`/api/my/affiliate/products/${SHOP_PROD_ID}`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ affiliate_enabled: true, commission_rate: 15 });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('affiliate_enabled', true);
+    expect(res.body).toHaveProperty('commission_rate', 15);
+  });
+
+  it('returns 404 for product not in seller store', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID }] })   // store lookup
+      .mockResolvedValueOnce({ rows: [] });                   // product not in store
+
+    const res = await request(app)
+      .patch(`/api/my/affiliate/products/${SHOP_PROD_ID}`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ affiliate_enabled: true });
+    expect(res.status).toBe(404);
+  });
+});
+
+// ─── GET /api/my/affiliate/stats ─────────────────────────────────────────────
+
+describe('GET /api/my/affiliate/stats', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/my/affiliate/stats');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns affiliate stats for seller', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID }] })
+      .mockResolvedValueOnce({ rows: [{ total_links: '2', total_clicks: '20' }] })
+      .mockResolvedValueOnce({ rows: [{ total_commissions: '100.00', pending: '50.00', approved: '30.00', paid: '20.00' }] })
+      .mockResolvedValueOnce({ rows: [{ clicks_30d: '10' }] });
+
+    const res = await request(app)
+      .get('/api/my/affiliate/stats')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total_links', 2);
+    expect(res.body).toHaveProperty('pending_commission', 50);
+  });
+});
+
+// ─── GET /api/my/affiliate/commissions ───────────────────────────────────────
+
+describe('GET /api/my/affiliate/commissions', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/my/affiliate/commissions');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns commissions list for seller', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID }] })
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'comm-1', amount: '50.00', rate: '10', status: 'pending', created_at: new Date(), creator_name: 'Creator', product_name: 'Fotel', order_id: ORDER_ID }] });
+
+    const res = await request(app)
+      .get('/api/my/affiliate/commissions')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('commissions');
+    expect(res.body.total).toBe(1);
+  });
+});

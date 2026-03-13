@@ -26,6 +26,7 @@ const referralRouter = require('./routes/referral').router;
 const referralsRouter = require('./routes/referrals');
 const scriptsRouter = require('./routes/scripts');
 const analyticsRouter = require('./routes/analytics');
+const creatorRouter = require('./routes/creator');
 const { importSupplierProducts } = require('./services/supplier-import');
 const { getPromoSlots } = require('./helpers/promo');
 const db = require('./config/database');
@@ -225,6 +226,7 @@ app.use('/api/referral', referralRouter);
 app.use('/api/referrals', referralsRouter);
 app.use('/api/scripts', scriptsRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/creator', creatorRouter);
 
 // ─── Public promo slots feed ───────────────────────────────────────────────────
 // Shows how many early-access slots remain at each promotional tier.

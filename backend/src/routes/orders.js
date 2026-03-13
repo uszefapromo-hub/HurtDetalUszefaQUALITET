@@ -77,10 +77,11 @@ router.post(
     body('items.*.product_id').isUUID(),
     body('items.*.quantity').isInt({ min: 1 }),
     body('shipping_address').notEmpty(),
+    body('affiliate_code').optional().trim(),
   ],
   validate,
   async (req, res) => {
-    const { store_id, items, shipping_address, notes = '' } = req.body;
+    const { store_id, items, shipping_address, notes = '', affiliate_code = null } = req.body;
     // Sanitize user-supplied free-text to prevent stored XSS
     const safeAddress = sanitizeText(shipping_address);
     const safeNotes = sanitizeText(notes);
@@ -164,10 +165,10 @@ router.post(
           `INSERT INTO orders
              (id, store_id, store_owner_id, buyer_id, status, subtotal, platform_fee,
               order_total, platform_commission, seller_revenue, total,
-              shipping_address, notes, created_at)
-           VALUES ($1,$2,$3,$4,'created',$5,$6,$7,$8,$9,$10,$11,$12,NOW())`,
+              shipping_address, notes, affiliate_code, created_at)
+           VALUES ($1,$2,$3,$4,'created',$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW())`,
           [orderId, store_id, store.owner_id, req.user.id, subtotal.toFixed(2), platformFee,
-           orderTotal, platform_commission, seller_revenue, orderTotal, safeAddress, safeNotes]
+           orderTotal, platform_commission, seller_revenue, orderTotal, safeAddress, safeNotes, affiliate_code || null]
         );
 
         for (const oi of orderItems) {
@@ -189,6 +190,34 @@ router.post(
 
       const newOrder = await db.query('SELECT * FROM orders WHERE id = $1', [createdOrderId]);
       const newItems = await db.query('SELECT * FROM order_items WHERE order_id = $1', [createdOrderId]);
+
+      // ── Affiliate commission attribution ──────────────────────────────────
+      if (affiliate_code) {
+        try {
+          const linkResult = await db.query(
+            `SELECT al.id AS link_id, al.creator_id, sp.commission_rate, sp.id AS shop_product_id
+             FROM affiliate_links al
+             JOIN shop_products sp ON sp.id = al.shop_product_id
+             WHERE al.code = $1 AND al.active = TRUE AND sp.affiliate_enabled = TRUE
+             LIMIT 1`,
+            [affiliate_code]
+          );
+          const link = linkResult.rows[0];
+          if (link) {
+            const orderTotal = parseFloat(newOrder.rows[0].total);
+            const commissionAmount = parseFloat((orderTotal * (link.commission_rate / 100)).toFixed(2));
+            await db.query(
+              `INSERT INTO affiliate_commissions (id, link_id, order_id, creator_id, amount, rate, status, created_at)
+               VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())`,
+              [uuidv4(), link.link_id, createdOrderId, link.creator_id, commissionAmount, link.commission_rate]
+            );
+          }
+        } catch (affErr) {
+          // Non-critical – log but do not fail the order
+          console.error('affiliate commission attribution error:', affErr.message);
+        }
+      }
+
       auditLog({
         actorUserId: req.user.id,
         action: 'order.created',
