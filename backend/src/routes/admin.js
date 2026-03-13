@@ -15,6 +15,7 @@ const { PLAN_CONFIG } = require('./subscriptions');
 const { upsertSupplierProducts, fetchSupplierProducts } = require('../services/supplier-import');
 const { computePlatformPrice, dbTiersToArray, DEFAULT_PLATFORM_TIERS } = require('../helpers/pricing');
 const { getPromoSlots } = require('../helpers/promo');
+const { sendAnnouncementEmail } = require('../services/email');
 
 // Optional nodemailer for SMTP mail dispatch (e.g. Proton Mail Bridge).
 // Loaded once at startup; null when the package is not installed.
@@ -1155,6 +1156,53 @@ router.patch(
   }
 );
 
+// ─── POST /api/admin/broadcast – send email announcement to all users ─────────
+
+router.post(
+  '/broadcast',
+  authenticate,
+  requireRole('owner', 'admin'),
+  [
+    body('subject').trim().notEmpty(),
+    body('message').trim().notEmpty(),
+    body('role_filter').optional().isIn(['all', 'seller', 'buyer', 'admin']),
+  ],
+  validate,
+  async (req, res) => {
+    const { subject, message, role_filter = 'all' } = req.body;
+    try {
+      const result = role_filter === 'all'
+        ? await db.query(
+            'SELECT id, email, name FROM users ORDER BY created_at DESC LIMIT 500'
+          )
+        : await db.query(
+            'SELECT id, email, name FROM users WHERE role = $1 ORDER BY created_at DESC LIMIT 500',
+            [role_filter]
+          );
+      const users = result.rows;
+
+      // Fire-and-forget: send all emails asynchronously, do not block the response
+      for (const user of users) {
+        sendAnnouncementEmail({
+          to:      user.email,
+          name:    user.name,
+          subject,
+          message,
+        }).catch((err) => console.error(`[broadcast] email to ${user.email} failed:`, err.message));
+      }
+
+      return res.json({
+        ok:      true,
+        queued:  users.length,
+        message: `Wysłano wiadomość do ${users.length} użytkownik${users.length === 1 ? 'a' : 'ów'}.`,
+      });
+    } catch (err) {
+      console.error('admin broadcast error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
 // ─── GET /api/admin/announcements – list all announcements ───────────────────
 
 router.get('/announcements', authenticate, requireRole('owner', 'admin'), async (req, res) => {
@@ -1377,6 +1425,7 @@ router.get('/mail', authenticate, requireRole('owner', 'admin'), async (req, res
     return res.status(500).json({ error: 'Błąd serwera' });
   }
 });
+
 
 module.exports = router;
 
