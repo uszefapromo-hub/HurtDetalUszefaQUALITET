@@ -753,4 +753,79 @@ router.get(
   }
 );
 
+// ─── GET /api/affiliate/analytics ────────────────────────────────────────────
+// Per-link analytics for the authenticated creator: clicks and conversions over time
+
+router.get('/analytics', authenticate, async (req, res) => {
+  const days  = Math.min(90, Math.max(7, parseInt(req.query.days || '30', 10)))
+  const page  = Math.max(1, parseInt(req.query.page  || '1',  10))
+  const limit = Math.min(100, parseInt(req.query.limit || '20', 10))
+  const offset = (page - 1) * limit
+
+  try {
+    const [overview, daily, topLinks] = await Promise.all([
+      // Summary totals for this creator
+      db.query(
+        `SELECT
+           COUNT(DISTINCT al.id)            AS total_links,
+           COALESCE(SUM(ac.cnt), 0)         AS total_clicks,
+           COUNT(DISTINCT aconv.id)         AS total_conversions,
+           COALESCE(SUM(aconv.commission_amount), 0) AS total_earnings
+         FROM affiliate_links al
+         LEFT JOIN (
+           SELECT link_id, COUNT(*) AS cnt FROM affiliate_clicks GROUP BY link_id
+         ) ac ON ac.link_id = al.id
+         LEFT JOIN affiliate_conversions aconv ON aconv.link_id = al.id
+         WHERE al.creator_id = $1`,
+        [req.user.id]
+      ),
+      // Daily breakdown
+      db.query(
+        `SELECT DATE(ac.created_at) AS day,
+                COUNT(*)            AS clicks
+         FROM affiliate_clicks ac
+         JOIN affiliate_links al ON al.id = ac.link_id
+         WHERE al.creator_id = $1
+           AND ac.created_at >= NOW() - ($2 || ' days')::INTERVAL
+         GROUP BY DATE(ac.created_at)
+         ORDER BY day DESC`,
+        [req.user.id, days]
+      ),
+      // Top performing links
+      db.query(
+        `SELECT al.id, al.code, al.product_id,
+                p.name            AS product_name,
+                COUNT(DISTINCT ac.id)::int   AS clicks,
+                COUNT(DISTINCT aconv.id)::int AS conversions,
+                COALESCE(SUM(aconv.commission_amount), 0) AS earnings
+         FROM affiliate_links al
+         LEFT JOIN products p              ON p.id = al.product_id
+         LEFT JOIN affiliate_clicks ac     ON ac.link_id = al.id
+         LEFT JOIN affiliate_conversions aconv ON aconv.link_id = al.id
+         WHERE al.creator_id = $1
+         GROUP BY al.id, al.code, al.product_id, p.name
+         ORDER BY clicks DESC
+         LIMIT $2 OFFSET $3`,
+        [req.user.id, limit, offset]
+      ),
+    ])
+
+    return res.json({
+      overview: {
+        total_links:       parseInt(overview.rows[0].total_links, 10),
+        total_clicks:      parseInt(overview.rows[0].total_clicks, 10),
+        total_conversions: parseInt(overview.rows[0].total_conversions, 10),
+        total_earnings:    parseFloat(overview.rows[0].total_earnings),
+      },
+      daily:     daily.rows,
+      top_links: topLinks.rows,
+      page,
+      limit,
+    })
+  } catch (err) {
+    console.error('affiliate analytics error:', err.message)
+    return res.status(500).json({ error: 'Błąd serwera' })
+  }
+})
+
 module.exports = router;

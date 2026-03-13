@@ -161,6 +161,79 @@ async function postStoreDescription(req, res, next) {
   }
 }
 
+/**
+ * POST /api/ai/generate-store
+ * Body: { niche, target_audience?, style? }
+ */
+const generateStoreValidators = [
+  body('niche').notEmpty().withMessage('Nisza/branża jest wymagana').isLength({ max: 200 }),
+  body('target_audience').optional().isLength({ max: 200 }),
+  body('style').optional().isIn(['nowoczesny', 'minimalistyczny', 'luksusowy', 'przyjazny', 'sportowy']),
+]
+
+async function postGenerateStore(req, res, next) {
+  if (validationErrors(req, res)) return
+  try {
+    const result = await AiService.generateStore({
+      userId: req.user.id,
+      niche: req.body.niche,
+      targetAudience: req.body.target_audience || '',
+      style: req.body.style || 'nowoczesny',
+    })
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/ai/marketing-copy
+ * Body: { product_name, copy_type?, target_audience?, tone? }
+ */
+const marketingCopyValidators = [
+  body('product_name').notEmpty().withMessage('Nazwa produktu jest wymagana').isLength({ max: 200 }),
+  body('copy_type').optional().isIn(['ad', 'email', 'social_post', 'sms']),
+  body('target_audience').optional().isLength({ max: 200 }),
+  body('tone').optional().isLength({ max: 100 }),
+]
+
+async function postMarketingCopy(req, res, next) {
+  if (validationErrors(req, res)) return
+  try {
+    const result = await AiService.generateMarketingCopy({
+      userId: req.user.id,
+      productName: req.body.product_name,
+      copyType: req.body.copy_type || 'ad',
+      targetAudience: req.body.target_audience || '',
+      tone: req.body.tone || 'przekonujący',
+    })
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/ai/trends
+ * Returns top trending products by trend_score
+ */
+const trendsValidators = [
+  query('limit').optional().isInt({ min: 1, max: 100 }),
+  query('offset').optional().isInt({ min: 0 }),
+]
+
+async function getTrends(req, res, next) {
+  if (validationErrors(req, res)) return
+  try {
+    const limit  = Math.min(100, parseInt(req.query.limit, 10) || 20)
+    const offset = parseInt(req.query.offset, 10) || 0
+    const trends = await AiModel.getProductTrends({ limit, offset })
+    res.json({ trends })
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   chatValidators,
   postChat,
@@ -173,4 +246,10 @@ module.exports = {
   postProductDescription,
   storeDescriptionValidators,
   postStoreDescription,
+  generateStoreValidators,
+  postGenerateStore,
+  marketingCopyValidators,
+  postMarketingCopy,
+  trendsValidators,
+  getTrends,
 }

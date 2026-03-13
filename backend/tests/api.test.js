@@ -5556,3 +5556,516 @@ describe('POST /api/ai/store-description', () => {
     expect(res.body).toHaveProperty('description');
   });
 });
+
+// ─── Users profile endpoints ───────────────────────────────────────────────────
+
+describe('GET /api/users/profile', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/users/profile');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns user profile with extended profile data', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: SELLER_ID, email: 'seller@test.pl', name: 'Seller', role: 'seller', plan: 'basic' }] })
+      .mockResolvedValueOnce({ rows: [{ bio: 'Test bio', country: 'PL', language: 'pl', social_links: {} }] });
+
+    const res = await request(app)
+      .get('/api/users/profile')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('id', SELLER_ID);
+    expect(res.body).toHaveProperty('profile');
+  });
+
+  it('returns null profile when no extended profile exists', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: SELLER_ID, email: 'seller@test.pl', name: 'Seller', role: 'seller', plan: 'basic' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .get('/api/users/profile')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.profile).toBeNull();
+  });
+});
+
+describe('PUT /api/users/profile', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).put('/api/users/profile').send({ name: 'New Name' });
+    expect(res.status).toBe(401);
+  });
+
+  it('updates user profile fields', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: SELLER_ID, email: 'seller@test.pl', name: 'New Name', phone: null, role: 'seller', plan: 'basic' }] })
+      .mockResolvedValueOnce({ rows: [{ user_id: SELLER_ID, bio: 'My bio', country: 'PL', language: 'pl', social_links: {} }] });
+
+    const res = await request(app)
+      .put('/api/users/profile')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ name: 'New Name', bio: 'My bio', country: 'PL', language: 'pl' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('name', 'New Name');
+  });
+
+  it('updates only user fields when no extended profile data provided', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: SELLER_ID, email: 'seller@test.pl', name: 'Updated', phone: null, role: 'seller', plan: 'basic' }] });
+
+    const res = await request(app)
+      .put('/api/users/profile')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ name: 'Updated' });
+
+    expect(res.status).toBe(200);
+  });
+});
+
+// ─── Payments: checkout and history ───────────────────────────────────────────
+
+describe('POST /api/payments/checkout', () => {
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .post('/api/payments/checkout')
+      .send({ order_id: ORDER_ID });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects missing order_id', async () => {
+    const res = await request(app)
+      .post('/api/payments/checkout')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({});
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 404 for unknown order', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .post('/api/payments/checkout')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ order_id: ORDER_ID });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('creates a checkout payment and returns provider data', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: ORDER_ID, buyer_id: SELLER_ID, total: 141.45, status: 'created' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'pay-1', order_id: ORDER_ID, user_id: SELLER_ID, amount: 141.45, method: 'stripe', status: 'pending' }] });
+
+    const res = await request(app)
+      .post('/api/payments/checkout')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ order_id: ORDER_ID });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('payment');
+    expect(res.body).toHaveProperty('provider');
+  });
+
+  it('returns 422 for already-paid order', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: ORDER_ID, buyer_id: SELLER_ID, total: 141.45, status: 'paid' }] });
+
+    const res = await request(app)
+      .post('/api/payments/checkout')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ order_id: ORDER_ID });
+
+    expect(res.status).toBe(422);
+  });
+});
+
+describe('GET /api/payments/history', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/payments/history');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns payment history for authenticated user', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '2' }] })
+      .mockResolvedValueOnce({ rows: [
+        { id: 'pay-1', order_id: ORDER_ID, user_id: SELLER_ID, amount: 141.45, status: 'paid', order_status: 'paid' },
+        { id: 'pay-2', order_id: ORDER_ID, user_id: SELLER_ID, amount: 50.00, status: 'pending', order_status: 'created' },
+      ]});
+
+    const res = await request(app)
+      .get('/api/payments/history')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total', 2);
+    expect(res.body).toHaveProperty('payments');
+    expect(Array.isArray(res.body.payments)).toBe(true);
+  });
+});
+
+// ─── Affiliate analytics ───────────────────────────────────────────────────────
+
+describe('GET /api/affiliate/analytics', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/affiliate/analytics');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns affiliate analytics for authenticated creator', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ total_links: '3', total_clicks: '50', total_conversions: '5', total_earnings: '120.00' }] })
+      .mockResolvedValueOnce({ rows: [{ day: '2026-03-10', clicks: '10' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'link-1', code: 'ABC123', product_id: PRODUCT_ID, product_name: 'Fotel', clicks: 25, conversions: 3, earnings: '72.00' }] });
+
+    const res = await request(app)
+      .get('/api/affiliate/analytics')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('overview');
+    expect(res.body).toHaveProperty('daily');
+    expect(res.body).toHaveProperty('top_links');
+    expect(res.body.overview.total_links).toBe(3);
+  });
+});
+
+// ─── AI: generate-store, marketing-copy, trends ───────────────────────────────
+
+describe('POST /api/ai/generate-store', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/ai/generate-store').send({ niche: 'Moda' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects missing niche', async () => {
+    const res = await request(app)
+      .post('/api/ai/generate-store')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('returns generated store concept', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 'log-1' }] });
+
+    const res = await request(app)
+      .post('/api/ai/generate-store')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ niche: 'Elektronika', target_audience: 'Gamers', style: 'nowoczesny' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('store');
+  });
+});
+
+describe('POST /api/ai/marketing-copy', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/ai/marketing-copy').send({ product_name: 'Fotel' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects missing product_name', async () => {
+    const res = await request(app)
+      .post('/api/ai/marketing-copy')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('returns generated marketing copy', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 'log-2' }] });
+
+    const res = await request(app)
+      .post('/api/ai/marketing-copy')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ product_name: 'Fotel gamingowy', copy_type: 'social_post' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('copy');
+    expect(res.body.copy_type).toBe('social_post');
+  });
+});
+
+describe('GET /api/ai/trends', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/ai/trends');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns trending products list', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        { product_id: PRODUCT_ID, trend_score: '95.50', views: 1000, sales: 50, product_name: 'Fotel', price: '141.45' },
+      ],
+    });
+
+    const res = await request(app)
+      .get('/api/ai/trends')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('trends');
+    expect(Array.isArray(res.body.trends)).toBe(true);
+  });
+});
+
+// ─── Admin: affiliate and payments ────────────────────────────────────────────
+
+describe('GET /api/admin/affiliate', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/admin/affiliate');
+    expect(res.status).toBe(401);
+  });
+
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin/affiliate')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns platform-wide affiliate stats', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '42' }] })
+      .mockResolvedValueOnce({ rows: [{ count: '1200' }] })
+      .mockResolvedValueOnce({ rows: [{ count: '80', total_paid: '2400.00' }] })
+      .mockResolvedValueOnce({ rows: [{ count: '5', total_amount: '500.00' }] });
+
+    const res = await request(app)
+      .get('/api/admin/affiliate')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('active_links', 42);
+    expect(res.body).toHaveProperty('total_clicks', 1200);
+    expect(res.body).toHaveProperty('total_commissions_paid', 2400);
+  });
+});
+
+describe('GET /api/admin/payments', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/admin/payments');
+    expect(res.status).toBe(401);
+  });
+
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin/payments')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns paginated payments list', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '5' }] })
+      .mockResolvedValueOnce({ rows: [
+        { id: 'pay-1', order_id: ORDER_ID, user_id: SELLER_ID, amount: 141.45, status: 'paid' },
+      ]});
+
+    const res = await request(app)
+      .get('/api/admin/payments')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total', 5);
+    expect(res.body).toHaveProperty('payments');
+  });
+});
+
+// ─── Notifications ─────────────────────────────────────────────────────────────
+
+describe('GET /api/notifications', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/notifications');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns list of notifications for authenticated user', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '2' }] })
+      .mockResolvedValueOnce({ rows: [
+        { id: 'notif-1', title: 'Test', message: 'Hello', status: 'unread', created_at: new Date() },
+      ]});
+
+    const res = await request(app)
+      .get('/api/notifications')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total', 2);
+    expect(res.body).toHaveProperty('notifications');
+  });
+});
+
+describe('PATCH /api/notifications/:id/read', () => {
+  const NOTIF_ID = 'b0000000-0000-4000-8000-000000000001';
+
+  it('requires authentication', async () => {
+    const res = await request(app).patch(`/api/notifications/${NOTIF_ID}/read`);
+    expect(res.status).toBe(401);
+  });
+
+  it('marks notification as read', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: NOTIF_ID, user_id: SELLER_ID, title: 'Test', message: 'Hello', status: 'read', created_at: new Date() }],
+    });
+
+    const res = await request(app)
+      .patch(`/api/notifications/${NOTIF_ID}/read`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('read');
+  });
+
+  it('returns 404 for notification not owned by user', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .patch(`/api/notifications/${NOTIF_ID}/read`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/notifications/read-all', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/notifications/read-all');
+    expect(res.status).toBe(401);
+  });
+
+  it('marks all notifications as read', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .post('/api/notifications/read-all')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+});
+
+// ─── Analytics events ──────────────────────────────────────────────────────────
+
+describe('POST /api/analytics/events', () => {
+  it('rejects invalid event_type', async () => {
+    const res = await request(app)
+      .post('/api/analytics/events')
+      .send({ event_type: 'unknown_event' });
+    expect(res.status).toBe(400);
+  });
+
+  it('tracks a product_view event anonymously', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: 'evt-1', event_type: 'product_view', created_at: new Date() }],
+    });
+
+    const res = await request(app)
+      .post('/api/analytics/events')
+      .send({ event_type: 'product_view', event_data: { product_id: PRODUCT_ID } });
+
+    expect(res.status).toBe(201);
+    expect(res.body.event_type).toBe('product_view');
+  });
+
+  it('tracks an add_to_cart event with auth', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: 'evt-2', event_type: 'add_to_cart', created_at: new Date() }],
+    });
+
+    const res = await request(app)
+      .post('/api/analytics/events')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ event_type: 'add_to_cart', event_data: { product_id: PRODUCT_ID, quantity: 1 } });
+
+    expect(res.status).toBe(201);
+  });
+});
+
+// ─── Store settings ────────────────────────────────────────────────────────────
+
+describe('GET /api/stores/:id/settings', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get(`/api/stores/${STORE_ID}/settings`);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns default settings when none are configured', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })  // store exists
+      .mockResolvedValueOnce({ rows: [] });                          // no settings row
+
+    const res = await request(app)
+      .get(`/api/stores/${STORE_ID}/settings`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('theme');
+    expect(res.body).toHaveProperty('currency');
+  });
+
+  it('returns configured store settings', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'ss-1', store_id: STORE_ID, theme: 'dark', primary_color: '#000', secondary_color: '#fff', currency: 'EUR' }] });
+
+    const res = await request(app)
+      .get(`/api/stores/${STORE_ID}/settings`)
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.theme).toBe('dark');
+    expect(res.body.currency).toBe('EUR');
+  });
+});
+
+describe('PUT /api/stores/:id/settings', () => {
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .put(`/api/stores/${STORE_ID}/settings`)
+      .send({ theme: 'dark' });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 for non-existent store', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .put(`/api/stores/${STORE_ID}/settings`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ theme: 'dark' });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 403 when not the store owner', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ owner_id: ADMIN_ID }] });
+
+    const res = await request(app)
+      .put(`/api/stores/${STORE_ID}/settings`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ theme: 'dark' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('updates store settings successfully', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'ss-1', store_id: STORE_ID, theme: 'dark', primary_color: '#111', secondary_color: '#eee', currency: 'PLN' }] });
+
+    const res = await request(app)
+      .put(`/api/stores/${STORE_ID}/settings`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ theme: 'dark', primary_color: '#111111', currency: 'PLN' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.theme).toBe('dark');
+  });
+});

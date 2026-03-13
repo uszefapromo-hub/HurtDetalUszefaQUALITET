@@ -92,6 +92,37 @@ async function logGeneration({ userId, type, prompt, result: resultText, tokensU
   return row.rows[0]
 }
 
+// ─── Product trends ────────────────────────────────────────────────────────────
+
+async function getProductTrends({ limit = 20, offset = 0 } = {}) {
+  const result = await db.query(
+    `SELECT pt.product_id, pt.trend_score, pt.views, pt.sales, pt.updated_at,
+            p.name AS product_name, p.price_gross AS price
+     FROM product_trends pt
+     JOIN products p ON p.id = pt.product_id
+     ORDER BY pt.trend_score DESC
+     LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  )
+  return result.rows
+}
+
+async function upsertProductTrend({ productId, views, sales }) {
+  const result = await db.query(
+    `INSERT INTO product_trends (product_id, views, sales, trend_score, updated_at)
+     VALUES ($1, $2, $3, ($2 * 1 + $3 * 10)::numeric, NOW())
+     ON CONFLICT (product_id) DO UPDATE SET
+       views       = product_trends.views + EXCLUDED.views,
+       sales       = product_trends.sales + EXCLUDED.sales,
+       trend_score = (product_trends.views + EXCLUDED.views) * 1
+                   + (product_trends.sales + EXCLUDED.sales) * 10,
+       updated_at  = NOW()
+     RETURNING *`,
+    [productId, views || 0, sales || 0]
+  )
+  return result.rows[0]
+}
+
 module.exports = {
   createConversation,
   listConversations,
@@ -101,4 +132,6 @@ module.exports = {
   addMessage,
   listMessages,
   logGeneration,
+  getProductTrends,
+  upsertProductTrend,
 }

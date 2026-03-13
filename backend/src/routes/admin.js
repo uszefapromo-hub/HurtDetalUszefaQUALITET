@@ -1557,3 +1557,66 @@ router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), asy
     finished_at: new Date(),
   });
 });
+
+// ─── GET /api/admin/affiliate – platform-wide affiliate overview ──────────────
+
+router.get('/affiliate', authenticate, requireRole('owner', 'admin'), async (_req, res) => {
+  try {
+    const [links, clicks, conversions, withdrawals] = await Promise.all([
+      db.query('SELECT COUNT(*) FROM affiliate_links WHERE is_active = TRUE'),
+      db.query('SELECT COUNT(*) FROM affiliate_clicks'),
+      db.query(
+        `SELECT COUNT(*) AS count,
+                COALESCE(SUM(commission_amount), 0) AS total_paid
+         FROM affiliate_conversions WHERE status = 'confirmed'`
+      ),
+      db.query(
+        `SELECT COUNT(*) AS count,
+                COALESCE(SUM(amount), 0) AS total_amount
+         FROM affiliate_withdrawals WHERE status = 'pending'`
+      ),
+    ]);
+    return res.json({
+      active_links:              parseInt(links.rows[0].count, 10),
+      total_clicks:              parseInt(clicks.rows[0].count, 10),
+      confirmed_conversions:     parseInt(conversions.rows[0].count, 10),
+      total_commissions_paid:    parseFloat(conversions.rows[0].total_paid),
+      pending_withdrawals:       parseInt(withdrawals.rows[0].count, 10),
+      pending_withdrawal_amount: parseFloat(withdrawals.rows[0].total_amount),
+    });
+  } catch (err) {
+    console.error('admin affiliate error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── GET /api/admin/payments – platform-wide payments list ───────────────────
+
+router.get('/payments', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  const page   = Math.max(1, parseInt(req.query.page  || '1',  10));
+  const limit  = Math.min(100, parseInt(req.query.limit || '20', 10));
+  const offset = (page - 1) * limit;
+  const status = req.query.status || null;
+
+  try {
+    const countResult = status
+      ? await db.query('SELECT COUNT(*) FROM payments WHERE status = $1', [status])
+      : await db.query('SELECT COUNT(*) FROM payments');
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const result = status
+      ? await db.query(
+          'SELECT * FROM payments WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+          [status, limit, offset]
+        )
+      : await db.query(
+          'SELECT * FROM payments ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+          [limit, offset]
+        );
+
+    return res.json({ total, page, limit, payments: result.rows });
+  } catch (err) {
+    console.error('admin payments error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});

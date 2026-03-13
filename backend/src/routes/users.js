@@ -199,6 +199,88 @@ router.put(
   }
 );
 
+// ─── GET /api/users/profile – alias for /me ───────────────────────────────────
+
+router.get('/profile', authenticate, async (req, res) => {
+  try {
+    const [userResult, profileResult] = await Promise.all([
+      db.query(
+        'SELECT id, email, name, role, plan, trial_ends_at, created_at FROM users WHERE id = $1',
+        [req.user.id]
+      ),
+      db.query(
+        'SELECT bio, country, language, social_links FROM user_profiles WHERE user_id = $1',
+        [req.user.id]
+      ),
+    ]);
+    if (!userResult.rows[0]) {
+      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    }
+    return res.json({
+      ...userResult.rows[0],
+      profile: profileResult.rows[0] || null,
+    });
+  } catch (err) {
+    console.error('get profile error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── PUT /api/users/profile – update extended profile ─────────────────────────
+
+router.put(
+  '/profile',
+  authenticate,
+  [
+    body('name').optional().trim().notEmpty(),
+    body('phone').optional().isMobilePhone(),
+    body('bio').optional().trim(),
+    body('country').optional().trim(),
+    body('language').optional().isLength({ min: 2, max: 10 }),
+    body('social_links').optional().isObject(),
+  ],
+  validate,
+  async (req, res) => {
+    const { name, phone, bio, country, language, social_links } = req.body;
+    try {
+      const userResult = await db.query(
+        `UPDATE users SET
+           name       = COALESCE($1, name),
+           phone      = COALESCE($2, phone),
+           updated_at = NOW()
+         WHERE id = $3
+         RETURNING id, email, name, phone, role, plan`,
+        [name || null, phone || null, req.user.id]
+      );
+
+      if (bio !== undefined || country !== undefined || language !== undefined || social_links !== undefined) {
+        await db.query(
+          `INSERT INTO user_profiles (user_id, bio, country, language, social_links, updated_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())
+           ON CONFLICT (user_id) DO UPDATE SET
+             bio          = COALESCE(EXCLUDED.bio, user_profiles.bio),
+             country      = COALESCE(EXCLUDED.country, user_profiles.country),
+             language     = COALESCE(EXCLUDED.language, user_profiles.language),
+             social_links = COALESCE(EXCLUDED.social_links, user_profiles.social_links),
+             updated_at   = NOW()`,
+          [
+            req.user.id,
+            bio !== undefined ? bio : null,
+            country !== undefined ? country : null,
+            language !== undefined ? language : null,
+            social_links !== undefined ? JSON.stringify(social_links) : null,
+          ]
+        );
+      }
+
+      return res.json(userResult.rows[0]);
+    } catch (err) {
+      console.error('update profile error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
 // ─── Admin: list all users ─────────────────────────────────────────────────────
 
 router.get('/', authenticate, requireRole('owner', 'admin'), async (req, res) => {

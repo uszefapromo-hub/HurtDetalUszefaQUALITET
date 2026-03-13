@@ -31,4 +31,8 @@ router.delete('/conversations/:id', ctrl.getConversationValidators, ctrl.deleteC
 router.post('/product-description', ctrl.productDescriptionValidators, ctrl.postProductDescription)
 router.post('/store-description', ctrl.storeDescriptionValidators, ctrl.postStoreDescription)
 
+router.post('/generate-store', ctrl.generateStoreValidators, ctrl.postGenerateStore)
+router.post('/marketing-copy', ctrl.marketingCopyValidators, ctrl.postMarketingCopy)
+router.get('/trends', ctrl.trendsValidators, ctrl.getTrends)
+
 module.exports = router

@@ -59,6 +59,35 @@ router.get('/', authenticate, async (req, res) => {
 
 // ─── Get single payment ────────────────────────────────────────────────────────
 
+router.get('/history', authenticate, async (req, res) => {
+  const page   = Math.max(1, parseInt(req.query.page  || '1',  10));
+  const limit  = Math.min(100, parseInt(req.query.limit || '20', 10));
+  const offset = (page - 1) * limit;
+
+  try {
+    const countResult = await db.query(
+      'SELECT COUNT(*) FROM payments WHERE user_id = $1',
+      [req.user.id]
+    );
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const result = await db.query(
+      `SELECT p.*, o.status AS order_status
+         FROM payments p
+         LEFT JOIN orders o ON o.id = p.order_id
+        WHERE p.user_id = $1
+        ORDER BY p.created_at DESC
+        LIMIT $2 OFFSET $3`,
+      [req.user.id, limit, offset]
+    );
+
+    return res.json({ total, page, limit, payments: result.rows });
+  } catch (err) {
+    console.error('payment history error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM payments WHERE id = $1', [req.params.id]);
@@ -419,6 +448,58 @@ async function buildProviderPayload(method, payment, returnUrl) {
     cancel_url: cancelUrl,
   };
 }
+
+// ─── POST /api/payments/checkout – create a Stripe checkout session ──────────
+// Convenience endpoint: given an order_id returns a Stripe checkout URL.
+
+router.post(
+  '/checkout',
+  authenticate,
+  [
+    body('order_id').isUUID(),
+    body('return_url').optional().isURL(),
+  ],
+  validate,
+  async (req, res) => {
+    const { order_id, return_url = '' } = req.body;
+
+    try {
+      const orderResult = await db.query(
+        'SELECT id, buyer_id, total, status FROM orders WHERE id = $1',
+        [order_id]
+      );
+      const order = orderResult.rows[0];
+      if (!order) return res.status(404).json({ error: 'Zamówienie nie znalezione' });
+
+      const isAdmin = ['owner', 'admin'].includes(req.user.role);
+      if (!isAdmin && order.buyer_id !== req.user.id) {
+        return res.status(403).json({ error: 'Brak uprawnień' });
+      }
+      if (!['pending', 'created'].includes(order.status)) {
+        return res.status(422).json({ error: 'Zamówienie nie może zostać opłacone w obecnym statusie' });
+      }
+
+      const paymentId = uuidv4();
+      const result = await db.query(
+        `INSERT INTO payments
+           (id, order_id, user_id, amount, currency, method, payment_provider, status, created_at)
+         VALUES ($1, $2, $3, $4, 'PLN', 'stripe', 'stripe', 'pending', NOW())
+         RETURNING *`,
+        [paymentId, order_id, req.user.id, order.total]
+      );
+
+      const providerData = await buildProviderPayload('stripe', result.rows[0], return_url);
+
+      return res.status(201).json({
+        payment: result.rows[0],
+        ...providerData,
+      });
+    } catch (err) {
+      console.error('checkout error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
 
 // ─── POST /api/payments/stripe/webhook – Stripe signed webhook ────────────────
 // Verifies the Stripe-Signature header and updates the payment status accordingly.

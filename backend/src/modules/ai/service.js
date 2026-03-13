@@ -193,8 +193,86 @@ async function generateStoreDescription({ userId, storeName, category = '', tone
   return { description: content, tokensUsed }
 }
 
+// ─── Store generator ──────────────────────────────────────────────────────────
+
+/**
+ * Generate a complete store concept (name, tagline, description, color palette).
+ * @param {{ userId: string, niche: string, targetAudience?: string, style?: string }} opts
+ */
+async function generateStore({ userId, niche, targetAudience = '', style = 'nowoczesny' }) {
+  const prompt =
+    `Wygeneruj kompletną koncepcję sklepu internetowego po polsku:\n` +
+    `Nisza/branża: ${niche}\n` +
+    (targetAudience ? `Grupa docelowa: ${targetAudience}\n` : '') +
+    `Styl: ${style}\n` +
+    `\nOdpowiedź w formacie JSON z polami: name (nazwa sklepu), tagline (slogan), ` +
+    `description (opis 2-3 zdania), primary_color (kolor hex), secondary_color (kolor hex).`
+
+  const start = Date.now()
+  const { content, tokensUsed } = await callAiProvider(
+    [
+      { role: 'system', content: 'Jesteś ekspertem od brandingu i marketingu e-commerce. Generujesz koncepcje sklepów w formacie JSON.' },
+      { role: 'user', content: prompt },
+    ],
+    { temperature: 0.85, maxTokens: 500 }
+  )
+  const durationMs = Date.now() - start
+
+  await AiModel.logGeneration({ userId, type: 'store_generator', prompt, result: content, tokensUsed, durationMs })
+
+  // Try to parse JSON from the response
+  let storeData
+  try {
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    storeData = jsonMatch ? JSON.parse(jsonMatch[0]) : { description: content }
+  } catch (_) {
+    storeData = { description: content }
+  }
+
+  return { store: storeData, tokensUsed }
+}
+
+// ─── Marketing copy generator ─────────────────────────────────────────────────
+
+/**
+ * Generate marketing copy (ad, email, social post, etc.).
+ * @param {{ userId: string, productName: string, copyType: string, targetAudience?: string, tone?: string }} opts
+ */
+async function generateMarketingCopy({ userId, productName, copyType = 'ad', targetAudience = '', tone = 'przekonujący' }) {
+  const typeLabels = {
+    ad:           'ogłoszenie reklamowe',
+    email:        'e-mail marketingowy',
+    social_post:  'post w mediach społecznościowych',
+    sms:          'SMS marketingowy',
+  }
+  const typeLabel = typeLabels[copyType] || typeLabels.ad
+
+  const prompt =
+    `Napisz ${typeLabel} po polsku dla produktu:\n` +
+    `Produkt: ${productName}\n` +
+    (targetAudience ? `Odbiorca: ${targetAudience}\n` : '') +
+    `Ton: ${tone}\n` +
+    `\nTekst powinien być krótki, chwytliwy i nakłaniający do działania.`
+
+  const start = Date.now()
+  const { content, tokensUsed } = await callAiProvider(
+    [
+      { role: 'system', content: 'Jesteś copywriterem specjalizującym się w marketingu e-commerce. Piszesz skuteczne teksty reklamowe.' },
+      { role: 'user', content: prompt },
+    ],
+    { temperature: 0.8, maxTokens: 400 }
+  )
+  const durationMs = Date.now() - start
+
+  await AiModel.logGeneration({ userId, type: 'marketing_copy', prompt, result: content, tokensUsed, durationMs })
+
+  return { copy: content, copy_type: copyType, tokensUsed }
+}
+
 module.exports = {
   chat,
   generateProductDescription,
   generateStoreDescription,
+  generateStore,
+  generateMarketingCopy,
 }
