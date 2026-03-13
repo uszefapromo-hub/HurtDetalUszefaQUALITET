@@ -29,6 +29,9 @@ const analyticsRouter = require('./routes/analytics');
 const affiliateRouter = require('./routes/affiliate');
 const creatorRouter = require('./routes/creator');
 const aiRouter = require('./modules/ai/routes');
+const socialRouter = require('./routes/social');
+const gamificationRouter = require('./routes/gamification');
+const collaborationRouter = require('./routes/collaboration');
 const errorHandler = require('./middleware/errorHandler');
 const { importSupplierProducts } = require('./services/supplier-import');
 const { getPromoSlots } = require('./helpers/promo');
@@ -261,6 +264,9 @@ app.use('/api/analytics', analyticsRouter);
 app.use('/api/affiliate', affiliateRouter);
 app.use('/api/creator', creatorRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/social', socialRouter);
+app.use('/api/gamification', gamificationRouter);
+app.use('/api/collaboration', collaborationRouter);
 
 // ─── Public promo slots feed ───────────────────────────────────────────────────
 // Shows how many early-access slots remain at each promotional tier.

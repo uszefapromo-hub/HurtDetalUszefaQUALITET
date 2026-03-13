@@ -5790,3 +5790,191 @@ describe('POST /api/creator/payouts', () => {
     expect(res.body.amount).toBe(50);
   });
 });
+
+// ─── Social Commerce ───────────────────────────────────────────────────────────
+const BUYER_ID  = 'c0000000-0000-4000-8000-000000000010';
+
+describe('GET /api/social/feed', () => {
+  it('returns post feed', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 'p1', content: 'Hello world', like_count: '2', comment_count: '1' }] });
+    const res = await request(app).get('/api/social/feed');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.posts)).toBe(true);
+  });
+});
+
+describe('POST /api/social/posts', () => {
+  let buyerToken;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    buyerToken = signToken({ id: BUYER_ID, email: 'buyer@test.pl', role: 'buyer' });
+  });
+
+  it('requires auth', async () => {
+    const res = await request(app).post('/api/social/posts').send({ content: 'test', post_type: 'general' });
+    expect(res.status).toBe(401);
+  });
+
+  it('creates a post', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 'post-1', content: 'New post', post_type: 'general', user_id: BUYER_ID }] });
+    const res = await request(app)
+      .post('/api/social/posts')
+      .set('Authorization', `Bearer ${buyerToken}`)
+      .send({ content: 'New post', post_type: 'general' });
+    expect(res.status).toBe(201);
+  });
+});
+
+describe('POST /api/social/posts/:id/like', () => {
+  let buyerToken;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    buyerToken = signToken({ id: BUYER_ID, email: 'buyer@test.pl', role: 'buyer' });
+  });
+
+  it('requires auth', async () => {
+    const res = await request(app).post('/api/social/posts/p1/like');
+    expect(res.status).toBe(401);
+  });
+
+  it('toggles like', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 'p1' }] }) // check post exists
+      .mockResolvedValueOnce({ rows: [] })              // check existing like
+      .mockResolvedValueOnce({ rows: [] });             // insert like
+    const res = await request(app)
+      .post('/api/social/posts/a0000000-0000-4000-8000-000000000099/like')
+      .set('Authorization', `Bearer ${buyerToken}`);
+    expect([200, 201]).toContain(res.status);
+  });
+});
+
+describe('GET /api/social/trending', () => {
+  it('returns trending posts', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 'p1', content: 'trending', like_count: '5' }] });
+    const res = await request(app).get('/api/social/trending');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.posts)).toBe(true);
+  });
+});
+
+describe('GET /api/social/rankings', () => {
+  it('returns product rankings', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ product_id: 'pr1', score: '9.5', period: 'weekly' }] });
+    const res = await request(app).get('/api/social/rankings');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.rankings)).toBe(true);
+  });
+});
+
+// ─── Gamification ─────────────────────────────────────────────────────────────
+describe('GET /api/gamification/badges', () => {
+  it('returns badge list', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 'b1', slug: 'first_order', name: 'Pierwszy zakup' }] });
+    const res = await request(app).get('/api/gamification/badges');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.badges)).toBe(true);
+  });
+});
+
+describe('GET /api/gamification/my/points', () => {
+  let buyerToken;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    buyerToken = signToken({ id: BUYER_ID, email: 'buyer@test.pl', role: 'buyer' });
+  });
+
+  it('requires auth', async () => {
+    const res = await request(app).get('/api/gamification/my/points');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns user points', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ total: '350' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'l1', points: 50, action: 'order_placed' }] });
+    const res = await request(app)
+      .get('/api/gamification/my/points')
+      .set('Authorization', `Bearer ${buyerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.total_points).toBe(350);
+    expect(res.body.level).toBe(4);
+  });
+});
+
+describe('GET /api/gamification/my/badges', () => {
+  let buyerToken;
+  beforeEach(() => {
+    const { signToken } = require('../src/middleware/auth');
+    buyerToken = signToken({ id: BUYER_ID, email: 'buyer@test.pl', role: 'buyer' });
+  });
+
+  it('requires auth', async () => {
+    const res = await request(app).get('/api/gamification/my/badges');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns user badges', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ badge_id: 'b1', slug: 'first_order', earned_at: new Date().toISOString() }] });
+    const res = await request(app)
+      .get('/api/gamification/my/badges')
+      .set('Authorization', `Bearer ${buyerToken}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.badges)).toBe(true);
+  });
+});
+
+describe('GET /api/gamification/leaderboard', () => {
+  it('returns leaderboard', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ user_id: BUYER_ID, name: 'Test Buyer', total_points: '500' }] });
+    const res = await request(app).get('/api/gamification/leaderboard');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.leaderboard)).toBe(true);
+  });
+});
+
+// ─── Collaboration ─────────────────────────────────────────────────────────────
+describe('GET /api/collaboration/stores', () => {
+  it('requires auth', async () => {
+    const res = await request(app).get('/api/collaboration/stores');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns collaborative stores', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 'cs1', store_id: 'store-1', name: 'Team Store' }] });
+    const res = await request(app)
+      .get('/api/collaboration/stores')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.stores)).toBe(true);
+  });
+});
+
+describe('POST /api/collaboration/stores', () => {
+  it('requires auth', async () => {
+    const res = await request(app).post('/api/collaboration/stores').send({ store_id: STORE_ID, name: 'Team Store' });
+    expect(res.status).toBe(401);
+  });
+
+  it('creates a collaborative store', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: STORE_ID, owner_id: SELLER_ID }] })              // verify store ownership
+      .mockResolvedValueOnce({ rows: [{ id: 'cs1', store_id: STORE_ID, name: 'Team Store' }] }) // insert collaborative store
+      .mockResolvedValueOnce({ rows: [] });                                                    // insert team_member owner entry
+    const res = await request(app)
+      .post('/api/collaboration/stores')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, name: 'Team Store' });
+    expect(res.status).toBe(201);
+  });
+});
+
+describe('POST /api/collaboration/invite/accept', () => {
+  it('rejects invalid token', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // no invitation found
+    const res = await request(app)
+      .post('/api/collaboration/invite/accept')
+      .send({ token: 'invalid-token' });
+    expect(res.status).toBe(404);
+  });
+});
