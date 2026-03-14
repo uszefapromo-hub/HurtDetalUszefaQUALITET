@@ -192,17 +192,25 @@
       });
   }
 
-  function loadCreatorPicks() {
-    var container = document.getElementById('homepage-creator-picks');
+  function loadProfitableProducts() {
+    var container = document.getElementById('homepage-profitable-products');
     if (!container) return;
     renderSkeletons(container, 4, 220);
-    apiGet('/products', { limit: 8, sort: 'created_at', order: 'desc' })
+    // Fetch products sorted by margin descending (highest margin first)
+    apiGet('/products', { limit: 8, sort: 'margin', order: 'desc', is_central: 'true' })
       .then(function (data) {
         var items = Array.isArray(data) ? data : (data.products || data.data || data.items || []);
         if (items.length === 0) throw new Error('empty');
-        // Show next 4 products as "creator picks" (offset)
-        var picks = items.length > 4 ? items.slice(4, 8) : items.slice(0, 4);
-        container.innerHTML = picks.map(productCard).join('');
+        container.innerHTML = items.slice(0, 4).map(productCard).join('');
+      })
+      .catch(function () {
+        // Fallback: show regular products
+        return apiGet('/products', { limit: 4 })
+          .then(function (data) {
+            var items = Array.isArray(data) ? data : (data.products || data.data || data.items || []);
+            if (items.length === 0) throw new Error('empty');
+            container.innerHTML = items.slice(0, 4).map(productCard).join('');
+          });
       })
       .catch(function () {
         container.innerHTML = placeholderProducts();
@@ -269,9 +277,8 @@
     // Stagger requests to avoid hammering the API simultaneously
     loadTrendingProducts();
     setTimeout(loadTopStores, 150);
-    setTimeout(loadArtAuctions, 300);
-    setTimeout(loadCreatorPicks, 450);
-    setTimeout(loadTopSellers, 600);
+    setTimeout(loadProfitableProducts, 300);
+    setTimeout(loadTopSellers, 450);
   }
 
   if (document.readyState === 'loading') {
