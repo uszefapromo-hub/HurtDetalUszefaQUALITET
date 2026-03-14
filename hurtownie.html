@@ -25,6 +25,8 @@
     .supplier-cat{font-size:11px;padding:2px 9px;border-radius:20px;background:rgba(124,58,237,.12);color:var(--purple-bright);border:1px solid rgba(124,58,237,.2)}
     .supplier-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
     .btn-sm{font-size:13px;padding:7px 14px}
+    .supplier-selector-card{cursor:pointer;padding:16px}
+    .supplier-selector-card.is-selected{border:2px solid var(--purple)}
     [data-admin-only]{display:none}
     body[data-role="admin"] [data-admin-only],
     body[data-role="owner"] [data-admin-only]{display:inline-flex}
@@ -69,10 +71,10 @@
         <span class="eyebrow">Hurtownie dropshipping</span>
         <h1>Hurtownie</h1>
         <p class="lead">Wybieraj hurtownie, importuj produkty i ustawiaj marże bez wychodzenia z panelu.</p>
-        <div class="cta-row">
-          <a class="btn btn-primary" href="cennik.html">Ulepsz plan</a>
-          <a class="btn btn-secondary" href="dashboard.html">Wróć do dashboardu</a>
-        </div>
+         <div class="cta-row">
+           <a class="btn btn-primary" href="sklep.html">Przejdź do QualitetMarket Hurt / Detal</a>
+           <a class="btn btn-secondary" href="dashboard.html">Panel zarządzania</a>
+         </div>
       </div>
     </section>
 
@@ -102,10 +104,10 @@
           <span class="eyebrow">Hurtownie mobilnie</span>
           <h2>Zarządzaj hurtowniami z aplikacji</h2>
           <p class="hint">Dodaj platformę do ekranu głównego i importuj produkty bezpośrednio z telefonu.</p>
-          <div class="app-cta-actions">
-            <button class="btn btn-primary" type="button" data-app-install-open>Otwórz aplikację</button>
-            <a class="btn btn-secondary" href="cennik.html">Aktywuj PRO</a>
-          </div>
+           <div class="app-cta-actions">
+             <button class="btn btn-primary" type="button" data-app-install-open>Otwórz aplikację</button>
+             <a class="btn btn-secondary" href="sklep.html">Katalog QualitetVerse</a>
+           </div>
           <div class="app-instructions">
             <div>
               <strong>iPhone</strong>
@@ -126,7 +128,7 @@
         </div>
         <div class="app-cta-media">
           <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80" alt="Zespół zarządzający hurtowniami" loading="lazy" decoding="async">
-          <span class="app-cta-badge">Hurtownie PRO</span>
+           <span class="app-cta-badge">QualitetVerse</span>
         </div>
       </div>
     </section>
@@ -309,90 +311,6 @@
           </div>
         </article>
 
-        <!-- SaleHoo -->
-        <article class="supplier-catalogue-card" data-supplier-slug="salehoo">
-          <div class="supplier-logo-wrap">
-            <span class="supplier-logo-emoji" aria-hidden="true">🌐</span>
-          </div>
-          <div class="supplier-info">
-            <h3>SaleHoo</h3>
-            <p class="supplier-desc">Katalog ponad 8000 zweryfikowanych hurtowni i dostawców dropshipping. Narzędzia do researchu rynku i analiz trendów sprzedażowych.</p>
-            <div class="supplier-categories">
-              <span class="supplier-cat">Elektronika</span>
-              <span class="supplier-cat">Moda</span>
-              <span class="supplier-cat">Kolekcje</span>
-              <span class="supplier-cat">Zdrowie</span>
-            </div>
-          </div>
-          <div class="supplier-actions">
-            <a class="btn btn-primary btn-sm" href="https://www.salehoo.com" target="_blank" rel="noopener noreferrer">Otwórz hurtownię</a>
-            <button class="btn btn-secondary btn-sm" data-import-supplier="salehoo" data-admin-only>Import produktów</button>
-          </div>
-        </article>
-
-        <!-- Avasam -->
-        <article class="supplier-catalogue-card" data-supplier-slug="avasam">
-          <div class="supplier-logo-wrap">
-            <span class="supplier-logo-emoji" aria-hidden="true">⚡</span>
-          </div>
-          <div class="supplier-info">
-            <h3>Avasam</h3>
-            <p class="supplier-desc">Brytyjska platforma dropshippingowa z automatyzacją realizacji zamówień. Zweryfikowani dostawcy, szybka wysyłka z UK i Europy.</p>
-            <div class="supplier-categories">
-              <span class="supplier-cat">Dom</span>
-              <span class="supplier-cat">Elektronika</span>
-              <span class="supplier-cat">Kosmetyki</span>
-              <span class="supplier-cat">Sport</span>
-            </div>
-          </div>
-          <div class="supplier-actions">
-            <a class="btn btn-primary btn-sm" href="https://www.avasam.com" target="_blank" rel="noopener noreferrer">Otwórz hurtownię</a>
-            <button class="btn btn-secondary btn-sm" data-import-supplier="avasam" data-admin-only>Import produktów</button>
-          </div>
-        </article>
-
-        <!-- BrandsGateway -->
-        <article class="supplier-catalogue-card" data-supplier-slug="brandsgateway">
-          <div class="supplier-logo-wrap">
-            <span class="supplier-logo-emoji" aria-hidden="true">👑</span>
-          </div>
-          <div class="supplier-info">
-            <h3>BrandsGateway</h3>
-            <p class="supplier-desc">Ekskluzywna hurtownia markowej odzieży i akcesoriów luksusowych. Autentyczne produkty znanych marek w cenach hurtowych.</p>
-            <div class="supplier-categories">
-              <span class="supplier-cat">Luksusowa moda</span>
-              <span class="supplier-cat">Biżuteria</span>
-              <span class="supplier-cat">Zegarki</span>
-              <span class="supplier-cat">Torebki</span>
-            </div>
-          </div>
-          <div class="supplier-actions">
-            <a class="btn btn-primary btn-sm" href="https://www.brandsgateway.com" target="_blank" rel="noopener noreferrer">Otwórz hurtownię</a>
-            <button class="btn btn-secondary btn-sm" data-import-supplier="brandsgateway" data-admin-only>Import produktów</button>
-          </div>
-        </article>
-
-        <!-- Modalyst -->
-        <article class="supplier-catalogue-card" data-supplier-slug="modalyst">
-          <div class="supplier-logo-wrap">
-            <span class="supplier-logo-emoji" aria-hidden="true">🎨</span>
-          </div>
-          <div class="supplier-info">
-            <h3>Modalyst</h3>
-            <p class="supplier-desc">Platforma dropshipping skupiająca niezależnych projektantów i marki premium. Unikalne produkty, szybka wysyłka z USA i Europy.</p>
-            <div class="supplier-categories">
-              <span class="supplier-cat">Odzież</span>
-              <span class="supplier-cat">Akcesoria</span>
-              <span class="supplier-cat">Wystrój wnętrz</span>
-              <span class="supplier-cat">Uroda</span>
-            </div>
-          </div>
-          <div class="supplier-actions">
-            <a class="btn btn-primary btn-sm" href="https://www.modalyst.co" target="_blank" rel="noopener noreferrer">Otwórz hurtownię</a>
-            <button class="btn btn-secondary btn-sm" data-import-supplier="modalyst" data-admin-only>Import produktów</button>
-          </div>
-        </article>
-
       </div>
       <p class="hint" style="margin-top:16px;text-align:center">
         💡 Przycisk <strong>Import produktów</strong> jest dostępny tylko dla administratora i właściciela platformy.
@@ -424,7 +342,7 @@
           </div>
         </div>
         <div class="cta-row">
-          <button class="btn btn-secondary" type="button" data-import-store>Importuj do sklepu</button>
+          <button class="btn btn-secondary" type="button" data-import-store data-admin-only>Importuj do sklepu</button>
           <span class="hint" data-import-status>Wybierz produkty i dodaj je do sklepu.</span>
         </div>
         <div class="products-grid" data-products-grid></div>
@@ -522,6 +440,97 @@
 
     var API_BASE = window.QM_API_BASE || '/api';
     var selectedSupplierId = null;
+    var currentProducts = [];
+    var filtersInitialized = false;
+    var DEFAULT_PRODUCT_COUNT = 18;
+    var MIN_IMPORTS_PER_DAY = 6;
+    var MAX_IMPORTS_PER_DAY = 48;
+    var STATIC_SUPPLIERS = [
+      {
+        id: 'bigbuy',
+        name: 'BigBuy',
+        slug: 'bigbuy',
+        integration_type: 'API',
+        url: 'https://www.bigbuy.eu',
+        notes: 'Europejski lider dropshippingu z automatyczną synchronizacją zapasów.',
+        categories: ['Elektronika', 'Dom & Ogród', 'Sport', 'Moda'],
+        products: [
+          { id: 'bb-1', name: 'Smartwatch BigFit S2', category: 'Elektronika', cost: 129.9 },
+          { id: 'bb-2', name: 'Zestaw garnków Inox 12 el.', category: 'Dom & Ogród', cost: 189.5 },
+          { id: 'bb-3', name: 'Rowerek balansowy Rider', category: 'Sport', cost: 95.0 }
+        ],
+      },
+      {
+        id: 'syncee',
+        name: 'Syncee',
+        slug: 'syncee',
+        integration_type: 'API',
+        url: 'https://syncee.com',
+        notes: 'Globalna platforma B2B z automatyczną aktualizacją cen i stanów.',
+        categories: ['Moda', 'Akcesoria', 'Kosmetyki', 'Dom'],
+        products: [
+          { id: 'sy-1', name: 'Torebka eco-leather', category: 'Akcesoria', cost: 79.0 },
+          { id: 'sy-2', name: 'Serum witamina C 30ml', category: 'Kosmetyki', cost: 39.9 },
+          { id: 'sy-3', name: 'Koc bawełniany 150x200', category: 'Dom', cost: 58.0 }
+        ],
+      },
+      {
+        id: 'spocket',
+        name: 'Spocket',
+        slug: 'spocket',
+        integration_type: 'API',
+        url: 'https://www.spocket.co',
+        notes: 'Dostawcy z UE i USA z dostawą 2–7 dni.',
+        categories: ['Moda', 'Biżuteria', 'Dom', 'Uroda'],
+        products: [
+          { id: 'sp-1', name: 'Naszyjnik minimalistyczny', category: 'Biżuteria', cost: 45.0 },
+          { id: 'sp-2', name: 'Zestaw świec sojowych', category: 'Dom', cost: 54.0 },
+          { id: 'sp-3', name: 'Kurtka softshell', category: 'Moda', cost: 210.0 }
+        ],
+      },
+      {
+        id: 'dropcom',
+        name: 'Dropcom',
+        slug: 'dropcom',
+        integration_type: 'API',
+        url: 'https://www.dropcom.eu',
+        notes: 'Integracja API, niskie ceny zakupu i szybka realizacja zamówień.',
+        categories: ['Elektronika', 'AGD', 'Sport', 'Zabawki'],
+        products: [
+          { id: 'dc-1', name: 'Blender kielichowy 1200W', category: 'AGD', cost: 159.0 },
+          { id: 'dc-2', name: 'Drukarka termiczna etykiet', category: 'Elektronika', cost: 239.0 },
+          { id: 'dc-3', name: 'Hulajnoga miejska', category: 'Sport', cost: 320.0 }
+        ],
+      },
+      {
+        id: 'eu-trade',
+        name: 'EU-Trade',
+        slug: 'eu-trade',
+        integration_type: 'API',
+        url: 'https://eu-trade.net',
+        notes: 'Certyfikowane produkty europejskie: RTV/AGD, kosmetyki i artykuły przemysłowe.',
+        categories: ['RTV/AGD', 'Kosmetyki', 'Przemysłowe', 'Ogród'],
+        products: [
+          { id: 'eu-1', name: 'Suszarka do włosów PRO', category: 'RTV/AGD', cost: 119.0 },
+          { id: 'eu-2', name: 'Zestaw kosmetyków SPA', category: 'Kosmetyki', cost: 68.0 },
+          { id: 'eu-3', name: 'Latarka czołowa LED', category: 'Przemysłowe', cost: 42.5 }
+        ],
+      },
+      {
+        id: 'vidaxl',
+        name: 'VidaXL',
+        slug: 'vidaxl',
+        integration_type: 'API',
+        url: 'https://www.vidaxl.pl',
+        notes: 'Ponad 90 000 produktów: meble, ogród, sport i dom.',
+        categories: ['Meble', 'Ogród', 'Sport', 'Dom'],
+        products: [
+          { id: 'vx-1', name: 'Stół ogrodowy drewniany', category: 'Ogród', cost: 420.0 },
+          { id: 'vx-2', name: 'Regał industrialny 5 półek', category: 'Dom', cost: 285.0 },
+          { id: 'vx-3', name: 'Zestaw hantli 2x10kg', category: 'Sport', cost: 155.0 }
+        ],
+      },
+    ];
 
     function authHeaders() {
       var token = localStorage.getItem('token') || '';
@@ -533,45 +542,190 @@
         .then(function (r) { return r.json(); });
     }
 
+    function normaliseSlug(value) {
+      return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
     function escHtml(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    function loadSuppliers() {
+    function findStaticSupplier(key) {
+      var norm = normaliseSlug(key || '');
+      return STATIC_SUPPLIERS.find(function (s) {
+        return normaliseSlug(s.id) === norm || normaliseSlug(s.slug) === norm || normaliseSlug(s.name) === norm;
+      });
+    }
+
+    function setText(selector, value) {
+      var el = document.querySelector(selector);
+      if (el) el.textContent = value;
+    }
+
+    function setCountersFromList(list) {
+      var items = list && list.length ? list : STATIC_SUPPLIERS;
+      var suppliersCount = items.length;
+      var productsCount = items.reduce(function (acc, s) {
+        return acc + ((s.products && s.products.length) || 0);
+      }, 0);
+      var costs = [];
+      items.forEach(function (s) {
+        (s.products || []).forEach(function (p) { if (typeof p.cost === 'number') costs.push(p.cost); });
+      });
+      var avgCost = costs.length ? (costs.reduce(function (a, b) { return a + b; }, 0) / costs.length) : 0;
+      setText('[data-suppliers-count]', suppliersCount);
+      setText('[data-products-count]', productsCount || DEFAULT_PRODUCT_COUNT);
+      setText('[data-average-cost]', Math.round(avgCost));
+      setText('[data-imports-today]', Math.max(MIN_IMPORTS_PER_DAY, Math.min(MAX_IMPORTS_PER_DAY, Math.round(productsCount / 2))));
+    }
+
+    function computePriceWithMargin(cost, margin) {
+      var numericCost = typeof cost === 'number' ? cost : parseFloat(cost) || 0;
+      var numericMargin = isNaN(margin) ? 0 : margin;
+      return numericCost * (1 + numericMargin / 100);
+    }
+
+    function mergeWithFallback(apiSupplier, fallback) {
+      var slug = apiSupplier.slug || fallback.slug || normaliseSlug(apiSupplier.name || apiSupplier.id || '');
+      return {
+        id: apiSupplier.id || fallback.id || slug,
+        slug: slug,
+        name: apiSupplier.name || fallback.name || 'Hurtownia',
+        integration_type: apiSupplier.integration_type || fallback.integration_type || 'API',
+        notes: apiSupplier.notes || fallback.notes || '',
+        categories: apiSupplier.categories || fallback.categories || [],
+        products: fallback.products || [],
+        url: apiSupplier.url || fallback.url || '#',
+      };
+    }
+
+    function setProducts(products) {
+      currentProducts = products || [];
+      var categorySelect = document.querySelector('[data-product-category]');
+      if (categorySelect) {
+        var categories = Array.from(new Set(['all'].concat(currentProducts.map(function (p) { return p.category || 'Inne'; }))));
+        categorySelect.innerHTML = categories.map(function (c) {
+          var label = c === 'all' ? 'Wszystkie' : c;
+          return '<option value="' + escHtml(c) + '">' + escHtml(label) + '</option>';
+        }).join('');
+      }
+      applyProductFilters();
+    }
+
+    function applyProductFilters() {
+      var grid = document.querySelector('[data-products-grid]');
+      var empty = document.querySelector('[data-products-empty]');
+      var searchEl = document.querySelector('[data-product-search]');
+      var categoryEl = document.querySelector('[data-product-category]');
+      var marginEl = document.querySelector('[data-bulk-margin]');
+      if (!grid) return;
+
+      var term = (searchEl && searchEl.value || '').toLowerCase();
+      var category = categoryEl ? categoryEl.value : 'all';
+      var margin = marginEl ? parseFloat(marginEl.value) || 0 : 0;
+
+      var filtered = currentProducts.filter(function (p) {
+        var matchesTerm = !term || (p.name && p.name.toLowerCase().indexOf(term) !== -1);
+        var matchesCategory = category === 'all' || normaliseSlug(p.category) === normaliseSlug(category);
+        return matchesTerm && matchesCategory;
+      });
+
+      grid.innerHTML = filtered.map(function (p) {
+        var finalPrice = computePriceWithMargin(p.cost, margin);
+        return '<article class="panel-card product-card">'
+          + '<strong>' + escHtml(p.name) + '</strong>'
+          + '<p class="hint" style="margin:6px 0 10px">' + escHtml(p.category || 'Produkt') + '</p>'
+          + '<div class="cta-row" style="gap:8px;align-items:center">'
+          + '<span style="font-size:13px;color:var(--muted)">Koszt: ' + escHtml(p.cost.toFixed(2)) + ' zł</span>'
+          + '<span style="font-size:13px;color:var(--muted)">Cena z marżą: ' + escHtml(finalPrice.toFixed(2)) + ' zł</span>'
+          + '</div>'
+          + '</article>';
+      }).join('');
+
+      if (empty) empty.hidden = filtered.length > 0;
+    }
+
+    function initFilters() {
+      if (filtersInitialized) return;
+      var searchEl = document.querySelector('[data-product-search]');
+      var categoryEl = document.querySelector('[data-product-category]');
+      var marginEl = document.querySelector('[data-bulk-margin]');
+      [searchEl, categoryEl, marginEl].forEach(function (el) {
+        if (!el) return;
+        ['input', 'change'].forEach(function (evt) {
+          el.addEventListener(evt, applyProductFilters);
+        });
+      });
+      filtersInitialized = true;
+    }
+
+    function selectSupplier(supplier, allItems) {
+      selectedSupplierId = supplier.id;
+      var nameEl = document.querySelector('[data-selected-supplier-name]');
+      var descEl = document.querySelector('[data-selected-supplier-desc]');
+      if (nameEl) nameEl.textContent = supplier.name || 'Hurtownia';
+      if (descEl) descEl.textContent = supplier.notes || 'Wybierz produkty do importu poniżej.';
+
+      var grid = document.querySelector('[data-suppliers-grid]');
+      if (grid) {
+        grid.querySelectorAll('[data-supplier-card]').forEach(function (c) {
+          if (c.dataset.sid === selectedSupplierId) {
+            c.classList.add('is-selected');
+          } else {
+            c.classList.remove('is-selected');
+          }
+        });
+      }
+
+      var fallback = findStaticSupplier(supplier.slug || supplier.name || supplier.id);
+      setProducts((fallback && fallback.products) || supplier.products || []);
+      initFilters();
+      setCountersFromList(allItems || STATIC_SUPPLIERS);
+    }
+
+    function renderSupplierGrid(list) {
       var grid = document.querySelector('[data-suppliers-grid]');
       var empty = document.querySelector('[data-suppliers-empty]');
       if (!grid) return;
 
+      if (!list.length) {
+        if (empty) empty.hidden = false;
+        return;
+      }
+
+      if (empty) empty.hidden = true;
+      grid.innerHTML = list.map(function (s) {
+        return '<div class="panel-card supplier-selector-card" data-supplier-card data-sid="' + escHtml(s.id) + '" data-supplier-slug="' + escHtml(s.slug || s.id) + '">'
+          + '<strong>' + escHtml(s.name) + '</strong>'
+          + '<p style="font-size:13px;color:var(--muted);margin:4px 0 0">' + escHtml(s.integration_type || 'API') + '</p>'
+          + '</div>';
+      }).join('');
+
+      grid.onclick = function (e) {
+        var card = e.target.closest('[data-supplier-card]');
+        if (!card) return;
+        var supplier = list.find(function (x) { return x.id === card.dataset.sid; }) || list[0];
+        if (supplier) selectSupplier(supplier, list);
+      };
+
+      selectSupplier(list[0], list);
+    }
+
+    function loadSuppliers() {
+      setCountersFromList(STATIC_SUPPLIERS);
+      renderSupplierGrid(STATIC_SUPPLIERS);
       apiGet('/suppliers')
         .then(function (data) {
           var items = Array.isArray(data) ? data : (data.suppliers || []);
-          if (!items.length) {
-            if (empty) empty.hidden = false;
-            return;
-          }
-          grid.innerHTML = items.map(function (s) {
-            return '<div class="panel-card" style="cursor:pointer;padding:16px" data-supplier-card data-sid="' + escHtml(s.id) + '">'
-              + '<strong>' + escHtml(s.name) + '</strong>'
-              + '<p style="font-size:13px;color:var(--muted);margin:4px 0 0">' + escHtml(s.integration_type || 'manual') + '</p>'
-              + '</div>';
-          }).join('');
-
-          grid.addEventListener('click', function (e) {
-            var card = e.target.closest('[data-supplier-card]');
-            if (!card) return;
-            selectedSupplierId = card.dataset.sid;
-            grid.querySelectorAll('[data-supplier-card]').forEach(function (c) {
-              c.style.border = c === card ? '2px solid var(--purple)' : '';
-            });
-            var nameEl = document.querySelector('[data-selected-supplier-name]');
-            var descEl = document.querySelector('[data-selected-supplier-desc]');
-            var item = items.find(function (x) { return x.id === selectedSupplierId; });
-            if (nameEl && item) nameEl.textContent = item.name;
-            if (descEl && item) descEl.textContent = item.notes || 'Wybierz produkty do importu poniżej.';
+          var mapped = items.map(function (s) {
+            var fallback = findStaticSupplier(s.id || s.name || s.slug) || { slug: normaliseSlug(s.name || s.id || '') };
+            return mergeWithFallback(s, fallback);
           });
+          var finalList = mapped.length ? mapped : STATIC_SUPPLIERS;
+          renderSupplierGrid(finalList);
         })
         .catch(function () {
-          if (empty) empty.hidden = false;
+          renderSupplierGrid(STATIC_SUPPLIERS);
         });
     }
 
