@@ -477,7 +477,10 @@
             <div class="auction-card__timer ${timer.urgent ? 'auction-card__timer--urgent' : ''}">
               ⏱ ${timer.text}
             </div>
-            <button class="auction-card__btn" onclick="openBidModal('${a.id}', '${(a.title || '').replace(/'/g, "\\'")}', ${a.current_price || a.starting_price})" ${ended ? 'disabled' : ''}>
+            <button class="auction-card__btn js-bid-btn"
+              data-auction-id="${a.id}"
+              data-auction-price="${a.current_price || a.starting_price}"
+              ${ended ? 'disabled' : ''}>
               ${ended ? 'Zakończona' : '⚡ Licytuj teraz'}
             </button>
           </div>
@@ -621,6 +624,16 @@
         currentPage = 1;
         loadAuctions(currentStatus, currentPage, false);
       });
+    });
+
+    /* ── Bid button delegation (avoids inline onclick) ── */
+    document.getElementById('auctions-container').addEventListener('click', (e) => {
+      const btn = e.target.closest('.js-bid-btn');
+      if (!btn || btn.disabled) return;
+      const card = btn.closest('.auction-card');
+      const titleEl = card ? card.querySelector('.auction-card__title') : null;
+      const title = titleEl ? titleEl.textContent : '';
+      openBidModal(btn.dataset.auctionId, title, btn.dataset.auctionPrice);
     });
 
     /* ── Load more ── */
