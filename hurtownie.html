@@ -699,7 +699,7 @@
 
       if (empty) empty.hidden = true;
       grid.innerHTML = list.map(function (s) {
-        return '<button type="button" class="panel-card supplier-selector-card" data-supplier-card data-sid="' + escHtml(s.id) + '" data-supplier-slug="' + escHtml(s.slug || s.id) + '" aria-pressed="false" aria-label="' + escHtml('Wybierz hurtownię ' + (s.name || '')) + '">'
+        return '<button type="button" class="panel-card supplier-selector-card" data-supplier-card data-sid="' + escHtml(s.id) + '" data-supplier-slug="' + escHtml(s.slug || s.id) + '" aria-pressed="false" aria-label="' + escHtml(s.name ? ('Wybierz hurtownię ' + s.name) : 'Wybierz hurtownię') + '">'
           + '<strong>' + escHtml(s.name) + '</strong>'
           + '<p style="font-size:13px;color:var(--muted);margin:4px 0 0">' + escHtml(s.integration_type || 'API') + '</p>'
           + '</button>';
