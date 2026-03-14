@@ -522,12 +522,22 @@
       }
     }
 
+    // ── Authenticated fetch helper ───────────────────────────────────────────────
+    async function apiFetch(path) {
+      const token = localStorage.getItem('qm_token')
+      const res = await fetch(path, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json()
+    }
+
     // ── Load supplier stats ─────────────────────────────────────────────────────
     async function loadStats(api) {
       try {
         const [prodRes, ordRes] = await Promise.allSettled([
-          api.Products ? api.Products.list({ limit: 100 }) : fetch('/api/products?limit=100').then(r => r.json()),
-          api.Orders   ? api.Orders.list({ limit: 100 })   : fetch('/api/orders?limit=100').then(r => r.json()),
+          api.Products ? api.Products.list({ limit: 100 }) : apiFetch('/api/products?limit=100'),
+          api.Orders   ? api.Orders.list({ limit: 100 })   : apiFetch('/api/orders?limit=100'),
         ])
 
         const products = (prodRes.status === 'fulfilled' ? (prodRes.value.products || prodRes.value.data || []) : [])
