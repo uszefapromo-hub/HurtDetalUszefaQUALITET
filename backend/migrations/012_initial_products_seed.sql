@@ -10,7 +10,7 @@
 --   supplier_price ≤ 300  → × 1.25
 --   supplier_price >  300 → × 1.15
 --
--- Idempotent: ON CONFLICT (sku) WHERE is_central=true DO NOTHING
+-- Idempotent: ON CONFLICT (sku) WHERE is_central=true AND sku IS NOT NULL DO NOTHING
 
 INSERT INTO products (
   id, store_id, supplier_id,
@@ -277,4 +277,4 @@ SELECT
   'active',
   NOW()
 FROM priced p
-ON CONFLICT (sku) WHERE is_central = TRUE DO NOTHING;
+ON CONFLICT (sku) WHERE is_central = TRUE AND sku IS NOT NULL DO NOTHING;
