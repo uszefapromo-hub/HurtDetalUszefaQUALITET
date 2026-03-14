@@ -1,16 +1,17 @@
 'use strict';
 
 const express = require('express');
-const { body, param, query } = require('express-validator');
+const { body, param } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 
 const db = require('../config/database');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 
 const router = express.Router();
 
 // ─── List campaigns (public, active) ──────────────────────────────────────────
+// IMPORTANT: specific routes (/my/*, /promoted) must be registered BEFORE /:id
 
 router.get('/', async (req, res) => {
   try {
@@ -38,6 +39,104 @@ router.get('/', async (req, res) => {
     return res.status(500).json({ error: 'Błąd serwera' });
   }
 });
+
+// ─── My campaigns (owner) — must be before /:id ───────────────────────────────
+
+router.get('/my/campaigns', authenticate, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT c.*,
+              COUNT(DISTINCT cp.product_id) AS product_count,
+              COUNT(DISTINCT cpar.creator_id) FILTER (WHERE cpar.status = 'approved') AS participant_count
+       FROM campaigns c
+       LEFT JOIN campaign_products cp ON c.id = cp.campaign_id
+       LEFT JOIN campaign_participants cpar ON c.id = cpar.campaign_id
+       WHERE c.owner_id = $1
+       GROUP BY c.id
+       ORDER BY c.created_at DESC`,
+      [req.user.id]
+    );
+    return res.json({ campaigns: result.rows });
+  } catch (err) {
+    console.error('my campaigns error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── My participations (creator) — must be before /:id ───────────────────────
+
+router.get('/my/participations', authenticate, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT cpar.*, c.title AS campaign_title, c.commission_rate, c.status AS campaign_status,
+              u.name AS owner_name
+       FROM campaign_participants cpar
+       JOIN campaigns c ON cpar.campaign_id = c.id
+       JOIN users u ON c.owner_id = u.id
+       WHERE cpar.creator_id = $1
+       ORDER BY cpar.joined_at DESC`,
+      [req.user.id]
+    );
+    return res.json({ participations: result.rows });
+  } catch (err) {
+    console.error('my participations error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── Promoted listings (GET & POST) — must be before /:id ────────────────────
+
+router.get('/promoted', async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT pl.*, p.name AS product_name, p.price, p.image_url
+       FROM promoted_listings pl
+       JOIN products p ON pl.product_id = p.id
+       WHERE pl.active = TRUE AND pl.ends_at > NOW()
+       ORDER BY pl.created_at DESC
+       LIMIT 50`
+    );
+    return res.json({ listings: result.rows });
+  } catch (err) {
+    console.error('list promoted error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+router.post(
+  '/promoted',
+  authenticate,
+  [
+    body('product_id').isUUID(),
+    body('plan').isIn(['7d', '30d']),
+  ],
+  validate,
+  async (req, res) => {
+    const { product_id, plan } = req.body;
+    const pricePln = plan === '7d' ? 29 : 79;
+    const durationDays = plan === '7d' ? 7 : 30;
+    const id = uuidv4();
+
+    try {
+      const product = await db.query(
+        'SELECT id FROM products WHERE id = $1 AND seller_id = $2',
+        [product_id, req.user.id]
+      );
+      if (!product.rows[0]) return res.status(404).json({ error: 'Produkt nie znaleziony' });
+
+      const result = await db.query(
+        `INSERT INTO promoted_listings (id, product_id, seller_id, plan, price_pln, ends_at)
+         VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '${durationDays} days')
+         RETURNING *`,
+        [id, product_id, req.user.id, plan, pricePln]
+      );
+      return res.status(201).json({ listing: result.rows[0] });
+    } catch (err) {
+      console.error('create promoted listing error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
 
 // ─── Get single campaign ───────────────────────────────────────────────────────
 
@@ -84,7 +183,7 @@ router.get(
   }
 );
 
-// ─── Create campaign (brand / seller) ─────────────────────────────────────────
+// ─── Create campaign ───────────────────────────────────────────────────────────
 
 router.post(
   '/',
@@ -271,104 +370,5 @@ router.patch(
     }
   }
 );
-
-// ─── My campaigns (owner) ──────────────────────────────────────────────────────
-
-router.get('/my/campaigns', authenticate, async (req, res) => {
-  try {
-    const result = await db.query(
-      `SELECT c.*,
-              COUNT(DISTINCT cp.product_id) AS product_count,
-              COUNT(DISTINCT cpar.creator_id) FILTER (WHERE cpar.status = 'approved') AS participant_count
-       FROM campaigns c
-       LEFT JOIN campaign_products cp ON c.id = cp.campaign_id
-       LEFT JOIN campaign_participants cpar ON c.id = cpar.campaign_id
-       WHERE c.owner_id = $1
-       GROUP BY c.id
-       ORDER BY c.created_at DESC`,
-      [req.user.id]
-    );
-    return res.json({ campaigns: result.rows });
-  } catch (err) {
-    console.error('my campaigns error:', err.message);
-    return res.status(500).json({ error: 'Błąd serwera' });
-  }
-});
-
-// ─── My participations (creator) ──────────────────────────────────────────────
-
-router.get('/my/participations', authenticate, async (req, res) => {
-  try {
-    const result = await db.query(
-      `SELECT cpar.*, c.title AS campaign_title, c.commission_rate, c.status AS campaign_status,
-              u.name AS owner_name
-       FROM campaign_participants cpar
-       JOIN campaigns c ON cpar.campaign_id = c.id
-       JOIN users u ON c.owner_id = u.id
-       WHERE cpar.creator_id = $1
-       ORDER BY cpar.joined_at DESC`,
-      [req.user.id]
-    );
-    return res.json({ participations: result.rows });
-  } catch (err) {
-    console.error('my participations error:', err.message);
-    return res.status(500).json({ error: 'Błąd serwera' });
-  }
-});
-
-// ─── Promoted listings ─────────────────────────────────────────────────────────
-
-router.post(
-  '/promoted',
-  authenticate,
-  [
-    body('product_id').isUUID(),
-    body('plan').isIn(['7d', '30d']),
-  ],
-  validate,
-  async (req, res) => {
-    const { product_id, plan } = req.body;
-    const pricePln = plan === '7d' ? 29 : 79;
-    const durationDays = plan === '7d' ? 7 : 30;
-    const id = uuidv4();
-
-    try {
-      // Verify product belongs to seller
-      const product = await db.query(
-        'SELECT id FROM products WHERE id = $1 AND seller_id = $2',
-        [product_id, req.user.id]
-      );
-      if (!product.rows[0]) return res.status(404).json({ error: 'Produkt nie znaleziony' });
-
-      const result = await db.query(
-        `INSERT INTO promoted_listings (id, product_id, seller_id, plan, price_pln, ends_at)
-         VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '${durationDays} days')
-         RETURNING *`,
-        [id, product_id, req.user.id, plan, pricePln]
-      );
-      return res.status(201).json({ listing: result.rows[0] });
-    } catch (err) {
-      console.error('create promoted listing error:', err.message);
-      return res.status(500).json({ error: 'Błąd serwera' });
-    }
-  }
-);
-
-router.get('/promoted', async (req, res) => {
-  try {
-    const result = await db.query(
-      `SELECT pl.*, p.name AS product_name, p.price, p.image_url
-       FROM promoted_listings pl
-       JOIN products p ON pl.product_id = p.id
-       WHERE pl.active = TRUE AND pl.ends_at > NOW()
-       ORDER BY pl.created_at DESC
-       LIMIT 50`
-    );
-    return res.json({ listings: result.rows });
-  } catch (err) {
-    console.error('list promoted error:', err.message);
-    return res.status(500).json({ error: 'Błąd serwera' });
-  }
-});
 
 module.exports = router;
