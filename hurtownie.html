@@ -271,5 +271,104 @@
   <script src="js/pwa-connect.js" defer></script>
   <script src="js/flow.js" defer></script>
   <script src="js/app.js" defer></script>
+  <script>
+  (function () {
+    'use strict';
+
+    var API_BASE = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
+    var selectedSupplierId = null;
+
+    function authHeaders() {
+      var token = localStorage.getItem('token') || '';
+      return token ? { 'Authorization': 'Bearer ' + token } : {};
+    }
+
+    function apiGet(path) {
+      return fetch(API_BASE + path, { headers: Object.assign({ 'Accept': 'application/json' }, authHeaders()) })
+        .then(function (r) { return r.json(); });
+    }
+
+    function escHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function loadSuppliers() {
+      var grid = document.querySelector('[data-suppliers-grid]');
+      var empty = document.querySelector('[data-suppliers-empty]');
+      if (!grid) return;
+
+      apiGet('/suppliers')
+        .then(function (data) {
+          var items = Array.isArray(data) ? data : (data.suppliers || []);
+          if (!items.length) {
+            if (empty) empty.hidden = false;
+            return;
+          }
+          grid.innerHTML = items.map(function (s) {
+            return '<div class="panel-card" style="cursor:pointer;padding:16px" data-supplier-card data-sid="' + escHtml(s.id) + '">'
+              + '<strong>' + escHtml(s.name) + '</strong>'
+              + '<p style="font-size:13px;color:var(--muted);margin:4px 0 0">' + escHtml(s.integration_type || 'manual') + '</p>'
+              + '</div>';
+          }).join('');
+
+          grid.addEventListener('click', function (e) {
+            var card = e.target.closest('[data-supplier-card]');
+            if (!card) return;
+            selectedSupplierId = card.dataset.sid;
+            grid.querySelectorAll('[data-supplier-card]').forEach(function (c) {
+              c.style.border = c === card ? '2px solid var(--purple)' : '';
+            });
+            var nameEl = document.querySelector('[data-selected-supplier-name]');
+            var descEl = document.querySelector('[data-selected-supplier-desc]');
+            var item = items.find(function (x) { return x.id === selectedSupplierId; });
+            if (nameEl && item) nameEl.textContent = item.name;
+            if (descEl && item) descEl.textContent = item.notes || 'Wybierz produkty do importu poniżej.';
+          });
+        })
+        .catch(function () {
+          if (empty) empty.hidden = false;
+        });
+    }
+
+    function initImportBtn() {
+      var importBtn = document.querySelector('[data-import-store]');
+      var statusEl = document.querySelector('[data-import-status]');
+      if (!importBtn) return;
+
+      importBtn.addEventListener('click', function () {
+        if (!selectedSupplierId) {
+          if (statusEl) statusEl.textContent = '⚠️ Najpierw wybierz hurtownię po lewej stronie.';
+          return;
+        }
+        var marginInput = document.querySelector('[data-bulk-margin]');
+        var margin = marginInput ? parseFloat(marginInput.value) : 15;
+
+        importBtn.disabled = true;
+        if (statusEl) statusEl.textContent = '⏳ Synchronizuję produkty...';
+
+        fetch(API_BASE + '/suppliers/' + encodeURIComponent(selectedSupplierId) + '/sync', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json', 'Accept': 'application/json' }, authHeaders()),
+          body: JSON.stringify({ margin: margin }),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (statusEl) statusEl.textContent = '✅ ' + (data.message || 'Zaimportowano produkty.');
+          })
+          .catch(function () {
+            if (statusEl) statusEl.textContent = '❌ Błąd importu. Upewnij się, że jesteś zalogowany jako sprzedawca.';
+          })
+          .finally(function () {
+            importBtn.disabled = false;
+          });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadSuppliers();
+      initImportBtn();
+    });
+  })();
+  </script>
 </body>
 </html>
