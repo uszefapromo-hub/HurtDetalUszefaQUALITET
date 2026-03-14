@@ -3452,8 +3452,7 @@
       return storedPlan;
     }
     if(logged){
-      const remaining = getTrialRemainingDays();
-      return remaining > 0 ? 'free' : 'free';
+      return 'free';
     }
     return null;
   }

@@ -17,10 +17,10 @@ UPDATE subscriptions
 SET plan = 'free'
 WHERE plan = 'trial';
 
--- 2. Update commission rates for 'free' (was trial)
+-- 2. Update commission rates for 'free' (was trial) — unconditional
 UPDATE subscriptions
 SET commission_rate = 0.05
-WHERE plan = 'free' AND commission_rate = 0.15;
+WHERE plan = 'free';
 
 -- 3. Update 'basic' (Seller PRO): lower commission, unlimited products
 UPDATE subscriptions
