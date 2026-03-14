@@ -11,6 +11,18 @@ function getDb() {
   return db;
 }
 
+function resolveStoreId(req) {
+  const sources = [req.body, req.params, req.query];
+
+  for (const source of sources) {
+    if (source && Object.prototype.hasOwnProperty.call(source, 'store_id')) {
+      return source.store_id;
+    }
+  }
+
+  return undefined;
+}
+
 /**
  * Middleware: verify Bearer token and attach decoded payload to req.user.
  */
@@ -72,9 +84,9 @@ function signToken(user) {
  * On success, attaches the subscription record to req.subscription.
  */
 async function requireActiveSubscription(req, res, next) {
-  const storeId = req.body?.store_id || req.params?.store_id || req.query?.store_id;
+  const storeId = resolveStoreId(req);
 
-  if (storeId && !isUuid(storeId)) {
+  if (storeId !== undefined && storeId !== null && !isUuid(String(storeId))) {
     return res.status(400).json({ error: 'Nieprawidłowy store_id' });
   }
 
