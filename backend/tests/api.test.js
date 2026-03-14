@@ -8415,7 +8415,7 @@ describe('POST /api/social/posts – with media_urls (community image post)', ()
       .set('Authorization', `Bearer ${sellerToken}`)
       .send({ content: 'Test', media_urls: 'not-an-array' });
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/tabl/i);
+    expect(res.body.error).toMatch(/media_urls musi być tablicą/i);
   });
 
   it('creates a general community post with text only', async () => {
