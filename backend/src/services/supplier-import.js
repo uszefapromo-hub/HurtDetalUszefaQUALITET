@@ -414,9 +414,9 @@ async function logImport(opts) {
   try {
     await db.query(
       `INSERT INTO import_logs
-         (supplier_id, supplier_name, trigger, status, count, updated, featured, skipped, failed, error_message, started_at, finished_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())`,
-      [supplier_id, supplier_name, trigger, status, count, updated, featured, skipped, failed, error_message, started_at]
+         (supplier_id, supplier_name, trigger, status, count, created, updated, featured, skipped, failed, error_message, started_at, finished_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())`,
+      [supplier_id, supplier_name, trigger, status, count, created, updated, featured, skipped, failed, error_message, started_at]
     );
   } catch (err) {
     // import_logs table may not exist yet during early deploys – silently skip
