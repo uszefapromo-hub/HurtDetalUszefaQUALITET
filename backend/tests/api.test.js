@@ -4118,8 +4118,9 @@ describe('POST /api/admin/scripts/:id/run', () => {
 
   it('runs cleanup-accounts script successfully', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [] })  // UPDATE users (cleanup)
-      .mockResolvedValueOnce({ rows: [] }); // INSERT script_runs
+      .mockResolvedValueOnce({ rows: [{ count: '5' }] })  // COUNT users
+      .mockResolvedValueOnce({ rows: [] })                 // UPDATE users (cleanup)
+      .mockResolvedValueOnce({ rows: [] });                // INSERT script_runs
 
     const res = await request(app)
       .post('/api/admin/scripts/cleanup-accounts/run')
@@ -4145,9 +4146,10 @@ describe('POST /api/admin/scripts/:id/run', () => {
 
   it('runs cleanup-demo-data script successfully', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [{ id: 'sp-1' }, { id: 'sp-2' }] }) // DELETE shop_products
+      .mockResolvedValueOnce({ rows: [{ count: '3' }] })                            // COUNT products
+      .mockResolvedValueOnce({ rows: [{ id: 'sp-1' }, { id: 'sp-2' }] })           // DELETE shop_products
       .mockResolvedValueOnce({ rows: [{ id: 'p-1' }, { id: 'p-2' }, { id: 'p-3' }] }) // DELETE products
-      .mockResolvedValueOnce({ rows: [] }); // INSERT script_runs
+      .mockResolvedValueOnce({ rows: [] });                                          // INSERT script_runs
 
     const res = await request(app)
       .post('/api/admin/scripts/cleanup-demo-data/run')
@@ -4157,8 +4159,140 @@ describe('POST /api/admin/scripts/:id/run', () => {
     expect(res.body.script_id).toBe('cleanup-demo-data');
     expect(res.body.result).toContain('3');
   });
+
+  it('runs cleanup-accounts in dry-run mode (no DB writes)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '7' }] }); // COUNT only, no UPDATE
+
+    const res = await request(app)
+      .post('/api/admin/scripts/cleanup-accounts/run?dryRun=true')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.dry_run).toBe(true);
+    expect(res.body.result).toContain('[DRY-RUN]');
+    expect(res.body.result).toContain('7');
+  });
+
+  it('runs cleanup-subscriptions in dry-run mode', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '3' }] }) // expired count
+      .mockResolvedValueOnce({ rows: [] });               // duplicates
+
+    const res = await request(app)
+      .post('/api/admin/scripts/cleanup-subscriptions/run?dryRun=true')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.dry_run).toBe(true);
+    expect(res.body.result).toContain('[DRY-RUN]');
+  });
+
+  it('runs cleanup-subscriptions and archives expired subscriptions', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '2' }] })                  // expired count
+      .mockResolvedValueOnce({ rows: [] })                                 // duplicates
+      .mockResolvedValueOnce({ rows: [{ id: 'sub-1' }, { id: 'sub-2' }] }) // UPDATE subscriptions
+      .mockResolvedValueOnce({ rows: [] });                                 // INSERT script_runs
+
+    const res = await request(app)
+      .post('/api/admin/scripts/cleanup-subscriptions/run')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.result).toContain('2');
+  });
+
+  it('script response includes enabled and dangerous fields from GET /scripts', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .get('/api/admin/scripts')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    const dangerousScript = res.body.scripts.find((s) => s.dangerous === true);
+    expect(dangerousScript).toBeDefined();
+    const safeScript = res.body.scripts.find((s) => s.dangerous === false);
+    expect(safeScript).toBeDefined();
+    expect(res.body.scripts[0]).toHaveProperty('enabled');
+  });
 });
-// ─── Referral codes ───────────────────────────────────────────────────────────
+
+// ─── PATCH /api/admin/scripts/:id – enable/disable ────────────────────────────
+
+describe('PATCH /api/admin/scripts/:id', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .patch('/api/admin/scripts/warehouse-sync')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ enabled: false });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 for unknown script', async () => {
+    const res = await request(app)
+      .patch('/api/admin/scripts/unknown-script')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ enabled: false });
+    expect(res.status).toBe(404);
+  });
+
+  it('disables a script', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .patch('/api/admin/scripts/warehouse-sync')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ enabled: false });
+    expect(res.status).toBe(200);
+    expect(res.body.enabled).toBe(false);
+    expect(res.body.script_id).toBe('warehouse-sync');
+  });
+
+  it('returns 422 when enabled field is missing', async () => {
+    const res = await request(app)
+      .patch('/api/admin/scripts/warehouse-sync')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+    expect(res.status).toBe(422);
+  });
+});
+
+// ─── GET /api/admin/github/status ─────────────────────────────────────────────
+
+describe('GET /api/admin/github/status', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin/github/status')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns configured=false when GITHUB_TOKEN is not set', async () => {
+    const orig = process.env.GITHUB_TOKEN;
+    delete process.env.GITHUB_TOKEN;
+    const res = await request(app)
+      .get('/api/admin/github/status')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.configured).toBe(false);
+    if (orig !== undefined) process.env.GITHUB_TOKEN = orig;
+  });
+});
+
+// ─── GET /api/admin/github/pulls/:number ──────────────────────────────────────
+
+describe('GET /api/admin/github/pulls/:number', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin/github/pulls/1')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 400 for non-numeric PR number', async () => {
+    const res = await request(app)
+      .get('/api/admin/github/pulls/abc')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(400);
+  });
+});
 
 const REFERRAL_CODE_ID = 'b0000000-0000-4000-8000-000000000001';
 
