@@ -9309,9 +9309,63 @@ describe('logImport helper (supplier-import service)', () => {
       trigger:       'scheduled',
       status:        'success',
       count:         42,
+      created:       10,
+      updated:       5,
       featured:      10,
       skipped:       3,
     })).resolves.not.toThrow();
+  });
+
+  it('stores count, created, updated, skipped and featured in the INSERT', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await logImport({
+      supplier_id:   SUPPLIER_ID,
+      supplier_name: 'Test Supplier',
+      trigger:       'manual',
+      status:        'success',
+      count:         20,
+      created:       15,
+      updated:       5,
+      featured:      4,
+      skipped:       2,
+    });
+
+    const [sql, params] = db.query.mock.calls[db.query.mock.calls.length - 1];
+    expect(sql).toMatch(/created/i);
+    expect(sql).toMatch(/updated/i);
+    expect(params).toContain(20); // count
+    expect(params).toContain(15); // created
+    expect(params).toContain(5);  // updated
+    expect(params).toContain(4);  // featured
+    expect(params).toContain(2);  // skipped
+  });
+
+  it('stores created=0 and updated>0 on second sync (refresh run)', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await logImport({
+      supplier_id:   SUPPLIER_ID,
+      supplier_name: 'Test Supplier',
+      trigger:       'manual',
+      status:        'success',
+      count:         10,
+      created:       0,
+      updated:       7,
+      featured:      2,
+      skipped:       0,
+    });
+
+    const [sql, params] = db.query.mock.calls[db.query.mock.calls.length - 1];
+    expect(sql).toMatch(/created/i);
+    expect(sql).toMatch(/updated/i);
+    // params order: supplier_id, supplier_name, trigger, status, count, created, updated, ...
+    const createdIdx = sql.indexOf('created');
+    const updatedIdx = sql.indexOf('updated');
+    // created column should appear before updated in the SQL
+    expect(createdIdx).toBeLessThan(updatedIdx);
+    expect(params).toContain(0); // created = 0
+    expect(params).toContain(7); // updated = 7
   });
 
   it('silently ignores 42P01 (table not found) error', async () => {
