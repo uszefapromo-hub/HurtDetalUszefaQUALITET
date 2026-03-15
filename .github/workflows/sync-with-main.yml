@@ -1,0 +1,77 @@
+name: Sync branch with main before PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-and-test:
+    name: Rebase on main, run tests, push
+    runs-on: ubuntu-latest
+    # Skip on main itself and skip pushes made by this workflow to avoid infinite loops
+    if: >
+      github.ref != 'refs/heads/main' &&
+      github.head_ref != 'main' &&
+      github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          # Full history needed for rebase
+          fetch-depth: 0
+          # GITHUB_TOKEN is sufficient; the bot push will be skipped by the
+          # actor guard above so no infinite loop occurs.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch latest origin/main
+        run: git fetch origin main
+
+      - name: Rebase branch on origin/main
+        id: rebase
+        run: |
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          echo "Rebasing $BRANCH on origin/main"
+          if git rebase origin/main; then
+            echo "rebase_status=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Rebase failed – conflicts detected. Please resolve manually."
+            git rebase --abort
+            echo "rebase_status=conflict" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: backend
+        env:
+          NODE_ENV: test
+        run: npm test
+
+      - name: Push rebased branch
+        if: steps.rebase.outputs.rebase_status == 'success'
+        run: |
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          git push origin "HEAD:refs/heads/${BRANCH}" --force-with-lease
