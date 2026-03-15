@@ -1859,12 +1859,14 @@ router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), asy
 
 // ─── GitHub integration helpers ───────────────────────────────────────────────
 
-function githubRequest(path, options = {}) {
+async function githubRequest(path, options = {}) {
   const token = process.env.GITHUB_TOKEN;
   const repo  = process.env.GITHUB_REPO;
-  if (!token || !repo) return Promise.resolve(null);
+  if (!token || !repo) {
+    throw new Error('GitHub integration not configured (missing GITHUB_TOKEN or GITHUB_REPO)');
+  }
   const url = `https://api.github.com/repos/${repo}${path}`;
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers: {
       Accept: 'application/vnd.github+json',
@@ -1873,7 +1875,12 @@ function githubRequest(path, options = {}) {
       'User-Agent': 'QualitetVerse-Admin/1.0',
       ...(options.headers || {}),
     },
-  }).then((r) => r.ok ? r.json() : r.json().then((e) => Promise.reject(new Error(e.message || 'GitHub API error'))));
+  });
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(errBody.message || `GitHub API error (HTTP ${response.status})`);
+  }
+  return response.json();
 }
 
 // ─── GET /api/admin/github/status – repository overview ──────────────────────

@@ -4266,13 +4266,16 @@ describe('GET /api/admin/github/status', () => {
 
   it('returns configured=false when GITHUB_TOKEN is not set', async () => {
     const orig = process.env.GITHUB_TOKEN;
-    delete process.env.GITHUB_TOKEN;
-    const res = await request(app)
-      .get('/api/admin/github/status')
-      .set('Authorization', `Bearer ${adminToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body.configured).toBe(false);
-    if (orig !== undefined) process.env.GITHUB_TOKEN = orig;
+    try {
+      delete process.env.GITHUB_TOKEN;
+      const res = await request(app)
+        .get('/api/admin/github/status')
+        .set('Authorization', `Bearer ${adminToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body.configured).toBe(false);
+    } finally {
+      if (orig !== undefined) process.env.GITHUB_TOKEN = orig;
+    }
   });
 });
 
