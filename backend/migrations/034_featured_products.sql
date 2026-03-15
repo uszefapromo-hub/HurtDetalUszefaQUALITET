@@ -7,9 +7,9 @@
 --   pinned_at      – timestamp when the product was pinned
 
 ALTER TABLE products
-  ADD COLUMN IF NOT EXISTS is_featured   BOOLEAN        NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS quality_score NUMERIC(5, 2)  NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS is_pinned     BOOLEAN        NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS is_featured   BOOLEAN   NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS quality_score SMALLINT  NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS is_pinned     BOOLEAN   NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS pinned_at     TIMESTAMPTZ;
 
 -- Speed up homepage / category featured queries
