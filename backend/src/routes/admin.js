@@ -1639,7 +1639,7 @@ router.get('/scripts', authenticate, requireRole('owner'), async (req, res) => {
 
 router.post('/scripts/:id/run', authenticate, requireRole('owner'), async (req, res) => {
   const scriptId = req.params.id;
-  const dryRun   = req.body.dry_run === true;
+  const dryRun = req.body.dry_run === true;
   const script = SYSTEM_SCRIPTS.find((s) => s.id === scriptId);
   if (!script) {
     return res.status(404).json({ error: 'Skrypt nie istnieje' });
