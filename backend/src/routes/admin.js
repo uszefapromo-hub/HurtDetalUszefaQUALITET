@@ -701,8 +701,7 @@ router.post(
   ],
   validate,
   async (req, res) => {
-    const { selectBestSupplier, computeSourceQualityScore: _cqs } = require('../helpers/pricing');
-    const { computeResellerPrice, computeProfits } = require('../helpers/pricing');
+    const { selectBestSupplier, computeResellerPrice, computeProfits, computeSourceQualityScore } = require('../helpers/pricing');
 
     const { offers, mode = 'best_quality', product_id = null } = req.body;
 
@@ -714,6 +713,7 @@ router.post(
       const platformPrice  = computePlatformPrice(supplierPrice);
       const resellerPrice  = computeResellerPrice(platformPrice);
       const { platformProfit, resellerProfit } = computeProfits(supplierPrice, platformPrice, resellerPrice);
+      const bestSourceScore = computeSourceQualityScore(best);
 
       // Exclude the winning offer using a price+supplier_id key to avoid reference comparison issues
       const bestKey = `${best.supplier_id}|${best.price_gross}`;
@@ -724,7 +724,7 @@ router.post(
           supplier_name: o.supplier_name || null,
           price_gross:   parseFloat(o.price_gross) || 0,
           stock:         parseInt(o.stock, 10) || 0,
-          quality_score: require('../helpers/pricing').computeSourceQualityScore(o),
+          quality_score: computeSourceQualityScore(o),
         }));
 
       // Optionally persist selection to a product record
@@ -752,7 +752,7 @@ router.post(
             platformProfit.toFixed(2),
             resellerProfit.toFixed(2),
             JSON.stringify(alternatives),
-            require('../helpers/pricing').computeSourceQualityScore(best),
+            bestSourceScore,
           ]
         );
       }
@@ -766,7 +766,7 @@ router.post(
         recommended_reseller_price:    resellerPrice,
         expected_platform_profit:      platformProfit,
         expected_reseller_profit:      resellerProfit,
-        source_quality_score:          require('../helpers/pricing').computeSourceQualityScore(best),
+        source_quality_score:          bestSourceScore,
         alternative_suppliers:         alternatives,
         product_id,
       });
