@@ -60,6 +60,7 @@
         <a href="#" data-owner-tab="orders">🛒 Zamówienia</a>
         <a href="#" data-owner-tab="subscriptions">💳 Subskrypcje i płatności</a>
         <a href="#" data-owner-tab="scripts">📜 Skrypty</a>
+        <a href="#" data-owner-tab="github">🐙 GitHub / Developer</a>
         <a href="#" data-owner-tab="finances">💰 Marże i Prowizje</a>
         <a href="#" data-owner-tab="referrals">🔗 Polecenia</a>
         <a href="#" data-owner-tab="ranking">🏆 Ranking</a>
@@ -156,6 +157,12 @@
               <button class="owner-tile" data-owner-tab-trigger="scripts">
                 <span class="tile-icon">📜</span><span class="tile-label">Skrypty</span>
               </button>
+              <button class="owner-tile" data-owner-tab-trigger="github">
+                <span class="tile-icon">🐙</span><span class="tile-label">GitHub / Developer</span>
+              </button>
+              <a class="owner-tile owner-tile-link" href="https://chat.openai.com" target="_blank" rel="noopener noreferrer" aria-label="Otwórz ChatGPT w nowej karcie">
+                <span class="tile-icon">🤖</span><span class="tile-label">ChatGPT</span>
+              </a>
               <button class="owner-tile" data-owner-tab-trigger="settings">
                 <span class="tile-icon">⚙️</span><span class="tile-label">Ustawienia systemu</span>
               </button>
@@ -551,57 +558,116 @@
 
         <!-- TAB: IMPORT PRODUKTÓW -->
         <div class="owner-tab-panel" data-owner-tab-panel="import-products" hidden>
+          <section class="panel-card dashboard-welcome">
+            <span class="eyebrow">Import produktów — Centrum importu</span>
+            <h2>Importuj produkty do katalogu</h2>
+            <p class="hint">Zaimportuj produkty z pliku CSV lub XML, lub zsynchronizuj z hurtownią. Import odbywa się synchronicznie – wynik pojawi się natychmiast po zakończeniu.</p>
+          </section>
+
+          <!-- Import from file -->
           <section class="panel-card">
             <div class="section-head">
-              <span class="eyebrow">Import produktów</span>
-              <h2>Importuj produkty do katalogu</h2>
-              <p class="hint">Zaimportuj produkty z pliku CSV lub XML, lub zsynchronizuj z hurtownią.</p>
+              <span class="eyebrow">Import z pliku</span>
+              <h2>Import CSV / XML</h2>
             </div>
-
-            <!-- Import from file -->
-            <div class="panel-card" style="margin-top:16px">
-              <h3>Import z pliku CSV / XML</h3>
-              <p class="hint">Wybierz plik CSV lub XML i zaimportuj produkty do katalogu centralnego.</p>
-              <form data-import-file-form style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
-                <div class="form-field">
-                  <label for="import-file-input">Plik CSV lub XML</label>
-                  <input id="import-file-input" type="file" accept=".csv,.xml" data-import-file required aria-label="Plik CSV lub XML do importu produktów" aria-describedby="import-file-hint">
-                  <small id="import-file-hint" class="hint">Obsługiwane formaty: .csv, .xml. Kolumny: nazwa, sku, cena_netto, kategoria, opis, stan.</small>
+            <p class="hint">Wybierz plik CSV lub XML i zaimportuj produkty do katalogu centralnego.</p>
+            <form data-import-file-form style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+              <div class="form-field">
+                <label for="import-file-input">Plik CSV lub XML</label>
+                <input id="import-file-input" type="file" accept=".csv,.xml" data-import-file required aria-label="Plik CSV lub XML do importu produktów" aria-describedby="import-file-hint">
+                <small id="import-file-hint" class="hint">Obsługiwane formaty: .csv, .xml. Kolumny: nazwa, sku, cena_netto, kategoria, opis, stan.</small>
+              </div>
+              <!-- Progress bar -->
+              <div id="import-file-progress-wrap" hidden style="margin-top:8px">
+                <div style="background:var(--border,#e5e7eb);border-radius:8px;overflow:hidden;height:10px">
+                  <div id="import-file-progress-bar" style="height:10px;background:var(--primary,#7c3aed);width:0%;transition:width 0.3s"></div>
                 </div>
-                <p data-import-file-msg class="hint" hidden></p>
-                <div class="cta-row">
-                  <button class="btn btn-primary" type="submit" data-import-file-submit>📥 Importuj produkty</button>
-                </div>
-              </form>
-            </div>
-
-            <!-- Sync from supplier -->
-            <div class="panel-card" style="margin-top:16px">
-              <h3>Synchronizacja z hurtownią</h3>
-              <p class="hint">Wybierz hurtownię i pobierz aktualne produkty z jej API.</p>
-              <form data-import-sync-form style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
-                <div class="form-field">
-                  <label for="import-supplier-select">Hurtownia</label>
-                  <select id="import-supplier-select" data-import-supplier-select required>
-                    <option value="">Wybierz hurtownię…</option>
-                  </select>
-                </div>
-                <p data-import-sync-msg class="hint" hidden></p>
-                <div class="cta-row">
-                  <button class="btn btn-primary" type="submit" data-import-sync-submit>🔄 Synchronizuj produkty</button>
-                </div>
-              </form>
-            </div>
-
+                <p class="hint" id="import-file-progress-label" style="margin-top:4px">Przetwarzanie…</p>
+              </div>
+              <p data-import-file-msg id="import-file-msg" class="hint" hidden></p>
+              <div class="cta-row">
+                <button class="btn btn-primary" type="submit" data-import-file-submit id="import-file-btn">📥 Importuj produkty</button>
+              </div>
+            </form>
             <!-- Import result -->
-            <div data-import-result hidden style="margin-top:16px">
-              <div class="panel-card">
-                <h3>Wynik importu</h3>
-                <p data-import-result-msg class="hint"></p>
+            <div id="import-file-result" data-import-result hidden style="margin-top:16px">
+              <div class="panel-card" id="import-file-result-card">
+                <h3 id="import-file-result-title">Wynik importu</h3>
+                <p id="import-file-result-msg" data-import-result-msg class="hint"></p>
+                <div class="stats-grid stats-g4" id="import-file-result-stats" hidden style="margin:12px 0">
+                  <div class="stat-card"><span>Zaimportowano</span><strong id="import-count">0</strong></div>
+                  <div class="stat-card"><span>Wyróżnione</span><strong id="import-featured">0</strong></div>
+                  <div class="stat-card"><span>Pominięte</span><strong id="import-skipped">0</strong></div>
+                  <div class="stat-card"><span>Status</span><strong id="import-status-pill">—</strong></div>
+                </div>
                 <div class="cta-row" style="margin-top:8px">
-                  <button class="btn btn-secondary" type="button" data-owner-tab-trigger="products">📦 Przejdź do produktów</button>
+                  <button class="btn btn-primary" type="button" data-owner-tab-trigger="products">📦 Przejdź do produktów</button>
+                  <button class="btn btn-secondary" type="button" id="import-file-retry-btn">🔄 Spróbuj ponownie</button>
                 </div>
               </div>
+            </div>
+          </section>
+
+          <!-- Sync from supplier -->
+          <section class="panel-card">
+            <div class="section-head">
+              <span class="eyebrow">Synchronizacja</span>
+              <h2>Synchronizacja z hurtownią</h2>
+            </div>
+            <p class="hint">Wybierz hurtownię i pobierz aktualne produkty z jej API lub endpointu.</p>
+            <form data-import-sync-form style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+              <div class="form-field">
+                <label for="import-supplier-select">Hurtownia</label>
+                <select id="import-supplier-select" data-import-supplier-select required>
+                  <option value="">Wybierz hurtownię…</option>
+                </select>
+              </div>
+              <!-- Progress bar -->
+              <div id="import-sync-progress-wrap" hidden style="margin-top:8px">
+                <div style="background:var(--border,#e5e7eb);border-radius:8px;overflow:hidden;height:10px">
+                  <div id="import-sync-progress-bar" style="height:10px;background:var(--primary,#7c3aed);width:0%;transition:width 0.3s"></div>
+                </div>
+                <p class="hint" id="import-sync-progress-label" style="margin-top:4px">Synchronizacja w toku…</p>
+              </div>
+              <p data-import-sync-msg id="import-sync-msg" class="hint" hidden></p>
+              <div class="cta-row">
+                <button class="btn btn-primary" type="submit" data-import-sync-submit id="import-sync-btn">🔄 Synchronizuj produkty</button>
+              </div>
+            </form>
+            <!-- Sync result -->
+            <div id="import-sync-result" hidden style="margin-top:16px">
+              <div class="panel-card" id="import-sync-result-card">
+                <h3 id="import-sync-result-title">Wynik synchronizacji</h3>
+                <p id="import-sync-result-msg" class="hint"></p>
+                <div class="stats-grid stats-g4" id="import-sync-result-stats" hidden style="margin:12px 0">
+                  <div class="stat-card"><span>Zaimportowano</span><strong id="sync-count">0</strong></div>
+                  <div class="stat-card"><span>Wyróżnione</span><strong id="sync-featured">0</strong></div>
+                  <div class="stat-card"><span>Pominięte</span><strong id="sync-skipped">0</strong></div>
+                  <div class="stat-card"><span>Status</span><strong id="sync-status-pill">—</strong></div>
+                </div>
+                <div class="cta-row" style="margin-top:8px">
+                  <button class="btn btn-primary" type="button" data-owner-tab-trigger="products">📦 Przejdź do produktów</button>
+                  <button class="btn btn-secondary" type="button" id="import-sync-retry-btn">🔄 Synchronizuj ponownie</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Import history from scripts -->
+          <section class="panel-card">
+            <div class="section-head">
+              <span class="eyebrow">Historia importów</span>
+              <h2>Ostatnie operacje importu</h2>
+            </div>
+            <div class="owner-table-wrap">
+              <table class="owner-table">
+                <thead>
+                  <tr><th>Skrypt</th><th>Ostatnie uruchomienie</th><th>Wynik</th><th>Status</th></tr>
+                </thead>
+                <tbody id="import-history-tbody">
+                  <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Brak historii importów.</td></tr>
+                </tbody>
+              </table>
             </div>
           </section>
         </div>
@@ -1290,119 +1356,63 @@
         </div>
         <div class="owner-tab-panel" data-owner-tab-panel="scripts" hidden>
           <section class="panel-card dashboard-welcome">
-            <span class="eyebrow">Skrypty systemowe</span>
+            <span class="eyebrow">Skrypty systemowe — tylko Superadmin</span>
             <h2>Zarządzanie skryptami</h2>
-            <p class="hint">Uruchamiaj i zarządzaj skryptami automatyzacji platformy. Każdy skrypt możesz uruchomić jednym kliknięciem lub zaplanować jego cykliczne wykonanie.</p>
+            <p class="hint">Uruchamiaj i zarządzaj skryptami automatyzacji platformy. Skrypty niebezpieczne wymagają potwierdzenia. Użyj <strong>Dry Run</strong> aby sprawdzić wynik bez rzeczywistych zmian.</p>
             <div class="dashboard-meta">
               <div><span>Dostępne skrypty</span><strong data-scripts-total>—</strong></div>
               <div><span>Ostatnie uruchomienie</span><strong data-scripts-last-run>—</strong></div>
               <div><span>Tryb systemu</span><strong class="status-pill is-ready" data-system-mode>Produkcyjny</strong></div>
             </div>
           </section>
-          <section class="panel-card">
+
+          <!-- Dynamic scripts list loaded from /api/admin/scripts -->
+          <section class="panel-card" id="scripts-loading-card">
+            <p class="hint" style="padding:16px">Ładowanie skryptów…</p>
+          </section>
+
+          <section class="panel-card" id="scripts-main-card" hidden>
             <div class="section-head">
-              <span class="eyebrow">Skrypty importu i synchronizacji</span>
-              <h2>Import danych</h2>
+              <span class="eyebrow">Skrypty systemowe</span>
+              <h2>Lista skryptów</h2>
             </div>
             <div class="owner-table-wrap">
-              <table class="owner-table">
+              <table class="owner-table" id="scripts-table">
                 <thead>
                   <tr>
-                    <th>Nazwa skryptu</th>
+                    <th>Skrypt</th>
                     <th>Opis</th>
                     <th>Ostatnie uruchomienie</th>
+                    <th>Wynik</th>
                     <th>Status</th>
-                    <th>Akcja</th>
+                    <th>Akcje</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Synchronizacja hurtowni</strong></td>
-                    <td class="cell-muted">Aktualizuje produkty ze wszystkich podłączonych hurtowni</td>
-                    <td class="cell-muted" data-script-run-time="sync-warehouses">—</td>
-                    <td><span class="pill-active" data-script-status="sync-warehouses">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="sync-warehouses">▶ Uruchom</button></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Import produktów CSV/XML</strong></td>
-                    <td class="cell-muted">Importuje produkty z pliku CSV lub XML do katalogu platformy</td>
-                    <td class="cell-muted" data-script-run-time="import-products">—</td>
-                    <td><span class="pill-active" data-script-status="import-products">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="import-products">▶ Uruchom</button></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Przeliczenie cen i marż</strong></td>
-                    <td class="cell-muted">Przelicza ceny sprzedaży na podstawie aktualnych marż platformy</td>
-                    <td class="cell-muted" data-script-run-time="recalc-prices">—</td>
-                    <td><span class="pill-active" data-script-status="recalc-prices">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="recalc-prices">▶ Uruchom</button></td>
-                  </tr>
+                <tbody id="scripts-tbody">
+                  <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Ładowanie…</td></tr>
                 </tbody>
               </table>
             </div>
           </section>
-          <section class="panel-card">
+
+          <!-- Script result message -->
+          <section class="panel-card" id="scripts-result-card" hidden>
             <div class="section-head">
-              <span class="eyebrow">Skrypty zarządzania</span>
-              <h2>Operacje systemu</h2>
+              <span class="eyebrow">Wynik ostatniego skryptu</span>
+              <h2 id="scripts-result-title">—</h2>
             </div>
-            <div class="owner-table-wrap">
-              <table class="owner-table">
-                <thead>
-                  <tr>
-                    <th>Nazwa skryptu</th>
-                    <th>Opis</th>
-                    <th>Ostatnie uruchomienie</th>
-                    <th>Status</th>
-                    <th>Akcja</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Czyszczenie wygasłych subskrypcji</strong></td>
-                    <td class="cell-muted">Dezaktywuje subskrypcje, którym minął termin ważności</td>
-                    <td class="cell-muted" data-script-run-time="cleanup-subscriptions">—</td>
-                    <td><span class="pill-active" data-script-status="cleanup-subscriptions">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="cleanup-subscriptions">▶ Uruchom</button></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Generowanie raportów miesięcznych</strong></td>
-                    <td class="cell-muted">Tworzy zestawienia finansowe i sprzedażowe za bieżący miesiąc</td>
-                    <td class="cell-muted" data-script-run-time="gen-reports">—</td>
-                    <td><span class="pill-active" data-script-status="gen-reports">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="gen-reports">▶ Uruchom</button></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Wysyłka powiadomień e-mail</strong></td>
-                    <td class="cell-muted">Wysyła zaległe powiadomienia do użytkowników platformy</td>
-                    <td class="cell-muted" data-script-run-time="send-notifications">—</td>
-                    <td><span class="pill-active" data-script-status="send-notifications">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="send-notifications">▶ Uruchom</button></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Backup bazy danych</strong></td>
-                    <td class="cell-muted">Tworzy kopię zapasową wszystkich danych platformy</td>
-                    <td class="cell-muted" data-script-run-time="db-backup">—</td>
-                    <td><span class="pill-active" data-script-status="db-backup">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="db-backup">▶ Uruchom</button></td>
-                  </tr>
-                </tbody>
-              </table>
+            <p id="scripts-result-msg" class="hint"></p>
+            <div class="cta-row" style="margin-top:12px">
+              <span id="scripts-result-status" class="pill-active"></span>
+              <span id="scripts-result-time" class="cell-muted"></span>
             </div>
           </section>
+
+          <!-- Logs -->
           <section class="panel-card">
             <div class="section-head">
               <span class="eyebrow">Historia wykonania</span>
               <h2>Logi skryptów</h2>
-            </div>
-            <div class="owner-toolbar">
-              <input class="owner-search" type="search" placeholder="Szukaj w logach…" aria-label="Szukaj w logach skryptów">
-              <select class="owner-filter" aria-label="Filtruj status">
-                <option value="">Wszystkie statusy</option>
-                <option value="success">Sukces</option>
-                <option value="error">Błąd</option>
-                <option value="running">W trakcie</option>
-              </select>
             </div>
             <div class="owner-table-wrap">
               <table class="owner-table">
@@ -1410,12 +1420,12 @@
                   <tr>
                     <th>Czas</th>
                     <th>Skrypt</th>
-                    <th>Czas trwania</th>
+                    <th>Typ wykonania</th>
                     <th>Status</th>
                     <th>Komunikat</th>
                   </tr>
                 </thead>
-                <tbody data-scripts-log-tbody>
+                <tbody id="scripts-log-tbody" data-scripts-log-tbody>
                   <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Brak wpisów w historii. Uruchom skrypt, aby zobaczyć log.</td></tr>
                 </tbody>
               </table>
@@ -1424,6 +1434,118 @@
         </div>
 
         <!-- TAB: SCRIPTS is defined above (first occurrence) -->
+
+        <!-- TAB: GITHUB / DEVELOPER -->
+        <div class="owner-tab-panel" data-owner-tab-panel="github" hidden>
+          <section class="panel-card dashboard-welcome">
+            <span class="eyebrow">Integracja z GitHub</span>
+            <h2>Developer / GitHub</h2>
+            <p class="hint">Zarządzaj repozytorium, przeglądaj pull requesty i zatwierdzaj zmiany bez opuszczania platformy.</p>
+            <div class="dashboard-meta" id="github-meta">
+              <div><span>Repozytorium</span><strong id="gh-repo-name">Ładowanie…</strong></div>
+              <div><span>Domyślna gałąź</span><strong id="gh-default-branch">—</strong></div>
+              <div><span>Otwarte PR</span><strong id="gh-open-prs-count">—</strong></div>
+            </div>
+          </section>
+
+          <!-- Not configured notice -->
+          <section class="panel-card" id="github-not-configured" hidden>
+            <div class="section-head">
+              <span class="eyebrow">Konfiguracja wymagana</span>
+              <h2>Integracja z GitHub nie jest skonfigurowana</h2>
+            </div>
+            <p class="hint">Ustaw poniższe zmienne środowiskowe na serwerze, aby włączyć integrację z GitHub:</p>
+            <div class="roles-grid">
+              <div class="role-card">
+                <strong>Zmienne środowiskowe</strong>
+                <ul>
+                  <li><code>GITHUB_TOKEN=ghp_twój_token</code> – Personal Access Token z uprawnieniami <em>repo</em> i <em>pull_requests</em></li>
+                  <li><code>GITHUB_REPO=owner/repo-name</code> – nazwa repozytorium (np. <code>uszefapromo-hub/HurtDetalUszefaQUALITET</code>)</li>
+                </ul>
+              </div>
+              <div class="role-card">
+                <strong>Bezpieczeństwo</strong>
+                <span>Token jest przechowywany wyłącznie jako zmienna środowiskowa serwera. Nigdy nie jest przekazywany do przeglądarki.</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- GitHub content (shown when configured) -->
+          <div id="github-configured-content" hidden>
+            <!-- Open Pull Requests -->
+            <section class="panel-card">
+              <div class="section-head">
+                <span class="eyebrow">Pull Requesty</span>
+                <h2>Otwarte Pull Requesty</h2>
+              </div>
+              <div id="github-prs-loading" class="hint" style="padding:16px">Ładowanie pull requestów…</div>
+              <div class="owner-table-wrap" id="github-prs-wrap" hidden>
+                <table class="owner-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Tytuł</th>
+                      <th>Autor</th>
+                      <th>Gałąź</th>
+                      <th>Data</th>
+                      <th>Akcje</th>
+                    </tr>
+                  </thead>
+                  <tbody id="github-prs-tbody">
+                    <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Brak otwartych pull requestów.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- Recent Commits -->
+            <section class="panel-card">
+              <div class="section-head">
+                <span class="eyebrow">Ostatnie zmiany</span>
+                <h2>Historia commitów</h2>
+              </div>
+              <div id="github-commits-loading" class="hint" style="padding:16px">Ładowanie commitów…</div>
+              <div class="owner-table-wrap" id="github-commits-wrap" hidden>
+                <table class="owner-table">
+                  <thead>
+                    <tr>
+                      <th>SHA</th>
+                      <th>Wiadomość</th>
+                      <th>Autor</th>
+                      <th>Data</th>
+                      <th>Link</th>
+                    </tr>
+                  </thead>
+                  <tbody id="github-commits-tbody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- PR detail modal area -->
+            <section class="panel-card" id="github-pr-detail" hidden>
+              <div class="section-head">
+                <span class="eyebrow">Szczegóły Pull Requesta</span>
+                <h2 id="github-pr-detail-title">PR #—</h2>
+              </div>
+              <div id="github-pr-detail-body"></div>
+              <div class="owner-table-wrap" id="github-pr-files-wrap" hidden>
+                <h3 style="margin:16px 0 8px">Zmienione pliki</h3>
+                <table class="owner-table">
+                  <thead><tr><th>Plik</th><th>Status</th><th>+</th><th>-</th></tr></thead>
+                  <tbody id="github-pr-files-tbody"></tbody>
+                </table>
+              </div>
+              <div class="cta-row" style="margin-top:16px">
+                <button class="btn btn-secondary" type="button" id="github-pr-back-btn">← Wróć do listy PR</button>
+                <a class="btn btn-secondary" id="github-pr-open-link" href="#" target="_blank" rel="noopener noreferrer">↗ Otwórz na GitHub</a>
+                <button class="btn btn-primary" type="button" id="github-pr-approve-btn">✅ Zatwierdź PR</button>
+                <button class="btn btn-primary" type="button" id="github-pr-merge-btn" style="background:var(--success,#16a34a)">🔀 Scal PR (Squash)</button>
+                <button class="btn btn-danger" type="button" id="github-pr-close-btn">✕ Zamknij PR</button>
+              </div>
+              <p id="github-pr-action-msg" class="hint" style="margin-top:8px" hidden></p>
+            </section>
+          </div>
+        </div>
 
         <!-- TAB: ANNOUNCEMENTS (Komunikaty) -->
         <div class="owner-tab-panel" data-owner-tab-panel="announcements" hidden>
@@ -1716,7 +1838,520 @@
   })();
   </script>
 
-  <footer class="site-footer">
+  <script>
+  // ─── Scripts tab: dynamic loading, run/dry-run, enable/disable ───────────────
+  (function () {
+    function apiReqScripts(method, path, body) {
+      const token = localStorage.getItem('token') || '';
+      const opts = { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) } };
+      if (body) opts.body = JSON.stringify(body);
+      return fetch('/api' + path, opts).then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)));
+    }
+
+    const scriptLogs = [];
+
+    function appendScriptLog(entry) {
+      scriptLogs.unshift(entry);
+      const tbody = document.getElementById('scripts-log-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = scriptLogs.slice(0, 50).map(l => `
+        <tr>
+          <td class="cell-muted">${new Date(l.time).toLocaleString('pl-PL')}</td>
+          <td><strong>${escHtml(l.name)}</strong></td>
+          <td>${l.dryRun ? '<span class="pill-inactive">Dry Run</span>' : '—'}</td>
+          <td><span class="${l.ok ? 'pill-active' : 'pill-inactive'}">${l.ok ? '✅ OK' : '❌ Błąd'}</span></td>
+          <td class="cell-muted">${escHtml(l.result)}</td>
+        </tr>`).join('');
+    }
+
+    function escHtml(str) {
+      return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function loadScripts() {
+      const loadingCard = document.getElementById('scripts-loading-card');
+      const mainCard = document.getElementById('scripts-main-card');
+      const tbody = document.getElementById('scripts-tbody');
+      const totalEl = document.querySelector('[data-scripts-total]');
+      if (!tbody) return;
+
+      try {
+        const data = await apiReqScripts('GET', '/admin/scripts');
+        const scripts = data.scripts || [];
+
+        if (totalEl) totalEl.textContent = scripts.length;
+
+        const lastRun = scripts.filter(s => s.last_run_at).sort((a,b) => new Date(b.last_run_at) - new Date(a.last_run_at))[0];
+        const lastRunEl = document.querySelector('[data-scripts-last-run]');
+        if (lastRun && lastRunEl) lastRunEl.textContent = new Date(lastRun.last_run_at).toLocaleString('pl-PL');
+
+        tbody.innerHTML = scripts.map(s => `
+          <tr id="script-row-${escHtml(s.id)}">
+            <td>
+              <strong>${escHtml(s.name)}</strong>
+              ${s.dangerous ? ' <span class="pill-inactive" title="Niebezpieczna operacja">⚠️ Niebezpieczny</span>' : ''}
+            </td>
+            <td class="cell-muted">${escHtml(s.description)}</td>
+            <td class="cell-muted">${s.last_run_at ? new Date(s.last_run_at).toLocaleString('pl-PL') : '—'}</td>
+            <td class="cell-muted" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(s.last_result || '')}">${escHtml(s.last_result || '—')}</td>
+            <td>
+              ${s.enabled !== false
+                ? '<span class="pill-active">Aktywny</span>'
+                : '<span class="pill-inactive">Wyłączony</span>'}
+            </td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-primary btn-sm" type="button" data-script-run="${escHtml(s.id)}" data-script-name="${escHtml(s.name)}" data-script-dangerous="${s.dangerous ? '1' : '0'}" ${s.enabled === false ? 'disabled' : ''}>▶ Uruchom</button>
+              <button class="btn btn-secondary btn-sm" type="button" data-script-dryrun="${escHtml(s.id)}" data-script-name="${escHtml(s.name)}" ${s.enabled === false ? 'disabled' : ''}>🔍 Dry Run</button>
+              <button class="btn btn-secondary btn-sm" type="button" data-script-toggle="${escHtml(s.id)}" data-script-enabled="${s.enabled !== false ? '1' : '0'}">${s.enabled !== false ? '⏸ Wyłącz' : '▶ Włącz'}</button>
+            </td>
+          </tr>`).join('');
+
+        // Bind run buttons
+        tbody.querySelectorAll('[data-script-run]').forEach(btn => {
+          btn.addEventListener('click', () => runScript(btn.dataset.scriptRun, btn.dataset.scriptName, false, btn.dataset.scriptDangerous === '1'));
+        });
+        tbody.querySelectorAll('[data-script-dryrun]').forEach(btn => {
+          btn.addEventListener('click', () => runScript(btn.dataset.scriptDryrun, btn.dataset.scriptName, true, false));
+        });
+        tbody.querySelectorAll('[data-script-toggle]').forEach(btn => {
+          btn.addEventListener('click', () => toggleScript(btn.dataset.scriptToggle, btn.dataset.scriptEnabled !== '1'));
+        });
+
+        if (loadingCard) loadingCard.hidden = true;
+        if (mainCard) mainCard.hidden = false;
+
+      } catch (err) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="color:var(--error,red);padding:24px">Błąd ładowania skryptów: ${escHtml(err.message || err.error || 'Nieznany błąd')}</td></tr>`;
+        if (loadingCard) loadingCard.hidden = true;
+        if (mainCard) mainCard.hidden = false;
+      }
+    }
+
+    async function runScript(scriptId, scriptName, dryRun, dangerous) {
+      if (!dryRun && dangerous) {
+        if (!confirm(`⚠️ Czy na pewno chcesz uruchomić "${scriptName}"?\n\nTa operacja jest NIEODWRACALNA. Zalecamy najpierw uruchomić Dry Run.`)) return;
+      }
+      const resultCard = document.getElementById('scripts-result-card');
+      const resultTitle = document.getElementById('scripts-result-title');
+      const resultMsg = document.getElementById('scripts-result-msg');
+      const resultStatus = document.getElementById('scripts-result-status');
+      const resultTime = document.getElementById('scripts-result-time');
+
+      if (resultCard) {
+        resultCard.hidden = false;
+        if (resultTitle) resultTitle.textContent = (dryRun ? '[Dry Run] ' : '') + scriptName;
+        if (resultMsg) resultMsg.textContent = 'Uruchamianie…';
+        if (resultStatus) { resultStatus.className = 'pill-inactive'; resultStatus.textContent = '⏳ W trakcie'; }
+      }
+
+      try {
+        const url = `/admin/scripts/${encodeURIComponent(scriptId)}/run${dryRun ? '?dryRun=true' : ''}`;
+        const data = await apiReqScripts('POST', url);
+        const ok = data.ok !== false;
+
+        if (resultMsg) resultMsg.textContent = data.result || 'Zakończono';
+        if (resultStatus) {
+          resultStatus.className = ok ? 'pill-active' : 'pill-inactive';
+          resultStatus.textContent = dryRun ? '🔍 Dry Run OK' : (ok ? '✅ Sukces' : '❌ Błąd');
+        }
+        if (resultTime) resultTime.textContent = `Czas: ${new Date(data.finished_at).toLocaleString('pl-PL')}`;
+
+        appendScriptLog({ time: data.started_at || new Date(), name: scriptName, ok, result: data.result, dryRun });
+        if (!dryRun) loadScripts();
+      } catch (err) {
+        const msg = err.error || err.message || 'Nieznany błąd';
+        if (resultMsg) resultMsg.textContent = 'Błąd: ' + msg;
+        if (resultStatus) { resultStatus.className = 'pill-inactive'; resultStatus.textContent = '❌ Błąd'; }
+        appendScriptLog({ time: new Date(), name: scriptName, ok: false, result: msg, dryRun });
+      }
+    }
+
+    async function toggleScript(scriptId, enable) {
+      try {
+        await apiReqScripts('PATCH', `/admin/scripts/${encodeURIComponent(scriptId)}`, { enabled: enable });
+        loadScripts();
+      } catch (err) {
+        alert('Błąd: ' + (err.error || err.message));
+      }
+    }
+
+    // Load scripts when tab is activated
+    document.querySelectorAll('[data-owner-tab]').forEach(a => {
+      if (a.dataset.ownerTab === 'scripts') {
+        a.addEventListener('click', () => setTimeout(loadScripts, 100));
+      }
+    });
+  })();
+  </script>
+
+  <script>
+  // ─── GitHub tab logic ─────────────────────────────────────────────────────────
+  (function () {
+    function apiReqGh(method, path, body) {
+      const token = localStorage.getItem('token') || '';
+      const opts = { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) } };
+      if (body) opts.body = JSON.stringify(body);
+      return fetch('/api' + path, opts).then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)));
+    }
+
+    function esc(str) {
+      return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    let currentPrNumber = null;
+
+    async function loadGithub() {
+      const repoName = document.getElementById('gh-repo-name');
+      const defaultBranch = document.getElementById('gh-default-branch');
+      const openPrsCount = document.getElementById('gh-open-prs-count');
+      const notConfigured = document.getElementById('github-not-configured');
+      const configuredContent = document.getElementById('github-configured-content');
+      const prsLoading = document.getElementById('github-prs-loading');
+      const prsWrap = document.getElementById('github-prs-wrap');
+      const commitsLoading = document.getElementById('github-commits-loading');
+      const commitsWrap = document.getElementById('github-commits-wrap');
+
+      try {
+        const data = await apiReqGh('GET', '/admin/github/status');
+
+        if (!data.configured) {
+          if (repoName) repoName.textContent = 'Nie skonfigurowane';
+          if (notConfigured) notConfigured.hidden = false;
+          if (configuredContent) configuredContent.hidden = true;
+          return;
+        }
+
+        if (data.error) {
+          if (repoName) repoName.textContent = 'Błąd: ' + esc(data.error);
+          return;
+        }
+
+        const repo = data.repo || {};
+        if (repoName) repoName.textContent = repo.full_name || repo.name || '—';
+        if (defaultBranch) defaultBranch.textContent = repo.default_branch || '—';
+        if (openPrsCount) openPrsCount.textContent = (data.open_prs || []).length;
+
+        if (notConfigured) notConfigured.hidden = true;
+        if (configuredContent) configuredContent.hidden = false;
+
+        // Render PRs
+        const prsTbody = document.getElementById('github-prs-tbody');
+        if (prsTbody) {
+          const prs = data.open_prs || [];
+          if (prs.length === 0) {
+            prsTbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Brak otwartych pull requestów.</td></tr>';
+          } else {
+            prsTbody.innerHTML = prs.map(pr => `
+              <tr>
+                <td><strong>#${pr.number}</strong></td>
+                <td>${esc(pr.title)}</td>
+                <td class="cell-muted">${esc(pr.user || '—')}</td>
+                <td class="cell-muted"><code>${esc(pr.head_ref || '—')}</code></td>
+                <td class="cell-muted">${new Date(pr.updated_at).toLocaleDateString('pl-PL')}</td>
+                <td style="white-space:nowrap">
+                  <button class="btn btn-secondary btn-sm" type="button" data-gh-pr-detail="${pr.number}">🔍 Szczegóły</button>
+                  <a class="btn btn-secondary btn-sm" href="${esc(pr.html_url)}" target="_blank" rel="noopener noreferrer">↗ GitHub</a>
+                </td>
+              </tr>`).join('');
+
+            prsTbody.querySelectorAll('[data-gh-pr-detail]').forEach(btn => {
+              btn.addEventListener('click', () => loadPrDetail(parseInt(btn.dataset.ghPrDetail, 10)));
+            });
+          }
+          if (prsLoading) prsLoading.hidden = true;
+          if (prsWrap) prsWrap.hidden = false;
+        }
+
+        // Render commits
+        const commitsTbody = document.getElementById('github-commits-tbody');
+        if (commitsTbody) {
+          const commits = data.commits || [];
+          commitsTbody.innerHTML = commits.map(c => `
+            <tr>
+              <td><code>${esc(c.sha)}</code></td>
+              <td>${esc(c.message)}</td>
+              <td class="cell-muted">${esc(c.author || '—')}</td>
+              <td class="cell-muted">${c.date ? new Date(c.date).toLocaleDateString('pl-PL') : '—'}</td>
+              <td><a href="${esc(c.url || '#')}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">↗</a></td>
+            </tr>`).join('');
+          if (commitsLoading) commitsLoading.hidden = true;
+          if (commitsWrap) commitsWrap.hidden = false;
+        }
+
+      } catch (err) {
+        if (repoName) repoName.textContent = 'Błąd: ' + esc(err.message || err.error || 'nieznany');
+      }
+    }
+
+    async function loadPrDetail(prNumber) {
+      currentPrNumber = prNumber;
+      const detailSection = document.getElementById('github-pr-detail');
+      const detailTitle = document.getElementById('github-pr-detail-title');
+      const detailBody = document.getElementById('github-pr-detail-body');
+      const filesTbody = document.getElementById('github-pr-files-tbody');
+      const filesWrap = document.getElementById('github-pr-files-wrap');
+      const openLink = document.getElementById('github-pr-open-link');
+      const actionMsg = document.getElementById('github-pr-action-msg');
+
+      if (detailSection) detailSection.hidden = false;
+      if (detailTitle) detailTitle.textContent = `PR #${prNumber} — Ładowanie…`;
+      if (actionMsg) actionMsg.hidden = true;
+
+      try {
+        const data = await apiReqGh('GET', `/admin/github/pulls/${prNumber}`);
+        if (detailTitle) detailTitle.textContent = `PR #${data.number}: ${esc(data.title)}`;
+        if (detailBody) detailBody.innerHTML = `<p class="hint">${esc(data.body || 'Brak opisu.')}</p><p class="cell-muted">Autor: ${esc(data.user)} | ${esc(data.head_ref)} → ${esc(data.base_ref)} | ${data.draft ? '📝 Draft' : '✅ Ready'}</p>`;
+        if (openLink) openLink.href = data.html_url || '#';
+
+        if (filesTbody && data.files && data.files.length > 0) {
+          filesTbody.innerHTML = data.files.map(f => `
+            <tr>
+              <td><code>${esc(f.filename)}</code></td>
+              <td><span class="pill-${f.status === 'added' ? 'active' : f.status === 'removed' ? 'inactive' : ''}">${esc(f.status)}</span></td>
+              <td style="color:var(--success,green)">+${f.additions}</td>
+              <td style="color:var(--error,red)">-${f.deletions}</td>
+            </tr>`).join('');
+          if (filesWrap) filesWrap.hidden = false;
+        }
+
+        detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        if (detailTitle) detailTitle.textContent = `PR #${prNumber} — Błąd`;
+        if (detailBody) detailBody.innerHTML = `<p class="hint" style="color:var(--error,red)">Błąd: ${esc(err.message || err.error)}</p>`;
+      }
+    }
+
+    async function prAction(action) {
+      if (!currentPrNumber) return;
+      const msg = document.getElementById('github-pr-action-msg');
+      const labels = { approve: 'Zatwierdzanie…', merge: 'Scalanie…', close: 'Zamykanie…' };
+      const confirmMsgs = {
+        merge: `Czy scalić PR #${currentPrNumber}? Ta operacja jest nieodwracalna.`,
+        close: `Czy zamknąć PR #${currentPrNumber}?`,
+        approve: null,
+      };
+
+      if (confirmMsgs[action] && !confirm(confirmMsgs[action])) return;
+      if (msg) { msg.textContent = labels[action] || 'Przetwarzanie…'; msg.hidden = false; }
+
+      try {
+        if (action === 'approve') {
+          await apiReqGh('POST', `/admin/github/pulls/${currentPrNumber}/approve`, { body: 'Approved via QualitetVerse Super Admin' });
+          if (msg) msg.textContent = `✅ PR #${currentPrNumber} zatwierdzony!`;
+        } else if (action === 'merge') {
+          await apiReqGh('POST', `/admin/github/pulls/${currentPrNumber}/merge`, { merge_method: 'squash' });
+          if (msg) msg.textContent = `✅ PR #${currentPrNumber} scalony!`;
+          setTimeout(loadGithub, 1500);
+        } else if (action === 'close') {
+          await apiReqGh('POST', `/admin/github/pulls/${currentPrNumber}/close`);
+          if (msg) msg.textContent = `✅ PR #${currentPrNumber} zamknięty.`;
+          setTimeout(loadGithub, 1500);
+        }
+      } catch (err) {
+        if (msg) msg.textContent = `❌ Błąd: ${esc(err.message || err.error || 'Nieznany błąd')}`;
+      }
+    }
+
+    // Bind PR action buttons
+    const approveBtn = document.getElementById('github-pr-approve-btn');
+    const mergeBtn = document.getElementById('github-pr-merge-btn');
+    const closeBtn = document.getElementById('github-pr-close-btn');
+    const backBtn = document.getElementById('github-pr-back-btn');
+
+    if (approveBtn) approveBtn.addEventListener('click', () => prAction('approve'));
+    if (mergeBtn)   mergeBtn.addEventListener('click',   () => prAction('merge'));
+    if (closeBtn)   closeBtn.addEventListener('click',   () => prAction('close'));
+    if (backBtn)    backBtn.addEventListener('click', () => {
+      const d = document.getElementById('github-pr-detail');
+      if (d) d.hidden = true;
+      currentPrNumber = null;
+    });
+
+    // Load on tab switch
+    document.querySelectorAll('[data-owner-tab]').forEach(a => {
+      if (a.dataset.ownerTab === 'github') {
+        a.addEventListener('click', () => setTimeout(loadGithub, 100));
+      }
+    });
+  })();
+  </script>
+
+  <script>
+  // ─── Import products tab: improved UX with progress, error, retry ─────────────
+  (function () {
+    function apiReqImport(method, path, opts) {
+      const token = localStorage.getItem('token') || '';
+      const headers = { ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(opts && opts.headers || {}) };
+      return fetch('/api' + path, { method, headers, ...(opts || {}) })
+        .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)));
+    }
+
+    function showImportProgress(wrap, bar, label, pct, text) {
+      if (wrap) wrap.hidden = false;
+      if (bar) bar.style.width = pct + '%';
+      if (label) label.textContent = text;
+    }
+
+    function hideImportProgress(wrap) {
+      if (wrap) wrap.hidden = true;
+    }
+
+    function showImportResult(resultDiv, titleEl, msgEl, statsDiv, countEl, featuredEl, skippedEl, statusEl, data, success) {
+      if (resultDiv) resultDiv.hidden = false;
+      if (titleEl) titleEl.textContent = success ? '✅ Import zakończony!' : '❌ Import nie powiódł się';
+      if (msgEl) msgEl.textContent = data.message || data.error || (success ? 'Zakończono.' : 'Nieznany błąd');
+      if (success && statsDiv) {
+        statsDiv.hidden = false;
+        if (countEl) countEl.textContent = data.count || 0;
+        if (featuredEl) featuredEl.textContent = data.featured || 0;
+        if (skippedEl) skippedEl.textContent = data.skipped || 0;
+        if (statusEl) { statusEl.textContent = 'Sukces'; statusEl.className = 'pill-active'; }
+      } else if (!success && statsDiv) {
+        statsDiv.hidden = true;
+        if (statusEl) { statusEl.textContent = 'Błąd'; statusEl.className = 'pill-inactive'; }
+      }
+    }
+
+    // File import form
+    const fileForm = document.querySelector('[data-import-file-form]');
+    if (fileForm) {
+      const btn = document.getElementById('import-file-btn');
+      const progressWrap = document.getElementById('import-file-progress-wrap');
+      const progressBar = document.getElementById('import-file-progress-bar');
+      const progressLabel = document.getElementById('import-file-progress-label');
+      const msgEl = document.getElementById('import-file-msg');
+      const resultDiv = document.getElementById('import-file-result');
+      const resultTitle = document.getElementById('import-file-result-title');
+      const resultMsg = document.getElementById('import-file-result-msg');
+      const statsDiv = document.getElementById('import-file-result-stats');
+      const retryBtn = document.getElementById('import-file-retry-btn');
+
+      fileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = fileForm.querySelector('[data-import-file]');
+        if (!fileInput || !fileInput.files[0]) return;
+
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Importowanie…'; }
+        if (msgEl) msgEl.hidden = true;
+        if (resultDiv) resultDiv.hidden = true;
+
+        showImportProgress(progressWrap, progressBar, progressLabel, 30, 'Przesyłanie pliku…');
+
+        const fd = new FormData();
+        fd.append('file', fileInput.files[0]);
+
+        try {
+          showImportProgress(progressWrap, progressBar, progressLabel, 60, 'Przetwarzanie produktów…');
+          const data = await apiReqImport('POST', '/admin/products/import', { body: fd });
+          showImportProgress(progressWrap, progressBar, progressLabel, 100, 'Gotowe!');
+          setTimeout(() => hideImportProgress(progressWrap), 1500);
+          showImportResult(resultDiv, resultTitle, resultMsg, statsDiv,
+            document.getElementById('import-count'),
+            document.getElementById('import-featured'),
+            document.getElementById('import-skipped'),
+            document.getElementById('import-status-pill'),
+            data, true);
+        } catch (err) {
+          hideImportProgress(progressWrap);
+          const errMsg = err.error || err.message || 'Nieznany błąd importu';
+          showImportResult(resultDiv, resultTitle, resultMsg, statsDiv, null, null, null, document.getElementById('import-status-pill'), { error: errMsg }, false);
+          if (msgEl) { msgEl.textContent = '❌ ' + errMsg; msgEl.hidden = false; }
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = '📥 Importuj produkty'; }
+        }
+      });
+
+      if (retryBtn) retryBtn.addEventListener('click', () => {
+        if (resultDiv) resultDiv.hidden = true;
+        if (fileForm) fileForm.reset();
+      });
+    }
+
+    // Sync from supplier form
+    const syncForm = document.querySelector('[data-import-sync-form]');
+    if (syncForm) {
+      const btn = document.getElementById('import-sync-btn');
+      const progressWrap = document.getElementById('import-sync-progress-wrap');
+      const progressBar = document.getElementById('import-sync-progress-bar');
+      const progressLabel = document.getElementById('import-sync-progress-label');
+      const msgEl = document.getElementById('import-sync-msg');
+      const resultDiv = document.getElementById('import-sync-result');
+      const resultTitle = document.getElementById('import-sync-result-title');
+      const resultMsg = document.getElementById('import-sync-result-msg');
+      const statsDiv = document.getElementById('import-sync-result-stats');
+      const retryBtn = document.getElementById('import-sync-retry-btn');
+
+      syncForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const select = syncForm.querySelector('[data-import-supplier-select]');
+        const supplierId = select ? select.value : '';
+        if (!supplierId) { if (msgEl) { msgEl.textContent = 'Wybierz hurtownię.'; msgEl.hidden = false; } return; }
+
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Synchronizacja…'; }
+        if (msgEl) msgEl.hidden = true;
+        if (resultDiv) resultDiv.hidden = true;
+
+        showImportProgress(progressWrap, progressBar, progressLabel, 20, 'Łączenie z hurtownią…');
+
+        const fd = new FormData();
+        fd.append('supplier_id', supplierId);
+
+        try {
+          showImportProgress(progressWrap, progressBar, progressLabel, 60, 'Pobieranie produktów…');
+          const data = await apiReqImport('POST', '/admin/suppliers/import', { body: fd });
+          showImportProgress(progressWrap, progressBar, progressLabel, 100, 'Zakończono!');
+          setTimeout(() => hideImportProgress(progressWrap), 1500);
+          showImportResult(resultDiv, resultTitle, resultMsg, statsDiv,
+            document.getElementById('sync-count'),
+            document.getElementById('sync-featured'),
+            document.getElementById('sync-skipped'),
+            document.getElementById('sync-status-pill'),
+            data, true);
+        } catch (err) {
+          hideImportProgress(progressWrap);
+          const errMsg = err.error || err.message || 'Nieznany błąd synchronizacji';
+          showImportResult(resultDiv, resultTitle, resultMsg, statsDiv, null, null, null, document.getElementById('sync-status-pill'), { error: errMsg }, false);
+          if (msgEl) { msgEl.textContent = '❌ ' + errMsg; msgEl.hidden = false; }
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = '🔄 Synchronizuj produkty'; }
+        }
+      });
+
+      if (retryBtn) retryBtn.addEventListener('click', () => {
+        if (resultDiv) resultDiv.hidden = true;
+      });
+    }
+
+    // Load import history from scripts tab when import-products tab is active
+    async function loadImportHistory() {
+      const tbody = document.getElementById('import-history-tbody');
+      if (!tbody) return;
+      try {
+        const token = localStorage.getItem('token') || '';
+        const resp = await fetch('/api/admin/scripts', { headers: { Authorization: 'Bearer ' + token } });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const importScripts = (data.scripts || []).filter(s =>
+          ['warehouse-sync', 'csv-import'].includes(s.id)
+        );
+        if (importScripts.length === 0) return;
+        tbody.innerHTML = importScripts.map(s => `
+          <tr>
+            <td><strong>${s.name}</strong></td>
+            <td class="cell-muted">${s.last_run_at ? new Date(s.last_run_at).toLocaleString('pl-PL') : '—'}</td>
+            <td class="cell-muted">${s.last_result || '—'}</td>
+            <td><span class="${s.status === 'ok' ? 'pill-active' : s.status === 'error' ? 'pill-inactive' : ''}">${s.status || 'idle'}</span></td>
+          </tr>`).join('');
+      } catch (_) {}
+    }
+
+    document.querySelectorAll('[data-owner-tab]').forEach(a => {
+      if (a.dataset.ownerTab === 'import-products') {
+        a.addEventListener('click', () => setTimeout(loadImportHistory, 200));
+      }
+    });
+  })();
+  </script>
     <div class="wrap site-footer-inner">
       <p>© 2026 QualitetVerse. Wszelkie prawa zastrzeżone.</p>
       <p>Projekt i marka platformy stworzone przez Henryka Ślusarskiego</p>

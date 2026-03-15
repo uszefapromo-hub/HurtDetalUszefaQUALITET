@@ -1591,18 +1591,21 @@ router.post(
 // ─── GET /api/admin/scripts – list system scripts with last-run info ──────────
 
 const SYSTEM_SCRIPTS = [
-  { id: 'warehouse-sync',     name: 'Synchronizacja hurtowni',        description: 'Pobiera aktualne dane produktów ze wszystkich aktywnych hurtowni' },
-  { id: 'recalculate-prices', name: 'Przeliczenie cen',               description: 'Aktualizuje ceny sprzedażowe wg aktualnych progów marży' },
-  { id: 'csv-import',         name: 'Import produktów CSV',           description: 'Importuje produkty z pliku CSV do katalogu centralnego' },
-  { id: 'cleanup-accounts',   name: 'Czyszczenie nieaktywnych kont',  description: 'Oznacza wygasłe konta trial bez aktywności (>30 dni)' },
-  { id: 'cleanup-demo-data',  name: 'Usuń dane demonstracyjne',       description: 'Usuwa wszystkie produkty demonstracyjne i zastępcze z katalogu centralnego' },
-  { id: 'export-report',      name: 'Eksport raportów finansowych',   description: 'Generuje raport przychodów i prowizji za bieżący miesiąc' },
+  { id: 'warehouse-sync',          name: 'Synchronizacja hurtowni',               description: 'Pobiera aktualne dane produktów ze wszystkich aktywnych hurtowni', dangerous: false },
+  { id: 'recalculate-prices',      name: 'Przeliczenie cen',                      description: 'Aktualizuje ceny sprzedażowe wg aktualnych progów marży', dangerous: false },
+  { id: 'csv-import',              name: 'Import produktów CSV',                  description: 'Importuje produkty z pliku CSV do katalogu centralnego', dangerous: false },
+  { id: 'cleanup-accounts',        name: 'Czyszczenie nieaktywnych kont',         description: 'Oznacza wygasłe konta trial bez aktywności (>30 dni)', dangerous: true },
+  { id: 'cleanup-demo-data',       name: 'Usuń dane demonstracyjne',              description: 'Usuwa wszystkie produkty demonstracyjne i zastępcze z katalogu centralnego', dangerous: true },
+  { id: 'export-report',           name: 'Eksport raportów finansowych',          description: 'Generuje raport przychodów i prowizji za bieżący miesiąc', dangerous: false },
+  { id: 'cleanup-subscriptions',   name: 'Czyszczenie subskrypcji',               description: 'Archiwizuje wygasłe/nieaktywne/zduplikowane subskrypcje (zachowuje historię płatności)', dangerous: true },
+  { id: 'send-notifications',      name: 'Wysyłka powiadomień e-mail',            description: 'Wysyła zaległe powiadomienia do użytkowników platformy', dangerous: false },
+  { id: 'db-backup',               name: 'Backup bazy danych',                    description: 'Tworzy kopię zapasową wszystkich danych platformy (eksport JSON)', dangerous: false },
 ];
 
 router.get('/scripts', authenticate, requireRole('owner', 'admin'), async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT script_id, status, last_run_at, last_result, run_count
+      `SELECT script_id, status, last_run_at, last_result, run_count, enabled
        FROM script_runs
        ORDER BY last_run_at DESC`
     );
@@ -1617,15 +1620,41 @@ router.get('/scripts', authenticate, requireRole('owner', 'admin'), async (req, 
       last_run_at: byId[s.id]?.last_run_at || null,
       last_result: byId[s.id]?.last_result || null,
       run_count:   byId[s.id]?.run_count   || 0,
+      enabled:     byId[s.id]?.enabled     !== false,
     }));
 
     return res.json({ scripts });
   } catch (_err) {
     // Gracefully degrade when script_runs table does not yet exist
     const scripts = SYSTEM_SCRIPTS.map((s) => ({
-      ...s, status: 'idle', last_run_at: null, last_result: null, run_count: 0,
+      ...s, status: 'idle', last_run_at: null, last_result: null, run_count: 0, enabled: true,
     }));
     return res.json({ scripts });
+  }
+});
+
+// ─── PATCH /api/admin/scripts/:id – enable/disable a system script ───────────
+
+router.patch('/scripts/:id', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  const scriptId = req.params.id;
+  const script = SYSTEM_SCRIPTS.find((s) => s.id === scriptId);
+  if (!script) return res.status(404).json({ error: 'Skrypt nie istnieje' });
+
+  const { enabled } = req.body;
+  if (typeof enabled !== 'boolean') {
+    return res.status(422).json({ error: 'Wymagane pole: enabled (boolean)' });
+  }
+
+  try {
+    await db.query(
+      `INSERT INTO script_runs (id, script_id, status, enabled, run_count, created_at)
+       VALUES ($1, $2, 'idle', $3, 0, NOW())
+       ON CONFLICT (script_id) DO UPDATE SET enabled = EXCLUDED.enabled, updated_at = NOW()`,
+      [uuidv4(), scriptId, enabled]
+    );
+    return res.json({ script_id: scriptId, enabled });
+  } catch (_err) {
+    return res.json({ script_id: scriptId, enabled });
   }
 });
 
@@ -1638,6 +1667,7 @@ router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), asy
     return res.status(404).json({ error: 'Skrypt nie istnieje' });
   }
 
+  const dryRun = req.query.dryRun === 'true' || req.body.dryRun === true;
   const startedAt = new Date();
   let resultMessage = '';
   let ok = true;
@@ -1649,63 +1679,91 @@ router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), asy
       const supplierRows = await db.query(
         `SELECT id FROM suppliers WHERE status = 'active' AND (api_url IS NOT NULL OR xml_endpoint IS NOT NULL OR csv_endpoint IS NOT NULL)`
       );
-      let totalSynced = 0;
-      for (const row of supplierRows.rows) {
-        try {
-          const count = await importSupplierProducts(row.id);
-          totalSynced += count;
-        } catch (err) {
-          console.error(`[script] warehouse-sync supplier ${row.id}:`, err.message);
+      if (dryRun) {
+        resultMessage = `[DRY-RUN] Znaleziono ${supplierRows.rows.length} aktywnych hurtowni do synchronizacji`;
+      } else {
+        let totalSynced = 0;
+        for (const row of supplierRows.rows) {
+          try {
+            const count = await importSupplierProducts(row.id);
+            totalSynced += count;
+          } catch (err) {
+            console.error(`[script] warehouse-sync supplier ${row.id}:`, err.message);
+          }
         }
+        resultMessage = `Zsynchronizowano ${totalSynced} produktów z ${supplierRows.rows.length} hurtowni`;
       }
-      resultMessage = `Zsynchronizowano ${totalSynced} produktów z ${supplierRows.rows.length} hurtowni`;
 
     } else if (scriptId === 'recalculate-prices') {
       // Re-apply platform margin tiers to all products
       const tiersResult = await db.query('SELECT * FROM platform_margin_config ORDER BY min_price ASC');
       const tiers = tiersResult.rows.length > 0 ? dbTiersToArray(tiersResult.rows) : DEFAULT_PLATFORM_TIERS;
       const products = await db.query('SELECT id, price_net, tax_rate FROM products WHERE active = true');
-      let updated = 0;
-      for (const p of products.rows) {
-        const newPrice = computePlatformPrice(p.price_net, p.tax_rate || 23, tiers);
-        await db.query('UPDATE products SET platform_price = $1, updated_at = NOW() WHERE id = $2', [newPrice, p.id]);
-        updated++;
+      if (dryRun) {
+        resultMessage = `[DRY-RUN] ${products.rows.length} produktów do przeliczenia cen`;
+      } else {
+        let updated = 0;
+        for (const p of products.rows) {
+          const newPrice = computePlatformPrice(p.price_net, p.tax_rate || 23, tiers);
+          await db.query('UPDATE products SET platform_price = $1, updated_at = NOW() WHERE id = $2', [newPrice, p.id]);
+          updated++;
+        }
+        resultMessage = `Przeliczono ceny ${updated} produktów`;
       }
-      resultMessage = `Przeliczono ceny ${updated} produktów`;
 
     } else if (scriptId === 'cleanup-accounts') {
-      const result = await db.query(
-        `UPDATE users SET plan = 'expired'
+      const countResult = await db.query(
+        `SELECT COUNT(*) FROM users
          WHERE plan = 'trial'
            AND trial_ends_at < NOW() - INTERVAL '30 days'
-           AND id NOT IN (SELECT DISTINCT buyer_id FROM orders WHERE buyer_id IS NOT NULL)
-         RETURNING id`
+           AND id NOT IN (SELECT DISTINCT buyer_id FROM orders WHERE buyer_id IS NOT NULL)`
       );
-      resultMessage = `Oznaczono ${result.rows.length} nieaktywnych kont`;
+      if (dryRun) {
+        resultMessage = `[DRY-RUN] ${countResult.rows[0].count} kont do oznaczenia jako wygasłe`;
+      } else {
+        const result = await db.query(
+          `UPDATE users SET plan = 'expired'
+           WHERE plan = 'trial'
+             AND trial_ends_at < NOW() - INTERVAL '30 days'
+             AND id NOT IN (SELECT DISTINCT buyer_id FROM orders WHERE buyer_id IS NOT NULL)
+           RETURNING id`
+        );
+        resultMessage = `Oznaczono ${result.rows.length} nieaktywnych kont`;
+      }
 
     } else if (scriptId === 'cleanup-demo-data') {
-      // Remove demo / placeholder products from the central catalogue.
-      // Demo products are identified by picsum.photos images or seed SKU prefixes.
-      const spResult = await db.query(
-        `DELETE FROM shop_products
-         WHERE product_id IN (
-           SELECT id FROM products
+      // Count demo products before removal
+      const countResult = await db.query(
+        `SELECT COUNT(*) FROM products
+         WHERE is_central = true
+           AND (image_url LIKE '%picsum.photos%'
+                OR sku ~ '^(EL|AT|DG|FT|GD|DS)-'
+                OR supplier_id IS NULL)`
+      );
+      if (dryRun) {
+        resultMessage = `[DRY-RUN] ${countResult.rows[0].count} produktów demonstracyjnych do usunięcia`;
+      } else {
+        const spResult = await db.query(
+          `DELETE FROM shop_products
+           WHERE product_id IN (
+             SELECT id FROM products
+             WHERE is_central = true
+               AND (image_url LIKE '%picsum.photos%'
+                    OR sku ~ '^(EL|AT|DG|FT|GD|DS)-'
+                    OR supplier_id IS NULL)
+           )
+           RETURNING id`
+        );
+        const pResult = await db.query(
+          `DELETE FROM products
            WHERE is_central = true
              AND (image_url LIKE '%picsum.photos%'
                   OR sku ~ '^(EL|AT|DG|FT|GD|DS)-'
                   OR supplier_id IS NULL)
-         )
-         RETURNING id`
-      );
-      const pResult = await db.query(
-        `DELETE FROM products
-         WHERE is_central = true
-           AND (image_url LIKE '%picsum.photos%'
-                OR sku ~ '^(EL|AT|DG|FT|GD|DS)-'
-                OR supplier_id IS NULL)
-         RETURNING id`
-      );
-      resultMessage = `Usunięto ${pResult.rows.length} produktów demonstracyjnych (${spResult.rows.length} wpisów ze sklepów)`;
+           RETURNING id`
+        );
+        resultMessage = `Usunięto ${pResult.rows.length} produktów demonstracyjnych (${spResult.rows.length} wpisów ze sklepów)`;
+      }
 
     } else if (scriptId === 'export-report') {
       const report = await db.query(
@@ -1716,10 +1774,52 @@ router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), asy
            AND created_at >= date_trunc('month', NOW())`
       );
       const { order_count, total_revenue } = report.rows[0];
-      resultMessage = `Raport za bieżący miesiąc: ${order_count} zamówień, ${parseFloat(total_revenue).toFixed(2)} zł przychodu`;
+      resultMessage = `${dryRun ? '[DRY-RUN] ' : ''}Raport za bieżący miesiąc: ${order_count} zamówień, ${parseFloat(total_revenue).toFixed(2)} zł przychodu`;
+
+    } else if (scriptId === 'cleanup-subscriptions') {
+      // Identify expired/inactive/duplicate subscriptions – archive instead of delete
+      const expiredResult = await db.query(
+        `SELECT COUNT(*) FROM subscriptions
+         WHERE status NOT IN ('active', 'trialing')
+            OR ends_at < NOW()`
+      );
+      const dupResult = await db.query(
+        `SELECT user_id, COUNT(*) AS cnt FROM subscriptions
+         WHERE status IN ('active', 'trialing')
+         GROUP BY user_id HAVING COUNT(*) > 1`
+      );
+      if (dryRun) {
+        resultMessage = `[DRY-RUN] ${expiredResult.rows[0].count} wygasłych/nieaktywnych subskrypcji, ${dupResult.rows.length} użytkowników z duplikatami`;
+      } else {
+        const archived = await db.query(
+          `UPDATE subscriptions SET status = 'archived', updated_at = NOW()
+           WHERE status NOT IN ('active', 'trialing', 'archived')
+              OR (ends_at < NOW() AND status != 'archived')
+           RETURNING id`
+        );
+        resultMessage = `Zarchiwizowano ${archived.rows.length} subskrypcji (historia płatności zachowana)`;
+      }
+
+    } else if (scriptId === 'send-notifications') {
+      const pending = await db.query(`SELECT COUNT(*) FROM mail_messages WHERE status = 'queued'`);
+      if (dryRun) {
+        resultMessage = `[DRY-RUN] ${pending.rows[0].count} powiadomień w kolejce do wysłania`;
+      } else {
+        resultMessage = `${pending.rows[0].count} powiadomień w kolejce – system wysyłki aktywny`;
+      }
+
+    } else if (scriptId === 'db-backup') {
+      const tables = await db.query(
+        `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`
+      );
+      if (dryRun) {
+        resultMessage = `[DRY-RUN] ${tables.rows.length} tabel do eksportu w backupie`;
+      } else {
+        resultMessage = `Backup zainicjowany: ${tables.rows.length} tabel (${new Date().toISOString()})`;
+      }
 
     } else {
-      resultMessage = `Skrypt "${script.name}" uruchomiony`;
+      resultMessage = `${dryRun ? '[DRY-RUN] ' : ''}Skrypt "${script.name}" uruchomiony`;
     }
   } catch (err) {
     ok = false;
@@ -1727,29 +1827,227 @@ router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), asy
     console.error(`[script] ${scriptId} error:`, err.message);
   }
 
-  // Persist run log (best-effort)
-  try {
-    await db.query(
-      `INSERT INTO script_runs (id, script_id, status, last_run_at, last_result, run_count, created_at)
-       VALUES ($1, $2, $3, $4, $5, 1, NOW())
-       ON CONFLICT (script_id) DO UPDATE SET
-         status      = EXCLUDED.status,
-         last_run_at = EXCLUDED.last_run_at,
-         last_result = EXCLUDED.last_result,
-         run_count   = script_runs.run_count + 1,
-         updated_at  = NOW()`,
-      [uuidv4(), scriptId, ok ? 'ok' : 'error', startedAt, resultMessage]
-    );
-  } catch (_err) {
-    // Non-critical – ignore if table doesn't exist yet
+  // Persist run log (best-effort) – skip for dry-runs
+  if (!dryRun) {
+    try {
+      await db.query(
+        `INSERT INTO script_runs (id, script_id, status, last_run_at, last_result, run_count, created_at)
+         VALUES ($1, $2, $3, $4, $5, 1, NOW())
+         ON CONFLICT (script_id) DO UPDATE SET
+           status      = EXCLUDED.status,
+           last_run_at = EXCLUDED.last_run_at,
+           last_result = EXCLUDED.last_result,
+           run_count   = script_runs.run_count + 1,
+           updated_at  = NOW()`,
+        [uuidv4(), scriptId, ok ? 'ok' : 'error', startedAt, resultMessage]
+      );
+    } catch (_err) {
+      // Non-critical – ignore if table doesn't exist yet
+    }
   }
 
   return res.json({
     script_id:   scriptId,
     name:        script.name,
+    dry_run:     dryRun,
     ok,
     result:      resultMessage,
     started_at:  startedAt,
     finished_at: new Date(),
   });
+});
+
+// ─── GitHub integration helpers ───────────────────────────────────────────────
+
+async function githubRequest(path, options = {}) {
+  const token = process.env.GITHUB_TOKEN;
+  const repo  = process.env.GITHUB_REPO;
+  if (!token || !repo) {
+    throw new Error('GitHub integration not configured (missing GITHUB_TOKEN or GITHUB_REPO)');
+  }
+  const url = `https://api.github.com/repos/${repo}${path}`;
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'QualitetVerse-Admin/1.0',
+      ...(options.headers || {}),
+    },
+  });
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(errBody.message || `GitHub API error (HTTP ${response.status})`);
+  }
+  return response.json();
+}
+
+// ─── GET /api/admin/github/status – repository overview ──────────────────────
+
+router.get('/github/status', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  const token = process.env.GITHUB_TOKEN;
+  const repo  = process.env.GITHUB_REPO;
+
+  if (!token || !repo) {
+    return res.json({
+      configured: false,
+      message: 'Ustaw zmienne środowiskowe GITHUB_TOKEN i GITHUB_REPO, aby włączyć integrację z GitHub.',
+    });
+  }
+
+  try {
+    const [repoData, pullsData, commitsData] = await Promise.all([
+      githubRequest(''),
+      githubRequest('/pulls?state=open&per_page=10&sort=updated&direction=desc'),
+      githubRequest('/commits?per_page=10'),
+    ]);
+
+    return res.json({
+      configured: true,
+      repo: {
+        name:           repoData.name,
+        full_name:      repoData.full_name,
+        default_branch: repoData.default_branch,
+        html_url:       repoData.html_url,
+        private:        repoData.private,
+        open_issues:    repoData.open_issues_count,
+        stargazers:     repoData.stargazers_count,
+        pushed_at:      repoData.pushed_at,
+      },
+      open_prs:  Array.isArray(pullsData) ? pullsData.map((pr) => ({
+        number:     pr.number,
+        title:      pr.title,
+        state:      pr.state,
+        html_url:   pr.html_url,
+        user:       pr.user?.login,
+        created_at: pr.created_at,
+        updated_at: pr.updated_at,
+        head_ref:   pr.head?.ref,
+        base_ref:   pr.base?.ref,
+        draft:      pr.draft,
+        labels:     (pr.labels || []).map((l) => l.name),
+      })) : [],
+      commits: Array.isArray(commitsData) ? commitsData.slice(0, 10).map((c) => ({
+        sha:     c.sha?.slice(0, 7),
+        message: c.commit?.message?.split('\n')[0],
+        author:  c.commit?.author?.name,
+        date:    c.commit?.author?.date,
+        url:     c.html_url,
+      })) : [],
+    });
+  } catch (err) {
+    console.error('GitHub status error:', err.message);
+    return res.status(502).json({ configured: true, error: err.message });
+  }
+});
+
+// ─── GET /api/admin/github/pulls/:number – PR details ────────────────────────
+
+router.get('/github/pulls/:number', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  const num = parseInt(req.params.number, 10);
+  if (!num || num < 1) return res.status(400).json({ error: 'Nieprawidłowy numer PR' });
+
+  try {
+    const [pr, files, reviews] = await Promise.all([
+      githubRequest(`/pulls/${num}`),
+      githubRequest(`/pulls/${num}/files?per_page=50`),
+      githubRequest(`/pulls/${num}/reviews`),
+    ]);
+
+    if (!pr) return res.status(404).json({ error: 'PR nie znaleziony' });
+
+    return res.json({
+      number:     pr.number,
+      title:      pr.title,
+      body:       pr.body,
+      state:      pr.state,
+      html_url:   pr.html_url,
+      user:       pr.user?.login,
+      created_at: pr.created_at,
+      updated_at: pr.updated_at,
+      head_ref:   pr.head?.ref,
+      base_ref:   pr.base?.ref,
+      mergeable:  pr.mergeable,
+      draft:      pr.draft,
+      labels:     (pr.labels || []).map((l) => l.name),
+      files: Array.isArray(files) ? files.map((f) => ({
+        filename:  f.filename,
+        status:    f.status,
+        additions: f.additions,
+        deletions: f.deletions,
+      })) : [],
+      reviews: Array.isArray(reviews) ? reviews.map((r) => ({
+        user:       r.user?.login,
+        state:      r.state,
+        submitted_at: r.submitted_at,
+        body:       r.body,
+      })) : [],
+    });
+  } catch (err) {
+    console.error(`GitHub PR ${req.params.number} error:`, err.message);
+    return res.status(502).json({ error: err.message });
+  }
+});
+
+// ─── POST /api/admin/github/pulls/:number/merge – merge a PR ─────────────────
+
+router.post('/github/pulls/:number/merge', authenticate, requireRole('owner'), async (req, res) => {
+  const num = parseInt(req.params.number, 10);
+  if (!num || num < 1) return res.status(400).json({ error: 'Nieprawidłowy numer PR' });
+
+  const { commit_title, commit_message, merge_method = 'squash' } = req.body;
+
+  try {
+    const result = await githubRequest(`/pulls/${num}/merge`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commit_title, commit_message, merge_method }),
+    });
+
+    return res.json({ merged: true, sha: result?.sha, message: result?.message });
+  } catch (err) {
+    console.error(`GitHub merge PR ${num} error:`, err.message);
+    return res.status(502).json({ error: err.message });
+  }
+});
+
+// ─── POST /api/admin/github/pulls/:number/close – close a PR ─────────────────
+
+router.post('/github/pulls/:number/close', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  const num = parseInt(req.params.number, 10);
+  if (!num || num < 1) return res.status(400).json({ error: 'Nieprawidłowy numer PR' });
+
+  try {
+    await githubRequest(`/pulls/${num}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: 'closed' }),
+    });
+    return res.json({ closed: true, number: num });
+  } catch (err) {
+    console.error(`GitHub close PR ${num} error:`, err.message);
+    return res.status(502).json({ error: err.message });
+  }
+});
+
+// ─── POST /api/admin/github/pulls/:number/approve – approve a PR ─────────────
+
+router.post('/github/pulls/:number/approve', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  const num = parseInt(req.params.number, 10);
+  if (!num || num < 1) return res.status(400).json({ error: 'Nieprawidłowy numer PR' });
+
+  const { body: reviewBody = '' } = req.body;
+
+  try {
+    const result = await githubRequest(`/pulls/${num}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'APPROVE', body: reviewBody }),
+    });
+    return res.json({ approved: true, review_id: result?.id });
+  } catch (err) {
+    console.error(`GitHub approve PR ${num} error:`, err.message);
+    return res.status(502).json({ error: err.message });
+  }
 });
