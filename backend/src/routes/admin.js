@@ -13,7 +13,7 @@ const { authenticate, requireRole, requireSuperAdmin } = require('../middleware/
 const { validate } = require('../middleware/validate');
 const { PLAN_CONFIG } = require('./subscriptions');
 const { upsertSupplierProducts, fetchSupplierProducts } = require('../services/supplier-import');
-const { computePlatformPrice, dbTiersToArray, DEFAULT_PLATFORM_TIERS, computeQualityScore, isProductFeatured, isLowQuality } = require('../helpers/pricing');
+const { computePlatformPrice, dbTiersToArray, DEFAULT_PLATFORM_TIERS, computeQualityScore, isProductFeatured, isLowQuality, selectBestSupplier } = require('../helpers/pricing');
 const { getPromoSlots } = require('../helpers/promo');
 const { sendImportNotification } = require('../helpers/mailer');
 
@@ -540,7 +540,163 @@ router.post(
   }
 );
 
-// ─── PATCH /api/admin/stores/:id/status – change store status ─────────────────
+// ─── POST /api/admin/suppliers/sync-all – sync all active suppliers ────────────
+
+router.post(
+  '/suppliers/sync-all',
+  authenticate,
+  requireRole('owner', 'admin'),
+  async (req, res) => {
+    try {
+      const suppliersResult = await db.query(
+        `SELECT * FROM suppliers WHERE status = 'active' AND (api_url IS NOT NULL OR xml_endpoint IS NOT NULL OR csv_endpoint IS NOT NULL) ORDER BY name ASC`
+      );
+      const suppliers = suppliersResult.rows;
+
+      if (suppliers.length === 0) {
+        return res.json({ message: 'Brak aktywnych hurtowni z skonfigurowanym endpointem', synced: 0, total_products: 0, results: [] });
+      }
+
+      const results = [];
+      let totalProducts = 0;
+
+      for (const supplier of suppliers) {
+        try {
+          const rawProducts = await fetchSupplierProducts(supplier);
+          const report = await upsertSupplierProducts(supplier.id, rawProducts);
+          await db.query(
+            `UPDATE suppliers SET last_sync_at = NOW(), status = 'active' WHERE id = $1`,
+            [supplier.id]
+          );
+          results.push({ supplier_id: supplier.id, name: supplier.name, status: 'ok', count: report.count, featured: report.featured, skipped: report.skipped });
+          totalProducts += report.count;
+        } catch (supplierErr) {
+          console.error(`[sync-all] Error syncing supplier ${supplier.name}:`, supplierErr.message);
+          results.push({ supplier_id: supplier.id, name: supplier.name, status: 'error', error: supplierErr.message, count: 0, featured: 0, skipped: 0 });
+        }
+      }
+
+      return res.json({
+        message: `Zsynchronizowano ${suppliers.length} hurtowni, łącznie ${totalProducts} produktów`,
+        synced: suppliers.length,
+        total_products: totalProducts,
+        synced_at: new Date().toISOString(),
+        results,
+      });
+    } catch (err) {
+      console.error('admin sync-all error:', err.message);
+      return res.status(500).json({ error: 'Błąd synchronizacji: ' + err.message });
+    }
+  }
+);
+
+// ─── GET /api/admin/import-center – overview of supplier sync state ────────────
+
+router.get(
+  '/import-center',
+  authenticate,
+  requireRole('owner', 'admin'),
+  async (req, res) => {
+    try {
+      const suppliersResult = await db.query(
+        `SELECT s.id, s.name, s.integration_type, s.status,
+                s.api_url, s.xml_endpoint, s.csv_endpoint,
+                s.last_sync_at,
+                (SELECT COUNT(*) FROM products p WHERE p.supplier_id = s.id) AS product_count,
+                (SELECT COUNT(*) FROM products p WHERE p.supplier_id = s.id AND p.status = 'active') AS active_product_count
+         FROM suppliers s
+         ORDER BY s.name ASC`
+      );
+
+      const suppliers = suppliersResult.rows.map((s) => ({
+        ...s,
+        has_endpoint: !!(s.api_url || s.xml_endpoint || s.csv_endpoint),
+        product_count: parseInt(s.product_count, 10),
+        active_product_count: parseInt(s.active_product_count, 10),
+      }));
+
+      const totalProducts = suppliers.reduce((sum, s) => sum + s.product_count, 0);
+      const totalActive   = suppliers.reduce((sum, s) => sum + s.active_product_count, 0);
+      const syncReady     = suppliers.filter((s) => s.has_endpoint && s.status === 'active').length;
+
+      return res.json({
+        suppliers,
+        summary: {
+          total_suppliers: suppliers.length,
+          sync_ready: syncReady,
+          total_products: totalProducts,
+          total_active_products: totalActive,
+        },
+      });
+    } catch (err) {
+      console.error('admin import-center error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── POST /api/admin/suppliers/select-best-source – pick best supplier offer ───
+
+router.post(
+  '/suppliers/select-best-source',
+  authenticate,
+  requireRole('owner', 'admin'),
+  [
+    body('sku').optional().trim(),
+    body('product_name').optional().trim(),
+    body('mode').optional().isIn(['lowest_cost', 'best_margin', 'best_quality']),
+  ],
+  validate,
+  async (req, res) => {
+    const { sku, product_name, mode = 'lowest_cost' } = req.body;
+
+    if (!sku && !product_name) {
+      return res.status(422).json({ error: 'Wymagany parametr: sku lub product_name' });
+    }
+
+    try {
+      let queryText;
+      let queryParams;
+
+      if (sku) {
+        queryText = `SELECT p.id, p.name, p.sku, p.supplier_id, p.supplier_price, p.platform_price,
+                            p.stock, p.quality_score, s.name AS supplier_name
+                     FROM products p
+                     JOIN suppliers s ON s.id = p.supplier_id
+                     WHERE p.sku = $1 AND p.supplier_id IS NOT NULL`;
+        queryParams = [sku];
+      } else {
+        queryText = `SELECT p.id, p.name, p.sku, p.supplier_id, p.supplier_price, p.platform_price,
+                            p.stock, p.quality_score, s.name AS supplier_name
+                     FROM products p
+                     JOIN suppliers s ON s.id = p.supplier_id
+                     WHERE p.name ILIKE $1 AND p.supplier_id IS NOT NULL`;
+        queryParams = [`%${product_name}%`];
+      }
+
+      const offersResult = await db.query(queryText, queryParams);
+      const offers = offersResult.rows;
+
+      if (offers.length === 0) {
+        return res.status(404).json({ error: 'Nie znaleziono ofert dla podanego produktu' });
+      }
+
+      const best = selectBestSupplier(offers, mode);
+
+      return res.json({
+        mode,
+        best_offer: best,
+        all_offers: offers,
+        total_offers: offers.length,
+      });
+    } catch (err) {
+      console.error('admin select-best-source error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+
 
 router.patch(
   '/stores/:id/status',

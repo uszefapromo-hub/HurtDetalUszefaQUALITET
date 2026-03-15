@@ -8937,3 +8937,278 @@ describe('PATCH /api/admin/products/:id/pinned', () => {
     expect(res.body).toHaveProperty('is_pinned', false);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// selectBestSupplier helper
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('selectBestSupplier helper', () => {
+  const { selectBestSupplier } = require('../src/helpers/pricing');
+
+  const offers = [
+    { supplier_id: 'sup-1', supplier_price: 50,  platform_price: 80,  quality_score: 70, stock: 5  },
+    { supplier_id: 'sup-2', supplier_price: 30,  platform_price: 48,  quality_score: 40, stock: 10 },
+    { supplier_id: 'sup-3', supplier_price: 100, platform_price: 125, quality_score: 90, stock: 2  },
+  ];
+
+  it('returns null for empty offers array', () => {
+    expect(selectBestSupplier([], 'lowest_cost')).toBeNull();
+  });
+
+  it('returns null for non-array input', () => {
+    expect(selectBestSupplier(null, 'lowest_cost')).toBeNull();
+  });
+
+  it('lowest_cost: returns offer with lowest supplier_price', () => {
+    const result = selectBestSupplier(offers, 'lowest_cost');
+    expect(result.supplier_id).toBe('sup-2');
+  });
+
+  it('lowest_cost is the default mode', () => {
+    const result = selectBestSupplier(offers);
+    expect(result.supplier_id).toBe('sup-2');
+  });
+
+  it('best_quality: returns offer with highest quality_score', () => {
+    const result = selectBestSupplier(offers, 'best_quality');
+    expect(result.supplier_id).toBe('sup-3');
+  });
+
+  it('best_margin: returns offer with highest platform/supplier ratio', () => {
+    // sup-1: 80/50 = 1.6, sup-2: 48/30 = 1.6, sup-3: 125/100 = 1.25
+    // sup-1 wins (or sup-2 ties – first wins in a tie)
+    const result = selectBestSupplier(offers, 'best_margin');
+    expect(['sup-1', 'sup-2']).toContain(result.supplier_id);
+  });
+
+  it('best_margin: falls back to computePlatformPrice when platform_price missing', () => {
+    const offersNoPP = [
+      { supplier_id: 'sup-a', supplier_price: 10,  quality_score: 50 },
+      { supplier_id: 'sup-b', supplier_price: 200, quality_score: 80 },
+    ];
+    // Higher margin is on low price (tier 1: 60%). sup-a wins.
+    const result = selectBestSupplier(offersNoPP, 'best_margin');
+    expect(result.supplier_id).toBe('sup-a');
+  });
+
+  it('returns the only offer when array has one element', () => {
+    const result = selectBestSupplier([offers[0]], 'lowest_cost');
+    expect(result.supplier_id).toBe('sup-1');
+  });
+
+  it('unknown mode falls back to lowest_cost', () => {
+    const result = selectBestSupplier(offers, 'unknown_mode');
+    expect(result.supplier_id).toBe('sup-2');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/admin/suppliers/sync-all
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('POST /api/admin/suppliers/sync-all', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .post('/api/admin/suppliers/sync-all')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns message when no active suppliers with endpoints', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // no suppliers
+
+    const res = await request(app)
+      .post('/api/admin/suppliers/sync-all')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('synced', 0);
+    expect(res.body).toHaveProperty('results');
+    expect(res.body.results).toHaveLength(0);
+  });
+
+  it('handles supplier with no configured endpoint gracefully', async () => {
+    // The sync-all handler calls:
+    // 1. db.query to get all active suppliers with endpoints
+    // 2. fetchSupplierProducts (mocked via node-fetch – we'll bypass by mocking db.query for upsert)
+    // Since fetchSupplierProducts is external, we mock it by providing a supplier with no real URL
+    // and expect the error path to be exercised gracefully.
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{ id: SUPPLIER_ID, name: 'HurtABC', api_url: null, xml_endpoint: null, csv_endpoint: null, status: 'active' }],
+      });
+
+    const res = await request(app)
+      .post('/api/admin/suppliers/sync-all')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    // The supplier has no endpoint configured → fetchSupplierProducts throws → recorded as error
+    expect(res.body.results[0]).toHaveProperty('status', 'error');
+    expect(res.body.results[0]).toHaveProperty('supplier_id', SUPPLIER_ID);
+    expect(res.body.results[0]).toHaveProperty('count', 0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/admin/import-center
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/admin/import-center', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin/import-center')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns suppliers with summary statistics', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        {
+          id: SUPPLIER_ID,
+          name: 'BigBuy',
+          integration_type: 'api',
+          status: 'active',
+          api_url: 'https://example.com/api',
+          xml_endpoint: null,
+          csv_endpoint: null,
+          last_sync_at: '2025-01-01T00:00:00.000Z',
+          product_count: '42',
+          active_product_count: '40',
+        },
+      ],
+    });
+
+    const res = await request(app)
+      .get('/api/admin/import-center')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('suppliers');
+    expect(res.body).toHaveProperty('summary');
+    expect(res.body.suppliers[0]).toHaveProperty('has_endpoint', true);
+    expect(res.body.suppliers[0]).toHaveProperty('product_count', 42);
+    expect(res.body.summary).toHaveProperty('total_suppliers', 1);
+    expect(res.body.summary).toHaveProperty('sync_ready', 1);
+    expect(res.body.summary).toHaveProperty('total_products', 42);
+  });
+
+  it('marks supplier without endpoint as not sync_ready', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        {
+          id: SUPPLIER_ID,
+          name: 'Manual Supplier',
+          integration_type: 'manual',
+          status: 'active',
+          api_url: null,
+          xml_endpoint: null,
+          csv_endpoint: null,
+          last_sync_at: null,
+          product_count: '0',
+          active_product_count: '0',
+        },
+      ],
+    });
+
+    const res = await request(app)
+      .get('/api/admin/import-center')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.suppliers[0]).toHaveProperty('has_endpoint', false);
+    expect(res.body.summary).toHaveProperty('sync_ready', 0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/admin/suppliers/select-best-source
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('POST /api/admin/suppliers/select-best-source', () => {
+  const SUPPLIER_ID_2 = 'a0000000-0000-4000-8000-000000000030';
+
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .post('/api/admin/suppliers/select-best-source')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ sku: 'SKU-123', mode: 'lowest_cost' });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 422 when neither sku nor product_name provided', async () => {
+    const res = await request(app)
+      .post('/api/admin/suppliers/select-best-source')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ mode: 'lowest_cost' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 422 for invalid mode', async () => {
+    const res = await request(app)
+      .post('/api/admin/suppliers/select-best-source')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ sku: 'SKU-123', mode: 'invalid_mode' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 404 when no offers found for sku', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .post('/api/admin/suppliers/select-best-source')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ sku: 'NONEXISTENT-SKU' });
+    expect(res.status).toBe(404);
+  });
+
+  it('returns best offer by lowest_cost when searched by sku', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        { id: PRODUCT_ID, name: 'Widget', sku: 'WGT-1', supplier_id: SUPPLIER_ID,   supplier_name: 'Hurtownia A', supplier_price: '50.00',  platform_price: '80.00',  quality_score: 70, stock: 5  },
+        { id: PRODUCT_ID, name: 'Widget', sku: 'WGT-1', supplier_id: SUPPLIER_ID_2, supplier_name: 'Hurtownia B', supplier_price: '30.00',  platform_price: '48.00',  quality_score: 40, stock: 10 },
+      ],
+    });
+
+    const res = await request(app)
+      .post('/api/admin/suppliers/select-best-source')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ sku: 'WGT-1', mode: 'lowest_cost' });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('mode', 'lowest_cost');
+    expect(res.body.best_offer.supplier_id).toBe(SUPPLIER_ID_2);
+    expect(res.body).toHaveProperty('total_offers', 2);
+  });
+
+  it('returns best offer by best_quality when searched by product_name', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        { id: PRODUCT_ID, name: 'Widget', sku: 'WGT-1', supplier_id: SUPPLIER_ID,   supplier_name: 'Hurtownia A', supplier_price: '50.00',  platform_price: '80.00',  quality_score: 70, stock: 5  },
+        { id: PRODUCT_ID, name: 'Widget', sku: 'WGT-1', supplier_id: SUPPLIER_ID_2, supplier_name: 'Hurtownia B', supplier_price: '30.00',  platform_price: '48.00',  quality_score: 40, stock: 10 },
+      ],
+    });
+
+    const res = await request(app)
+      .post('/api/admin/suppliers/select-best-source')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ product_name: 'Widget', mode: 'best_quality' });
+    expect(res.status).toBe(200);
+    expect(res.body.best_offer.supplier_id).toBe(SUPPLIER_ID);
+    expect(res.body).toHaveProperty('all_offers');
+    expect(res.body.all_offers).toHaveLength(2);
+  });
+
+  it('returns best offer by best_margin mode', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        { id: PRODUCT_ID, name: 'Widget', sku: 'WGT-1', supplier_id: SUPPLIER_ID,   supplier_name: 'Hurtownia A', supplier_price: '200.00', platform_price: '250.00', quality_score: 70, stock: 5 },
+        { id: PRODUCT_ID, name: 'Widget', sku: 'WGT-1', supplier_id: SUPPLIER_ID_2, supplier_name: 'Hurtownia B', supplier_price: '10.00',  platform_price: '16.00',  quality_score: 40, stock: 2 },
+      ],
+    });
+
+    const res = await request(app)
+      .post('/api/admin/suppliers/select-best-source')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ sku: 'WGT-1', mode: 'best_margin' });
+    expect(res.status).toBe(200);
+    // sup-B: 16/10 = 1.6 > sup-A: 250/200 = 1.25 → sup-B wins
+    expect(res.body.best_offer.supplier_id).toBe(SUPPLIER_ID_2);
+  });
+});

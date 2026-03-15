@@ -110,6 +110,62 @@ function isLowQuality({ image_url = null, description = null, stock = 0 } = {}) 
   return !hasImage && !hasDescription && !hasStock;
 }
 
+// ─── Supplier comparison ───────────────────────────────────────────────────────
+
+/**
+ * Select the best supplier offer from a list of candidate offers.
+ *
+ * Supported modes:
+ *   - 'lowest_cost'  : supplier with the lowest supplier_price wins
+ *   - 'best_margin'  : supplier with the highest platform margin ratio wins
+ *                      (platform_price / supplier_price, or computePlatformPrice if not pre-computed)
+ *   - 'best_quality' : supplier with the highest quality_score wins
+ *
+ * Each offer object is expected to have at a minimum:
+ *   { supplier_id, supplier_price, platform_price?, quality_score?, stock? }
+ *
+ * Returns null when offers is empty.
+ *
+ * @param {object[]} offers  Array of supplier offer objects.
+ * @param {string}   mode    Selection mode: 'lowest_cost' | 'best_margin' | 'best_quality'
+ * @returns {object|null}    The winning offer, or null if offers is empty.
+ */
+function selectBestSupplier(offers, mode = 'lowest_cost') {
+  if (!Array.isArray(offers) || offers.length === 0) return null;
+
+  switch (mode) {
+    case 'best_quality':
+      return offers.reduce((best, cur) => {
+        const curScore  = parseFloat(cur.quality_score)  || 0;
+        const bestScore = parseFloat(best.quality_score) || 0;
+        return curScore > bestScore ? cur : best;
+      });
+
+    case 'best_margin': {
+      const withRatio = offers.map((o) => {
+        const sp = parseFloat(o.supplier_price) || 0;
+        const pp = o.platform_price != null
+          ? parseFloat(o.platform_price)
+          : (sp > 0 ? computePlatformPrice(sp) : 0);
+        const ratio = sp > 0 ? pp / sp : 0;
+        return { ...o, _ratio: ratio };
+      });
+      const best = withRatio.reduce((a, b) => (b._ratio > a._ratio ? b : a));
+      // eslint-disable-next-line no-unused-vars
+      const { _ratio, ...result } = best;
+      return result;
+    }
+
+    case 'lowest_cost':
+    default:
+      return offers.reduce((best, cur) => {
+        const curPrice  = parseFloat(cur.supplier_price)  || 0;
+        const bestPrice = parseFloat(best.supplier_price) || 0;
+        return curPrice < bestPrice ? cur : best;
+      });
+  }
+}
+
 module.exports = {
   DEFAULT_PLATFORM_TIERS,
   computePlatformPrice,
@@ -118,4 +174,5 @@ module.exports = {
   computeQualityScore,
   isProductFeatured,
   isLowQuality,
+  selectBestSupplier,
 };
