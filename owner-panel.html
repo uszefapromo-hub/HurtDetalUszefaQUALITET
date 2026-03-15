@@ -1321,21 +1321,21 @@
                     <td class="cell-muted">Aktualizuje produkty ze wszystkich podłączonych hurtowni</td>
                     <td class="cell-muted" data-script-run-time="sync-warehouses">—</td>
                     <td><span class="pill-active" data-script-status="sync-warehouses">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="sync-warehouses">▶ Uruchom</button></td>
+                    <td><button class="btn btn-secondary" type="button" data-run-script="warehouse-sync">▶ Uruchom</button></td>
                   </tr>
                   <tr>
                     <td><strong>Import produktów CSV/XML</strong></td>
                     <td class="cell-muted">Importuje produkty z pliku CSV lub XML do katalogu platformy</td>
                     <td class="cell-muted" data-script-run-time="import-products">—</td>
                     <td><span class="pill-active" data-script-status="import-products">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="import-products">▶ Uruchom</button></td>
+                    <td><button class="btn btn-secondary" type="button" data-run-script="csv-import">▶ Uruchom</button></td>
                   </tr>
                   <tr>
                     <td><strong>Przeliczenie cen i marż</strong></td>
                     <td class="cell-muted">Przelicza ceny sprzedaży na podstawie aktualnych marż platformy</td>
                     <td class="cell-muted" data-script-run-time="recalc-prices">—</td>
                     <td><span class="pill-active" data-script-status="recalc-prices">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="recalc-prices">▶ Uruchom</button></td>
+                    <td><button class="btn btn-secondary" type="button" data-run-script="recalculate-prices">▶ Uruchom</button></td>
                   </tr>
                 </tbody>
               </table>
@@ -1363,14 +1363,17 @@
                     <td class="cell-muted">Dezaktywuje subskrypcje, którym minął termin ważności</td>
                     <td class="cell-muted" data-script-run-time="cleanup-subscriptions">—</td>
                     <td><span class="pill-active" data-script-status="cleanup-subscriptions">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="cleanup-subscriptions">▶ Uruchom</button></td>
+                    <td>
+                      <button class="btn btn-secondary" type="button" data-run-script-dryrun="cleanup-subscriptions">🔍 Dry-run</button>
+                      <button class="btn btn-secondary" type="button" data-run-script="cleanup-subscriptions">▶ Uruchom</button>
+                    </td>
                   </tr>
                   <tr>
                     <td><strong>Generowanie raportów miesięcznych</strong></td>
                     <td class="cell-muted">Tworzy zestawienia finansowe i sprzedażowe za bieżący miesiąc</td>
-                    <td class="cell-muted" data-script-run-time="gen-reports">—</td>
-                    <td><span class="pill-active" data-script-status="gen-reports">Aktywny</span></td>
-                    <td><button class="btn btn-secondary" type="button" data-run-script="gen-reports">▶ Uruchom</button></td>
+                    <td class="cell-muted" data-script-run-time="export-report">—</td>
+                    <td><span class="pill-active" data-script-status="export-report">Aktywny</span></td>
+                    <td><button class="btn btn-secondary" type="button" data-run-script="export-report">▶ Uruchom</button></td>
                   </tr>
                   <tr>
                     <td><strong>Wysyłka powiadomień e-mail</strong></td>
@@ -1711,6 +1714,143 @@
     document.querySelectorAll('[data-owner-tab]').forEach(a => {
       if (a.dataset.ownerTab === 'mail') {
         a.addEventListener('click', () => setTimeout(loadMailHistory, 100));
+      }
+    });
+  })();
+  </script>
+
+  <script>
+  // ─── Scripts tab logic (Super Admin only) ────────────────────────────────────
+  (function () {
+    var scriptRunLog = [];
+
+    function apiReq(method, path, body) {
+      var token = localStorage.getItem('token') || '';
+      var opts = { method: method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      return fetch('/api' + path, opts).then(function(r) {
+        return r.ok ? r.json() : r.json().then(function(e) { return Promise.reject(e); });
+      });
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      try { return new Date(iso).toLocaleString('pl-PL'); } catch (_) { return iso; }
+    }
+
+    function updateScriptsMeta(scripts) {
+      var totalEl   = document.querySelector('[data-scripts-total]');
+      var lastRunEl = document.querySelector('[data-scripts-last-run]');
+      if (totalEl) totalEl.textContent = scripts.length;
+      var latest = scripts.reduce(function(acc, s) {
+        return (s.last_run_at && (!acc || s.last_run_at > acc)) ? s.last_run_at : acc;
+      }, null);
+      if (lastRunEl) lastRunEl.textContent = fmtDate(latest);
+    }
+
+    function updateScriptRow(scriptId, status, lastRunAt) {
+      var timeEl   = document.querySelector('[data-script-run-time="' + scriptId + '"]');
+      var statusEl = document.querySelector('[data-script-status="' + scriptId + '"]');
+      if (timeEl)   timeEl.textContent   = fmtDate(lastRunAt);
+      if (statusEl) {
+        statusEl.textContent = status === 'ok' ? 'OK' : status === 'error' ? 'Błąd' : 'Aktywny';
+        statusEl.className   = status === 'error' ? 'pill-inactive' : 'pill-active';
+      }
+    }
+
+    function appendLog(scriptId, name, ok, result, dryRun, startedAt) {
+      var dur = startedAt ? (Date.now() - new Date(startedAt).getTime()) + ' ms' : '—';
+      scriptRunLog.unshift({ scriptId: scriptId, name: name, ok: ok, result: result, dryRun: dryRun, at: new Date().toISOString(), dur: dur });
+      renderLog();
+    }
+
+    function renderLog() {
+      var tbody = document.querySelector('[data-scripts-log-tbody]');
+      if (!tbody) return;
+      if (scriptRunLog.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Brak wpisów w historii. Uruchom skrypt, aby zobaczyć log.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = scriptRunLog.map(function(entry) {
+        var pill = entry.ok
+          ? '<span class="pill-active">' + (entry.dryRun ? 'Dry-run' : 'OK') + '</span>'
+          : '<span class="pill-inactive">Błąd</span>';
+        return '<tr>' +
+          '<td class="cell-muted">' + fmtDate(entry.at) + '</td>' +
+          '<td><strong>' + (entry.name || entry.scriptId) + '</strong></td>' +
+          '<td class="cell-muted">' + entry.dur + '</td>' +
+          '<td>' + pill + '</td>' +
+          '<td class="cell-muted" style="max-width:320px;white-space:normal">' + (entry.result || '—') + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    async function loadScriptsStatus() {
+      try {
+        var data = await apiReq('GET', '/admin/scripts');
+        if (data && data.scripts) {
+          updateScriptsMeta(data.scripts);
+          data.scripts.forEach(function(s) {
+            updateScriptRow(s.id, s.status, s.last_run_at);
+            if (s.last_run_at && s.last_result) {
+              var exists = scriptRunLog.some(function(e) { return e.scriptId === s.id; });
+              if (!exists) {
+                scriptRunLog.push({ scriptId: s.id, name: s.name, ok: s.status === 'ok', result: s.last_result, dryRun: false, at: s.last_run_at, dur: '—' });
+              }
+            }
+          });
+          renderLog();
+        }
+      } catch (_) { /* silently degrade */ }
+    }
+
+    async function runScript(scriptId, dryRun) {
+      var btn = document.querySelector(dryRun
+        ? '[data-run-script-dryrun="' + scriptId + '"]'
+        : '[data-run-script="' + scriptId + '"]');
+      if (btn) { btn.disabled = true; btn.textContent = dryRun ? '⏳ Sprawdzanie…' : '⏳ Uruchamianie…'; }
+      var startedAt = new Date().toISOString();
+      try {
+        var body = dryRun ? { dry_run: true } : {};
+        var result = await apiReq('POST', '/admin/scripts/' + scriptId + '/run', body);
+        updateScriptRow(scriptId, result.ok ? 'ok' : 'error', result.started_at || startedAt);
+        appendLog(scriptId, result.name, result.ok, result.result, !!result.dry_run, startedAt);
+        if (dryRun && result.dry_run) {
+          var msg = 'Podgląd dry-run:\n' + result.result + '\n\nCzy chcesz uruchomić skrypt na żywo?';
+          if (confirm(msg)) {
+            if (btn) { btn.disabled = false; btn.textContent = '🔍 Dry-run'; }
+            runScript(scriptId, false);
+            return;
+          }
+        }
+      } catch (err) {
+        var errMsg = (err && (err.error || err.message)) || 'Nieznany błąd';
+        appendLog(scriptId, scriptId, false, 'Błąd: ' + errMsg, dryRun, startedAt);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = dryRun ? '🔍 Dry-run' : '▶ Uruchom';
+        }
+      }
+    }
+
+    // Bind run buttons
+    document.addEventListener('click', function(e) {
+      var runBtn     = e.target.closest('[data-run-script]');
+      var dryrunBtn  = e.target.closest('[data-run-script-dryrun]');
+      if (dryrunBtn) { e.preventDefault(); runScript(dryrunBtn.dataset.runScriptDryrun, true);  return; }
+      if (runBtn)    { e.preventDefault(); runScript(runBtn.dataset.runScript, false); return; }
+    });
+
+    // Load on scripts tab open
+    document.querySelectorAll('[data-owner-tab]').forEach(function(a) {
+      if (a.dataset.ownerTab === 'scripts') {
+        a.addEventListener('click', function() { setTimeout(loadScriptsStatus, 100); });
+      }
+    });
+    document.querySelectorAll('[data-owner-tab-trigger]').forEach(function(btn) {
+      if (btn.dataset.ownerTabTrigger === 'scripts') {
+        btn.addEventListener('click', function() { setTimeout(loadScriptsStatus, 100); });
       }
     });
   })();

@@ -4077,7 +4077,7 @@ describe('POST /api/auth/register – promo tier', () => {
 // ─── GET /api/admin/scripts ───────────────────────────────────────────────────
 
 describe('GET /api/admin/scripts', () => {
-  it('requires admin role', async () => {
+  it('requires owner role (seller is rejected)', async () => {
     const res = await request(app)
       .get('/api/admin/scripts')
       .set('Authorization', `Bearer ${sellerToken}`);
@@ -4102,7 +4102,7 @@ describe('GET /api/admin/scripts', () => {
 // ─── POST /api/admin/scripts/:id/run ─────────────────────────────────────────
 
 describe('POST /api/admin/scripts/:id/run', () => {
-  it('requires admin role', async () => {
+  it('requires owner role (seller is rejected)', async () => {
     const res = await request(app)
       .post('/api/admin/scripts/warehouse-sync/run')
       .set('Authorization', `Bearer ${sellerToken}`);
@@ -4156,6 +4156,38 @@ describe('POST /api/admin/scripts/:id/run', () => {
     expect(res.body.ok).toBe(true);
     expect(res.body.script_id).toBe('cleanup-demo-data');
     expect(res.body.result).toContain('3');
+  });
+
+  it('runs cleanup-subscriptions in dry-run mode (no DB changes)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ affected: '7' }] }); // SELECT COUNT for dry-run preview
+
+    const res = await request(app)
+      .post('/api/admin/scripts/cleanup-subscriptions/run')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ dry_run: true });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.dry_run).toBe(true);
+    expect(res.body.affected).toBe(7);
+    expect(res.body.result).toMatch(/DRY RUN/);
+    expect(res.body.script_id).toBe('cleanup-subscriptions');
+  });
+
+  it('runs cleanup-subscriptions live (archives expired active subscriptions)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 'sub-1' }, { id: 'sub-2' }] }) // UPDATE subscriptions
+      .mockResolvedValueOnce({ rows: [] }); // INSERT script_runs
+
+    const res = await request(app)
+      .post('/api/admin/scripts/cleanup-subscriptions/run')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.dry_run).toBe(false);
+    expect(res.body.script_id).toBe('cleanup-subscriptions');
+    expect(res.body.result).toContain('2');
+    expect(res.body.result).toMatch(/expired/);
   });
 });
 // ─── Referral codes ───────────────────────────────────────────────────────────

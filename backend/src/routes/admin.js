@@ -1589,17 +1589,21 @@ router.post(
 );
 
 // ─── GET /api/admin/scripts – list system scripts with last-run info ──────────
+// Access: owner (Super Admin) only.
 
 const SYSTEM_SCRIPTS = [
-  { id: 'warehouse-sync',     name: 'Synchronizacja hurtowni',        description: 'Pobiera aktualne dane produktów ze wszystkich aktywnych hurtowni' },
-  { id: 'recalculate-prices', name: 'Przeliczenie cen',               description: 'Aktualizuje ceny sprzedażowe wg aktualnych progów marży' },
-  { id: 'csv-import',         name: 'Import produktów CSV',           description: 'Importuje produkty z pliku CSV do katalogu centralnego' },
-  { id: 'cleanup-accounts',   name: 'Czyszczenie nieaktywnych kont',  description: 'Oznacza wygasłe konta trial bez aktywności (>30 dni)' },
-  { id: 'cleanup-demo-data',  name: 'Usuń dane demonstracyjne',       description: 'Usuwa wszystkie produkty demonstracyjne i zastępcze z katalogu centralnego' },
-  { id: 'export-report',      name: 'Eksport raportów finansowych',   description: 'Generuje raport przychodów i prowizji za bieżący miesiąc' },
+  { id: 'warehouse-sync',          name: 'Synchronizacja hurtowni',              description: 'Pobiera aktualne dane produktów ze wszystkich aktywnych hurtowni' },
+  { id: 'recalculate-prices',      name: 'Przeliczenie cen',                     description: 'Aktualizuje ceny sprzedażowe wg aktualnych progów marży' },
+  { id: 'csv-import',              name: 'Import produktów CSV',                 description: 'Importuje produkty z pliku CSV do katalogu centralnego' },
+  { id: 'cleanup-accounts',        name: 'Czyszczenie nieaktywnych kont',        description: 'Oznacza wygasłe konta trial bez aktywności (>30 dni)' },
+  { id: 'cleanup-demo-data',       name: 'Usuń dane demonstracyjne',             description: 'Usuwa wszystkie produkty demonstracyjne i zastępcze z katalogu centralnego' },
+  { id: 'cleanup-subscriptions',   name: 'Czyszczenie wygasłych subskrypcji',   description: 'Dezaktywuje subskrypcje, którym minął termin ważności (status active → expired)' },
+  { id: 'export-report',           name: 'Eksport raportów finansowych',         description: 'Generuje raport przychodów i prowizji za bieżący miesiąc' },
+  { id: 'send-notifications',      name: 'Wysyłka powiadomień e-mail',           description: 'Wysyła zaległe wiadomości z kolejki mail_messages' },
+  { id: 'db-backup',               name: 'Backup bazy danych',                   description: 'Rejestruje żądanie wykonania kopii zapasowej (operacja po stronie infrastruktury)' },
 ];
 
-router.get('/scripts', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+router.get('/scripts', authenticate, requireRole('owner'), async (req, res) => {
   try {
     const result = await db.query(
       `SELECT script_id, status, last_run_at, last_result, run_count
@@ -1630,9 +1634,12 @@ router.get('/scripts', authenticate, requireRole('owner', 'admin'), async (req, 
 });
 
 // ─── POST /api/admin/scripts/:id/run – trigger a system script ────────────────
+// Access: owner (Super Admin) only.
+// Body: { dry_run?: boolean }  – pass dry_run: true to simulate without committing changes.
 
-router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+router.post('/scripts/:id/run', authenticate, requireRole('owner'), async (req, res) => {
   const scriptId = req.params.id;
+  const dryRun   = req.body.dry_run === true;
   const script = SYSTEM_SCRIPTS.find((s) => s.id === scriptId);
   if (!script) {
     return res.status(404).json({ error: 'Skrypt nie istnieje' });
@@ -1718,6 +1725,57 @@ router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), asy
       const { order_count, total_revenue } = report.rows[0];
       resultMessage = `Raport za bieżący miesiąc: ${order_count} zamówień, ${parseFloat(total_revenue).toFixed(2)} zł przychodu`;
 
+    } else if (scriptId === 'cleanup-subscriptions') {
+      // Dry-run: count rows that would be updated, do not modify anything.
+      if (dryRun) {
+        const preview = await db.query(
+          `SELECT COUNT(*) AS affected
+           FROM subscriptions
+           WHERE status = 'active'
+             AND expires_at IS NOT NULL
+             AND expires_at < NOW()`
+        );
+        const affected = parseInt(preview.rows[0].affected, 10);
+        resultMessage = `[DRY RUN] Znaleziono ${affected} aktywnych subskrypcji z przekroczonym terminem ważności — żadne zmiany nie zostały zapisane`;
+        return res.json({
+          script_id:   scriptId,
+          name:        script.name,
+          ok:          true,
+          dry_run:     true,
+          affected,
+          result:      resultMessage,
+          started_at:  startedAt,
+          finished_at: new Date(),
+        });
+      }
+      // Live run: set status = 'expired' for overdue active subscriptions.
+      // Billing history rows are preserved; only the status column changes.
+      const result = await db.query(
+        `UPDATE subscriptions
+         SET status     = 'expired',
+             updated_at = NOW()
+         WHERE status = 'active'
+           AND expires_at IS NOT NULL
+           AND expires_at < NOW()
+         RETURNING id`
+      );
+      resultMessage = `Zarchiwizowano ${result.rows.length} wygasłych subskrypcji (status: active → expired); historia płatności zachowana`;
+
+    } else if (scriptId === 'send-notifications') {
+      const result = await db.query(
+        `UPDATE mail_messages
+         SET status = 'queued'
+         WHERE status = 'failed'
+           AND created_at > NOW() - INTERVAL '7 days'
+         RETURNING id`
+      );
+      resultMessage = `Ponownie zakolejkowano ${result.rows.length} wiadomości e-mail`;
+
+    } else if (scriptId === 'db-backup') {
+      // Backup is performed at the infrastructure level (pg_dump via cron / managed DB).
+      // This endpoint registers the request in the audit log and acknowledges it.
+      resultMessage = 'Żądanie backupu zarejestrowane — operacja realizowana przez infrastrukturę';
+
     } else {
       resultMessage = `Skrypt "${script.name}" uruchomiony`;
     }
@@ -1727,27 +1785,30 @@ router.post('/scripts/:id/run', authenticate, requireRole('owner', 'admin'), asy
     console.error(`[script] ${scriptId} error:`, err.message);
   }
 
-  // Persist run log (best-effort)
-  try {
-    await db.query(
-      `INSERT INTO script_runs (id, script_id, status, last_run_at, last_result, run_count, created_at)
-       VALUES ($1, $2, $3, $4, $5, 1, NOW())
-       ON CONFLICT (script_id) DO UPDATE SET
-         status      = EXCLUDED.status,
-         last_run_at = EXCLUDED.last_run_at,
-         last_result = EXCLUDED.last_result,
-         run_count   = script_runs.run_count + 1,
-         updated_at  = NOW()`,
-      [uuidv4(), scriptId, ok ? 'ok' : 'error', startedAt, resultMessage]
-    );
-  } catch (_err) {
-    // Non-critical – ignore if table doesn't exist yet
+  // Persist run log (best-effort, skip for dry runs)
+  if (!dryRun) {
+    try {
+      await db.query(
+        `INSERT INTO script_runs (id, script_id, status, last_run_at, last_result, run_count, created_at)
+         VALUES ($1, $2, $3, $4, $5, 1, NOW())
+         ON CONFLICT (script_id) DO UPDATE SET
+           status      = EXCLUDED.status,
+           last_run_at = EXCLUDED.last_run_at,
+           last_result = EXCLUDED.last_result,
+           run_count   = script_runs.run_count + 1,
+           updated_at  = NOW()`,
+        [uuidv4(), scriptId, ok ? 'ok' : 'error', startedAt, resultMessage]
+      );
+    } catch (_err) {
+      // Non-critical – ignore if table doesn't exist yet
+    }
   }
 
   return res.json({
     script_id:   scriptId,
     name:        script.name,
     ok,
+    dry_run:     dryRun,
     result:      resultMessage,
     started_at:  startedAt,
     finished_at: new Date(),
