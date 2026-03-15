@@ -12,7 +12,7 @@ const db = require('../config/database');
 const { authenticate, requireRole, requireSuperAdmin } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { PLAN_CONFIG } = require('./subscriptions');
-const { upsertSupplierProducts, fetchSupplierProducts } = require('../services/supplier-import');
+const { upsertSupplierProducts, fetchSupplierProducts, importSupplierProducts } = require('../services/supplier-import');
 const { computePlatformPrice, dbTiersToArray, DEFAULT_PLATFORM_TIERS, computeQualityScore, isProductFeatured, isLowQuality } = require('../helpers/pricing');
 const { getPromoSlots } = require('../helpers/promo');
 const { sendImportNotification } = require('../helpers/mailer');
@@ -539,6 +539,182 @@ router.post(
     }
   }
 );
+
+// ─── POST /api/admin/suppliers/sync-all – sync all active suppliers ────────────
+
+router.post(
+  '/suppliers/sync-all',
+  authenticate,
+  requireRole('owner', 'admin'),
+  async (req, res) => {
+    const trigger = 'manual';
+    try {
+      const suppliersResult = await db.query(
+        `SELECT id, name FROM suppliers
+         WHERE active = true
+           AND (api_url IS NOT NULL OR xml_endpoint IS NOT NULL OR csv_endpoint IS NOT NULL)`
+      );
+      const suppliers = suppliersResult.rows;
+
+      if (suppliers.length === 0) {
+        return res.json({
+          message: 'Brak aktywnych hurtowni z skonfigurowanym endpointem',
+          synced: 0,
+          total_count: 0,
+          total_featured: 0,
+          total_skipped: 0,
+          results: [],
+        });
+      }
+
+      const results = [];
+      let totalCount    = 0;
+      let totalFeatured = 0;
+      let totalSkipped  = 0;
+
+      for (const sup of suppliers) {
+        try {
+          const report = await importSupplierProducts(sup.id, trigger);
+          totalCount    += report.count;
+          totalFeatured += report.featured;
+          totalSkipped  += report.skipped;
+          results.push({ supplier_id: sup.id, supplier_name: sup.name, status: 'ok', ...report });
+
+          sendImportNotification({
+            supplierName: sup.name,
+            count: report.count,
+            status: 'success',
+          }).catch((e) => console.error('[sync-all] notification error:', e.message));
+        } catch (err) {
+          console.error(`[sync-all] Supplier ${sup.id} error:`, err.message);
+          results.push({ supplier_id: sup.id, supplier_name: sup.name, status: 'error', error: err.message });
+          sendImportNotification({
+            supplierName: sup.name,
+            count: 0,
+            status: 'failure',
+            errorMessage: err.message,
+          }).catch((e) => console.error('[sync-all] notification error:', e.message));
+        }
+      }
+
+      return res.json({
+        message:        `Zsynchronizowano ${totalCount} produktów z ${suppliers.length} hurtowni`,
+        synced:         suppliers.length,
+        total_count:    totalCount,
+        total_featured: totalFeatured,
+        total_skipped:  totalSkipped,
+        synced_at:      new Date().toISOString(),
+        results,
+      });
+    } catch (err) {
+      console.error('sync-all suppliers error:', err.message);
+      return res.status(500).json({ error: 'Błąd synchronizacji: ' + err.message });
+    }
+  }
+);
+
+// ─── GET /api/admin/import-logs – list recent import/sync logs ────────────────
+
+router.get('/import-logs', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  const page   = Math.max(1, parseInt(req.query.page  || '1',  10));
+  const limit  = Math.min(100, parseInt(req.query.limit || '20', 10));
+  const offset = (page - 1) * limit;
+
+  try {
+    const countResult = await db.query('SELECT COUNT(*) FROM import_logs');
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const result = await db.query(
+      `SELECT il.*, s.name AS supplier_name_live
+         FROM import_logs il
+         LEFT JOIN suppliers s ON il.supplier_id = s.id
+        ORDER BY il.created_at DESC
+        LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+
+    return res.json({ total, page, limit, logs: result.rows });
+  } catch (err) {
+    console.error('import-logs error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── GET /api/admin/sync-status – sync status per supplier ────────────────────
+
+router.get('/sync-status', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT s.id, s.name, s.status, s.active, s.last_sync_at,
+              s.integration_type,
+              (SELECT COUNT(*) FROM products p WHERE p.supplier_id = s.id) AS product_count,
+              (SELECT il.status FROM import_logs il WHERE il.supplier_id = s.id
+               ORDER BY il.created_at DESC LIMIT 1) AS last_import_status,
+              (SELECT il.count FROM import_logs il WHERE il.supplier_id = s.id
+               ORDER BY il.created_at DESC LIMIT 1) AS last_import_count,
+              (SELECT il.error_message FROM import_logs il WHERE il.supplier_id = s.id
+               ORDER BY il.created_at DESC LIMIT 1) AS last_import_error
+         FROM suppliers s
+        ORDER BY s.name ASC`
+    );
+
+    return res.json({ suppliers: result.rows });
+  } catch (err) {
+    console.error('sync-status error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── GET /api/admin/profit-report – order-level profitability report ──────────
+
+router.get('/profit-report', authenticate, requireRole('owner', 'admin'), async (req, res) => {
+  const page   = Math.max(1, parseInt(req.query.page  || '1',  10));
+  const limit  = Math.min(100, parseInt(req.query.limit || '20', 10));
+  const offset = (page - 1) * limit;
+
+  try {
+    const summaryResult = await db.query(
+      `SELECT
+         COUNT(*)                                    AS total_orders,
+         COALESCE(SUM(total), 0)                    AS total_revenue,
+         COALESCE(SUM(supplier_cost), 0)            AS total_supplier_cost,
+         COALESCE(SUM(payment_fee), 0)              AS total_payment_fees,
+         COALESCE(SUM(real_profit), 0)              AS total_real_profit,
+         COALESCE(AVG(real_profit), 0)              AS avg_profit_per_order
+       FROM orders
+       WHERE status NOT IN ('cancelled', 'created')`
+    );
+    const summary = summaryResult.rows[0];
+
+    const ordersResult = await db.query(
+      `SELECT o.id, o.status, o.total, o.supplier_cost, o.payment_fee, o.real_profit,
+              o.created_at, s.name AS store_name
+         FROM orders o
+         LEFT JOIN stores s ON o.store_id = s.id
+        WHERE o.status NOT IN ('cancelled', 'created')
+        ORDER BY o.created_at DESC
+        LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+
+    return res.json({
+      summary: {
+        total_orders:        parseInt(summary.total_orders, 10),
+        total_revenue:       parseFloat(parseFloat(summary.total_revenue).toFixed(2)),
+        total_supplier_cost: parseFloat(parseFloat(summary.total_supplier_cost).toFixed(2)),
+        total_payment_fees:  parseFloat(parseFloat(summary.total_payment_fees).toFixed(2)),
+        total_real_profit:   parseFloat(parseFloat(summary.total_real_profit).toFixed(2)),
+        avg_profit_per_order: parseFloat(parseFloat(summary.avg_profit_per_order).toFixed(2)),
+      },
+      page,
+      limit,
+      orders: ordersResult.rows,
+    });
+  } catch (err) {
+    console.error('profit-report error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
 
 // ─── PATCH /api/admin/stores/:id/status – change store status ─────────────────
 

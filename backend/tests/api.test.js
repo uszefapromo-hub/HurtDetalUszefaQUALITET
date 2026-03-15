@@ -8937,3 +8937,394 @@ describe('PATCH /api/admin/products/:id/pinned', () => {
     expect(res.body).toHaveProperty('is_pinned', false);
   });
 });
+
+// ─── Marketplace automation – pricing helpers ──────────────────────────────────
+
+describe('computeResellerPrice, computeExpectedPlatformProfit, computeExpectedResellerProfit, computeRealProfit, estimatePaymentFee', () => {
+  const {
+    computeResellerPrice,
+    computeExpectedPlatformProfit,
+    computeExpectedResellerProfit,
+    computeRealProfit,
+    estimatePaymentFee,
+    DEFAULT_RESELLER_MARGIN_PCT,
+  } = require('../src/helpers/pricing');
+
+  it('computeResellerPrice uses default 20% margin', () => {
+    expect(computeResellerPrice(100)).toBeCloseTo(120, 2);
+  });
+
+  it('computeResellerPrice uses custom margin', () => {
+    expect(computeResellerPrice(100, 30)).toBeCloseTo(130, 2);
+  });
+
+  it('computeResellerPrice returns 0 for zero price', () => {
+    expect(computeResellerPrice(0)).toBe(0);
+  });
+
+  it('DEFAULT_RESELLER_MARGIN_PCT is 20', () => {
+    expect(DEFAULT_RESELLER_MARGIN_PCT).toBe(20);
+  });
+
+  it('computeExpectedPlatformProfit returns platform_price minus supplier_price', () => {
+    expect(computeExpectedPlatformProfit(140, 100)).toBeCloseTo(40, 2);
+  });
+
+  it('computeExpectedPlatformProfit handles zero supplier price', () => {
+    expect(computeExpectedPlatformProfit(100, 0)).toBeCloseTo(100, 2);
+  });
+
+  it('computeExpectedResellerProfit returns reseller_price minus platform_price', () => {
+    expect(computeExpectedResellerProfit(120, 100)).toBeCloseTo(20, 2);
+  });
+
+  it('computeRealProfit: sale - cost - fee - other', () => {
+    expect(computeRealProfit(100, 60, 5, 2)).toBeCloseTo(33, 2);
+  });
+
+  it('computeRealProfit: defaults other costs to 0', () => {
+    expect(computeRealProfit(100, 60, 5)).toBeCloseTo(35, 2);
+  });
+
+  it('computeRealProfit: returns negative when costs exceed revenue', () => {
+    expect(computeRealProfit(10, 100, 3)).toBeLessThan(0);
+  });
+
+  it('estimatePaymentFee: default 2.9% + 0.30', () => {
+    // 100 * 0.029 + 0.30 = 3.20
+    expect(estimatePaymentFee(100)).toBeCloseTo(3.20, 2);
+  });
+
+  it('estimatePaymentFee: custom rate and fixed fee', () => {
+    // 200 * 0.015 + 0.50 = 3.50
+    expect(estimatePaymentFee(200, 1.5, 0.50)).toBeCloseTo(3.50, 2);
+  });
+});
+
+// ─── Supplier comparison service ──────────────────────────────────────────────
+
+describe('selectBestSupplier (supplier-comparison service)', () => {
+  const { selectBestSupplier, buildAlternativesSummary } = require('../src/services/supplier-comparison');
+
+  const makeCandidate = (id, price, stock, quality, platformPrice) => ({
+    supplier_id:    id,
+    supplier_name:  `Supplier ${id}`,
+    supplier_price: price,
+    stock,
+    quality_score:  quality,
+    platform_price: platformPrice,
+  });
+
+  it('throws when candidates array is empty', () => {
+    expect(() => selectBestSupplier([])).toThrow();
+  });
+
+  it('returns single candidate when only one supplier', () => {
+    const c = makeCandidate('s1', 100, 10, 80, 140);
+    const result = selectBestSupplier([c]);
+    expect(result.best.supplier_id).toBe('s1');
+    expect(result.alternatives).toHaveLength(0);
+  });
+
+  it('mode=lowest_cost selects cheapest supplier', () => {
+    const candidates = [
+      makeCandidate('s1', 100, 10, 80, 140),
+      makeCandidate('s2', 80,  5,  50, 112),
+      makeCandidate('s3', 120, 20, 90, 168),
+    ];
+    const result = selectBestSupplier(candidates, 'lowest_cost');
+    expect(result.best.supplier_id).toBe('s2');
+    expect(result.mode).toBe('lowest_cost');
+  });
+
+  it('mode=best_margin selects highest (platform_price - supplier_price)', () => {
+    const candidates = [
+      makeCandidate('s1', 100, 10, 80, 160), // margin = 60
+      makeCandidate('s2', 80,  5,  50, 160), // margin = 80
+      makeCandidate('s3', 120, 20, 90, 150), // margin = 30
+    ];
+    const result = selectBestSupplier(candidates, 'best_margin');
+    expect(result.best.supplier_id).toBe('s2');
+  });
+
+  it('mode=best_quality selects highest quality_score', () => {
+    const candidates = [
+      makeCandidate('s1', 100, 10, 80, 140),
+      makeCandidate('s2', 80,  5,  50, 112),
+      makeCandidate('s3', 120, 20, 90, 168),
+    ];
+    const result = selectBestSupplier(candidates, 'best_quality');
+    expect(result.best.supplier_id).toBe('s3');
+  });
+
+  it('mode=balanced returns scores for all candidates', () => {
+    const candidates = [
+      makeCandidate('s1', 100, 10, 80, 140),
+      makeCandidate('s2', 80,  5,  50, 112),
+    ];
+    const result = selectBestSupplier(candidates, 'balanced');
+    expect(result.scores).toHaveProperty('s1');
+    expect(result.scores).toHaveProperty('s2');
+    expect(result.alternatives).toHaveLength(1);
+  });
+
+  it('default mode is balanced', () => {
+    const candidates = [
+      makeCandidate('s1', 100, 10, 80, 140),
+      makeCandidate('s2', 80,  5,  50, 112),
+    ];
+    const result = selectBestSupplier(candidates);
+    expect(result.mode).toBe('balanced');
+  });
+
+  it('buildAlternativesSummary maps alternatives to compact format', () => {
+    const alts = [makeCandidate('s2', 80, 5, 50, 112)];
+    const summary = buildAlternativesSummary(alts);
+    expect(summary).toHaveLength(1);
+    expect(summary[0]).toHaveProperty('supplier_id', 's2');
+    expect(summary[0]).toHaveProperty('supplier_price', 80);
+    expect(summary[0]).not.toHaveProperty('platform_price');
+  });
+});
+
+// ─── Admin sync-all ────────────────────────────────────────────────────────────
+
+describe('POST /api/admin/suppliers/sync-all', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .post('/api/admin/suppliers/sync-all')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns empty result when no active suppliers have endpoints', async () => {
+    // No suppliers with configured endpoints
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .post('/api/admin/suppliers/sync-all')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('synced', 0);
+    expect(res.body.results).toHaveLength(0);
+  });
+});
+
+// ─── Admin import-logs ────────────────────────────────────────────────────────
+
+describe('GET /api/admin/import-logs', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin/import-logs')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns paginated import logs', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '2' }] })
+      .mockResolvedValueOnce({
+        rows: [
+          { id: 'log-1', supplier_name: 'Hurtownia A', status: 'success', count: 10, created_at: new Date() },
+          { id: 'log-2', supplier_name: 'Hurtownia B', status: 'failure', count: 0,  created_at: new Date() },
+        ],
+      });
+
+    const res = await request(app)
+      .get('/api/admin/import-logs')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total', 2);
+    expect(res.body).toHaveProperty('logs');
+    expect(Array.isArray(res.body.logs)).toBe(true);
+    expect(res.body.logs).toHaveLength(2);
+  });
+
+  it('supports pagination', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '50' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .get('/api/admin/import-logs?page=2&limit=10')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('page', 2);
+    expect(res.body).toHaveProperty('limit', 10);
+  });
+});
+
+// ─── Admin sync-status ────────────────────────────────────────────────────────
+
+describe('GET /api/admin/sync-status', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin/sync-status')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns supplier sync status list', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [
+        {
+          id: SUPPLIER_ID, name: 'Hurtownia ABC', status: 'active', active: true,
+          last_sync_at: new Date(), integration_type: 'api',
+          product_count: '15', last_import_status: 'success', last_import_count: '15', last_import_error: null,
+        },
+      ],
+    });
+
+    const res = await request(app)
+      .get('/api/admin/sync-status')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('suppliers');
+    expect(Array.isArray(res.body.suppliers)).toBe(true);
+    expect(res.body.suppliers[0]).toHaveProperty('product_count');
+    expect(res.body.suppliers[0]).toHaveProperty('last_import_status');
+  });
+});
+
+// ─── Admin profit-report ──────────────────────────────────────────────────────
+
+describe('GET /api/admin/profit-report', () => {
+  it('requires admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin/profit-report')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns profit summary and orders list', async () => {
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{
+          total_orders: '3', total_revenue: '450.00',
+          total_supplier_cost: '270.00', total_payment_fees: '15.00',
+          total_real_profit: '165.00', avg_profit_per_order: '55.00',
+        }],
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          { id: 'ord-1', status: 'paid', total: 150, supplier_cost: 90, payment_fee: 5, real_profit: 55, created_at: new Date() },
+          { id: 'ord-2', status: 'paid', total: 150, supplier_cost: 90, payment_fee: 5, real_profit: 55, created_at: new Date() },
+          { id: 'ord-3', status: 'paid', total: 150, supplier_cost: 90, payment_fee: 5, real_profit: 55, created_at: new Date() },
+        ],
+      });
+
+    const res = await request(app)
+      .get('/api/admin/profit-report')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('summary');
+    expect(res.body.summary).toHaveProperty('total_real_profit', 165);
+    expect(res.body.summary).toHaveProperty('total_revenue', 450);
+    expect(res.body.summary).toHaveProperty('total_supplier_cost', 270);
+    expect(res.body).toHaveProperty('orders');
+    expect(Array.isArray(res.body.orders)).toBe(true);
+  });
+});
+
+// ─── Seller opportunities ──────────────────────────────────────────────────────
+
+describe('GET /api/my/opportunities', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/my/opportunities');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns products with reseller profit potential for seller', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '2' }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: PRODUCT_ID, name: 'Laptop XYZ', sku: 'LAP-001',
+            supplier_price: 1000, platform_price: 1400,
+            recommended_reseller_price: 1680, expected_platform_profit: 400,
+            expected_reseller_profit: 280, quality_score: 90, is_featured: true,
+            stock: 5, supplier_name: 'Hurtownia A',
+          },
+          {
+            id: 'prod-2', name: 'Tablet ABC', sku: 'TAB-002',
+            supplier_price: 500, platform_price: 700,
+            recommended_reseller_price: 840, expected_platform_profit: 200,
+            expected_reseller_profit: 140, quality_score: 75, is_featured: false,
+            stock: 10, supplier_name: 'Hurtownia B',
+          },
+        ],
+      });
+
+    const res = await request(app)
+      .get('/api/my/opportunities')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total', 2);
+    expect(res.body).toHaveProperty('opportunities');
+    expect(Array.isArray(res.body.opportunities)).toBe(true);
+    expect(res.body.opportunities[0]).toHaveProperty('expected_reseller_profit');
+    expect(res.body.opportunities[0]).toHaveProperty('recommended_reseller_price');
+    expect(res.body.opportunities[0]).toHaveProperty('platform_price');
+  });
+
+  it('returns empty list when no opportunities available', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '0' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .get('/api/my/opportunities')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total', 0);
+    expect(res.body.opportunities).toHaveLength(0);
+  });
+
+  it('respects page and limit params', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '50' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .get('/api/my/opportunities?page=2&limit=10')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('page', 2);
+    expect(res.body).toHaveProperty('limit', 10);
+  });
+});
+
+// ─── logImport helper ─────────────────────────────────────────────────────────
+
+describe('logImport helper (supplier-import service)', () => {
+  const { logImport } = require('../src/services/supplier-import');
+
+  it('persists an import log entry to the database', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await expect(logImport({
+      supplier_id:   SUPPLIER_ID,
+      supplier_name: 'Test Supplier',
+      trigger:       'scheduled',
+      status:        'success',
+      count:         42,
+      featured:      10,
+      skipped:       3,
+    })).resolves.not.toThrow();
+  });
+
+  it('silently ignores 42P01 (table not found) error', async () => {
+    const pgErr = new Error('relation "import_logs" does not exist');
+    pgErr.code = '42P01';
+    db.query.mockRejectedValueOnce(pgErr);
+
+    await expect(logImport({ supplier_id: SUPPLIER_ID, status: 'success' })).resolves.not.toThrow();
+  });
+
+  it('silently ignores other DB errors without throwing', async () => {
+    db.query.mockRejectedValueOnce(new Error('DB connection lost'));
+
+    await expect(logImport({ supplier_id: SUPPLIER_ID, status: 'failure' })).resolves.not.toThrow();
+  });
+});
