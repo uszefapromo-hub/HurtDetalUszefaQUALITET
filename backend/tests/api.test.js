@@ -9314,6 +9314,33 @@ describe('logImport helper (supplier-import service)', () => {
     })).resolves.not.toThrow();
   });
 
+  it('persists updated count in the INSERT when products are refreshed', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await logImport({
+      supplier_id:   SUPPLIER_ID,
+      supplier_name: 'Test Supplier',
+      trigger:       'manual',
+      status:        'success',
+      count:         10,
+      created:       3,
+      updated:       7,
+      featured:      2,
+      skipped:       1,
+    });
+
+    // Verify INSERT was called with the correct column list and updated value
+    const call = db.query.mock.calls[db.query.mock.calls.length - 1];
+    const sql = call[0];
+    const params = call[1];
+    expect(sql).toMatch(/INSERT INTO import_logs/i);
+    expect(sql).toMatch(/updated/i);
+    // params order: supplier_id, supplier_name, trigger, status, count, updated, featured, skipped, failed, error_message, started_at
+    // updated is at index 5 (0-based)
+    expect(params[4]).toBe(10); // count
+    expect(params[5]).toBe(7);  // updated
+  });
+
   it('silently ignores 42P01 (table not found) error', async () => {
     const pgErr = new Error('relation "import_logs" does not exist');
     pgErr.code = '42P01';
@@ -9613,6 +9640,7 @@ describe('POST /api/admin/suppliers/sync-all – execution report fields', () =>
     expect(res.body).toHaveProperty('total_count', 0);
     expect(res.body).toHaveProperty('total_imported', 0);
     expect(res.body).toHaveProperty('total_updated', 0);
+    expect(res.body).toHaveProperty('total_featured', 0);
     expect(res.body).toHaveProperty('total_skipped', 0);
     expect(res.body).toHaveProperty('example_product', null);
     expect(res.body).toHaveProperty('synced_at');
@@ -9620,7 +9648,7 @@ describe('POST /api/admin/suppliers/sync-all – execution report fields', () =>
     expect(res.body.results[0]).toHaveProperty('status', 'error');
   });
 
-  it('returns total_imported=0, total_updated=0, example_product=null when no suppliers', async () => {
+  it('returns total_imported=0, total_updated=0, total_featured=0, example_product=null when no suppliers', async () => {
     db.query.mockResolvedValueOnce({ rows: [] });
 
     const res = await request(app)
@@ -9631,6 +9659,7 @@ describe('POST /api/admin/suppliers/sync-all – execution report fields', () =>
     expect(res.body).toHaveProperty('synced', 0);
     expect(res.body).toHaveProperty('total_imported', 0);
     expect(res.body).toHaveProperty('total_updated', 0);
+    expect(res.body).toHaveProperty('total_featured', 0);
     expect(res.body).toHaveProperty('example_product', null);
   });
 });
