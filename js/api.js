@@ -568,8 +568,9 @@
     referrals(params)          { return get('/referral/admin', params); },
     /** List system scripts. GET /api/admin/scripts */
     scripts()                  { return get('/admin/scripts'); },
-    /** Run a system script. POST /api/admin/scripts/:id/run */
-    runScript(id)              { return post(`/admin/scripts/${id}/run`, {}); },
+    /** Run a system script. POST /api/admin/scripts/:id/run
+     *  Pass { dry_run: true } to simulate without committing changes. */
+    runScript(id, body)        { return post(`/admin/scripts/${id}/run`, body || {}); },
     /** List announcements. GET /api/admin/announcements */
     announcements(params)      { return get('/admin/announcements', params); },
     /** Create an announcement. POST /api/admin/announcements */
