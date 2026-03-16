@@ -2081,7 +2081,7 @@
       : '/api';
 
     function getToken() {
-      try { return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || ''; }
+      try { return localStorage.getItem('qm_token') || localStorage.getItem('auth_token') || ''; }
       catch (_) { return ''; }
     }
 

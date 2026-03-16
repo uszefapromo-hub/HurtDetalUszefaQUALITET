@@ -77,6 +77,38 @@ function getStripe() {
   return _stripe;
 }
 
+/**
+ * Sync a Stripe subscription into the users table.
+ * Retrieves live status from Stripe and persists it to the DB.
+ *
+ * @param {object} stripeSub – Stripe Subscription object
+ * @param {string} userId    – internal user UUID
+ * @returns {{ subscription_status, subscription_plan, current_period_end }}
+ */
+async function syncStripeSubToDb(stripeSub, userId) {
+  const periodEnd = stripeSub.current_period_end
+    ? new Date(stripeSub.current_period_end * 1000)
+    : null;
+  const planMeta = stripeSub.metadata && stripeSub.metadata.plan;
+
+  await db.query(
+    `UPDATE users SET
+       stripe_subscription_id = $1,
+       subscription_status    = $2,
+       subscription_plan      = COALESCE($3, subscription_plan),
+       current_period_end     = $4,
+       updated_at             = NOW()
+     WHERE id = $5`,
+    [stripeSub.id, stripeSub.status, planMeta || null, periodEnd, userId]
+  );
+
+  return {
+    subscription_status: stripeSub.status,
+    subscription_plan: planMeta || null,
+    current_period_end: periodEnd,
+  };
+}
+
 // ─── List subscriptions (own shops) ───────────────────────────────────────────
 
 router.get('/', authenticate, async (req, res) => {
@@ -323,10 +355,16 @@ router.post(
           metadata: { user_id: req.user.id },
         });
         customerId = customer.id;
-        await db.query(
-          'UPDATE users SET stripe_customer_id = $1, updated_at = NOW() WHERE id = $2',
-          [customerId, req.user.id]
-        );
+        // Persist the customer ID; if DB write fails, log but proceed so the
+        // checkout session is still created (customer exists in Stripe already).
+        try {
+          await db.query(
+            'UPDATE users SET stripe_customer_id = $1, updated_at = NOW() WHERE id = $2',
+            [customerId, req.user.id]
+          );
+        } catch (dbErr) {
+          console.error(`Failed to save stripe_customer_id ${customerId} for user ${req.user.id}:`, dbErr.message);
+        }
       }
 
       let session;
@@ -426,24 +464,10 @@ router.get('/my-billing', authenticate, async (req, res) => {
     if (stripe && user.stripe_subscription_id) {
       try {
         const stripeSub = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
-        const periodEnd = stripeSub.current_period_end
-          ? new Date(stripeSub.current_period_end * 1000)
-          : null;
-        const planMeta = stripeSub.metadata && stripeSub.metadata.plan;
-
-        await db.query(
-          `UPDATE users SET
-             subscription_status = $1,
-             subscription_plan   = COALESCE($2, subscription_plan),
-             current_period_end  = $3,
-             updated_at          = NOW()
-           WHERE id = $4`,
-          [stripeSub.status, planMeta || null, periodEnd, req.user.id]
-        );
-
-        user.subscription_status = stripeSub.status;
-        if (planMeta) user.subscription_plan = planMeta;
-        user.current_period_end = periodEnd;
+        const synced = await syncStripeSubToDb(stripeSub, req.user.id);
+        user.subscription_status = synced.subscription_status;
+        if (synced.subscription_plan) user.subscription_plan = synced.subscription_plan;
+        user.current_period_end = synced.current_period_end;
       } catch (stripeErr) {
         console.error('stripe subscription retrieve error:', stripeErr.message);
         // Return cached data if Stripe call fails
@@ -501,27 +525,8 @@ router.post('/stripe-sync', authenticate, async (req, res) => {
     if (user.stripe_subscription_id) {
       try {
         const stripeSub = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
-        const periodEnd = stripeSub.current_period_end
-          ? new Date(stripeSub.current_period_end * 1000)
-          : null;
-        const planMeta = stripeSub.metadata && stripeSub.metadata.plan;
-
-        await db.query(
-          `UPDATE users SET
-             subscription_status = $1,
-             subscription_plan   = COALESCE($2, subscription_plan),
-             current_period_end  = $3,
-             updated_at          = NOW()
-           WHERE id = $4`,
-          [stripeSub.status, planMeta || null, periodEnd, req.user.id]
-        );
-
-        return res.json({
-          synced: true,
-          subscription_status: stripeSub.status,
-          subscription_plan: planMeta || null,
-          current_period_end: periodEnd,
-        });
+        const synced = await syncStripeSubToDb(stripeSub, req.user.id);
+        return res.json({ synced: true, ...synced });
       } catch (stripeErr) {
         console.error('stripe-sync retrieve error:', stripeErr.message);
         return res.json({ synced: false, reason: 'stripe_api_error', detail: stripeErr.message });
@@ -540,28 +545,8 @@ router.post('/stripe-sync', authenticate, async (req, res) => {
           (s) => ['active', 'trialing', 'past_due'].includes(s.status)
         );
         if (activeSub) {
-          const periodEnd = activeSub.current_period_end
-            ? new Date(activeSub.current_period_end * 1000)
-            : null;
-          const planMeta = activeSub.metadata && activeSub.metadata.plan;
-
-          await db.query(
-            `UPDATE users SET
-               stripe_subscription_id = $1,
-               subscription_status    = $2,
-               subscription_plan      = COALESCE($3, subscription_plan),
-               current_period_end     = $4,
-               updated_at             = NOW()
-             WHERE id = $5`,
-            [activeSub.id, activeSub.status, planMeta || null, periodEnd, req.user.id]
-          );
-
-          return res.json({
-            synced: true,
-            subscription_status: activeSub.status,
-            subscription_plan: planMeta || null,
-            current_period_end: periodEnd,
-          });
+          const synced = await syncStripeSubToDb(activeSub, req.user.id);
+          return res.json({ synced: true, ...synced });
         }
       } catch (stripeErr) {
         console.error('stripe-sync list error:', stripeErr.message);

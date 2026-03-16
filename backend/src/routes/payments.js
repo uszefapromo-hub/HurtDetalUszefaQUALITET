@@ -548,7 +548,7 @@ router.post(
             const stripeSubId   = session.subscription;
             const planFromMeta  = session.metadata && session.metadata.plan;
             if (customerId && session.client_reference_id) {
-              await db.query(
+              const updateResult = await db.query(
                 `UPDATE users SET
                    stripe_customer_id     = $1,
                    stripe_subscription_id = $2,
@@ -558,6 +558,9 @@ router.post(
                  WHERE id = $4`,
                 [customerId, stripeSubId, planFromMeta || null, session.client_reference_id]
               );
+              if (updateResult.rowCount === 0) {
+                console.warn(`stripe webhook: checkout.session.completed – no user found for client_reference_id=${session.client_reference_id}`);
+              }
             }
           }
           break;
@@ -613,11 +616,9 @@ router.post(
         case 'invoice.paid': {
           const invoice = event.data.object;
           const customerId = invoice.customer;
-          const periodEnd  = invoice.lines && invoice.lines.data && invoice.lines.data[0]
-            ? invoice.lines.data[0].period && invoice.lines.data[0].period.end
-              ? new Date(invoice.lines.data[0].period.end * 1000)
-              : null
-            : null;
+          const firstLine = invoice.lines && invoice.lines.data && invoice.lines.data[0];
+          const periodEndTs = firstLine && firstLine.period && firstLine.period.end;
+          const periodEnd = periodEndTs ? new Date(periodEndTs * 1000) : null;
           if (customerId) {
             await db.query(
               `UPDATE users SET

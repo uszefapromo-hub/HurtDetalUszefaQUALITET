@@ -727,7 +727,7 @@
     if (!api || !api.Auth || !api.Auth.isLoggedIn()) return;
 
     var token = '';
-    try { token = localStorage.getItem('qm_token') || sessionStorage.getItem('auth_token') || ''; } catch (_) {}
+    try { token = localStorage.getItem('qm_token') || localStorage.getItem('auth_token') || ''; } catch (_) {}
     if (!token) return;
 
     fetch('/api/subscriptions/stripe-sync', {
