@@ -79,11 +79,20 @@ function signToken(user) {
 }
 
 /**
- * Middleware: verify the shop referenced in the request has an active, non-expired subscription.
+ * Middleware: look up the active subscription for the shop referenced in the request.
  * Resolves shop_id from req.body.store_id, req.params.store_id or req.query.store_id.
- * On success, attaches the subscription record to req.subscription (including product_limit,
- * commission_rate, and plan).  Sets req.subscription = null when no active subscription exists
- * or when no store_id is present in the request.
+ *
+ * Product gating policy (enforced in route handlers):
+ *   • req.subscription === null  – no active subscription record found for the store.
+ *     The route handler treats this as open access: products can be added without any
+ *     cap.  This covers new sellers who have not yet created a subscription.
+ *   • req.subscription.product_limit === null  – unlimited plan (basic / pro / elite).
+ *     No product cap is applied.
+ *   • req.subscription.product_limit = N  – capped plan (e.g., free plan with 10-product
+ *     limit, or a custom admin-set cap).  The route handler enforces the cap and returns
+ *     403 { error: 'product_limit_reached' } when the store already has N or more products.
+ *
+ * This middleware never blocks the request itself; it only attaches data for downstream checks.
  */
 async function requireActiveSubscription(req, res, next) {
   const storeId = resolveStoreId(req);

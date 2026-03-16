@@ -2405,7 +2405,7 @@ describe('POST /api/shops/quick-setup', () => {
 
 
 describe('POST /api/my/store/products – subscription checks', () => {
-  it('adds product when no active subscription exists (free tier)', async () => {
+  it('adds product when no active subscription exists (open access for new sellers)', async () => {
     db.query
       .mockResolvedValueOnce({ rows: [] })                         // requireActiveSubscription: no subscription
       .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })  // store ownership
@@ -2507,8 +2507,7 @@ describe('POST /api/my/store/products/bulk', () => {
     expect(res.status).toBe(404);
   });
 
-  it('blocks when product_limit would be exceeded by bulk add', async () => {
-    // No active subscription → limit check skipped; no products found → all skipped
+  it('no active subscription – bulk add succeeds (open access for new sellers)', async () => {
     db.query
       .mockResolvedValueOnce({ rows: [] })                           // requireActiveSubscription: no subscription
       .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })   // store ownership
@@ -2574,6 +2573,78 @@ describe('POST /api/my/store/products/bulk', () => {
       .send({ store_id: STORE_ID, product_ids: [PRODUCT_ID] });
     expect(res.status).toBe(201);
     expect(res.body.results[0].margin_override).toBe(20);
+  });
+});
+
+// ─── POST /api/my/store/products/bulk – subscription checks ───────────────────
+// Mirrors the single-product "subscription checks" block; verifies all 4 gating
+// scenarios are correctly enforced for the bulk endpoint.
+
+describe('POST /api/my/store/products/bulk – subscription checks', () => {
+  const PRODUCT_ID_BULK = 'b0000000-0000-4000-8000-000000000020';
+  const PRODUCT_ID_BULK2 = 'b0000000-0000-4000-8000-000000000021';
+
+  it('adds products when no active subscription exists (open access for new sellers)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] })                           // requireActiveSubscription: no subscription
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })   // store ownership
+      .mockResolvedValueOnce({ rows: [{ id: PRODUCT_ID_BULK, selling_price: 100 }] }) // products found
+      .mockResolvedValueOnce({ rows: [{ id: 'sp-b1', store_id: STORE_ID, product_id: PRODUCT_ID_BULK, margin_override: 20, active: true }] }); // insert
+
+    const res = await request(app)
+      .post('/api/my/store/products/bulk')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, product_ids: [PRODUCT_ID_BULK] });
+    expect(res.status).toBe(201);
+    expect(res.body.added).toBe(1);
+    expect(res.body.skipped).toBe(0);
+  });
+
+  it('adds products when subscription has no product limit (paid plan – unlimited)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 'sub-pro', plan: 'pro', status: 'active', product_limit: null, commission_rate: 0.02 }] }) // requireActiveSubscription: pro plan
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })   // store ownership
+      // no count query because product_limit is null
+      .mockResolvedValueOnce({ rows: [{ id: PRODUCT_ID_BULK, selling_price: 100 }] }) // products found
+      .mockResolvedValueOnce({ rows: [{ id: 'sp-b2', store_id: STORE_ID, product_id: PRODUCT_ID_BULK, margin_override: 20, active: true }] }); // insert
+
+    const res = await request(app)
+      .post('/api/my/store/products/bulk')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, product_ids: [PRODUCT_ID_BULK] });
+    expect(res.status).toBe(201);
+    expect(res.body.added).toBe(1);
+  });
+
+  it('adds products when subscription limit is not yet reached', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 'sub-free', plan: 'free', status: 'active', product_limit: 10, commission_rate: 0.05 }] }) // requireActiveSubscription: free plan, limit 10
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })   // store ownership
+      .mockResolvedValueOnce({ rows: [{ count: '5' }] })             // current product count (5 + 2 = 7 < 10 → ok)
+      .mockResolvedValueOnce({ rows: [{ id: PRODUCT_ID_BULK, selling_price: 100 }, { id: PRODUCT_ID_BULK2, selling_price: 200 }] }) // products found
+      .mockResolvedValueOnce({ rows: [{ id: 'sp-b3', store_id: STORE_ID, product_id: PRODUCT_ID_BULK, margin_override: 20, active: true }] }) // insert 1
+      .mockResolvedValueOnce({ rows: [{ id: 'sp-b4', store_id: STORE_ID, product_id: PRODUCT_ID_BULK2, margin_override: 20, active: true }] }); // insert 2
+
+    const res = await request(app)
+      .post('/api/my/store/products/bulk')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, product_ids: [PRODUCT_ID_BULK, PRODUCT_ID_BULK2] });
+    expect(res.status).toBe(201);
+    expect(res.body.added).toBe(2);
+  });
+
+  it('blocks bulk add when subscription product limit would be exceeded', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 'sub-free', plan: 'free', status: 'active', product_limit: 10, commission_rate: 0.05 }] }) // requireActiveSubscription: free plan, limit 10
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID }] })   // store ownership
+      .mockResolvedValueOnce({ rows: [{ count: '9' }] });            // current count = 9; adding 2 → 11 > 10 → blocked
+
+    const res = await request(app)
+      .post('/api/my/store/products/bulk')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, product_ids: [PRODUCT_ID_BULK, PRODUCT_ID_BULK2] });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('product_limit_reached');
   });
 });
 
