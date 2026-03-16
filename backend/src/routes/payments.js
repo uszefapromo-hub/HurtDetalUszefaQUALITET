@@ -505,42 +505,149 @@ router.post(
     }
 
     try {
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        const paymentId = session.metadata && session.metadata.payment_id;
-        if (paymentId) {
-          const paymentUpdate = await db.query(
-            `UPDATE payments SET
-               status       = 'paid',
-               external_ref = $1,
-               paid_at      = NOW(),
-               updated_at   = NOW()
-             WHERE id = $2 AND status = 'pending'`,
-            [session.id, paymentId]
-          );
-          // Only update order if the payment status actually changed
-          if (paymentUpdate.rowCount > 0) {
-            const paymentRow = await db.query('SELECT order_id FROM payments WHERE id = $1', [paymentId]);
-            if (paymentRow.rows[0]) {
-              const orderResult = await db.query(
-                `UPDATE orders SET status = 'paid', updated_at = NOW() WHERE id = $1 AND status IN ('pending','created') RETURNING id, total`,
-                [paymentRow.rows[0].order_id]
-              );
-              if (orderResult.rows[0]) {
-                recordOrderProfit(orderResult.rows[0].id, orderResult.rows[0].total);
+      switch (event.type) {
+
+        // ── Order payment events ────────────────────────────────────────────
+        case 'checkout.session.completed': {
+          const session = event.data.object;
+          const paymentId = session.metadata && session.metadata.payment_id;
+          if (paymentId) {
+            const paymentUpdate = await db.query(
+              `UPDATE payments SET
+                 status       = 'paid',
+                 external_ref = $1,
+                 paid_at      = NOW(),
+                 updated_at   = NOW()
+               WHERE id = $2 AND status = 'pending'`,
+              [session.id, paymentId]
+            );
+            if (paymentUpdate.rowCount > 0) {
+              const paymentRow = await db.query('SELECT order_id FROM payments WHERE id = $1', [paymentId]);
+              if (paymentRow.rows[0]) {
+                const orderResult = await db.query(
+                  `UPDATE orders SET status = 'paid', updated_at = NOW() WHERE id = $1 AND status IN ('pending','created') RETURNING id, total`,
+                  [paymentRow.rows[0].order_id]
+                );
+                if (orderResult.rows[0]) {
+                  recordOrderProfit(orderResult.rows[0].id, orderResult.rows[0].total);
+                }
               }
             }
           }
+          // Also handle subscription checkout completions (session.mode === 'subscription')
+          if (session.mode === 'subscription' && session.subscription && session.customer) {
+            const subId = session.metadata && session.metadata.subscription_id;
+            if (subId) {
+              await db.query(
+                `UPDATE subscriptions SET status = 'active', updated_at = NOW() WHERE id = $1 AND status != 'active'`,
+                [subId]
+              );
+            }
+            // Link the Stripe customer + subscription to the user
+            const customerId    = session.customer;
+            const stripeSubId   = session.subscription;
+            const planFromMeta  = session.metadata && session.metadata.plan;
+            if (customerId && session.client_reference_id) {
+              await db.query(
+                `UPDATE users SET
+                   stripe_customer_id     = $1,
+                   stripe_subscription_id = $2,
+                   subscription_status    = 'active',
+                   subscription_plan      = COALESCE($3, subscription_plan),
+                   updated_at             = NOW()
+                 WHERE id = $4`,
+                [customerId, stripeSubId, planFromMeta || null, session.client_reference_id]
+              );
+            }
+          }
+          break;
         }
-      } else if (event.type === 'checkout.session.expired') {
-        const session = event.data.object;
-        const paymentId = session.metadata && session.metadata.payment_id;
-        if (paymentId) {
+
+        case 'checkout.session.expired': {
+          const session = event.data.object;
+          const paymentId = session.metadata && session.metadata.payment_id;
+          if (paymentId) {
+            await db.query(
+              `UPDATE payments SET status = 'failed', updated_at = NOW() WHERE id = $1 AND status = 'pending'`,
+              [paymentId]
+            );
+          }
+          break;
+        }
+
+        // ── Subscription lifecycle events ───────────────────────────────────
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated': {
+          const sub = event.data.object;
+          const customerId = sub.customer;
+          const periodEnd  = sub.current_period_end
+            ? new Date(sub.current_period_end * 1000)
+            : null;
+          const planMeta   = sub.metadata && sub.metadata.plan;
           await db.query(
-            `UPDATE payments SET status = 'failed', updated_at = NOW() WHERE id = $1 AND status = 'pending'`,
-            [paymentId]
+            `UPDATE users SET
+               stripe_subscription_id = $1,
+               subscription_status    = $2,
+               subscription_plan      = COALESCE($3, subscription_plan),
+               current_period_end     = $4,
+               updated_at             = NOW()
+             WHERE stripe_customer_id = $5`,
+            [sub.id, sub.status, planMeta || null, periodEnd, customerId]
           );
+          break;
         }
+
+        case 'customer.subscription.deleted': {
+          const sub = event.data.object;
+          await db.query(
+            `UPDATE users SET
+               subscription_status    = 'canceled',
+               current_period_end     = $1,
+               updated_at             = NOW()
+             WHERE stripe_customer_id = $2`,
+            [sub.current_period_end ? new Date(sub.current_period_end * 1000) : null, sub.customer]
+          );
+          break;
+        }
+
+        case 'invoice.paid': {
+          const invoice = event.data.object;
+          const customerId = invoice.customer;
+          const periodEnd  = invoice.lines && invoice.lines.data && invoice.lines.data[0]
+            ? invoice.lines.data[0].period && invoice.lines.data[0].period.end
+              ? new Date(invoice.lines.data[0].period.end * 1000)
+              : null
+            : null;
+          if (customerId) {
+            await db.query(
+              `UPDATE users SET
+                 subscription_status = 'active',
+                 current_period_end  = COALESCE($1, current_period_end),
+                 updated_at          = NOW()
+               WHERE stripe_customer_id = $2 AND subscription_status IN ('past_due','incomplete','unpaid')`,
+              [periodEnd, customerId]
+            );
+          }
+          break;
+        }
+
+        case 'invoice.payment_failed': {
+          const invoice = event.data.object;
+          const customerId = invoice.customer;
+          if (customerId) {
+            await db.query(
+              `UPDATE users SET
+                 subscription_status = 'past_due',
+                 updated_at          = NOW()
+               WHERE stripe_customer_id = $1`,
+              [customerId]
+            );
+          }
+          break;
+        }
+
+        default:
+          break;
       }
       return res.json({ received: true });
     } catch (err) {

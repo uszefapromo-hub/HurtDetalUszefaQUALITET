@@ -714,6 +714,28 @@
     api.Auth.refresh().catch(function () { /* ignore – user will be redirected on next 401 */ });
   }());
 
+  // ─── Automatic Stripe subscription sync ──────────────────────────────────────
+  // On dashboard and owner panel loads, silently sync the user's Stripe
+  // subscription status so plan features are unlocked automatically.
+  // Runs fire-and-forget – failures are silently ignored.
+  (function tryStripeSync() {
+    var syncPages = ['dashboard', 'owner-panel'];
+    var currentPage = document.body ? document.body.dataset.page : null;
+    if (!currentPage || syncPages.indexOf(currentPage) === -1) return;
+
+    var api = window.QMApi;
+    if (!api || !api.Auth || !api.Auth.isLoggedIn()) return;
+
+    var token = '';
+    try { token = localStorage.getItem('qm_token') || sessionStorage.getItem('auth_token') || ''; } catch (_) {}
+    if (!token) return;
+
+    fetch('/api/subscriptions/stripe-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    }).catch(function () { /* fire-and-forget – ignore errors */ });
+  }());
+
   // ─── Entry point ─────────────────────────────────────────────────────────────
 
   var page = document.body ? document.body.dataset.page : null;

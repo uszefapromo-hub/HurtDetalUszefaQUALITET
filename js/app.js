@@ -193,6 +193,7 @@
             banner.remove();
             banner = null;
           }
+          document.body.classList.remove('has-install-banner');
         }, 300);
       }
       if(persistDismissal){
@@ -259,6 +260,7 @@
 
       banner.append(closeButton, content, actions);
       document.body.appendChild(banner);
+      document.body.classList.add('has-install-banner');
     };
 
     window.addEventListener('beforeinstallprompt', event => {
