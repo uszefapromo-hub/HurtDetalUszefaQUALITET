@@ -478,13 +478,180 @@ async function buildProviderPayload(method, payment, returnUrl) {
 }
 
 // ─── POST /api/payments/stripe/webhook – Stripe signed webhook ────────────────
-// Verifies the Stripe-Signature header and updates the payment status accordingly.
+// Verifies the Stripe-Signature header then dispatches to an isolated handler
+// for each event type.  Every handler updates only the table(s) relevant to
+// that specific event – there is no mixing of payment SQL and subscription SQL.
+
+// ── Private webhook handler functions ─────────────────────────────────────────
+
+/**
+ * checkout.session.completed – payment mode
+ * Marks the payment row as paid and, if changed, marks the linked order as paid
+ * and asynchronously records profit.
+ */
+async function handleCheckoutPaymentCompleted(session) {
+  const paymentId = session.metadata && session.metadata.payment_id;
+  if (!paymentId) return;
+
+  const paymentUpdate = await db.query(
+    `UPDATE payments
+        SET status       = 'paid',
+            external_ref = $1,
+            paid_at      = NOW(),
+            updated_at   = NOW()
+      WHERE id = $2 AND status = 'pending'`,
+    [session.id, paymentId]
+  );
+
+  if (paymentUpdate.rowCount === 0) return; // already processed
+
+  const paymentRow = await db.query('SELECT order_id FROM payments WHERE id = $1', [paymentId]);
+  if (!paymentRow.rows[0]) return;
+
+  const orderResult = await db.query(
+    `UPDATE orders
+        SET status = 'paid', updated_at = NOW()
+      WHERE id = $1 AND status IN ('pending','created')
+      RETURNING id, total`,
+    [paymentRow.rows[0].order_id]
+  );
+
+  if (orderResult.rows[0]) {
+    recordOrderProfit(orderResult.rows[0].id, orderResult.rows[0].total);
+  }
+}
+
+/**
+ * checkout.session.completed – subscription mode
+ * Links the Stripe customer and subscription to the internal user identified by
+ * client_reference_id (the user's UUID).  Also marks the platform subscription
+ * record as active if one is referenced in metadata.
+ */
+async function handleCheckoutSubscriptionCompleted(session) {
+  const customerId  = session.customer;
+  const stripeSubId = session.subscription;
+  const userId      = session.client_reference_id;
+  const plan        = session.metadata && session.metadata.plan;
+  const subId       = session.metadata && session.metadata.subscription_id;
+
+  // Mark the internal subscription record active (if referenced)
+  if (subId) {
+    await db.query(
+      `UPDATE subscriptions
+          SET status = 'active', updated_at = NOW()
+        WHERE id = $1 AND status != 'active'`,
+      [subId]
+    );
+  }
+
+  // Link Stripe identifiers to the user account
+  if (customerId && userId) {
+    const result = await db.query(
+      `UPDATE users
+          SET stripe_customer_id     = $1,
+              stripe_subscription_id = $2,
+              subscription_status    = 'active',
+              subscription_plan      = COALESCE($3, subscription_plan),
+              updated_at             = NOW()
+        WHERE id = $4`,
+      [customerId, stripeSubId, plan || null, userId]
+    );
+    if (result.rowCount === 0) {
+      console.warn(`stripe webhook: checkout.session.completed (subscription) – no user found for client_reference_id=${userId}`);
+    }
+  }
+}
+
+/**
+ * customer.subscription.created / customer.subscription.updated
+ * Keeps the users row in sync with the latest Stripe subscription state.
+ */
+async function handleSubscriptionUpserted(sub) {
+  const periodEnd = sub.current_period_end
+    ? new Date(sub.current_period_end * 1000)
+    : null;
+  const plan = sub.metadata && sub.metadata.plan;
+
+  await db.query(
+    `UPDATE users
+        SET stripe_subscription_id = $1,
+            subscription_status    = $2,
+            subscription_plan      = COALESCE($3, subscription_plan),
+            current_period_end     = $4,
+            updated_at             = NOW()
+      WHERE stripe_customer_id = $5`,
+    [sub.id, sub.status, plan || null, periodEnd, sub.customer]
+  );
+}
+
+/**
+ * customer.subscription.deleted
+ * Marks the subscription as canceled and clears the subscription identifiers
+ * so that a future sync cannot accidentally resurrect a deleted subscription.
+ */
+async function handleSubscriptionDeleted(sub) {
+  const periodEnd = sub.current_period_end
+    ? new Date(sub.current_period_end * 1000)
+    : null;
+
+  await db.query(
+    `UPDATE users
+        SET stripe_subscription_id = NULL,
+            subscription_status    = 'canceled',
+            current_period_end     = $1,
+            updated_at             = NOW()
+      WHERE stripe_customer_id = $2`,
+    [periodEnd, sub.customer]
+  );
+}
+
+/**
+ * invoice.paid
+ * Restores the subscription to active when a previously failing invoice is paid.
+ * Also updates the period end so the renewal date stays current.
+ */
+async function handleInvoicePaid(invoice) {
+  if (!invoice.customer) return;
+
+  const firstLine   = invoice.lines && invoice.lines.data && invoice.lines.data[0];
+  const periodEndTs = firstLine && firstLine.period && firstLine.period.end;
+  const periodEnd   = periodEndTs ? new Date(periodEndTs * 1000) : null;
+
+  await db.query(
+    `UPDATE users
+        SET subscription_status = 'active',
+            current_period_end  = COALESCE($1, current_period_end),
+            updated_at          = NOW()
+      WHERE stripe_customer_id  = $2
+        AND subscription_status IN ('past_due','incomplete','unpaid')`,
+    [periodEnd, invoice.customer]
+  );
+}
+
+/**
+ * invoice.payment_failed
+ * Marks the subscription as past_due so the owner panel can display the
+ * correct status and prompt the user to update their payment method.
+ */
+async function handleInvoicePaymentFailed(invoice) {
+  if (!invoice.customer) return;
+
+  await db.query(
+    `UPDATE users
+        SET subscription_status = 'past_due',
+            updated_at          = NOW()
+      WHERE stripe_customer_id = $1`,
+    [invoice.customer]
+  );
+}
+
+// ── Route handler ──────────────────────────────────────────────────────────────
 
 router.post(
   '/stripe/webhook',
   express.raw({ type: 'application/json' }),
   async (req, res) => {
-    const sig = req.headers['stripe-signature'];
+    const sig           = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
@@ -507,61 +674,12 @@ router.post(
     try {
       switch (event.type) {
 
-        // ── Order payment events ────────────────────────────────────────────
         case 'checkout.session.completed': {
           const session = event.data.object;
-          const paymentId = session.metadata && session.metadata.payment_id;
-          if (paymentId) {
-            const paymentUpdate = await db.query(
-              `UPDATE payments SET
-                 status       = 'paid',
-                 external_ref = $1,
-                 paid_at      = NOW(),
-                 updated_at   = NOW()
-               WHERE id = $2 AND status = 'pending'`,
-              [session.id, paymentId]
-            );
-            if (paymentUpdate.rowCount > 0) {
-              const paymentRow = await db.query('SELECT order_id FROM payments WHERE id = $1', [paymentId]);
-              if (paymentRow.rows[0]) {
-                const orderResult = await db.query(
-                  `UPDATE orders SET status = 'paid', updated_at = NOW() WHERE id = $1 AND status IN ('pending','created') RETURNING id, total`,
-                  [paymentRow.rows[0].order_id]
-                );
-                if (orderResult.rows[0]) {
-                  recordOrderProfit(orderResult.rows[0].id, orderResult.rows[0].total);
-                }
-              }
-            }
-          }
-          // Also handle subscription checkout completions (session.mode === 'subscription')
-          if (session.mode === 'subscription' && session.subscription && session.customer) {
-            const subId = session.metadata && session.metadata.subscription_id;
-            if (subId) {
-              await db.query(
-                `UPDATE subscriptions SET status = 'active', updated_at = NOW() WHERE id = $1 AND status != 'active'`,
-                [subId]
-              );
-            }
-            // Link the Stripe customer + subscription to the user
-            const customerId    = session.customer;
-            const stripeSubId   = session.subscription;
-            const planFromMeta  = session.metadata && session.metadata.plan;
-            if (customerId && session.client_reference_id) {
-              const updateResult = await db.query(
-                `UPDATE users SET
-                   stripe_customer_id     = $1,
-                   stripe_subscription_id = $2,
-                   subscription_status    = 'active',
-                   subscription_plan      = COALESCE($3, subscription_plan),
-                   updated_at             = NOW()
-                 WHERE id = $4`,
-                [customerId, stripeSubId, planFromMeta || null, session.client_reference_id]
-              );
-              if (updateResult.rowCount === 0) {
-                console.warn(`stripe webhook: checkout.session.completed – no user found for client_reference_id=${session.client_reference_id}`);
-              }
-            }
+          if (session.mode === 'payment') {
+            await handleCheckoutPaymentCompleted(session);
+          } else if (session.mode === 'subscription') {
+            await handleCheckoutSubscriptionCompleted(session);
           }
           break;
         }
@@ -571,85 +689,37 @@ router.post(
           const paymentId = session.metadata && session.metadata.payment_id;
           if (paymentId) {
             await db.query(
-              `UPDATE payments SET status = 'failed', updated_at = NOW() WHERE id = $1 AND status = 'pending'`,
+              `UPDATE payments
+                  SET status = 'failed', updated_at = NOW()
+                WHERE id = $1 AND status = 'pending'`,
               [paymentId]
             );
           }
           break;
         }
 
-        // ── Subscription lifecycle events ───────────────────────────────────
         case 'customer.subscription.created':
-        case 'customer.subscription.updated': {
-          const sub = event.data.object;
-          const customerId = sub.customer;
-          const periodEnd  = sub.current_period_end
-            ? new Date(sub.current_period_end * 1000)
-            : null;
-          const planMeta   = sub.metadata && sub.metadata.plan;
-          await db.query(
-            `UPDATE users SET
-               stripe_subscription_id = $1,
-               subscription_status    = $2,
-               subscription_plan      = COALESCE($3, subscription_plan),
-               current_period_end     = $4,
-               updated_at             = NOW()
-             WHERE stripe_customer_id = $5`,
-            [sub.id, sub.status, planMeta || null, periodEnd, customerId]
-          );
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpserted(event.data.object);
           break;
-        }
 
-        case 'customer.subscription.deleted': {
-          const sub = event.data.object;
-          await db.query(
-            `UPDATE users SET
-               subscription_status    = 'canceled',
-               current_period_end     = $1,
-               updated_at             = NOW()
-             WHERE stripe_customer_id = $2`,
-            [sub.current_period_end ? new Date(sub.current_period_end * 1000) : null, sub.customer]
-          );
+        case 'customer.subscription.deleted':
+          await handleSubscriptionDeleted(event.data.object);
           break;
-        }
 
-        case 'invoice.paid': {
-          const invoice = event.data.object;
-          const customerId = invoice.customer;
-          const firstLine = invoice.lines && invoice.lines.data && invoice.lines.data[0];
-          const periodEndTs = firstLine && firstLine.period && firstLine.period.end;
-          const periodEnd = periodEndTs ? new Date(periodEndTs * 1000) : null;
-          if (customerId) {
-            await db.query(
-              `UPDATE users SET
-                 subscription_status = 'active',
-                 current_period_end  = COALESCE($1, current_period_end),
-                 updated_at          = NOW()
-               WHERE stripe_customer_id = $2 AND subscription_status IN ('past_due','incomplete','unpaid')`,
-              [periodEnd, customerId]
-            );
-          }
+        case 'invoice.paid':
+          await handleInvoicePaid(event.data.object);
           break;
-        }
 
-        case 'invoice.payment_failed': {
-          const invoice = event.data.object;
-          const customerId = invoice.customer;
-          if (customerId) {
-            await db.query(
-              `UPDATE users SET
-                 subscription_status = 'past_due',
-                 updated_at          = NOW()
-               WHERE stripe_customer_id = $1`,
-              [customerId]
-            );
-          }
+        case 'invoice.payment_failed':
+          await handleInvoicePaymentFailed(event.data.object);
           break;
-        }
 
         default:
+          // Unhandled event type – acknowledged but not processed
           break;
       }
+
       return res.json({ received: true });
     } catch (err) {
       console.error('stripe webhook processing error:', err.message);
@@ -659,3 +729,14 @@ router.post(
 );
 
 module.exports = router;
+
+// Export isolated handler functions for unit testing.
+// These are NOT part of the public API – they are only used by the test suite.
+module.exports._handlers = {
+  handleCheckoutPaymentCompleted,
+  handleCheckoutSubscriptionCompleted,
+  handleSubscriptionUpserted,
+  handleSubscriptionDeleted,
+  handleInvoicePaid,
+  handleInvoicePaymentFailed,
+};

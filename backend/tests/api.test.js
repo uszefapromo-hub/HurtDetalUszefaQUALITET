@@ -5214,6 +5214,258 @@ describe('POST /api/payments/stripe/webhook', () => {
   });
 });
 
+// ─── Stripe webhook handler unit tests ────────────────────────────────────────
+// Test each isolated handler function directly against the mocked database,
+// bypassing Stripe signature verification which requires live keys.
+
+describe('Stripe webhook handler functions – unit tests', () => {
+  const { _handlers } = require('../src/routes/payments');
+  const {
+    handleCheckoutPaymentCompleted,
+    handleCheckoutSubscriptionCompleted,
+    handleSubscriptionUpserted,
+    handleSubscriptionDeleted,
+    handleInvoicePaid,
+    handleInvoicePaymentFailed,
+  } = _handlers;
+
+  const SESSION_ID    = 'cs_test_session_001';
+  const PAYMENT_ID    = 'd0000000-0000-4000-8000-000000000001';
+  const STRIPE_CUS    = 'cus_test_001';
+  const STRIPE_SUB    = 'sub_test_001';
+  const USER_ID_STR   = 'a0000000-0000-4000-8000-000000000001';
+  const DB_SUB_ID     = 'b0000000-0000-4000-8000-000000000010';
+
+  // ── handleCheckoutPaymentCompleted ──────────────────────────────────────────
+
+  describe('handleCheckoutPaymentCompleted', () => {
+    it('does nothing when session has no payment_id in metadata', async () => {
+      await handleCheckoutPaymentCompleted({ id: SESSION_ID, metadata: {} });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('marks payment as paid and updates order when payment_id present', async () => {
+      db.query
+        .mockResolvedValueOnce({ rowCount: 1 })                               // UPDATE payments
+        .mockResolvedValueOnce({ rows: [{ order_id: ORDER_ID }] })            // SELECT order_id
+        .mockResolvedValueOnce({ rows: [{ id: ORDER_ID, total: 100 }] })      // UPDATE orders RETURNING
+        .mockResolvedValueOnce({ rows: [] })                                   // recordOrderProfit: SELECT items
+        .mockResolvedValueOnce({ rowCount: 1 });                               // recordOrderProfit: UPDATE orders profit
+
+      await handleCheckoutPaymentCompleted({
+        id: SESSION_ID,
+        metadata: { payment_id: PAYMENT_ID },
+      });
+
+      // Allow the fire-and-forget recordOrderProfit to settle
+      await new Promise((r) => setTimeout(r, 20));
+
+      const calls = db.query.mock.calls;
+      expect(calls.length).toBeGreaterThanOrEqual(3);
+      // First call updates payments
+      expect(calls[0][0]).toMatch(/UPDATE payments/);
+      expect(calls[0][1]).toContain(PAYMENT_ID);
+      // Second call selects order_id
+      expect(calls[1][0]).toMatch(/SELECT order_id FROM payments/);
+      // Third call updates orders
+      expect(calls[2][0]).toMatch(/UPDATE orders/);
+    });
+
+    it('does not update orders when payment was already processed (rowCount=0)', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 0 }); // UPDATE payments – already paid
+
+      await handleCheckoutPaymentCompleted({
+        id: SESSION_ID,
+        metadata: { payment_id: PAYMENT_ID },
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ── handleCheckoutSubscriptionCompleted ─────────────────────────────────────
+
+  describe('handleCheckoutSubscriptionCompleted', () => {
+    it('does nothing when customer or userId is missing', async () => {
+      await handleCheckoutSubscriptionCompleted({
+        customer: null,
+        subscription: STRIPE_SUB,
+        client_reference_id: null,
+        metadata: {},
+      });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('updates subscriptions table and links user to Stripe customer', async () => {
+      db.query
+        .mockResolvedValueOnce({ rowCount: 1 }) // UPDATE subscriptions
+        .mockResolvedValueOnce({ rowCount: 1 }); // UPDATE users
+
+      await handleCheckoutSubscriptionCompleted({
+        customer: STRIPE_CUS,
+        subscription: STRIPE_SUB,
+        client_reference_id: USER_ID_STR,
+        metadata: { subscription_id: DB_SUB_ID, plan: 'basic' },
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(2);
+      expect(db.query.mock.calls[0][0]).toMatch(/UPDATE subscriptions/);
+      expect(db.query.mock.calls[1][0]).toMatch(/UPDATE users/);
+      // users row should receive stripe_customer_id and stripe_subscription_id
+      expect(db.query.mock.calls[1][1]).toContain(STRIPE_CUS);
+      expect(db.query.mock.calls[1][1]).toContain(STRIPE_SUB);
+    });
+
+    it('warns when client_reference_id does not match any user', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      db.query
+        .mockResolvedValueOnce({ rowCount: 0 }) // UPDATE subscriptions (no sub ID in meta)
+        .mockResolvedValueOnce({ rowCount: 0 }); // UPDATE users – no match
+
+      await handleCheckoutSubscriptionCompleted({
+        customer: STRIPE_CUS,
+        subscription: STRIPE_SUB,
+        client_reference_id: '00000000-0000-4000-8000-000000000099',
+        metadata: {},
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('no user found'));
+      warnSpy.mockRestore();
+    });
+  });
+
+  // ── handleSubscriptionUpserted ───────────────────────────────────────────────
+
+  describe('handleSubscriptionUpserted (created / updated)', () => {
+    it('updates users row with subscription status and period end', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const now = Math.floor(Date.now() / 1000) + 3600;
+      await handleSubscriptionUpserted({
+        id: STRIPE_SUB,
+        status: 'active',
+        customer: STRIPE_CUS,
+        current_period_end: now,
+        metadata: { plan: 'pro' },
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query.mock.calls[0][0]).toMatch(/UPDATE users/);
+      const params = db.query.mock.calls[0][1];
+      expect(params[0]).toBe(STRIPE_SUB);
+      expect(params[1]).toBe('active');
+      expect(params[2]).toBe('pro');
+      expect(params[4]).toBe(STRIPE_CUS);
+    });
+
+    it('handles null current_period_end gracefully', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      await handleSubscriptionUpserted({
+        id: STRIPE_SUB,
+        status: 'trialing',
+        customer: STRIPE_CUS,
+        current_period_end: null,
+        metadata: {},
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query.mock.calls[0][1][3]).toBeNull();
+    });
+  });
+
+  // ── handleSubscriptionDeleted ────────────────────────────────────────────────
+
+  describe('handleSubscriptionDeleted', () => {
+    it('sets subscription_status to canceled and nulls stripe_subscription_id', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const now = Math.floor(Date.now() / 1000);
+      await handleSubscriptionDeleted({
+        id: STRIPE_SUB,
+        customer: STRIPE_CUS,
+        current_period_end: now,
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      const sql    = db.query.mock.calls[0][0];
+      const params = db.query.mock.calls[0][1];
+      expect(sql).toMatch(/UPDATE users/);
+      // stripe_subscription_id must be set to NULL in the SQL
+      expect(sql).toMatch(/stripe_subscription_id\s*=\s*NULL/);
+      expect(sql).toMatch(/subscription_status\s*=\s*'canceled'/);
+      expect(params[1]).toBe(STRIPE_CUS);
+    });
+
+    it('handles null current_period_end', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      await handleSubscriptionDeleted({
+        id: STRIPE_SUB,
+        customer: STRIPE_CUS,
+        current_period_end: null,
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query.mock.calls[0][1][0]).toBeNull();
+    });
+  });
+
+  // ── handleInvoicePaid ────────────────────────────────────────────────────────
+
+  describe('handleInvoicePaid', () => {
+    it('does nothing when invoice has no customer', async () => {
+      await handleInvoicePaid({ customer: null, lines: { data: [] } });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('restores subscription_status to active for past_due users', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const periodEnd = Math.floor(Date.now() / 1000) + 86400;
+      await handleInvoicePaid({
+        customer: STRIPE_CUS,
+        lines: { data: [{ period: { end: periodEnd } }] },
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      const sql = db.query.mock.calls[0][0];
+      expect(sql).toMatch(/subscription_status = 'active'/);
+      expect(sql).toMatch(/subscription_status IN \('past_due','incomplete','unpaid'\)/);
+    });
+
+    it('handles missing line items without crashing', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 0 });
+
+      await handleInvoicePaid({ customer: STRIPE_CUS, lines: null });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query.mock.calls[0][1][0]).toBeNull(); // periodEnd is null
+    });
+  });
+
+  // ── handleInvoicePaymentFailed ───────────────────────────────────────────────
+
+  describe('handleInvoicePaymentFailed', () => {
+    it('does nothing when invoice has no customer', async () => {
+      await handleInvoicePaymentFailed({ customer: null });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('sets subscription_status to past_due', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      await handleInvoicePaymentFailed({ customer: STRIPE_CUS });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      const sql = db.query.mock.calls[0][0];
+      expect(sql).toMatch(/subscription_status = 'past_due'/);
+      expect(db.query.mock.calls[0][1][0]).toBe(STRIPE_CUS);
+    });
+  });
+});
+
 // ─── Affiliate Creator System ──────────────────────────────────────────────────
 
 const AFF_LINK_ID    = 'c0000000-0000-4000-8000-000000000001';
