@@ -65,6 +65,13 @@ body.has-app-install-bar{
 body.has-bottom-nav.has-app-install-bar{
   padding-bottom:calc(92px + var(--app-bar-height) + 16px + env(safe-area-inset-bottom));
 }
+/* Padding compensation when the PWA install banner is visible */
+body.has-install-banner{
+  padding-bottom:calc(80px + env(safe-area-inset-bottom));
+}
+body.has-bottom-nav.has-install-banner{
+  padding-bottom:calc(92px + 80px + env(safe-area-inset-bottom));
+}
 img{max-width:100%;display:block}
 a{color:#fff;text-decoration:none}
 .wrap{width:min(1180px,calc(100% - 28px));margin:0 auto}

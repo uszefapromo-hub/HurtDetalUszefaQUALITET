@@ -32,6 +32,24 @@ jest.mock('../src/config/database', () => ({
   transaction: jest.fn(),
 }));
 
+// Mock the Stripe SDK so no real HTTP calls are ever made during tests and to
+// allow route-level webhook dispatch tests without live Stripe signatures.
+// The mock factory always returns the same `_instance` object; each test
+// configures the methods it needs via mockReturnValue / mockResolvedValueOnce.
+jest.mock('stripe', () => {
+  const instance = {
+    webhooks:      { constructEvent: jest.fn() },
+    subscriptions: { retrieve: jest.fn(), list: jest.fn() },
+    billingPortal: { sessions: { create: jest.fn() } },
+    checkout:      { sessions: { create: jest.fn() } },
+  };
+  const MockStripe = jest.fn(() => instance);
+  MockStripe._instance = instance;
+  return MockStripe;
+});
+// Convenience reference used in tests below
+const stripeMock = jest.requireMock('stripe')._instance;
+
 const db = require('../src/config/database');
 
 // Helper: make db.query return rows from our in-memory store
@@ -399,6 +417,12 @@ function setupDbMock() {
 
 // ─── Test setup ────────────────────────────────────────────────────────────────
 
+// Capture the initial state of Stripe env vars before any test runs.
+// The global afterEach restores both to these baseline values unconditionally,
+// so individual tests never need their own save/restore boilerplate.
+const _initStripeKey     = process.env.STRIPE_SECRET_KEY;
+const _initWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
 let app;
 let sellerToken;
 let adminToken;
@@ -444,6 +468,19 @@ beforeAll(async () => {
 afterEach(() => {
   jest.resetAllMocks();
   setupDbMock();
+  // Re-arm the Stripe factory mock: jest.resetAllMocks() clears its implementation,
+  // so without this, the next test's getStripe() would receive `undefined`.
+  jest.requireMock('stripe').mockImplementation(() => stripeMock);
+  // Reset the module-level _stripe singleton in both routes so that every test
+  // which checks "Stripe not configured" behaviour is order-independent.
+  require('../src/routes/payments')._resetStripeForTest();
+  require('../src/routes/subscriptions')._resetStripeForTest();
+  // Restore Stripe env vars to the baseline state captured at module load time.
+  // This ensures every test starts with the same env regardless of execution order.
+  if (_initStripeKey)     process.env.STRIPE_SECRET_KEY     = _initStripeKey;
+  else                    delete process.env.STRIPE_SECRET_KEY;
+  if (_initWebhookSecret) process.env.STRIPE_WEBHOOK_SECRET = _initWebhookSecret;
+  else                    delete process.env.STRIPE_WEBHOOK_SECRET;
 });
 
 // ─── Health check ──────────────────────────────────────────────────────────────
@@ -5153,7 +5190,6 @@ describe('POST /api/subscriptions/:id/checkout', () => {
     db.query.mockResolvedValueOnce({
       rows: [{ id: SUB_ID, shop_id: STORE_ID, owner_id: SELLER_ID, plan: 'basic', status: 'active' }],
     });
-    const savedKey = process.env.STRIPE_SECRET_KEY;
     delete process.env.STRIPE_SECRET_KEY;
 
     const res = await request(app)
@@ -5161,8 +5197,6 @@ describe('POST /api/subscriptions/:id/checkout', () => {
       .set('Authorization', `Bearer ${sellerToken}`);
     expect(res.status).toBe(503);
     expect(res.body).toHaveProperty('sandbox_mode', true);
-
-    if (savedKey) process.env.STRIPE_SECRET_KEY = savedKey;
   });
 
   it('returns 400 for trial plan (free – no checkout needed)', async () => {
@@ -5180,8 +5214,6 @@ describe('POST /api/subscriptions/:id/checkout', () => {
 
 describe('POST /api/payments/stripe/webhook', () => {
   it('returns 503 when STRIPE_WEBHOOK_SECRET is not set', async () => {
-    const savedSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    const savedKey    = process.env.STRIPE_SECRET_KEY;
     delete process.env.STRIPE_WEBHOOK_SECRET;
     delete process.env.STRIPE_SECRET_KEY;
 
@@ -5190,14 +5222,9 @@ describe('POST /api/payments/stripe/webhook', () => {
       .set('Content-Type', 'application/json')
       .send('{}');
     expect(res.status).toBe(503);
-
-    if (savedSecret) process.env.STRIPE_WEBHOOK_SECRET = savedSecret;
-    if (savedKey)    process.env.STRIPE_SECRET_KEY    = savedKey;
   });
 
   it('returns 503 when STRIPE_SECRET_KEY is not set', async () => {
-    const savedSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    const savedKey    = process.env.STRIPE_SECRET_KEY;
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
     delete process.env.STRIPE_SECRET_KEY;
 
@@ -5207,10 +5234,515 @@ describe('POST /api/payments/stripe/webhook', () => {
       .set('stripe-signature', 't=1,v1=abc')
       .send('{}');
     expect(res.status).toBe(503);
+  });
+});
 
-    if (savedSecret) process.env.STRIPE_WEBHOOK_SECRET = savedSecret;
-    else delete process.env.STRIPE_WEBHOOK_SECRET;
-    if (savedKey) process.env.STRIPE_SECRET_KEY = savedKey;
+// ─── Stripe webhook handler unit tests ────────────────────────────────────────
+// Test each isolated handler function directly against the mocked database,
+// bypassing Stripe signature verification which requires live keys.
+
+describe('Stripe webhook handler functions – unit tests', () => {
+  const { _handlers } = require('../src/routes/payments');
+  const {
+    handleCheckoutPaymentCompleted,
+    handleCheckoutSubscriptionCompleted,
+    handleCheckoutExpired,
+    handleSubscriptionUpserted,
+    handleSubscriptionDeleted,
+    handleInvoicePaid,
+    handleInvoicePaymentFailed,
+  } = _handlers;
+
+  const SESSION_ID    = 'cs_test_session_001';
+  const PAYMENT_ID    = 'd0000000-0000-4000-8000-000000000001';
+  const STRIPE_CUS    = 'cus_test_001';
+  const STRIPE_SUB    = 'sub_test_001';
+  const USER_ID_STR   = 'a0000000-0000-4000-8000-000000000001';
+  const DB_SUB_ID     = 'b0000000-0000-4000-8000-000000000010';
+
+  // ── handleCheckoutPaymentCompleted ──────────────────────────────────────────
+
+  describe('handleCheckoutPaymentCompleted', () => {
+    it('does nothing when session has no payment_id in metadata', async () => {
+      await handleCheckoutPaymentCompleted({ id: SESSION_ID, metadata: {} });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('marks payment as paid and updates order when payment_id present', async () => {
+      db.query
+        .mockResolvedValueOnce({ rowCount: 1 })                               // UPDATE payments
+        .mockResolvedValueOnce({ rows: [{ order_id: ORDER_ID }] })            // SELECT order_id
+        .mockResolvedValueOnce({ rows: [{ id: ORDER_ID, total: 100 }] });     // UPDATE orders RETURNING
+
+      const noopProfit = jest.fn(); // suppress fire-and-forget DB calls in test
+      await handleCheckoutPaymentCompleted(
+        { id: SESSION_ID, metadata: { payment_id: PAYMENT_ID } },
+        noopProfit
+      );
+
+      expect(db.query).toHaveBeenCalledTimes(3);
+      // First call updates payments
+      expect(db.query.mock.calls[0][0]).toMatch(/UPDATE payments/);
+      expect(db.query.mock.calls[0][1]).toContain(PAYMENT_ID);
+      // Second call selects order_id
+      expect(db.query.mock.calls[1][0]).toMatch(/SELECT order_id FROM payments/);
+      // Third call updates orders
+      expect(db.query.mock.calls[2][0]).toMatch(/UPDATE orders/);
+      // Profit recorder was called with the right order id
+      expect(noopProfit).toHaveBeenCalledWith(ORDER_ID, 100);
+    });
+
+    it('does not update orders when payment was already processed (rowCount=0)', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 0 }); // UPDATE payments – already paid
+
+      await handleCheckoutPaymentCompleted({
+        id: SESSION_ID,
+        metadata: { payment_id: PAYMENT_ID },
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ── handleCheckoutExpired ────────────────────────────────────────────────────
+
+  describe('handleCheckoutExpired', () => {
+    it('does nothing when session has no payment_id in metadata', async () => {
+      await handleCheckoutExpired({ metadata: {} });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('marks payment as failed when payment_id is present', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      await handleCheckoutExpired({ metadata: { payment_id: PAYMENT_ID } });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      const sql    = db.query.mock.calls[0][0];
+      const params = db.query.mock.calls[0][1];
+      expect(sql).toMatch(/UPDATE payments/);
+      expect(sql).toMatch(/status = 'failed'/);
+      expect(params[0]).toBe(PAYMENT_ID);
+    });
+
+    it('does not update already-failed payments (guard: WHERE status = pending)', async () => {
+      // Row count 0 means the payment was not pending – handler should not error
+      db.query.mockResolvedValueOnce({ rowCount: 0 });
+
+      await expect(
+        handleCheckoutExpired({ metadata: { payment_id: PAYMENT_ID } })
+      ).resolves.toBeUndefined();
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ── handleCheckoutSubscriptionCompleted ─────────────────────────────────────
+
+  describe('handleCheckoutSubscriptionCompleted', () => {
+    it('does nothing when customer or userId is missing', async () => {
+      await handleCheckoutSubscriptionCompleted({
+        customer: null,
+        subscription: STRIPE_SUB,
+        client_reference_id: null,
+        metadata: {},
+      });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('updates subscriptions table and links user to Stripe customer', async () => {
+      db.query
+        .mockResolvedValueOnce({ rowCount: 1 }) // UPDATE subscriptions
+        .mockResolvedValueOnce({ rowCount: 1 }); // UPDATE users
+
+      await handleCheckoutSubscriptionCompleted({
+        customer: STRIPE_CUS,
+        subscription: STRIPE_SUB,
+        client_reference_id: USER_ID_STR,
+        metadata: { subscription_id: DB_SUB_ID, plan: 'basic' },
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(2);
+      expect(db.query.mock.calls[0][0]).toMatch(/UPDATE subscriptions/);
+      expect(db.query.mock.calls[1][0]).toMatch(/UPDATE users/);
+      // users row should receive stripe_customer_id and stripe_subscription_id
+      expect(db.query.mock.calls[1][1]).toContain(STRIPE_CUS);
+      expect(db.query.mock.calls[1][1]).toContain(STRIPE_SUB);
+    });
+
+    it('warns when client_reference_id does not match any user', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      db.query
+        .mockResolvedValueOnce({ rowCount: 0 }) // UPDATE subscriptions (no sub ID in meta)
+        .mockResolvedValueOnce({ rowCount: 0 }); // UPDATE users – no match
+
+      await handleCheckoutSubscriptionCompleted({
+        customer: STRIPE_CUS,
+        subscription: STRIPE_SUB,
+        client_reference_id: '00000000-0000-4000-8000-000000000099',
+        metadata: {},
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('no user found'));
+      warnSpy.mockRestore();
+    });
+  });
+
+  // ── handleSubscriptionUpserted ───────────────────────────────────────────────
+
+  describe('handleSubscriptionUpserted (created / updated)', () => {
+    it('updates users row with subscription status and period end', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const now = Math.floor(Date.now() / 1000) + 3600;
+      await handleSubscriptionUpserted({
+        id: STRIPE_SUB,
+        status: 'active',
+        customer: STRIPE_CUS,
+        current_period_end: now,
+        metadata: { plan: 'pro' },
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query.mock.calls[0][0]).toMatch(/UPDATE users/);
+      const params = db.query.mock.calls[0][1];
+      expect(params[0]).toBe(STRIPE_SUB);
+      expect(params[1]).toBe('active');
+      expect(params[2]).toBe('pro');
+      expect(params[4]).toBe(STRIPE_CUS);
+    });
+
+    it('handles null current_period_end gracefully', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      await handleSubscriptionUpserted({
+        id: STRIPE_SUB,
+        status: 'trialing',
+        customer: STRIPE_CUS,
+        current_period_end: null,
+        metadata: {},
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query.mock.calls[0][1][3]).toBeNull();
+    });
+  });
+
+  // ── handleSubscriptionDeleted ────────────────────────────────────────────────
+
+  describe('handleSubscriptionDeleted', () => {
+    it('sets subscription_status to canceled and nulls stripe_subscription_id', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const now = Math.floor(Date.now() / 1000);
+      await handleSubscriptionDeleted({
+        id: STRIPE_SUB,
+        customer: STRIPE_CUS,
+        current_period_end: now,
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      const sql    = db.query.mock.calls[0][0];
+      const params = db.query.mock.calls[0][1];
+      expect(sql).toMatch(/UPDATE users/);
+      // stripe_subscription_id must be set to NULL in the SQL
+      expect(sql).toMatch(/stripe_subscription_id\s*=\s*NULL/);
+      expect(sql).toMatch(/subscription_status\s*=\s*'canceled'/);
+      expect(params[1]).toBe(STRIPE_CUS);
+    });
+
+    it('handles null current_period_end', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      await handleSubscriptionDeleted({
+        id: STRIPE_SUB,
+        customer: STRIPE_CUS,
+        current_period_end: null,
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query.mock.calls[0][1][0]).toBeNull();
+    });
+  });
+
+  // ── handleInvoicePaid ────────────────────────────────────────────────────────
+
+  describe('handleInvoicePaid', () => {
+    it('does nothing when invoice has no customer', async () => {
+      await handleInvoicePaid({ customer: null, lines: { data: [] } });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('restores subscription_status to active for past_due users', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const periodEnd = Math.floor(Date.now() / 1000) + 86400;
+      await handleInvoicePaid({
+        customer: STRIPE_CUS,
+        lines: { data: [{ period: { end: periodEnd } }] },
+      });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      const sql = db.query.mock.calls[0][0];
+      expect(sql).toMatch(/subscription_status = 'active'/);
+      expect(sql).toMatch(/subscription_status IN \('past_due','incomplete','unpaid'\)/);
+    });
+
+    it('handles missing line items without crashing', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 0 });
+
+      await handleInvoicePaid({ customer: STRIPE_CUS, lines: null });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query.mock.calls[0][1][0]).toBeNull(); // periodEnd is null
+    });
+  });
+
+  // ── handleInvoicePaymentFailed ───────────────────────────────────────────────
+
+  describe('handleInvoicePaymentFailed', () => {
+    it('does nothing when invoice has no customer', async () => {
+      await handleInvoicePaymentFailed({ customer: null });
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('sets subscription_status to past_due', async () => {
+      db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      await handleInvoicePaymentFailed({ customer: STRIPE_CUS });
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      const sql = db.query.mock.calls[0][0];
+      expect(sql).toMatch(/subscription_status = 'past_due'/);
+      expect(db.query.mock.calls[0][1][0]).toBe(STRIPE_CUS);
+    });
+  });
+});
+
+// ─── POST /api/payments/stripe/webhook – route-level dispatch tests ────────────
+// These tests exercise the full request path including Stripe's constructEvent
+// call (mocked) and verify that the switch correctly delegates to each handler
+// and always returns { received: true } on success.
+
+describe('POST /api/payments/stripe/webhook – event dispatch (mocked Stripe)', () => {
+  const WEBHOOK_SECRET = 'whsec_dispatch_test';
+  const SIG_HEADER     = 't=1,v1=placeholder';
+
+  beforeEach(() => {
+    process.env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
+    process.env.STRIPE_SECRET_KEY     = 'sk_test_mock_dispatch';
+  });
+
+  // Helper: POST raw body to the webhook endpoint
+  function webhookPost(body = '{}') {
+    return request(app)
+      .post('/api/payments/stripe/webhook')
+      .set('Content-Type', 'application/json')
+      .set('stripe-signature', SIG_HEADER)
+      .send(body);
+  }
+
+  it('checkout.session.completed (payment mode) dispatches handler and returns received:true', async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'checkout.session.completed',
+      data: { object: { mode: 'payment', id: 'cs_pay_001', metadata: {} } },
+    });
+    // payment not pending – no-op rowCount
+    db.query.mockResolvedValue({ rowCount: 0 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(stripeMock.webhooks.constructEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('checkout.session.completed (subscription mode) links user to Stripe customer', async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          mode: 'subscription',
+          customer: 'cus_dispatch_001',
+          subscription: 'sub_dispatch_001',
+          client_reference_id: 'user-uuid-001',
+          metadata: { plan: 'pro' },
+        },
+      },
+    });
+    db.query.mockResolvedValue({ rowCount: 1 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+
+    // Verify the users UPDATE was issued with the correct Stripe customer ID
+    const userUpdate = db.query.mock.calls.find(
+      ([sql]) => /UPDATE users/i.test(sql) && /stripe_customer_id/.test(sql)
+    );
+    expect(userUpdate).toBeDefined();
+    expect(userUpdate[1]).toContain('cus_dispatch_001');
+  });
+
+  it('customer.subscription.deleted clears stripe_subscription_id and sets canceled', async () => {
+    const ts = Math.floor(Date.now() / 1000) + 3600;
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_del_001', customer: 'cus_del_001', current_period_end: ts } },
+    });
+    db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(db.query).toHaveBeenCalledTimes(1);
+
+    const [sql, params] = db.query.mock.calls[0];
+    expect(sql).toMatch(/UPDATE users/);
+    expect(sql).toMatch(/stripe_subscription_id\s*=\s*NULL/);
+    expect(sql).toMatch(/subscription_status\s*=\s*'canceled'/);
+    expect(params[1]).toBe('cus_del_001');
+  });
+
+  it('invoice.paid restores subscription_status to active for past_due users', async () => {
+    const periodEnd = Math.floor(Date.now() / 1000) + 86400;
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'invoice.paid',
+      data: {
+        object: {
+          customer: 'cus_invoice_001',
+          lines: { data: [{ period: { end: periodEnd } }] },
+        },
+      },
+    });
+    db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(db.query).toHaveBeenCalledTimes(1);
+
+    const sql = db.query.mock.calls[0][0];
+    expect(sql).toMatch(/subscription_status = 'active'/);
+    expect(sql).toMatch(/subscription_status IN \('past_due','incomplete','unpaid'\)/);
+    expect(db.query.mock.calls[0][1][1]).toBe('cus_invoice_001');
+  });
+
+  it('invoice.payment_failed marks subscription as past_due', async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'invoice.payment_failed',
+      data: { object: { customer: 'cus_failed_001' } },
+    });
+    db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(db.query).toHaveBeenCalledTimes(1);
+
+    const sql = db.query.mock.calls[0][0];
+    expect(sql).toMatch(/subscription_status = 'past_due'/);
+    expect(db.query.mock.calls[0][1][0]).toBe('cus_failed_001');
+  });
+
+  it('unknown event type is acknowledged safely without any DB operations', async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'some.unknown.future.event',
+      data: { object: { id: 'obj_unknown' } },
+    });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when Stripe signature verification fails', async () => {
+    stripeMock.webhooks.constructEvent.mockImplementation(() => {
+      throw new Error('No signatures found matching the expected signature for payload');
+    });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── POST /api/subscriptions/stripe-sync – E2E with subscription ID ───────────
+
+describe('POST /api/subscriptions/stripe-sync – live subscription sync (mocked Stripe)', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_mock_sync';
+  });
+
+  it('syncs live subscription data when user has a stripe_subscription_id', async () => {
+    const periodEnd = Math.floor(Date.now() / 1000) + 2592000; // 30 days
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{ stripe_customer_id: 'cus_sync_001', stripe_subscription_id: 'sub_sync_001' }],
+      })
+      .mockResolvedValueOnce({ rowCount: 1 }); // syncStripeSubToDb UPDATE
+
+    stripeMock.subscriptions.retrieve.mockResolvedValueOnce({
+      id: 'sub_sync_001',
+      status: 'active',
+      current_period_end: periodEnd,
+      metadata: { plan: 'pro' },
+    });
+
+    const res = await request(app)
+      .post('/api/subscriptions/stripe-sync')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('synced', true);
+    expect(res.body).toHaveProperty('subscription_status', 'active');
+    expect(res.body).toHaveProperty('subscription_plan', 'pro');
+    expect(stripeMock.subscriptions.retrieve).toHaveBeenCalledWith('sub_sync_001');
+  });
+});
+
+// ─── GET /api/subscriptions/my-billing – E2E with Stripe configured ───────────
+
+describe('GET /api/subscriptions/my-billing – Stripe configured (mocked)', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_mock_billing';
+  });
+
+  it('returns live billing data synced from Stripe and includes portal URL', async () => {
+    const periodEnd = Math.floor(Date.now() / 1000) + 2592000;
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{
+          stripe_customer_id: 'cus_billing_001',
+          stripe_subscription_id: 'sub_billing_001',
+          subscription_status: 'past_due',
+          subscription_plan: 'basic',
+          current_period_end: null,
+          local_plan: 'basic',
+        }],
+      })
+      .mockResolvedValueOnce({ rowCount: 1 }); // syncStripeSubToDb UPDATE
+
+    stripeMock.subscriptions.retrieve.mockResolvedValueOnce({
+      id: 'sub_billing_001',
+      status: 'active',
+      current_period_end: periodEnd,
+      metadata: { plan: 'pro' },
+    });
+
+    stripeMock.billingPortal.sessions.create.mockResolvedValueOnce({
+      url: 'https://billing.stripe.com/p/session/test_portal',
+    });
+
+    const res = await request(app)
+      .get('/api/subscriptions/my-billing')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('stripe_configured', true);
+    expect(res.body).toHaveProperty('subscription_status', 'active');  // synced live from Stripe
+    expect(res.body).toHaveProperty('subscription_plan', 'pro');       // synced live from Stripe
+    expect(res.body).toHaveProperty('customer_portal_url', 'https://billing.stripe.com/p/session/test_portal');
   });
 });
 
@@ -9905,5 +10437,97 @@ describe('GET /api/feed', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.products[0].supplier_name).toBe('Dostawca ABC');
+  });
+});
+
+// ─── GET /api/subscriptions/my-billing ────────────────────────────────────────
+
+describe('GET /api/subscriptions/my-billing', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/subscriptions/my-billing');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns billing status for authenticated user (no Stripe configured)', async () => {
+    delete process.env.STRIPE_SECRET_KEY;
+
+    db.query.mockResolvedValueOnce({
+      rows: [{
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        subscription_status: null,
+        subscription_plan: null,
+        current_period_end: null,
+        local_plan: 'basic',
+      }],
+    });
+
+    const res = await request(app)
+      .get('/api/subscriptions/my-billing')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('stripe_configured', false);
+    expect(res.body).toHaveProperty('stripe_customer_id', null);
+    expect(res.body).toHaveProperty('subscription_plan', 'basic');
+  });
+
+  it('returns 404 if user not found', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .get('/api/subscriptions/my-billing')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(404);
+  });
+});
+
+// ─── POST /api/subscriptions/stripe-sync ──────────────────────────────────────
+
+describe('POST /api/subscriptions/stripe-sync', () => {
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/subscriptions/stripe-sync');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns synced:false when Stripe is not configured', async () => {
+    delete process.env.STRIPE_SECRET_KEY;
+
+    db.query.mockResolvedValueOnce({
+      rows: [{ stripe_customer_id: null, stripe_subscription_id: null }],
+    });
+
+    const res = await request(app)
+      .post('/api/subscriptions/stripe-sync')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('synced', false);
+    expect(res.body.reason).toBe('stripe_not_configured');
+  });
+
+  it('returns 404 if user not found', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app)
+      .post('/api/subscriptions/stripe-sync')
+      .set('Authorization', `Bearer ${sellerToken}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('returns synced:false with no_subscription reason when no Stripe ID', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
+
+    db.query.mockResolvedValueOnce({
+      rows: [{ stripe_customer_id: null, stripe_subscription_id: null }],
+    });
+
+    const res = await request(app)
+      .post('/api/subscriptions/stripe-sync')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    // Stripe is initialised but user has neither a subscription ID nor a
+    // customer ID, so the handler falls through to the no_subscription path.
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('synced', false);
+    expect(res.body.reason).toBe('no_subscription');
   });
 });

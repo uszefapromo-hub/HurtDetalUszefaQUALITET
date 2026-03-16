@@ -480,5 +480,136 @@
   </nav>
 
   <script src="js/app.js" defer></script>
+  <script>
+  // Handle Stripe checkout return (success / cancel)
+  (function () {
+    'use strict';
+
+    function getToken() {
+      try { return localStorage.getItem('qm_token') || localStorage.getItem('auth_token') || ''; }
+      catch (_) { return ''; }
+    }
+
+    function handleCheckoutReturn() {
+      var params = new URLSearchParams(window.location.search);
+      var status = params.get('subscription');
+      if (!status) return;
+
+      var successEl = document.querySelector('[data-plan-success]');
+      var planNameEl = document.querySelector('[data-plan-success-name]');
+
+      if (status === 'success') {
+        var subId     = params.get('subscription_id');
+        var sessionId = params.get('session_id');
+
+        if (successEl) successEl.hidden = false;
+        // Scroll to success banner
+        if (successEl) successEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Fire stripe-sync to unlock features immediately
+        var token = getToken();
+        if (token) {
+          fetch('/api/subscriptions/stripe-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          }).then(function (res) {
+            return res.ok ? res.json() : null;
+          }).then(function (data) {
+            if (data && data.synced && data.subscription_plan && planNameEl) {
+              var planNames = {
+                free: 'Seller Free', basic: 'Seller PRO', pro: 'Seller Business',
+                elite: 'Elite', supplier_basic: 'Supplier Basic', supplier_pro: 'Supplier Pro',
+                brand: 'Brand Plan', artist_basic: 'Artist Basic', artist_pro: 'Artist Pro',
+              };
+              planNameEl.textContent = planNames[data.subscription_plan] || data.subscription_plan;
+            }
+          }).catch(function () {});
+        }
+
+        // Clean up URL so it doesn't persist on refresh
+        window.history.replaceState({}, '', window.location.pathname + '#plany');
+
+      } else if (status === 'cancel') {
+        // Show a gentle notice
+        var cancelMsg = document.createElement('div');
+        cancelMsg.className = 'panel-card';
+        cancelMsg.style.cssText = 'margin:0 0 18px;padding:20px 24px;border-color:rgba(249,115,22,.5)';
+        cancelMsg.innerHTML = '<p style="margin:0">Płatność anulowana. Możesz wybrać plan ponownie lub <a href="dashboard.html">wrócić do dashboardu</a>.</p>';
+        var target = document.querySelector('[data-plan-success]');
+        if (target) target.parentNode.insertBefore(cancelMsg, target);
+        window.history.replaceState({}, '', window.location.pathname + '#plany');
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', handleCheckoutReturn);
+    } else {
+      handleCheckoutReturn();
+    }
+
+    // ── API-driven checkout (uses backend to create Stripe session) ──────────
+    // When the user is logged in, we intercept plan buttons to use the backend
+    // checkout API so the subscription is linked to their account properly.
+    // If not logged in, the default href (Stripe Payment Link) is used.
+    function initApiCheckout() {
+      var token = getToken();
+      if (!token) return; // not logged in – let Payment Links handle it
+
+      document.querySelectorAll('[data-plan-checkout]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          var plan = btn.dataset.plan;
+          if (!plan) return;
+
+          e.preventDefault();
+          btn.textContent = 'Tworzenie sesji…';
+          btn.style.pointerEvents = 'none';
+
+          // Step 1: get the user's active store or create a checkout directly
+          fetch('/api/subscriptions', {
+            headers: { Authorization: 'Bearer ' + token },
+          }).then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (subs) {
+            // Single-pass: prefer exact plan match, fall back to any active sub
+            var sub = null;
+            for (var i = 0; i < subs.length; i++) {
+              var s = subs[i];
+              if (s.status === 'active') {
+                if (s.plan === plan) { sub = s; break; }
+                if (!sub) sub = s; // keep first active as fallback
+              }
+            }
+            if (!sub) {
+              // No existing sub – fall back to Payment Link
+              window.location.href = btn.href || '#plany';
+              return null;
+            }
+            return fetch('/api/subscriptions/' + sub.id + '/checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            });
+          }).then(function (r) {
+            if (!r) return null;
+            return r.ok ? r.json() : null;
+          }).then(function (data) {
+            if (data && data.redirect_url) {
+              window.location.href = data.redirect_url;
+            } else {
+              // Fall back to Payment Link
+              window.location.href = btn.href || '#plany';
+            }
+          }).catch(function () {
+            window.location.href = btn.href || '#plany';
+          });
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApiCheckout);
+    } else {
+      initApiCheckout();
+    }
+  }());
+  </script>
 </body>
 </html>

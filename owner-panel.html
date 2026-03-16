@@ -709,6 +709,59 @@
 
         <!-- TAB: SUBSCRIPTIONS -->
         <div class="owner-tab-panel" data-owner-tab-panel="subscriptions" hidden>
+
+          <!-- ── Stripe Billing Section ── -->
+          <section class="panel-card" id="stripe-billing-section" data-stripe-billing>
+            <div class="section-head">
+              <span class="eyebrow">Stripe Billing</span>
+              <h2>Status połączenia Stripe</h2>
+              <p class="hint">Konfiguracja Stripe, aktywna subskrypcja i opcje płatności.</p>
+            </div>
+
+            <!-- Connection status -->
+            <div class="dashboard-meta" style="margin-bottom:18px">
+              <div>
+                <span>Połączenie Stripe</span>
+                <strong data-stripe-connection>Sprawdzanie…</strong>
+              </div>
+              <div>
+                <span>Stripe Customer ID</span>
+                <strong data-stripe-customer-id style="font-size:13px;font-family:monospace">—</strong>
+              </div>
+              <div>
+                <span>Stripe Subscription ID</span>
+                <strong data-stripe-sub-id style="font-size:13px;font-family:monospace">—</strong>
+              </div>
+            </div>
+
+            <!-- Subscription status -->
+            <div class="plan-status" style="margin-bottom:18px">
+              <div class="plan-status-grid">
+                <div class="plan-status-item">
+                  <span>Aktywny Plan</span>
+                  <strong data-billing-plan>—</strong>
+                </div>
+                <div class="plan-status-item">
+                  <span>Status subskrypcji</span>
+                  <strong data-billing-status>—</strong>
+                </div>
+                <div class="plan-status-item">
+                  <span>Odnowienie</span>
+                  <strong data-billing-renewal>—</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="cta-row" style="flex-wrap:wrap;gap:12px">
+              <a class="btn btn-primary" href="cennik.html" id="stripe-checkout-btn">Przejdź do checkout</a>
+              <button class="btn btn-secondary" type="button" id="stripe-portal-btn" style="display:none">Portal klienta Stripe</button>
+              <button class="btn btn-secondary" type="button" id="stripe-sync-btn">🔄 Synchronizuj z Stripe</button>
+            </div>
+            <p id="stripe-billing-msg" class="hint" style="margin-top:12px"></p>
+          </section>
+
+          <!-- ── Platform subscriptions table ── -->
           <section class="panel-card">
             <div class="section-head">
               <span class="eyebrow">Subskrypcje platformy</span>
@@ -2013,6 +2066,146 @@
     document.querySelectorAll('[data-owner-tab]').forEach(function (a) {
       if (a.dataset.ownerTab === 'import-products') {
         a.addEventListener('click', function () { setTimeout(loadImportLogs, 150); });
+      }
+    });
+  })();
+  </script>
+
+  <!-- ── Stripe Billing Panel Script ─────────────────────────────────────── -->
+  <script>
+  (function () {
+    'use strict';
+
+    const API_BASE = (typeof window.QMApi !== 'undefined' && window.QMApi && window.QMApi.base)
+      ? window.QMApi.base
+      : '/api';
+
+    function getToken() {
+      try { return localStorage.getItem('qm_token') || localStorage.getItem('auth_token') || ''; }
+      catch (_) { return ''; }
+    }
+
+    async function apiBillingReq(method, path, body) {
+      const token = getToken();
+      const opts = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        },
+      };
+      if (body) opts.body = JSON.stringify(body);
+      const resp = await fetch(API_BASE + path, opts);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    }
+
+    const _dateFormatter = new Intl.DateTimeFormat('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' });
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      try { return _dateFormatter.format(new Date(dateStr)); }
+      catch (_) { return dateStr; }
+    }
+
+    function statusLabel(status) {
+      const map = {
+        active: '✅ Aktywna',
+        trialing: '🟡 Trial',
+        past_due: '⚠️ Zaległa płatność',
+        canceled: '❌ Anulowana',
+        unpaid: '🔴 Nieopłacona',
+        incomplete: '⏳ Niekompletna',
+        incomplete_expired: '❌ Wygasła',
+        paused: '⏸ Wstrzymana',
+      };
+      return map[status] || (status ? status : '—');
+    }
+
+    function planLabel(plan) {
+      const map = {
+        free: 'Seller Free', trial: 'Seller Free',
+        basic: 'Seller PRO', pro: 'Seller Business', elite: 'Elite',
+        supplier_basic: 'Supplier Basic', supplier_pro: 'Supplier Pro',
+        brand: 'Brand Plan', artist_basic: 'Artist Basic', artist_pro: 'Artist Pro',
+      };
+      return map[plan] || (plan ? plan : '—');
+    }
+
+    async function loadBilling() {
+      const msgEl       = document.getElementById('stripe-billing-msg');
+      const connEl      = document.querySelector('[data-stripe-connection]');
+      const custEl      = document.querySelector('[data-stripe-customer-id]');
+      const subIdEl     = document.querySelector('[data-stripe-sub-id]');
+      const planEl      = document.querySelector('[data-billing-plan]');
+      const statusEl    = document.querySelector('[data-billing-status]');
+      const renewalEl   = document.querySelector('[data-billing-renewal]');
+      const portalBtn   = document.getElementById('stripe-portal-btn');
+
+      if (!connEl) return;
+
+      try {
+        const data = await apiBillingReq('GET', '/subscriptions/my-billing');
+
+        if (connEl)   connEl.textContent  = data.stripe_configured ? '✅ Połączono' : '⚠️ Nie skonfigurowano';
+        if (custEl)   custEl.textContent  = data.stripe_customer_id || '—';
+        if (subIdEl)  subIdEl.textContent = data.stripe_subscription_id || '—';
+        if (planEl)   planEl.textContent  = planLabel(data.subscription_plan);
+        if (statusEl) statusEl.textContent = statusLabel(data.subscription_status);
+        if (renewalEl) renewalEl.textContent = formatDate(data.current_period_end);
+
+        if (portalBtn && data.customer_portal_url) {
+          portalBtn.style.display = 'inline-flex';
+          portalBtn.onclick = function () { window.open(data.customer_portal_url, '_blank'); };
+        }
+
+        if (!data.stripe_configured && msgEl) {
+          msgEl.textContent = 'Stripe nie jest skonfigurowany. Ustaw STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY i STRIPE_WEBHOOK_SECRET w pliku .env serwera.';
+        }
+      } catch (err) {
+        if (connEl)   connEl.textContent  = '— Brak danych';
+        if (msgEl)    msgEl.textContent   = 'Nie można pobrać statusu – sprawdź czy jesteś zalogowany jako właściciel.';
+      }
+    }
+
+    async function syncStripe() {
+      const msgEl   = document.getElementById('stripe-billing-msg');
+      const syncBtn = document.getElementById('stripe-sync-btn');
+      if (syncBtn) { syncBtn.disabled = true; syncBtn.textContent = 'Synchronizowanie…'; }
+      if (msgEl)   msgEl.textContent = '';
+      try {
+        const data = await apiBillingReq('POST', '/subscriptions/stripe-sync');
+        if (data.synced) {
+          if (msgEl) msgEl.textContent = '✅ Synchronizacja zakończona. Odświeżam dane…';
+          await loadBilling();
+        } else {
+          if (msgEl) msgEl.textContent = data.reason === 'no_subscription'
+            ? 'Brak aktywnej subskrypcji Stripe dla tego konta.'
+            : data.reason === 'stripe_not_configured'
+              ? 'Stripe nie jest skonfigurowany na serwerze.'
+              : 'Nie można zsynchronizować – sprawdź klucze Stripe.';
+        }
+      } catch (_) {
+        if (msgEl) msgEl.textContent = 'Błąd synchronizacji – sprawdź czy jesteś zalogowany.';
+      } finally {
+        if (syncBtn) { syncBtn.disabled = false; syncBtn.textContent = '🔄 Synchronizuj z Stripe'; }
+      }
+    }
+
+    // Bind sync button
+    document.addEventListener('DOMContentLoaded', function () {
+      const syncBtn = document.getElementById('stripe-sync-btn');
+      if (syncBtn) syncBtn.addEventListener('click', syncStripe);
+
+      // Auto-load billing when subscriptions tab is opened
+      document.querySelectorAll('[data-owner-tab]').forEach(function (a) {
+        if (a.dataset.ownerTab === 'subscriptions') {
+          a.addEventListener('click', function () { setTimeout(loadBilling, 150); });
+        }
+      });
+
+      // Auto-sync on page load if on subscriptions tab
+      if (window.location.hash === '#subscriptions') {
+        setTimeout(loadBilling, 300);
       }
     });
   })();

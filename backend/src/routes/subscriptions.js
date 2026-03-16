@@ -77,6 +77,45 @@ function getStripe() {
   return _stripe;
 }
 
+/**
+ * Sync a Stripe subscription into the users table.
+ * Retrieves live status from Stripe and persists it to the DB.
+ *
+ * Note: subscription_plan uses COALESCE($3, subscription_plan), which means
+ * it is only updated when Stripe subscription metadata contains a `plan` key.
+ * If Stripe metadata does not carry a plan value the existing DB value is kept.
+ * This is intentional – the plan may have been set by an earlier checkout.session
+ * event or by an admin.  If you need to explicitly clear the plan, call a direct
+ * UPDATE instead of this helper.
+ *
+ * @param {object} stripeSub – Stripe Subscription object
+ * @param {string} userId    – internal user UUID
+ * @returns {{ subscription_status, subscription_plan, current_period_end }}
+ */
+async function syncStripeSubToDb(stripeSub, userId) {
+  const periodEnd = stripeSub.current_period_end
+    ? new Date(stripeSub.current_period_end * 1000)
+    : null;
+  const planMeta = stripeSub.metadata && stripeSub.metadata.plan;
+
+  await db.query(
+    `UPDATE users SET
+       stripe_subscription_id = $1,
+       subscription_status    = $2,
+       subscription_plan      = COALESCE($3, subscription_plan),
+       current_period_end     = $4,
+       updated_at             = NOW()
+     WHERE id = $5`,
+    [stripeSub.id, stripeSub.status, planMeta || null, periodEnd, userId]
+  );
+
+  return {
+    subscription_status: stripeSub.status,
+    subscription_plan: planMeta || null,
+    current_period_end: periodEnd,
+  };
+}
+
 // ─── List subscriptions (own shops) ───────────────────────────────────────────
 
 router.get('/', authenticate, async (req, res) => {
@@ -304,28 +343,78 @@ router.post(
       }
 
       const base = process.env.APP_URL || 'https://uszefaqualitet.pl';
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'pln',
-              product_data: {
-                name: `Subskrypcja Qualitet – ${PLAN_DISPLAY_NAMES[plan] || plan}`,
-                description: config.duration_days
-                  ? `${config.duration_days} dni dostępu, ${config.product_limit == null ? 'nieograniczona' : `do ${config.product_limit}`} liczba produktów`
-                  : `Dostęp bez okresu ważności`,
+
+      // Prefer a pre-configured recurring Price ID; fall back to one-time payment
+      const envKey = `STRIPE_PRICE_ID_${plan.toUpperCase()}`;
+      const stripePriceId = process.env[envKey];
+
+      // Retrieve or create a Stripe customer linked to this user
+      const userResult = await db.query(
+        'SELECT stripe_customer_id, email, name FROM users WHERE id = $1',
+        [req.user.id]
+      );
+      const userRow = userResult.rows[0] || {};
+      let customerId = userRow.stripe_customer_id;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: userRow.email || undefined,
+          name: userRow.name || undefined,
+          metadata: { user_id: req.user.id },
+        });
+        customerId = customer.id;
+        // Persist the customer ID; if DB write fails, log but proceed so the
+        // checkout session is still created (customer exists in Stripe already).
+        try {
+          await db.query(
+            'UPDATE users SET stripe_customer_id = $1, updated_at = NOW() WHERE id = $2',
+            [customerId, req.user.id]
+          );
+        } catch (dbErr) {
+          console.error(`Failed to save stripe_customer_id ${customerId} for user ${req.user.id}:`, dbErr.message);
+        }
+      }
+
+      let session;
+      if (stripePriceId) {
+        // Recurring subscription checkout
+        session = await stripe.checkout.sessions.create({
+          customer: customerId,
+          client_reference_id: req.user.id,
+          payment_method_types: ['card'],
+          line_items: [{ price: stripePriceId, quantity: 1 }],
+          mode: 'subscription',
+          success_url: `${base}/cennik.html?subscription=success&subscription_id=${sub.id}&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${base}/cennik.html?subscription=cancel`,
+          metadata: { subscription_id: sub.id, plan },
+          subscription_data: { metadata: { subscription_id: sub.id, plan, user_id: req.user.id } },
+        });
+      } else {
+        // One-time payment fallback
+        session = await stripe.checkout.sessions.create({
+          customer: customerId,
+          client_reference_id: req.user.id,
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'pln',
+                product_data: {
+                  name: `Subskrypcja Qualitet – ${PLAN_DISPLAY_NAMES[plan] || plan}`,
+                  description: config.duration_days
+                    ? `${config.duration_days} dni dostępu, ${config.product_limit == null ? 'nieograniczona' : `do ${config.product_limit}`} liczba produktów`
+                    : `Dostęp bez okresu ważności`,
+                },
+                unit_amount: pricePln * 100,
               },
-              unit_amount: pricePln * 100,
+              quantity: 1,
             },
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: `${base}/cennik.html?subscription=success&subscription_id=${sub.id}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${base}/cennik.html?subscription=cancel`,
-        metadata: { subscription_id: sub.id, plan },
-      });
+          ],
+          mode: 'payment',
+          success_url: `${base}/cennik.html?subscription=success&subscription_id=${sub.id}&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${base}/cennik.html?subscription=cancel`,
+          metadata: { subscription_id: sub.id, plan },
+        });
+      }
 
       return res.json({
         subscription_id: sub.id,
@@ -333,6 +422,7 @@ router.post(
         price_pln: pricePln,
         redirect_url: session.url,
         session_id: session.id,
+        mode: session.mode,
       });
     } catch (err) {
       console.error('subscription checkout error:', err.message);
@@ -358,5 +448,130 @@ router.get('/plans', async (_req, res) => {
   return res.json({ plans });
 });
 
+// ─── GET /api/subscriptions/my-billing – owner billing status ─────────────────
+// Returns the Stripe billing state for the authenticated owner/seller.
+// Called on dashboard load to show plan, renewal date, and connection status.
+
+router.get('/my-billing', authenticate, async (req, res) => {
+  try {
+    const userResult = await db.query(
+      `SELECT stripe_customer_id, stripe_subscription_id,
+              subscription_status, subscription_plan, current_period_end,
+              plan AS local_plan
+         FROM users WHERE id = $1`,
+      [req.user.id]
+    );
+    const user = userResult.rows[0];
+    if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+
+    const stripe = getStripe();
+    const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
+
+    // If Stripe is configured and the user has a subscription, sync live data
+    if (stripe && user.stripe_subscription_id) {
+      try {
+        const stripeSub = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+        const synced = await syncStripeSubToDb(stripeSub, req.user.id);
+        user.subscription_status = synced.subscription_status;
+        if (synced.subscription_plan) user.subscription_plan = synced.subscription_plan;
+        user.current_period_end = synced.current_period_end;
+      } catch (stripeErr) {
+        console.error('stripe subscription retrieve error:', stripeErr.message);
+        // Return cached data if Stripe call fails
+      }
+    }
+
+    const base = process.env.APP_URL || 'https://uszefaqualitet.pl';
+    let customerPortalUrl = null;
+    if (stripe && user.stripe_customer_id) {
+      try {
+        const portalSession = await stripe.billingPortal.sessions.create({
+          customer: user.stripe_customer_id,
+          return_url: `${base}/owner-panel.html`,
+        });
+        customerPortalUrl = portalSession.url;
+      } catch (_portalErr) {
+        // Portal not configured – skip
+      }
+    }
+
+    return res.json({
+      stripe_configured: stripeConfigured,
+      stripe_customer_id: user.stripe_customer_id || null,
+      stripe_subscription_id: user.stripe_subscription_id || null,
+      subscription_status: user.subscription_status || null,
+      subscription_plan: user.subscription_plan || user.local_plan || null,
+      current_period_end: user.current_period_end || null,
+      customer_portal_url: customerPortalUrl,
+    });
+  } catch (err) {
+    console.error('my-billing error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── POST /api/subscriptions/stripe-sync – sync subscription on login ─────────
+// Checks the user's Stripe subscription status and updates the DB.
+// Called automatically after owner/seller login.
+
+router.post('/stripe-sync', authenticate, async (req, res) => {
+  try {
+    const userResult = await db.query(
+      'SELECT stripe_customer_id, stripe_subscription_id FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    const user = userResult.rows[0];
+    if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+
+    const stripe = getStripe();
+    if (!stripe) {
+      return res.json({ synced: false, reason: 'stripe_not_configured' });
+    }
+
+    // If we have a direct subscription ID, sync it
+    if (user.stripe_subscription_id) {
+      try {
+        const stripeSub = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+        const synced = await syncStripeSubToDb(stripeSub, req.user.id);
+        return res.json({ synced: true, ...synced });
+      } catch (stripeErr) {
+        console.error('stripe-sync retrieve error:', stripeErr.message);
+        return res.json({ synced: false, reason: 'stripe_api_error', detail: stripeErr.message });
+      }
+    }
+
+    // If we have a customer ID but no sub ID, look for active subscriptions
+    if (user.stripe_customer_id) {
+      try {
+        const subscriptions = await stripe.subscriptions.list({
+          customer: user.stripe_customer_id,
+          status: 'all',
+          limit: 5,
+        });
+        const activeSub = subscriptions.data.find(
+          (s) => ['active', 'trialing', 'past_due'].includes(s.status)
+        );
+        if (activeSub) {
+          const synced = await syncStripeSubToDb(activeSub, req.user.id);
+          return res.json({ synced: true, ...synced });
+        }
+      } catch (stripeErr) {
+        console.error('stripe-sync list error:', stripeErr.message);
+      }
+    }
+
+    return res.json({ synced: false, reason: 'no_subscription' });
+  } catch (err) {
+    console.error('stripe-sync error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
 module.exports = { router, PLAN_CONFIG, PLAN_DISPLAY_NAMES, VALID_PLANS };
+
+// Test-only helper: resets the cached Stripe instance so each test that checks
+// "Stripe not configured" behaviour works correctly regardless of execution order.
+if (process.env.NODE_ENV === 'test') {
+  module.exports._resetStripeForTest = () => { _stripe = null; };
+}
 
