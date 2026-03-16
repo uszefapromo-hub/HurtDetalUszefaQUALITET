@@ -81,7 +81,9 @@ function signToken(user) {
 /**
  * Middleware: verify the shop referenced in the request has an active, non-expired subscription.
  * Resolves shop_id from req.body.store_id, req.params.store_id or req.query.store_id.
- * On success, attaches the subscription record to req.subscription.
+ * On success, attaches the subscription record to req.subscription (including product_limit,
+ * commission_rate, and plan).  Sets req.subscription = null when no active subscription exists
+ * or when no store_id is present in the request.
  */
 async function requireActiveSubscription(req, res, next) {
   const storeId = resolveStoreId(req);
@@ -91,6 +93,26 @@ async function requireActiveSubscription(req, res, next) {
   }
 
   req.subscription = null;
+
+  if (storeId) {
+    try {
+      const result = await getDb().query(
+        `SELECT id, plan, status, product_limit, commission_rate, expires_at
+           FROM subscriptions
+          WHERE shop_id = $1
+            AND status = 'active'
+            AND (expires_at IS NULL OR expires_at > NOW())
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [storeId]
+      );
+      req.subscription = result.rows[0] || null;
+    } catch (err) {
+      console.error('requireActiveSubscription query error:', err.message);
+      // Non-critical: allow request through if subscription lookup fails
+    }
+  }
+
   return next();
 }
 
