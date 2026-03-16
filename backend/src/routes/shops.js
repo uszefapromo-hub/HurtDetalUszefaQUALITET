@@ -91,7 +91,7 @@ router.post(
 router.get('/:slug', async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT id, name, slug, description, logo_url, created_at
+      `SELECT id, name, slug, description, logo_url, plan, margin, created_at
        FROM stores
        WHERE slug = $1 AND status IN ('active', 'pending')`,
       [req.params.slug]
@@ -117,7 +117,7 @@ router.get('/:slug/products', async (req, res) => {
   try {
     // Resolve store by slug
     const storeResult = await db.query(
-      `SELECT id FROM stores WHERE slug = $1 AND status IN ('active', 'pending')`,
+      `SELECT id, margin FROM stores WHERE slug = $1 AND status IN ('active', 'pending')`,
       [req.params.slug]
     );
     const store = storeResult.rows[0];
@@ -142,6 +142,24 @@ router.get('/:slug/products', async (req, res) => {
     );
     const total = parseInt(countResult.rows[0].count, 10);
 
+    // If the shop has no assigned products, auto-assign up to 20 from the central catalogue
+    if (total === 0 && !search && !category) {
+      const catalogResult = await db.query(
+        `SELECT id, selling_price, margin FROM products
+         WHERE is_central = true AND stock > 0 AND status = 'active'
+         ORDER BY created_at DESC LIMIT 20`
+      );
+      for (const product of catalogResult.rows) {
+        const spId = uuidv4();
+        await db.query(
+          `INSERT INTO shop_products (id, store_id, product_id, active, margin_override, sort_order, created_at)
+           VALUES ($1, $2, $3, true, $4, 0, NOW())
+           ON CONFLICT (store_id, product_id) DO NOTHING`,
+          [spId, store.id, product.id, store.margin]
+        );
+      }
+    }
+
     const result = await db.query(
       `SELECT sp.id, sp.store_id, sp.product_id, sp.active, sp.sort_order, sp.created_at,
               COALESCE(sp.custom_title, p.name)              AS name,
@@ -157,7 +175,7 @@ router.get('/:slug/products', async (req, res) => {
       [...params, limit, offset]
     );
 
-    return res.json({ total, page, limit, products: result.rows });
+    return res.json({ total: result.rows.length, page, limit, products: result.rows });
   } catch (err) {
     console.error('get shop products by slug error:', err.message);
     return res.status(500).json({ error: 'Błąd serwera' });
