@@ -752,3 +752,9 @@ module.exports._handlers = {
   handleInvoicePaid,
   handleInvoicePaymentFailed,
 };
+
+// Test-only helper: resets the cached Stripe instance so each test that checks
+// "Stripe not configured" behaviour works correctly regardless of execution order.
+if (process.env.NODE_ENV === 'test') {
+  module.exports._resetStripeForTest = () => { _stripe = null; };
+}

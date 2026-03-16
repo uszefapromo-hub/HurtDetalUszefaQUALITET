@@ -32,6 +32,24 @@ jest.mock('../src/config/database', () => ({
   transaction: jest.fn(),
 }));
 
+// Mock the Stripe SDK so no real HTTP calls are ever made during tests and to
+// allow route-level webhook dispatch tests without live Stripe signatures.
+// The mock factory always returns the same `_instance` object; each test
+// configures the methods it needs via mockReturnValue / mockResolvedValueOnce.
+jest.mock('stripe', () => {
+  const instance = {
+    webhooks:      { constructEvent: jest.fn() },
+    subscriptions: { retrieve: jest.fn(), list: jest.fn() },
+    billingPortal: { sessions: { create: jest.fn() } },
+    checkout:      { sessions: { create: jest.fn() } },
+  };
+  const MockStripe = jest.fn(() => instance);
+  MockStripe._instance = instance;
+  return MockStripe;
+});
+// Convenience reference used in tests below
+const stripeMock = jest.requireMock('stripe')._instance;
+
 const db = require('../src/config/database');
 
 // Helper: make db.query return rows from our in-memory store
@@ -444,6 +462,13 @@ beforeAll(async () => {
 afterEach(() => {
   jest.resetAllMocks();
   setupDbMock();
+  // Re-arm the Stripe factory mock: jest.resetAllMocks() clears its implementation,
+  // so without this, the next test's getStripe() would receive `undefined`.
+  jest.requireMock('stripe').mockImplementation(() => stripeMock);
+  // Reset the module-level _stripe singleton in both routes so that every test
+  // which checks "Stripe not configured" behaviour is order-independent.
+  require('../src/routes/payments')._resetStripeForTest();
+  require('../src/routes/subscriptions')._resetStripeForTest();
 });
 
 // ─── Health check ──────────────────────────────────────────────────────────────
@@ -5192,7 +5217,9 @@ describe('POST /api/payments/stripe/webhook', () => {
     expect(res.status).toBe(503);
 
     if (savedSecret) process.env.STRIPE_WEBHOOK_SECRET = savedSecret;
-    if (savedKey)    process.env.STRIPE_SECRET_KEY    = savedKey;
+    else delete process.env.STRIPE_WEBHOOK_SECRET;
+    if (savedKey) process.env.STRIPE_SECRET_KEY = savedKey;
+    else delete process.env.STRIPE_SECRET_KEY;
   });
 
   it('returns 503 when STRIPE_SECRET_KEY is not set', async () => {
@@ -5211,6 +5238,7 @@ describe('POST /api/payments/stripe/webhook', () => {
     if (savedSecret) process.env.STRIPE_WEBHOOK_SECRET = savedSecret;
     else delete process.env.STRIPE_WEBHOOK_SECRET;
     if (savedKey) process.env.STRIPE_SECRET_KEY = savedKey;
+    else delete process.env.STRIPE_SECRET_KEY;
   });
 });
 
@@ -5494,6 +5522,245 @@ describe('Stripe webhook handler functions – unit tests', () => {
       expect(sql).toMatch(/subscription_status = 'past_due'/);
       expect(db.query.mock.calls[0][1][0]).toBe(STRIPE_CUS);
     });
+  });
+});
+
+// ─── POST /api/payments/stripe/webhook – route-level dispatch tests ────────────
+// These tests exercise the full request path including Stripe's constructEvent
+// call (mocked) and verify that the switch correctly delegates to each handler
+// and always returns { received: true } on success.
+
+describe('POST /api/payments/stripe/webhook – event dispatch (mocked Stripe)', () => {
+  const WEBHOOK_SECRET = 'whsec_dispatch_test';
+  const SIG_HEADER     = 't=1,v1=placeholder';
+
+  beforeEach(() => {
+    process.env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
+    process.env.STRIPE_SECRET_KEY     = 'sk_test_mock_dispatch';
+  });
+
+  afterEach(() => {
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+    delete process.env.STRIPE_SECRET_KEY;
+  });
+
+  // Helper: POST raw body to the webhook endpoint
+  function webhookPost(body = '{}') {
+    return request(app)
+      .post('/api/payments/stripe/webhook')
+      .set('Content-Type', 'application/json')
+      .set('stripe-signature', SIG_HEADER)
+      .send(body);
+  }
+
+  it('checkout.session.completed (payment mode) dispatches handler and returns received:true', async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'checkout.session.completed',
+      data: { object: { mode: 'payment', id: 'cs_pay_001', metadata: {} } },
+    });
+    // payment not pending – no-op rowCount
+    db.query.mockResolvedValue({ rowCount: 0 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(stripeMock.webhooks.constructEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('checkout.session.completed (subscription mode) links user to Stripe customer', async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          mode: 'subscription',
+          customer: 'cus_dispatch_001',
+          subscription: 'sub_dispatch_001',
+          client_reference_id: 'user-uuid-001',
+          metadata: { plan: 'pro' },
+        },
+      },
+    });
+    db.query.mockResolvedValue({ rowCount: 1 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+
+    // Verify the users UPDATE was issued with the correct Stripe customer ID
+    const userUpdate = db.query.mock.calls.find(
+      ([sql]) => /UPDATE users/i.test(sql) && /stripe_customer_id/.test(sql)
+    );
+    expect(userUpdate).toBeDefined();
+    expect(userUpdate[1]).toContain('cus_dispatch_001');
+  });
+
+  it('customer.subscription.deleted clears stripe_subscription_id and sets canceled', async () => {
+    const ts = Math.floor(Date.now() / 1000) + 3600;
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_del_001', customer: 'cus_del_001', current_period_end: ts } },
+    });
+    db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(db.query).toHaveBeenCalledTimes(1);
+
+    const [sql, params] = db.query.mock.calls[0];
+    expect(sql).toMatch(/UPDATE users/);
+    expect(sql).toMatch(/stripe_subscription_id\s*=\s*NULL/);
+    expect(sql).toMatch(/subscription_status\s*=\s*'canceled'/);
+    expect(params[1]).toBe('cus_del_001');
+  });
+
+  it('invoice.paid restores subscription_status to active for past_due users', async () => {
+    const periodEnd = Math.floor(Date.now() / 1000) + 86400;
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'invoice.paid',
+      data: {
+        object: {
+          customer: 'cus_invoice_001',
+          lines: { data: [{ period: { end: periodEnd } }] },
+        },
+      },
+    });
+    db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(db.query).toHaveBeenCalledTimes(1);
+
+    const sql = db.query.mock.calls[0][0];
+    expect(sql).toMatch(/subscription_status = 'active'/);
+    expect(sql).toMatch(/subscription_status IN \('past_due','incomplete','unpaid'\)/);
+    expect(db.query.mock.calls[0][1][1]).toBe('cus_invoice_001');
+  });
+
+  it('invoice.payment_failed marks subscription as past_due', async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'invoice.payment_failed',
+      data: { object: { customer: 'cus_failed_001' } },
+    });
+    db.query.mockResolvedValueOnce({ rowCount: 1 });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(db.query).toHaveBeenCalledTimes(1);
+
+    const sql = db.query.mock.calls[0][0];
+    expect(sql).toMatch(/subscription_status = 'past_due'/);
+    expect(db.query.mock.calls[0][1][0]).toBe('cus_failed_001');
+  });
+
+  it('unknown event type is acknowledged safely without any DB operations', async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      type: 'some.unknown.future.event',
+      data: { object: { id: 'obj_unknown' } },
+    });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when Stripe signature verification fails', async () => {
+    stripeMock.webhooks.constructEvent.mockImplementation(() => {
+      throw new Error('No signatures found matching the expected signature for payload');
+    });
+
+    const res = await webhookPost();
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── POST /api/subscriptions/stripe-sync – E2E with subscription ID ───────────
+
+describe('POST /api/subscriptions/stripe-sync – live subscription sync (mocked Stripe)', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_mock_sync';
+  });
+
+  afterEach(() => {
+    delete process.env.STRIPE_SECRET_KEY;
+  });
+
+  it('syncs live subscription data when user has a stripe_subscription_id', async () => {
+    const periodEnd = Math.floor(Date.now() / 1000) + 2592000; // 30 days
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{ stripe_customer_id: 'cus_sync_001', stripe_subscription_id: 'sub_sync_001' }],
+      })
+      .mockResolvedValueOnce({ rowCount: 1 }); // syncStripeSubToDb UPDATE
+
+    stripeMock.subscriptions.retrieve.mockResolvedValueOnce({
+      id: 'sub_sync_001',
+      status: 'active',
+      current_period_end: periodEnd,
+      metadata: { plan: 'pro' },
+    });
+
+    const res = await request(app)
+      .post('/api/subscriptions/stripe-sync')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('synced', true);
+    expect(res.body).toHaveProperty('subscription_status', 'active');
+    expect(res.body).toHaveProperty('subscription_plan', 'pro');
+    expect(stripeMock.subscriptions.retrieve).toHaveBeenCalledWith('sub_sync_001');
+  });
+});
+
+// ─── GET /api/subscriptions/my-billing – E2E with Stripe configured ───────────
+
+describe('GET /api/subscriptions/my-billing – Stripe configured (mocked)', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_mock_billing';
+  });
+
+  afterEach(() => {
+    delete process.env.STRIPE_SECRET_KEY;
+  });
+
+  it('returns live billing data synced from Stripe and includes portal URL', async () => {
+    const periodEnd = Math.floor(Date.now() / 1000) + 2592000;
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{
+          stripe_customer_id: 'cus_billing_001',
+          stripe_subscription_id: 'sub_billing_001',
+          subscription_status: 'past_due',
+          subscription_plan: 'basic',
+          current_period_end: null,
+          local_plan: 'basic',
+        }],
+      })
+      .mockResolvedValueOnce({ rowCount: 1 }); // syncStripeSubToDb UPDATE
+
+    stripeMock.subscriptions.retrieve.mockResolvedValueOnce({
+      id: 'sub_billing_001',
+      status: 'active',
+      current_period_end: periodEnd,
+      metadata: { plan: 'pro' },
+    });
+
+    stripeMock.billingPortal.sessions.create.mockResolvedValueOnce({
+      url: 'https://billing.stripe.com/p/session/test_portal',
+    });
+
+    const res = await request(app)
+      .get('/api/subscriptions/my-billing')
+      .set('Authorization', `Bearer ${sellerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('stripe_configured', true);
+    expect(res.body).toHaveProperty('subscription_status', 'active');  // synced live from Stripe
+    expect(res.body).toHaveProperty('subscription_plan', 'pro');       // synced live from Stripe
+    expect(res.body).toHaveProperty('customer_portal_url', 'https://billing.stripe.com/p/session/test_portal');
   });
 });
 
@@ -10224,6 +10491,7 @@ describe('GET /api/subscriptions/my-billing', () => {
     expect(res.body).toHaveProperty('subscription_plan', 'basic');
 
     if (savedKey) process.env.STRIPE_SECRET_KEY = savedKey;
+    else delete process.env.STRIPE_SECRET_KEY;
   });
 
   it('returns 404 if user not found', async () => {
@@ -10260,6 +10528,7 @@ describe('POST /api/subscriptions/stripe-sync', () => {
     expect(res.body.reason).toBe('stripe_not_configured');
 
     if (savedKey) process.env.STRIPE_SECRET_KEY = savedKey;
+    else delete process.env.STRIPE_SECRET_KEY;
   });
 
   it('returns 404 if user not found', async () => {
@@ -10272,23 +10541,21 @@ describe('POST /api/subscriptions/stripe-sync', () => {
 
   it('returns synced:false with no_subscription reason when no Stripe ID', async () => {
     const savedKey = process.env.STRIPE_SECRET_KEY;
-    process.env.STRIPE_SECRET_KEY = 'sk_test_fake';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
 
     db.query.mockResolvedValueOnce({
       rows: [{ stripe_customer_id: null, stripe_subscription_id: null }],
     });
 
-    // Override require('stripe') to return a mock that throws on subscriptions
-    const { router: subsRouter } = require('../src/routes/subscriptions');
-    // When no customer ID, should return no_subscription
     const res = await request(app)
       .post('/api/subscriptions/stripe-sync')
       .set('Authorization', `Bearer ${sellerToken}`);
 
-    // Since STRIPE_SECRET_KEY is set but fake, stripe SDK initialises but no sub ID → no_subscription
+    // Stripe is initialised but user has neither a subscription ID nor a
+    // customer ID, so the handler falls through to the no_subscription path.
     expect(res.status).toBe(200);
-    // We accept either synced:false or a server error gracefully
-    expect(res.body).toBeDefined();
+    expect(res.body).toHaveProperty('synced', false);
+    expect(res.body.reason).toBe('no_subscription');
 
     if (savedKey) process.env.STRIPE_SECRET_KEY = savedKey;
     else delete process.env.STRIPE_SECRET_KEY;
