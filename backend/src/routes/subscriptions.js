@@ -210,10 +210,13 @@ router.post(
       );
 
       // Sync the owner's users.plan so both tables stay consistent
-      await db.query(
+      const syncResult = await db.query(
         'UPDATE users SET plan = $1, updated_at = NOW() WHERE id = $2',
         [plan, store.owner_id]
       );
+      if (syncResult.rowCount === 0) {
+        console.warn(`create subscription: could not sync plan '${plan}' to user ${store.owner_id}`);
+      }
 
       return res.status(201).json(result.rows[0]);
     } catch (err) {

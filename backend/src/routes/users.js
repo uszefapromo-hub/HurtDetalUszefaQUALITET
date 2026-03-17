@@ -202,6 +202,17 @@ router.put(
 
 // ─── Change own subscription plan ─────────────────────────────────────────────
 
+// Plans selectable by role for self-service: admins/owners may set any plan.
+// Regular users are restricted to plans appropriate for their role so that
+// premium or cross-role plans cannot be self-assigned without going through
+// the normal checkout flow.
+const SELF_SERVICE_PLANS = {
+  seller:   ['free', 'trial', 'basic', 'pro', 'elite'],
+  buyer:    ['free', 'trial'],
+  supplier: ['supplier_basic', 'supplier_pro'],
+  artist:   ['artist_basic', 'artist_pro'],
+};
+
 router.patch(
   '/me/plan',
   authenticate,
@@ -209,6 +220,17 @@ router.patch(
   validate,
   async (req, res) => {
     const { plan } = req.body;
+    const role = req.user.role;
+
+    // Admins and owners may set any plan; other roles are restricted
+    const isAdmin = ['owner', 'admin'].includes(role);
+    if (!isAdmin) {
+      const allowed = SELF_SERVICE_PLANS[role] || [];
+      if (!allowed.includes(plan)) {
+        return res.status(403).json({ error: 'Nie możesz wybrać tego planu dla swojej roli' });
+      }
+    }
+
     try {
       const result = await db.query(
         `UPDATE users SET plan = $1, updated_at = NOW() WHERE id = $2

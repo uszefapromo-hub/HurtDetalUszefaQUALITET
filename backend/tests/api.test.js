@@ -2002,14 +2002,35 @@ describe('PATCH /api/users/me/plan', () => {
     expect(res.body.user.plan).toBe('pro');
   });
 
-  it('accepts all valid plans including supplier_basic', async () => {
+  it('accepts seller plans for seller role', async () => {
     db.query.mockResolvedValueOnce({
-      rows: [{ id: SELLER_ID, email: 'seller@test.pl', name: 'Seller', role: 'seller', plan: 'supplier_basic' }],
+      rows: [{ id: SELLER_ID, email: 'seller@test.pl', name: 'Seller', role: 'seller', plan: 'pro' }],
     });
 
     const res = await request(app)
       .patch('/api/users/me/plan')
       .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ plan: 'pro' });
+    expect(res.status).toBe(200);
+    expect(res.body.plan).toBe('pro');
+  });
+
+  it('rejects cross-role plan (seller cannot self-assign supplier_basic)', async () => {
+    const res = await request(app)
+      .patch('/api/users/me/plan')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ plan: 'supplier_basic' });
+    expect(res.status).toBe(403);
+  });
+
+  it('allows admin to set any plan including supplier_basic', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: ADMIN_ID, email: 'admin@test.pl', name: 'Admin', role: 'owner', plan: 'supplier_basic' }],
+    });
+
+    const res = await request(app)
+      .patch('/api/users/me/plan')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ plan: 'supplier_basic' });
     expect(res.status).toBe(200);
     expect(res.body.plan).toBe('supplier_basic');
