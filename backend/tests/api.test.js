@@ -3432,6 +3432,94 @@ describe('POST /api/payments/:orderId/initiate – stripe & p24', () => {
     expect(res.status).toBe(201);
     expect(res.body.provider).toBe('p24');
   });
+
+  it('initiates blik payment and returns instructions', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: ORDER_ID, buyer_id: SELLER_ID, total: 99.99, status: 'created' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'pay-blik', order_id: ORDER_ID, user_id: SELLER_ID, amount: 99.99, method: 'blik', payment_provider: 'blik', status: 'pending' }] });
+
+    const res = await request(app)
+      .post(`/api/payments/${ORDER_ID}/initiate`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ method: 'blik' });
+    expect(res.status).toBe(201);
+    expect(res.body.provider).toBe('blik');
+    expect(res.body).toHaveProperty('instructions');
+    expect(res.body).toHaveProperty('payment_id');
+  });
+
+  it('initiates transfer payment and returns bank account details', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: ORDER_ID, buyer_id: SELLER_ID, total: 200.00, status: 'created' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'pay-transfer', order_id: ORDER_ID, user_id: SELLER_ID, amount: 200.00, method: 'transfer', payment_provider: 'transfer', status: 'pending' }] });
+
+    const res = await request(app)
+      .post(`/api/payments/${ORDER_ID}/initiate`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ method: 'transfer' });
+    expect(res.status).toBe(201);
+    expect(res.body.provider).toBe('transfer');
+    expect(res.body).toHaveProperty('bank_account');
+    expect(res.body).toHaveProperty('instructions');
+    expect(res.body).toHaveProperty('payment_id');
+  });
+
+  it('initiates card payment and returns redirect_url', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: ORDER_ID, buyer_id: SELLER_ID, total: 150.00, status: 'created' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'pay-card', order_id: ORDER_ID, user_id: SELLER_ID, amount: 150.00, method: 'card', payment_provider: 'card', status: 'pending' }] });
+
+    const res = await request(app)
+      .post(`/api/payments/${ORDER_ID}/initiate`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ method: 'card' });
+    expect(res.status).toBe(201);
+    expect(res.body.provider).toBe('card');
+    expect(res.body).toHaveProperty('redirect_url');
+    expect(res.body).toHaveProperty('payment_id');
+  });
+
+  it('rejects invalid payment method', async () => {
+    const res = await request(app)
+      .post(`/api/payments/${ORDER_ID}/initiate`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ method: 'paypal' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 403 when a different user tries to initiate payment', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: ORDER_ID, buyer_id: 'other-user-id', total: 100, status: 'created' }],
+    });
+
+    const res = await request(app)
+      .post(`/api/payments/${ORDER_ID}/initiate`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ method: 'transfer' });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 422 when order is already paid', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: ORDER_ID, buyer_id: SELLER_ID, total: 100, status: 'paid' }],
+    });
+
+    const res = await request(app)
+      .post(`/api/payments/${ORDER_ID}/initiate`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ method: 'transfer' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 404 for non-existent order', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .post(`/api/payments/${ORDER_ID}/initiate`)
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ method: 'transfer' });
+    expect(res.status).toBe(404);
+  });
 });
 
 describe('PUT /api/payments/:id/status – paid status', () => {
