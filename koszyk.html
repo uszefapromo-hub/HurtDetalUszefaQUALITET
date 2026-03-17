@@ -57,6 +57,20 @@
     .order-success p{color:var(--muted);margin:0 0 6px}
     .order-number{font-weight:800;font-size:18px;color:#35d9ff;margin:12px 0 24px}
 
+    .payment-methods{display:flex;flex-direction:column;gap:8px;margin:4px 0 8px}
+    .payment-method-option{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:1px solid var(--stroke);background:rgba(148,163,184,.08);cursor:pointer;transition:border-color .15s,background .15s}
+    .payment-method-option:hover{background:rgba(148,163,184,.16)}
+    .payment-method-option input[type=radio]{accent-color:#35d9ff;width:16px;height:16px;flex-shrink:0}
+    .payment-method-option input[type=radio]:checked + .pm-label{color:#35d9ff}
+    .payment-method-option:has(input:checked){border-color:#35d9ff;background:rgba(53,217,255,.08)}
+    .pm-label{display:flex;align-items:center;gap:7px;font-weight:600;font-size:14px}
+    .pm-icon{font-size:18px;line-height:1}
+
+    .payment-info-box{background:rgba(53,217,255,.07);border:1px solid rgba(53,217,255,.25);border-radius:14px;padding:16px 18px;font-size:13px;line-height:1.6;margin-top:4px}
+    .payment-info-box strong{color:#35d9ff}
+    .payment-info-box p{margin:0 0 6px}
+    .payment-info-box p:last-child{margin:0}
+
     .cart-header{display:flex;align-items:center;gap:16px;margin-bottom:4px}
     .cart-header h1{font-size:clamp(26px,4vw,40px);margin:0}
     .cart-back{color:var(--muted);font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
@@ -112,12 +126,13 @@
 
     <!-- Success state -->
     <div class="panel-card order-success" data-order-success hidden>
-      <div class="order-success-icon">✅</div>
-      <div class="eyebrow">Zamówienie przyjęte</div>
-      <h2>Dziękujemy za zakup!</h2>
+      <div class="order-success-icon" data-success-icon>✅</div>
+      <div class="eyebrow" data-success-eyebrow>Zamówienie przyjęte</div>
+      <h2 data-success-heading>Dziękujemy za zakup!</h2>
       <p class="order-number" data-order-number></p>
-      <p>Potwierdzenie zostanie wysłane na podany adres e-mail.</p>
+      <p data-success-subtext>Potwierdzenie zostanie wysłane na podany adres e-mail.</p>
       <p style="color:var(--muted);font-size:14px;margin-top:6px">Czas realizacji zamówienia: <strong style="color:#fff">24–72h</strong></p>
+      <div data-payment-info style="max-width:420px;margin:16px auto 0"></div>
       <div class="cta-row" style="justify-content:center;margin-top:24px">
         <a class="btn btn-primary" href="sklep.html">Kontynuuj zakupy</a>
         <a class="btn btn-secondary" href="index.html">Strona główna</a>
@@ -169,6 +184,27 @@
             <div class="checkout-field">
               <label for="chk-address">Adres dostawy *</label>
               <textarea id="chk-address" name="address" placeholder="ul. Przykładowa 1, 00-001 Warszawa" required autocomplete="street-address"></textarea>
+            </div>
+            <div class="checkout-field">
+              <label>Metoda płatności *</label>
+              <div class="payment-methods" role="radiogroup" aria-label="Wybierz metodę płatności">
+                <label class="payment-method-option">
+                  <input type="radio" name="payment_method" value="transfer" checked>
+                  <span class="pm-label"><span class="pm-icon">🏦</span>Przelew bankowy</span>
+                </label>
+                <label class="payment-method-option">
+                  <input type="radio" name="payment_method" value="blik">
+                  <span class="pm-label"><span class="pm-icon">📱</span>BLIK</span>
+                </label>
+                <label class="payment-method-option">
+                  <input type="radio" name="payment_method" value="card">
+                  <span class="pm-label"><span class="pm-icon">💳</span>Karta płatnicza</span>
+                </label>
+                <label class="payment-method-option">
+                  <input type="radio" name="payment_method" value="p24">
+                  <span class="pm-label"><span class="pm-icon">🔄</span>Przelewy24</span>
+                </label>
+              </div>
             </div>
             <div style="font-size:12px;color:var(--muted);line-height:1.5">
               Składając zamówienie akceptujesz <a href="#" style="color:#35d9ff">regulamin</a> i <a href="#" style="color:#35d9ff">politykę prywatności</a>.
@@ -243,6 +279,37 @@
       var form = document.querySelector('[data-checkout-form]');
       var submitBtn = document.querySelector('[data-checkout-btn]');
 
+      function escapeHtml(str){
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      // ── Handle payment gateway return (?payment=success or ?payment=cancel) ──
+      var urlParams = new URLSearchParams(window.location.search);
+      var paymentResult = urlParams.get('payment');
+      if(paymentResult === 'success'){
+        cart.clearCart();
+        var orderNum = '';
+        try{ orderNum = sessionStorage.getItem('qm_last_order') || ''; }catch(_){}
+        var numEl = document.querySelector('[data-order-number]');
+        if(numEl){ numEl.textContent = orderNum ? 'Numer zam\u00f3wienia: ' + orderNum : ''; }
+        var infoBox = document.querySelector('[data-payment-info]');
+        if(infoBox){
+          infoBox.innerHTML = '<div class="payment-info-box"><p>✅ <strong>P\u0142atno\u015b\u0107 zaksi\u0119gowana</strong></p><p>Twoje zam\u00f3wienie zosta\u0142o op\u0142acone i jest teraz przetwarzane.</p></div>';
+        }
+        if(contentEl) contentEl.hidden = true;
+        if(successEl) successEl.hidden = false;
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+      if(paymentResult === 'cancel'){
+        var banner = document.createElement('div');
+        banner.style.cssText = 'background:rgba(255,79,79,.12);border:1px solid rgba(255,79,79,.3);border-radius:14px;padding:14px 18px;font-size:14px;color:#ff9f9f;margin-bottom:16px';
+        banner.textContent = '\u26a0\ufe0f P\u0142atno\u015b\u0107 anulowana. Mo\u017cesz op\u0142aci\u0107 ponownie lub wybra\u0107 inn\u0105 metod\u0119 p\u0142atno\u015bci.';
+        var cartHeader = document.querySelector('.cart-header');
+        if(cartHeader) cartHeader.insertAdjacentElement('afterend', banner);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
       function render(){
         var items = cart.getCart();
         var count = cart.getCartCount(items);
@@ -285,10 +352,6 @@
         });
       }
 
-      function escapeHtml(str){
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      }
-
       if(listEl){
         listEl.addEventListener('click', function(e){
           var decBtn = e.target.closest('[data-qty-dec]');
@@ -322,29 +385,32 @@
           e.preventDefault();
           var items = cart.getCart();
           if(!items.length) return;
-          if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Składam zamówienie...'; }
+          if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Sk\u0142adam zam\u00f3wienie...'; }
           var fd = new FormData(form);
           var formData = {
             name: fd.get('name') || '',
             email: fd.get('email') || '',
             phone: fd.get('phone') || '',
-            address: fd.get('address') || ''
+            address: fd.get('address') || '',
+            payment_method: fd.get('payment_method') || 'transfer'
           };
 
-          function showSuccess(orderNum){
+          function showSuccess(orderNum, paymentInfoHtml){
             cart.clearCart();
             var numEl = document.querySelector('[data-order-number]');
-            if(numEl){ numEl.textContent = 'Numer zamówienia: ' + (orderNum || '—'); }
+            if(numEl){ numEl.textContent = 'Numer zam\u00f3wienia: ' + (orderNum || '\u2014'); }
+            var infoBox = document.querySelector('[data-payment-info]');
+            if(infoBox){ infoBox.innerHTML = paymentInfoHtml || ''; }
             if(contentEl) contentEl.hidden = true;
             if(successEl) successEl.hidden = false;
             window.scrollTo({top: 0, behavior: 'smooth'});
-            if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Złóż zamówienie'; }
+            if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Z\u0142\u00f3\u017c zam\u00f3wienie'; }
           }
 
           function localOrder(){
             var order = cart.saveOrder(formData, items);
             try{ sessionStorage.setItem('qm_last_order', order.number); }catch(_){}
-            showSuccess(order.number);
+            showSuccess(order.number, '');
           }
 
           // Flow 6: try API order creation first
@@ -353,7 +419,7 @@
               .then(function(apiOrder){
                 var num = apiOrder && (apiOrder.order_number || apiOrder.id || '');
                 try{ if(num) sessionStorage.setItem('qm_last_order', num); }catch(_){}
-                showSuccess(num);
+                showSuccess(num, '');
               })
               .catch(function(){
                 // API unavailable or user not logged in – fall back

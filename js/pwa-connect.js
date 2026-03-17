@@ -258,11 +258,15 @@
 
   // ─── Cart / Checkout page ────────────────────────────────────────────────────
 
+  // Payment methods that show instructions instead of redirecting to a gateway.
+  var MANUAL_PAYMENT_METHODS = ['transfer', 'blik'];
+
   /**
    * If the user is logged in, intercept the checkout form during capture phase
    * and submit the order via the API.  The existing inline handler (localStorage)
    * is bypassed only when we can actually reach the API.
    * On API failure we re-enable the button and let the user retry.
+   * After order creation, automatically initiates payment with the selected method.
    */
   function initCartPage() {
     var api = window.QMApi;
@@ -285,6 +289,7 @@
       setButtonLoading(submitBtn, 'Sk\u0142adam zam\u00f3wienie\u2026');
 
       var fd = new FormData(form);
+      var paymentMethod = fd.get('payment_method') || 'transfer';
 
       var shipping = [
         fd.get('name') || '',
@@ -319,18 +324,83 @@
         notes: notes
       })
         .then(function (order) {
-          cart.clearCart();
+          var orderId = order.id;
+          var orderNum = order.order_number || order.number || orderId || '';
+          try { if (orderNum) sessionStorage.setItem('qm_last_order', orderNum); } catch (_) {}
+
           var numEl = document.querySelector('[data-order-number]');
-          if (numEl) {
-            numEl.textContent = 'Numer zam\u00f3wienia: ' + (order.number || order.id || '');
-          }
-          showOrderSuccess();
+          if (numEl) numEl.textContent = 'Numer zam\u00f3wienia: ' + orderNum;
+
+          setButtonLoading(submitBtn, 'Inicjuj\u0119 p\u0142atno\u015b\u0107\u2026');
+
+          var returnUrl = window.location.href.split('?')[0] + '?payment=success';
+          return api.Payments.initiate(orderId, paymentMethod, returnUrl)
+            .then(function (payData) {
+              cart.clearCart();
+              restoreButton(submitBtn, 'Z\u0142\u00f3\u017c zam\u00f3wienie');
+
+              // For gateway redirects (Stripe, P24, card) – navigate away
+              if (payData && payData.redirect_url && MANUAL_PAYMENT_METHODS.indexOf(paymentMethod) === -1) {
+                window.location.href = payData.redirect_url;
+                return;
+              }
+
+              // For manual payments show instructions in the success screen
+              showOrderSuccess(buildPaymentInfoHtml(payData, paymentMethod));
+            })
+            .catch(function () {
+              // Payment initiation failed – still show order success (order was created)
+              cart.clearCart();
+              restoreButton(submitBtn, 'Z\u0142\u00f3\u017c zam\u00f3wienie');
+              showOrderSuccess('');
+            });
         })
         .catch(function () {
           restoreButton(submitBtn, 'Z\u0142\u00f3\u017c zam\u00f3wienie');
           submitLocalOrder(form, cart, items, fd);
         });
     }, true /* capture */);
+  }
+
+  /**
+   * Build HTML for the payment info box shown in the order-success screen.
+   * @param {object} payData - response from POST /api/payments/:orderId/initiate
+   * @param {string} method  - payment method chosen by the user
+   * @returns {string} HTML string (safe to set as innerHTML)
+   */
+  function buildPaymentInfoHtml(payData, method) {
+    if (!payData) return '';
+
+    if (method === 'transfer') {
+      var account = escapeHtmlStr(payData.bank_account || '');
+      var amount  = escapeHtmlStr(payData.amount || '');
+      var ref     = escapeHtmlStr(payData.reference || payData.payment_id || '');
+      return '<div class="payment-info-box">' +
+        '<p>🏦 <strong>Dane do przelewu bankowego</strong></p>' +
+        (account ? '<p>Numer konta: <strong>' + account + '</strong></p>' : '') +
+        (amount  ? '<p>Kwota: <strong>' + amount + ' PLN</strong></p>' : '') +
+        (ref     ? '<p>Tytu\u0142 przelewu: <strong>' + ref + '</strong></p>' : '') +
+        '<p>Zam\u00f3wienie zostanie zrealizowane po ksi\u0119gowaniu p\u0142atno\u015bci.</p>' +
+        '</div>';
+    }
+
+    if (method === 'blik') {
+      var instructions = escapeHtmlStr(payData.instructions || 'Wygeneruj kod BLIK w aplikacji bankowej.');
+      return '<div class="payment-info-box">' +
+        '<p>📱 <strong>P\u0142atno\u015b\u0107 BLIK</strong></p>' +
+        '<p>' + instructions + '</p>' +
+        '</div>';
+    }
+
+    return '';
+  }
+
+  function escapeHtmlStr(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function submitLocalOrder(form, cart, items, fd) {
@@ -345,12 +415,14 @@
     cart.clearCart();
     var numEl = document.querySelector('[data-order-number]');
     if (numEl) numEl.textContent = 'Numer zam\u00f3wienia: ' + order.number;
-    showOrderSuccess();
+    showOrderSuccess('');
   }
 
-  function showOrderSuccess() {
+  function showOrderSuccess(paymentInfoHtml) {
     var contentEl = document.querySelector('[data-cart-content]');
     var successEl = document.querySelector('[data-order-success]');
+    var infoBox   = document.querySelector('[data-payment-info]');
+    if (infoBox && paymentInfoHtml != null) infoBox.innerHTML = paymentInfoHtml;
     if (contentEl) contentEl.hidden = true;
     if (successEl) successEl.hidden = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
