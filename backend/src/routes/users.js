@@ -9,6 +9,7 @@ const db = require('../config/database');
 const { authenticate, requireRole, signToken } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { getPromoTier } = require('../helpers/promo');
+const { VALID_PLANS } = require('./subscriptions');
 
 const router = express.Router();
 
@@ -194,6 +195,52 @@ router.put(
       return res.json({ message: 'Hasło zmienione' });
     } catch (err) {
       console.error('change password error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── Change own subscription plan ─────────────────────────────────────────────
+
+// Plans selectable by role for self-service: admins/owners may set any plan.
+// Regular users are restricted to plans appropriate for their role so that
+// premium or cross-role plans cannot be self-assigned without going through
+// the normal checkout flow.
+const SELF_SERVICE_PLANS = {
+  seller:   ['free', 'trial', 'basic', 'pro', 'elite'],
+  buyer:    ['free', 'trial'],
+  supplier: ['supplier_basic', 'supplier_pro'],
+  artist:   ['artist_basic', 'artist_pro'],
+};
+
+router.patch(
+  '/me/plan',
+  authenticate,
+  [body('plan').isIn(VALID_PLANS)],
+  validate,
+  async (req, res) => {
+    const { plan } = req.body;
+    const role = req.user.role;
+
+    // Admins and owners may set any plan; other roles are restricted
+    const isAdmin = ['owner', 'admin'].includes(role);
+    if (!isAdmin) {
+      const allowed = SELF_SERVICE_PLANS[role] || [];
+      if (!allowed.includes(plan)) {
+        return res.status(403).json({ error: 'Nie możesz wybrać tego planu dla swojej roli' });
+      }
+    }
+
+    try {
+      const result = await db.query(
+        `UPDATE users SET plan = $1, updated_at = NOW() WHERE id = $2
+         RETURNING id, email, name, role, plan`,
+        [plan, req.user.id]
+      );
+      if (!result.rows[0]) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+      return res.json({ success: true, plan: result.rows[0].plan, user: result.rows[0] });
+    } catch (err) {
+      console.error('change plan error:', err.message);
       return res.status(500).json({ error: 'Błąd serwera' });
     }
   }
