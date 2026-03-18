@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Linki sprzedażowe | QualitetMarket</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body data-page="linki-sprzedazowe" class="feature-page has-bottom-nav">
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="QualitetMarket">
+      </div>
+      <div class="app-splash-title">
+        <strong>QualitetMarket</strong>
+        <span>Marketplace B2B/B2C</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>Marketplace B2B/B2C</span>
+          
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="wrap">
+        <span class="eyebrow">Sprzedaż przez link</span>
+        <h1>Moje linki sprzedażowe</h1>
+        <p class="lead">Generuj linki do produktów, udostępniaj je i zarabiaj marżę z każdej sprzedaży — bez potrzeby posiadania sklepu.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="hurtownie.html">Przeglądaj katalog</a>
+          <a class="btn btn-secondary" href="dashboard.html">Wróć do dashboardu</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap stats-grid">
+      <div class="stat-card">
+        <span>Aktywne linki</span>
+        <strong data-sl-total-links>0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Kliknięcia</span>
+        <strong data-sl-total-clicks>0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Sprzedaże</span>
+        <strong data-sl-total-sales>0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Łączny zarobek</span>
+        <strong data-sl-total-earnings>0 zł</strong>
+      </div>
+    </section>
+
+    <section class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Sprzedaż przez link</span>
+        <h2>Twoje linki produktów</h2>
+        <p class="hint">Każdy wygenerowany link śledzi kliknięcia i sprzedaże. Udostępniaj w mediach społecznościowych lub wysyłaj bezpośrednio do klientów.</p>
+      </div>
+
+      <div class="sales-links-list" data-sales-links-list></div>
+      <p class="empty" data-sales-links-empty hidden>Nie masz jeszcze żadnych linków sprzedażowych. Przejdź do <a href="hurtownie.html">hurtowni</a>, wybierz produkt i kliknij „Generuj link sprzedażowy".</p>
+    </section>
+
+    <section class="wrap section-grid">
+      <article class="feature-card gradient-a">
+        <h2>Jak to działa?</h2>
+        <p class="hint">Wybierz produkt w hurtowni i kliknij „Generuj link sprzedażowy". Każde zamówienie złożone przez Twój link zapisuje Twój zarobek.</p>
+      </article>
+      <article class="feature-card gradient-b">
+        <h2>Zarabiaj bez sklepu</h2>
+        <p class="hint">Udostępniaj linki w mediach społecznościowych, e-mailach i czatach. Prowizja nalicza się automatycznie.</p>
+      </article>
+      <article class="feature-card gradient-c">
+        <h2>Śledzenie wyników</h2>
+        <p class="hint">Monitoruj kliknięcia, konwersje i zarobki w czasie rzeczywistym z poziomu tego panelu.</p>
+      </article>
+    </section>
+
+    <!-- Promotion generator section -->
+    <section class="wrap" style="margin-top:32px">
+      <div class="section-head">
+        <span class="eyebrow">Generator treści</span>
+        <h2>✨ Generator postów i opisów produktów</h2>
+        <p class="hint">Automatycznie wygeneruj gotowy post do social media i opis produktu. Jedno kliknięcie – gotowe do publikacji.</p>
+      </div>
+      <form class="panel-card" id="promoGenForm">
+        <div class="owner-toolbar" style="flex-wrap:wrap;gap:12px">
+          <label class="form-field" style="flex:1;min-width:180px">
+            Nazwa produktu
+            <input type="text" name="promo_product" class="owner-input" placeholder="np. Fotel gamingowy RGB" required>
+          </label>
+          <label class="form-field" style="min-width:120px">
+            Cena (zł)
+            <input type="number" name="promo_price" class="owner-input" placeholder="299.99" min="0" step="0.01">
+          </label>
+          <label class="form-field" style="min-width:180px">
+            Link do sklepu (opcjonalnie)
+            <input type="url" name="promo_url" class="owner-input" placeholder="https://twojsklep.pl/produkt">
+          </label>
+          <label class="form-field" style="min-width:140px">
+            Platforma
+            <select name="promo_platform" class="owner-filter">
+              <option value="facebook">Facebook</option>
+              <option value="instagram">Instagram</option>
+              <option value="tiktok">TikTok</option>
+              <option value="twitter">Twitter / X</option>
+            </select>
+          </label>
+        </div>
+        <div class="cta-row" style="margin-top:12px">
+          <button class="btn btn-primary" type="submit">✨ Generuj treść</button>
+          <span class="hint" id="promoGenStatus"></span>
+        </div>
+      </form>
+      <div id="promoGenResult" hidden class="panel-card" style="margin-top:16px">
+        <div class="section-head"><span class="eyebrow">Wygenerowane treści</span><h2>Gotowe do użycia</h2></div>
+        <div style="margin-bottom:16px">
+          <strong>Post do social media:</strong>
+          <pre id="promoResultPost" style="white-space:pre-wrap;background:var(--bg-2,#f1f5f9);padding:12px;border-radius:6px;margin-top:8px;font-family:inherit"></pre>
+          <button class="btn btn-secondary" id="copyPostBtn" type="button" style="margin-top:8px">Kopiuj post</button>
+        </div>
+        <div>
+          <strong>Opis produktu:</strong>
+          <p id="promoResultDesc" style="margin-top:8px;color:var(--muted)"></p>
+          <button class="btn btn-secondary" id="copyDescBtn" type="button" style="margin-top:8px">Kopiuj opis</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap panel-footer">
+    <div class="panel-footer-inner">
+      <span>© 2026 QualitetMarket — Wszelkie prawa zastrzeżone. Projekt i marka platformy stworzone przez Henryka Ślusarskiego</span>
+      <div class="panel-footer-links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cennik.html">Cennik</a>
+        <a href="index.html">Strona główna</a>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
+    <a href="index.html" rel="nofollow noreferrer" data-nav="index">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 11.5L12 4l9 7.5"></path>
+        <path d="M5 10.5V20h14v-9.5"></path>
+      </svg>
+      <span>Start</span>
+    </a>
+    <a href="sklep.html" rel="nofollow noreferrer" data-nav="sklep">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9h18l-1.5 11H4.5L3 9z"></path>
+        <path d="M7 9V7a5 5 0 0 1 10 0v2"></path>
+      </svg>
+      <span>Sklep</span>
+    </a>
+    <a href="hurtownie.html" rel="nofollow noreferrer" data-nav="hurtownie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="7" width="7" height="10" rx="1.4"></rect>
+        <rect x="14" y="7" width="7" height="10" rx="1.4"></rect>
+        <path d="M6.5 7V5.5a1.5 1.5 0 0 1 3 0V7"></path>
+      </svg>
+      <span>Hurtownie</span>
+    </a>
+    <a href="dashboard.html" rel="nofollow noreferrer" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.2"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.2"></rect>
+      </svg>
+      <span>Panel</span>
+    </a>
+    <a href="login.html" rel="nofollow noreferrer" data-nav="login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c2-3.5 6-5 8-5s6 1.5 8 5"></path>
+      </svg>
+      <span>Konto</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js" defer></script>
+  <script>
+  (function () {
+    // ─── Promotion generator ──────────────────────────────────────────────────
+    const genForm   = document.getElementById('promoGenForm');
+    const genResult = document.getElementById('promoGenResult');
+
+    async function generatePromotion(e) {
+      e.preventDefault();
+      if (!genForm) return;
+      const fd    = new FormData(genForm);
+      const token = localStorage.getItem('token') || '';
+      const btn   = genForm.querySelector('[type="submit"]');
+      const statusEl = document.getElementById('promoGenStatus');
+
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Generuję…'; }
+      if (statusEl) statusEl.textContent = '';
+
+      try {
+        const res = await fetch('/api/my/promotion/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+          body: JSON.stringify({
+            product_name: fd.get('promo_product') || '',
+            price: fd.get('promo_price') ? parseFloat(fd.get('promo_price')) : null,
+            store_url: fd.get('promo_url') || '',
+            platform: fd.get('promo_platform') || 'facebook',
+          }),
+        });
+        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Błąd'); }
+        const data = await res.json();
+
+        if (genResult) {
+          genResult.hidden = false;
+          const postEl = document.getElementById('promoResultPost');
+          const descEl = document.getElementById('promoResultDesc');
+          if (postEl) postEl.textContent = data.post || '';
+          if (descEl) descEl.textContent = data.productDescription || '';
+        }
+      } catch (err) {
+        if (statusEl) statusEl.textContent = '❌ ' + (err.message || 'Błąd. Upewnij się, że jesteś zalogowany.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '✨ Generuj treść'; }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('promoGenForm');
+      if (form) form.addEventListener('submit', generatePromotion);
+
+      const copyPost = document.getElementById('copyPostBtn');
+      if (copyPost) copyPost.addEventListener('click', () => {
+        const text = (document.getElementById('promoResultPost') || {}).textContent || '';
+        navigator.clipboard.writeText(text).catch(() => {});
+        copyPost.textContent = '✅ Skopiowano!';
+        setTimeout(() => { copyPost.textContent = 'Kopiuj post'; }, 2000);
+      });
+
+      const copyDesc = document.getElementById('copyDescBtn');
+      if (copyDesc) copyDesc.addEventListener('click', () => {
+        const text = (document.getElementById('promoResultDesc') || {}).textContent || '';
+        navigator.clipboard.writeText(text).catch(() => {});
+        copyDesc.textContent = '✅ Skopiowano!';
+        setTimeout(() => { copyDesc.textContent = 'Kopiuj opis'; }, 2000);
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

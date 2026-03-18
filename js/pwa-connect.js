@@ -1,0 +1,953 @@
+/**
+ * pwa-connect.js – bridges the QualitetMarket PWA frontend to the backend REST API.
+ *
+ * Requires js/api.js to be loaded first (provides window.QMApi).
+ * Gracefully degrades: if the API is unavailable, the existing localStorage
+ * flow from app.js / cart.js continues to work unchanged.
+ *
+ * Pages handled:
+ *   login.html   – email/password login + account registration via QMApi.Auth
+ *   sklep.html   – product listing via QMApi.Products with mock fallback
+ *   koszyk.html  – order submission via QMApi.Orders for logged-in users
+ *   dashboard.html – real user profile & order history via QMApi.Auth + QMApi.Orders
+ */
+(function () {
+  'use strict';
+
+  var CURRENCY_FMT = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 });
+
+  var MS_PER_DAY = 86400000;
+
+  /** Human-readable plan display names (aligned with backend PLAN_DISPLAY_NAMES) */
+  var PLAN_DISPLAY_NAMES = {
+    free:           'Seller Free',
+    trial:          'Seller Free',
+    basic:          'Seller PRO',
+    pro:            'Seller Business',
+    elite:          'Elite',
+    supplier_basic: 'Supplier Basic',
+    supplier_pro:   'Supplier Pro',
+    brand:          'Brand Plan',
+    artist_basic:   'Artist Basic',
+    artist_pro:     'Artist Pro',
+  };
+
+  function getPlanDisplayName(plan) {
+    return PLAN_DISPLAY_NAMES[plan] || (plan ? plan.toUpperCase() : 'Free');
+  }
+
+  function formatPrice(value) {
+    return CURRENCY_FMT.format(Number(value) || 0);
+  }
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ─── Login / Register ────────────────────────────────────────────────────────
+
+  /**
+   * Intercept the email login form at document-capture level so our handler
+   * runs BEFORE the app.js bubble-phase handler on the form element itself.
+   * Calling stopImmediatePropagation() during capture prevents the event
+   * from reaching the form's own bubble handlers.
+   */
+  function initLoginPage() {
+    var api = window.QMApi;
+    if (!api) return;
+
+    // If already logged in, redirect away from the login page immediately
+    if (api.Auth.isLoggedIn()) {
+      var params = new URLSearchParams(window.location.search);
+      var redirectTarget = params.get('redirect');
+      window.location.replace(redirectTarget || 'dashboard.html');
+      return;
+    }
+
+    // Intercept form submit in capture phase at document level
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.hasAttribute('data-login-form')) return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      var emailInput = form.querySelector('input[name="email"]');
+      var passwordInput = form.querySelector('input[name="password"]');
+      var email = emailInput ? emailInput.value.trim() : '';
+      var password = passwordInput ? passwordInput.value : '';
+
+      if (!email || !password) {
+        showFormError(form, 'Podaj adres e-mail i has\u0142o.');
+        return;
+      }
+
+      var submitBtn = form.querySelector('button[type="submit"]');
+      var origText = submitBtn ? submitBtn.textContent : '';
+      setButtonLoading(submitBtn, 'Logowanie\u2026');
+      hideFormError(form);
+
+      api.Auth.login(email, password)
+        .then(function () {
+          // QMApi.Auth.login stores the JWT token under 'qm_token'; that is
+          // sufficient for app.js guards (isAppLoggedIn checks qm_token first).
+          var params = new URLSearchParams(window.location.search);
+          var redirectTarget = params.get('redirect');
+          window.location.href = redirectTarget || 'dashboard.html';
+        })
+        .catch(function (err) {
+          restoreButton(submitBtn, origText);
+          var msg = (err && err.body && err.body.error)
+            || (err && !err.status ? 'Brak po\u0142\u0105czenia z serwerem. Spr\u00f3buj ponownie.' : null)
+            || 'B\u0142\u0105d logowania. Sprawd\u017a e-mail i has\u0142o.';
+          showFormError(form, msg);
+        });
+    }, true /* capture */);
+
+    // Wire the "Utwórz konto" (registration) button
+    document.addEventListener('DOMContentLoaded', function () {
+      var loginForm = document.querySelector('[data-login-form]');
+      if (!loginForm) return;
+
+      var registerBtn = loginForm.querySelector('[data-register-btn]');
+      if (registerBtn) {
+        registerBtn.addEventListener('click', function () {
+          showRegisterPanel();
+        });
+      }
+    });
+
+    // Intercept registration form submit (panel created dynamically)
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.hasAttribute('data-register-form')) return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      var name = (form.querySelector('input[name="name"]') || {}).value || '';
+      var email = (form.querySelector('input[name="email"]') || {}).value || '';
+      var password = (form.querySelector('input[name="password"]') || {}).value || '';
+      var password2 = (form.querySelector('input[name="password2"]') || {}).value || '';
+
+      if (!name.trim()) { showFormError(form, 'Podaj imi\u0119 i nazwisko.'); return; }
+      if (!email) { showFormError(form, 'Podaj adres e-mail.'); return; }
+      if (password.length < 8) { showFormError(form, 'Has\u0142o musi mie\u0107 co najmniej 8 znak\u00f3w.'); return; }
+      if (password !== password2) { showFormError(form, 'Has\u0142a nie s\u0105 zgodne.'); return; }
+
+      var submitBtn = form.querySelector('button[type="submit"]');
+      var origText = submitBtn ? submitBtn.textContent : '';
+      setButtonLoading(submitBtn, 'Tworz\u0119 konto\u2026');
+      hideFormError(form);
+
+      api.Auth.register(email, password, name.trim(), 'buyer')
+        .then(function () {
+          // QMApi.Auth.register stores the JWT token under 'qm_token'.
+          window.location.href = 'dashboard.html';
+        })
+        .catch(function (err) {
+          restoreButton(submitBtn, origText);
+          var msg = (err && err.body && err.body.error) || 'Rejestracja nie powiod\u0142a si\u0119. Spr\u00f3buj ponownie.';
+          showFormError(form, msg);
+        });
+    }, true /* capture */);
+  }
+
+  function showRegisterPanel() {
+    var loginPanel = document.getElementById('auth-panel-email');
+    if (!loginPanel) return;
+
+    var existing = document.getElementById('auth-panel-register');
+    if (existing) {
+      loginPanel.hidden = true;
+      existing.hidden = false;
+      return;
+    }
+
+    var panel = document.createElement('div');
+    panel.id = 'auth-panel-register';
+    panel.className = 'auth-tab-panel';
+    panel.innerHTML =
+      '<form class="form-card" data-register-form>' +
+        '<label>Imi\u0119 i nazwisko<input type="text" name="name" placeholder="Jan Kowalski" autocomplete="name" required></label>' +
+        '<label>E-mail<input type="email" name="email" placeholder="jan@przyk\u0142ad.pl" autocomplete="email" required></label>' +
+        '<label>Has\u0142o (min. 8 znak\u00f3w)<input type="password" name="password" placeholder="\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7" autocomplete="new-password" required></label>' +
+        '<label>Powt\u00f3rz has\u0142o<input type="password" name="password2" placeholder="\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7" autocomplete="new-password" required></label>' +
+        '<div class="cta-row auth-actions">' +
+          '<button class="btn btn-primary" type="submit">Utw\u00f3rz konto</button>' +
+          '<button class="btn btn-secondary" type="button" data-back-to-login>Mam ju\u017c konto</button>' +
+        '</div>' +
+        '<p class="hint pwa-form-error" hidden></p>' +
+      '</form>';
+
+    loginPanel.parentNode.insertBefore(panel, loginPanel.nextSibling);
+
+    panel.querySelector('[data-back-to-login]').addEventListener('click', function () {
+      panel.hidden = true;
+      loginPanel.hidden = false;
+    });
+
+    loginPanel.hidden = true;
+  }
+
+  // ─── Products page ───────────────────────────────────────────────────────────
+
+  function initProductsPage() {
+    var api = window.QMApi;
+    if (!api) return;
+
+    api.Products.list({ status: 'active', limit: 48 })
+      .then(function (data) {
+        var products = Array.isArray(data) ? data : (data.products || []);
+        if (!products.length) return;
+        renderApiProducts(products);
+      })
+      .catch(function () {
+        // API unavailable – let app.js mock data render (no action needed)
+      });
+  }
+
+  function renderApiProducts(products) {
+    var grid = document.querySelector('[data-store-products-grid]');
+    if (!grid) return;
+
+    var demoSection = document.querySelector('[data-store-demo-products]');
+    if (demoSection) demoSection.hidden = true;
+
+    grid.innerHTML = '';
+    grid.hidden = false;
+    var emptyEl = document.querySelector('[data-store-products-empty]');
+    if (emptyEl) emptyEl.hidden = true;
+
+    products.forEach(function (product) {
+      var card = buildProductCard(product);
+      grid.appendChild(card);
+    });
+  }
+
+  function buildProductCard(product) {
+    var id = product.id || '';
+    var name = product.name || 'Produkt';
+    var price = Number(product.selling_price || product.price_gross || product.price || 0);
+    var img = product.image_url || product.img || '';
+    var category = product.category_name || product.category || '';
+    var description = product.description || '';
+
+    var card = document.createElement('article');
+    card.className = 'product-card product-tile';
+
+    var imgHtml = img
+      ? '<img src="' + escapeHtml(img) + '" alt="' + escapeHtml(name) + '" loading="lazy">'
+      : '<span role="img" aria-label="Brak zdj\u0119cia produktu" style="font-size:42px">\ud83d\udce6</span>';
+
+    card.innerHTML =
+      '<div class="product-media">' + imgHtml + '</div>' +
+      '<div class="product-details">' +
+        '<span class="tag">' + escapeHtml(category) + '</span>' +
+        '<h3>' + escapeHtml(name) + '</h3>' +
+        (description ? '<p class="hint">' + escapeHtml(description.slice(0, 80)) + (description.length > 80 ? '\u2026' : '') + '</p>' : '') +
+        '<div class="product-meta"><span class="price">' + formatPrice(price) + '</span></div>' +
+        '<div class="cta-row product-actions">' +
+          '<button class="btn btn-primary" type="button"' +
+            ' data-add-to-cart' +
+            ' data-product-id="' + escapeHtml(id) + '"' +
+            ' data-product-name="' + escapeHtml(name) + '"' +
+            ' data-product-price="' + price + '"' +
+            ' data-product-img="' + escapeHtml(img) + '">' +
+            'Dodaj do koszyka' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+
+    return card;
+  }
+
+  // ─── Cart / Checkout page ────────────────────────────────────────────────────
+
+  // Payment methods that show instructions instead of redirecting to a gateway.
+  var MANUAL_PAYMENT_METHODS = ['transfer', 'blik'];
+
+  /**
+   * Safe redirect wrapper – delegates to window.QMSafeRedirect (security-guard.js).
+   * Falls back to an inline implementation when the guard is not yet loaded.
+   */
+  function safeRedirect(url) {
+    if (!url) return;
+    if (typeof window.QMSafeRedirect === 'function') {
+      window.QMSafeRedirect(url);
+    } else {
+      // Minimal inline fallback: block obvious external hosts
+      try {
+        var parsed = new URL(url, window.location.origin);
+        if (parsed.origin === window.location.origin) { window.location.href = url; return; }
+        var safe = ['checkout.stripe.com', 'hooks.stripe.com', 'przelewy24.pl', 'secure.przelewy24.pl'];
+        for (var i = 0; i < safe.length; i++) {
+          if (parsed.hostname === safe[i] || parsed.hostname.endsWith('.' + safe[i])) {
+            window.location.href = url; return;
+          }
+        }
+        if (typeof console !== 'undefined') console.warn('[QualitetMarket] Blocked external redirect to:', url);
+      } catch (e) { /* invalid URL – ignore */ }
+    }
+  }
+
+  /**
+   * If the user is logged in, intercept the checkout form during capture phase
+   * and submit the order via the API.  The existing inline handler (localStorage)
+   * is bypassed only when we can actually reach the API.
+   * On API failure we re-enable the button and let the user retry.
+   * After order creation, automatically initiates payment with the selected method.
+   */
+  function initCartPage() {
+    var api = window.QMApi;
+    if (!api || !api.Auth.isLoggedIn()) return;
+
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.hasAttribute('data-checkout-form')) return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      var cart = window.QMCart;
+      if (!cart) return;
+
+      var items = cart.getCart();
+      if (!items || !items.length) return;
+
+      var submitBtn = form.querySelector('[data-checkout-btn]');
+      setButtonLoading(submitBtn, 'Sk\u0142adam zam\u00f3wienie\u2026');
+
+      var fd = new FormData(form);
+      var paymentMethod = fd.get('payment_method') || 'transfer';
+
+      var shipping = [
+        fd.get('name') || '',
+        fd.get('address') || ''
+      ].filter(Boolean).join(', ');
+
+      var notes = [
+        fd.get('email') ? 'E-mail: ' + fd.get('email') : '',
+        fd.get('phone') ? 'Tel: ' + fd.get('phone') : ''
+      ].filter(Boolean).join('; ');
+
+      var orderItems = items.map(function (item) {
+        return { product_id: item.id, quantity: Number(item.qty) || 1 };
+      });
+
+      var storeId = null;
+      try {
+        var activeStore = JSON.parse(localStorage.getItem('activeStore') || 'null');
+        storeId = activeStore && activeStore.id ? activeStore.id : null;
+      } catch (_) {}
+
+      if (!storeId) {
+        restoreButton(submitBtn, 'Z\u0142\u00f3\u017c zam\u00f3wienie');
+        submitLocalOrder(form, cart, items, fd);
+        return;
+      }
+
+      api.Orders.create({
+        store_id: storeId,
+        items: orderItems,
+        shipping_address: shipping,
+        notes: notes
+      })
+        .then(function (order) {
+          var orderId = order.id;
+          var orderNum = order.order_number || order.number || orderId || '';
+          try { if (orderNum) sessionStorage.setItem('qm_last_order', orderNum); } catch (_) {}
+
+          var numEl = document.querySelector('[data-order-number]');
+          if (numEl) numEl.textContent = 'Numer zam\u00f3wienia: ' + orderNum;
+
+          setButtonLoading(submitBtn, 'Inicjuj\u0119 p\u0142atno\u015b\u0107\u2026');
+
+          var returnUrl = window.location.href.split('?')[0] + '?payment=success';
+          return api.Payments.initiate(orderId, paymentMethod, returnUrl)
+            .then(function (payData) {
+              cart.clearCart();
+              restoreButton(submitBtn, 'Z\u0142\u00f3\u017c zam\u00f3wienie');
+
+              // For gateway redirects (Stripe, P24, card) – navigate away
+              if (payData && payData.redirect_url && MANUAL_PAYMENT_METHODS.indexOf(paymentMethod) === -1) {
+                safeRedirect(payData.redirect_url);
+                return;
+              }
+
+              // For manual payments show instructions in the success screen
+              showOrderSuccess(buildPaymentInfoHtml(payData, paymentMethod));
+            })
+            .catch(function () {
+              // Payment initiation failed – still show order success (order was created)
+              cart.clearCart();
+              restoreButton(submitBtn, 'Z\u0142\u00f3\u017c zam\u00f3wienie');
+              showOrderSuccess('');
+            });
+        })
+        .catch(function () {
+          restoreButton(submitBtn, 'Z\u0142\u00f3\u017c zam\u00f3wienie');
+          submitLocalOrder(form, cart, items, fd);
+        });
+    }, true /* capture */);
+  }
+
+  /**
+   * Build HTML for the payment info box shown in the order-success screen.
+   * @param {object} payData - response from POST /api/payments/:orderId/initiate
+   * @param {string} method  - payment method chosen by the user
+   * @returns {string} HTML string (safe to set as innerHTML)
+   */
+  function buildPaymentInfoHtml(payData, method) {
+    if (!payData) return '';
+
+    if (method === 'transfer') {
+      var account = escapeHtmlStr(payData.bank_account || '');
+      var amount  = escapeHtmlStr(payData.amount || '');
+      var ref     = escapeHtmlStr(payData.reference || payData.payment_id || '');
+      return '<div class="payment-info-box">' +
+        '<p>🏦 <strong>Dane do przelewu bankowego</strong></p>' +
+        (account ? '<p>Numer konta: <strong>' + account + '</strong></p>' : '') +
+        (amount  ? '<p>Kwota: <strong>' + amount + ' PLN</strong></p>' : '') +
+        (ref     ? '<p>Tytu\u0142 przelewu: <strong>' + ref + '</strong></p>' : '') +
+        '<p>Zam\u00f3wienie zostanie zrealizowane po ksi\u0119gowaniu p\u0142atno\u015bci.</p>' +
+        '</div>';
+    }
+
+    if (method === 'blik') {
+      var instructions = escapeHtmlStr(payData.instructions || 'Wygeneruj kod BLIK w aplikacji bankowej.');
+      return '<div class="payment-info-box">' +
+        '<p>📱 <strong>P\u0142atno\u015b\u0107 BLIK</strong></p>' +
+        '<p>' + instructions + '</p>' +
+        '</div>';
+    }
+
+    return '';
+  }
+
+  function escapeHtmlStr(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function submitLocalOrder(form, cart, items, fd) {
+    var formData = {
+      name: fd.get('name') || '',
+      email: fd.get('email') || '',
+      phone: fd.get('phone') || '',
+      address: fd.get('address') || ''
+    };
+    var order = cart.saveOrder(formData, items);
+    try { sessionStorage.setItem('qm_last_order', order.number); } catch (_) {}
+    cart.clearCart();
+    var numEl = document.querySelector('[data-order-number]');
+    if (numEl) numEl.textContent = 'Numer zam\u00f3wienia: ' + order.number;
+    showOrderSuccess('');
+  }
+
+  function showOrderSuccess(paymentInfoHtml) {
+    var contentEl = document.querySelector('[data-cart-content]');
+    var successEl = document.querySelector('[data-order-success]');
+    var infoBox   = document.querySelector('[data-payment-info]');
+    if (infoBox && paymentInfoHtml != null) infoBox.innerHTML = paymentInfoHtml;
+    if (contentEl) contentEl.hidden = true;
+    if (successEl) successEl.hidden = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ─── Dashboard page ──────────────────────────────────────────────────────────
+
+  function initDashboardPage() {
+    var api = window.QMApi;
+    if (!api || !api.Auth.isLoggedIn()) {
+      return;
+    }
+
+    api.Auth.me()
+      .then(function (user) {
+        updateDashboardUser(user);
+
+        // Load promo slots for admin/owner users
+        if (user.role === 'owner' || user.role === 'admin') {
+          api.Admin.dashboard()
+            .then(function (data) {
+              var slots = data && data.promo_slots;
+              if (Array.isArray(slots)) {
+                var tier1El = document.querySelector('[data-promo-slot-tier1]');
+                var tier2El = document.querySelector('[data-promo-slot-tier2]');
+                var tier3El = document.querySelector('[data-promo-slot-tier3]');
+                if (tier1El && slots[0]) tier1El.textContent = slots[0].slotsLeft;
+                if (tier2El && slots[1]) tier2El.textContent = slots[1].slotsLeft;
+                if (tier3El && slots[2]) tier3El.textContent = slots[2].slotsLeft;
+              }
+            })
+            .catch(function () {});
+        }
+      })
+      .catch(function (err) {
+        if (err && err.status === 401) {
+          api.Auth.logout();
+          try { localStorage.removeItem('app_user_logged'); } catch (_) {}
+        }
+      });
+
+    loadDashboardOrders();
+  }
+
+  function updateDashboardUser(user) {
+    var welcomeEl = document.querySelector('.dashboard-welcome h1');
+    if (welcomeEl && user.name) {
+      welcomeEl.textContent = 'Witaj, ' + user.name + '!';
+    }
+
+    var plan = (user.plan || 'trial').toUpperCase();
+    document.querySelectorAll('[data-user-plan],[data-plan-name]').forEach(function (el) {
+      el.textContent = plan;
+    });
+
+    if (user.trial_ends_at || user.trialEndsAt) {
+      var endsAt = new Date(user.trial_ends_at || user.trialEndsAt);
+      var daysLeft = Math.max(0, Math.ceil((endsAt - Date.now()) / MS_PER_DAY));
+      document.querySelectorAll('[data-trial-remaining],[data-plan-trial]').forEach(function (el) {
+        el.textContent = daysLeft;
+      });
+    }
+  }
+
+  function loadDashboardOrders() {
+    var api = window.QMApi;
+    if (!api) return;
+
+    var ordersSection = document.querySelector('[data-api-orders]');
+    if (!ordersSection) return;
+
+    api.Orders.list({ limit: 5 })
+      .then(function (data) {
+        var orders = Array.isArray(data) ? data : (data.orders || []);
+        renderDashboardOrders(ordersSection, orders);
+      })
+      .catch(function () {
+        var loadingEl = ordersSection.querySelector('[data-orders-loading]');
+        if (loadingEl) loadingEl.hidden = true;
+      });
+  }
+
+  function renderDashboardOrders(container, orders) {
+    var loadingEl = container.querySelector('[data-orders-loading]');
+    var listEl = container.querySelector('[data-orders-list]');
+    var emptyEl = container.querySelector('[data-orders-empty]');
+
+    if (loadingEl) loadingEl.hidden = true;
+
+    if (!orders.length) {
+      if (emptyEl) emptyEl.hidden = false;
+      return;
+    }
+
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+    orders.forEach(function (order) {
+      var date = order.created_at ? new Date(order.created_at).toLocaleDateString('pl-PL') : '\u2014';
+      var total = order.total_amount != null ? formatPrice(order.total_amount) : '\u2014';
+      var status = translateStatus(order.status || 'pending');
+      var row = document.createElement('div');
+      row.className = 'order-row';
+      row.innerHTML =
+        '<span class="order-num">' + escapeHtml(order.number || (order.id || '').slice(0, 8)) + '</span>' +
+        '<span class="order-date">' + date + '</span>' +
+        '<span class="order-total">' + total + '</span>' +
+        '<span class="order-status badge-pill">' + escapeHtml(status) + '</span>';
+      listEl.appendChild(row);
+    });
+    if (emptyEl) emptyEl.hidden = true;
+  }
+
+  function translateStatus(status) {
+    var map = {
+      pending: 'Oczekuj\u0105ce',
+      confirmed: 'Potwierdzone',
+      shipped: 'Wys\u0142ane',
+      delivered: 'Dostarczone',
+      cancelled: 'Anulowane'
+    };
+    return map[status] || status;
+  }
+
+  // ─── Shared UI helpers ───────────────────────────────────────────────────────
+
+  function showFormError(form, msg) {
+    var el = form.querySelector('.pwa-form-error');
+    if (!el) {
+      el = document.createElement('p');
+      el.className = 'hint pwa-form-error';
+      form.appendChild(el);
+    }
+    el.textContent = msg;
+    el.hidden = false;
+  }
+
+  function hideFormError(form) {
+    var el = form.querySelector('.pwa-form-error');
+    if (el) el.hidden = true;
+  }
+
+  function setButtonLoading(btn, text) {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.textContent = text;
+  }
+
+  function restoreButton(btn, origText) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.textContent = origText || 'Wy\u015blij';
+  }
+
+  // ─── Store panel page (panel-sklepu.html) ────────────────────────────────────
+
+  function initStorePanelPage() {
+    var api = window.QMApi;
+    if (!api || !api.Auth.isLoggedIn()) {
+      return;
+    }
+
+    var contentEl = document.querySelector('[data-store-content]');
+    var emptyEl = document.querySelector('[data-store-empty]');
+
+    api.MyStore.get()
+      .then(function (store) {
+        if (!store || !store.id) {
+          if (contentEl) contentEl.hidden = true;
+          if (emptyEl) emptyEl.hidden = false;
+          return;
+        }
+
+        if (contentEl) contentEl.hidden = false;
+        if (emptyEl) emptyEl.hidden = true;
+
+        var nameEl = document.querySelector('[data-store-name]');
+        if (nameEl) nameEl.textContent = store.name || 'Panel sklepu';
+
+        var planEl = document.querySelector('[data-store-plan]');
+        if (planEl) planEl.textContent = getPlanDisplayName(store.plan || 'free');
+
+        var marginEl = document.querySelector('[data-store-margin]');
+        if (marginEl) marginEl.textContent = (store.margin != null ? store.margin : 0) + '%';
+
+        var subdomainEl = document.querySelector('[data-store-subdomain]');
+        if (subdomainEl && store.subdomain) subdomainEl.textContent = store.subdomain;
+
+        var slugEl = document.querySelector('[data-store-slug]');
+        if (slugEl && store.slug) slugEl.textContent = store.slug;
+      })
+      .catch(function () {
+        // Keep whatever the localStorage-based shop.js already rendered;
+        // only show the empty state when there is genuinely no store data.
+        var hasLocalStore = window.StoreManager && window.StoreManager.getActiveStore();
+        if (!hasLocalStore) {
+          if (contentEl) contentEl.hidden = true;
+          if (emptyEl) emptyEl.hidden = false;
+        }
+      });
+  }
+
+  // ─── Owner panel page (owner-panel.html) ─────────────────────────────────────
+
+  function initOwnerPanelPage() {
+    var api = window.QMApi;
+    if (!api || !api.Auth.isLoggedIn()) {
+      return;
+    }
+
+    api.MyStore.get()
+      .then(function (store) {
+        if (!store) return;
+        var nameEl = document.querySelector('[data-store-name]');
+        if (nameEl) nameEl.textContent = store.name || '';
+      })
+      .catch(function (err) {
+        console.warn('[pwa-connect] owner-panel: could not load store data', err);
+      });
+
+    // Load referral data for the referrals tab
+    api.Admin.referrals({ limit: 50 })
+      .then(function (data) {
+        var rows = (data && data.referrals) || [];
+        var tbody = document.querySelector('[data-ref-tbody]');
+        var totalReferrers = rows.length;
+        var totalReferred = 0;
+        var totalActiveStores = 0;
+        var totalBonusMonths = 0;
+
+        rows.forEach(function (r) {
+          totalReferred     += r.total_referred      || 0;
+          totalActiveStores += r.active_stores        || 0;
+          totalBonusMonths  += r.total_bonus_months   || 0;
+        });
+
+        function setText(sel, val) {
+          var el = document.querySelector(sel);
+          if (el) el.textContent = val;
+        }
+        setText('[data-ref-total-referrers]',  totalReferrers);
+        setText('[data-ref-total-referred]',   totalReferred);
+        setText('[data-ref-active-stores]',    totalActiveStores);
+        setText('[data-ref-commissions]',      totalBonusMonths + ' mies.');
+        setText('[data-owner-referrals-count]', totalReferred);
+
+        if (tbody) {
+          tbody.innerHTML = '';
+          rows.forEach(function (r) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+              '<td>' + (r.referrer_name || r.referrer_email || '—') + '</td>' +
+              '<td><code>' + (r.code || '—') + '</code></td>' +
+              '<td>' + (r.total_referred || 0) + '</td>' +
+              '<td>' + (r.active_stores || 0) + '</td>' +
+              '<td>' + (r.total_bonus_months || 0) + ' mies.</td>' +
+              '<td><span class="status-pill is-ready">Aktywny</span></td>';
+            tbody.appendChild(tr);
+          });
+          if (!rows.length) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="6" class="hint" style="text-align:center">Brak poleceń</td>';
+            tbody.appendChild(tr);
+          }
+        }
+      })
+      .catch(function (err) {
+        console.warn('[pwa-connect] owner-panel: could not load referrals', err);
+      });
+
+    // Load referral code for owner (link box)
+    api.Referral.my()
+      .then(function (data) {
+        var linkEl = document.querySelector('[data-owner-referral-link]');
+        if (linkEl && data && data.code) {
+          var baseUrl = window.location.origin + '/login.html';
+          linkEl.value = baseUrl + '?ref=' + data.code;
+        }
+      })
+      .catch(function () {});
+
+    // Load admin dashboard (promo slots + revenue)
+    api.Admin.dashboard()
+      .then(function (data) {
+        function setText(sel, val) {
+          var el = document.querySelector(sel);
+          if (el) el.textContent = val;
+        }
+        if (data.promo_slots && Array.isArray(data.promo_slots)) {
+          var slots = data.promo_slots;
+          if (slots[0]) setText('[data-promo-slot-tier1]', slots[0].slotsLeft);
+          if (slots[1]) setText('[data-promo-slot-tier2]', slots[1].slotsLeft);
+          if (slots[2]) setText('[data-promo-slot-tier3]', slots[2].slotsLeft);
+        }
+        if (data.revenue_today != null)      setText('[data-owner-revenue-today]',  data.revenue_today.toFixed(2) + ' zł');
+        if (data.revenue_this_month != null) setText('[data-owner-revenue-month]',  data.revenue_this_month.toFixed(2) + ' zł');
+        if (data.sellers) {
+          setText('[data-owner-users]',  data.sellers.total_registrations);
+          setText('[data-owner-stores]', data.sellers.active_shops);
+        }
+        if (data.products) {
+          setText('[data-owner-products]', data.products.global_products);
+        }
+        if (data.customers) {
+          setText('[data-owner-orders]', data.customers.total_orders);
+        }
+        if (data.revenue != null) {
+          setText('[data-owner-revenue]', data.revenue.toFixed(2) + ' zł');
+        }
+      })
+      .catch(function () {});
+
+    // Load script stats for scripts tab
+    api.Admin.scripts()
+      .then(function (data) {
+        var scripts = (data && data.scripts) || [];
+        var active = scripts.filter(function (s) { return s.status === 'ok'; }).length;
+        function setText(sel, val) {
+          var el = document.querySelector(sel);
+          if (el) el.textContent = val;
+        }
+        setText('[data-scripts-active]', active);
+      })
+      .catch(function () {});
+
+    // Wire script run buttons to real API
+    document.querySelectorAll('[data-script-run]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var scriptId = btn.dataset.scriptRun;
+        var originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '⏳ Uruchamianie…';
+        api.Admin.runScript(scriptId)
+          .then(function (result) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            var resultEl = document.querySelector('[data-script-result]');
+            if (resultEl) {
+              resultEl.textContent = (result.ok ? '✅ ' : '❌ ') + (result.result || result.name);
+            }
+          })
+          .catch(function (err) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            var resultEl = document.querySelector('[data-script-result]');
+            if (resultEl) {
+              resultEl.textContent = '❌ Błąd: ' + (err && err.message ? err.message : 'Nieznany błąd');
+            }
+          });
+      });
+    });
+  }
+
+  // ─── Proactive session refresh ───────────────────────────────────────────────
+  // On each page load, if a token is stored, silently attempt to refresh it
+  // so the session is extended without forcing the user to re-login.
+  // This runs asynchronously and never blocks page rendering.
+  (function tryRefreshSession() {
+    var api = window.QMApi;
+    if (!api || !api.Auth || !api.Auth.isLoggedIn()) return;
+    api.Auth.refresh().catch(function () { /* ignore – user will be redirected on next 401 */ });
+  }());
+
+  // ─── Automatic Stripe subscription sync ──────────────────────────────────────
+  // On dashboard and owner panel loads, silently sync the user's Stripe
+  // subscription status so plan features are unlocked automatically.
+  // Throttled to at most once every 5 minutes to avoid unnecessary Stripe API calls.
+  // Runs fire-and-forget – failures are silently ignored.
+  (function tryStripeSync() {
+    var syncPages = ['dashboard', 'owner-panel'];
+    var currentPage = document.body ? document.body.dataset.page : null;
+    if (!currentPage || syncPages.indexOf(currentPage) === -1) return;
+
+    var api = window.QMApi;
+    if (!api || !api.Auth || !api.Auth.isLoggedIn()) return;
+
+    var token = '';
+    try { token = localStorage.getItem('qm_token') || localStorage.getItem('auth_token') || ''; } catch (_) {}
+    if (!token) return;
+
+    // Throttle: skip if synced within the last 5 minutes
+    var SYNC_THROTTLE_MS = 5 * 60 * 1000;
+    var SYNC_KEY = 'qm_stripe_sync_at';
+    try {
+      var lastSync = parseInt(localStorage.getItem(SYNC_KEY) || '0', 10);
+      if (Date.now() - lastSync < SYNC_THROTTLE_MS) return;
+      localStorage.setItem(SYNC_KEY, String(Date.now()));
+    } catch (_) {}
+
+    fetch('/api/subscriptions/stripe-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    }).catch(function () { /* fire-and-forget – ignore errors */ });
+  }());
+
+    // ─── Pricing / Cennik page ────────────────────────────────────────────────────
+
+  /**
+   * Runs on the cennik (pricing) page.
+   * - When the user is logged in: updates the topbar CTA to "Dashboard",
+   *   highlights their current plan card with an "AKTYWNY" badge, and marks
+   *   that plan's CTA button as the active plan (disabled, no checkout).
+   * - When not logged in: adds a ?redirect= parameter to the free-plan button
+   *   so that after registration the user lands back on the pricing page.
+   */
+  function initCennikPage() {
+    var api = window.QMApi;
+
+    if (!api || !api.Auth.isLoggedIn()) {
+      // Guest: update the FREE plan "Zacznij za darmo" button to carry a
+      // redirect param so the user comes back to cennik after logging in.
+      var freeBtn = document.querySelector('[data-plan-card][data-plan="free"] .btn-plan');
+      if (freeBtn && freeBtn.href && freeBtn.href.indexOf('login.html') !== -1) {
+        freeBtn.href = 'login.html?redirect=cennik.html';
+      }
+      return;
+    }
+
+    // Logged-in user: switch the topbar CTA to the user dashboard
+    var topbarCta = document.querySelector('.topbar-cta');
+    if (topbarCta && topbarCta.href && topbarCta.href.indexOf('login.html') !== -1) {
+      topbarCta.textContent = 'Dashboard';
+      topbarCta.href = 'dashboard.html';
+    }
+
+    // Fetch the user profile to know their current plan
+    api.Auth.me()
+      .then(function (user) {
+        var currentPlan = user && user.plan ? user.plan : 'trial';
+        // Normalize legacy alias
+        if (currentPlan === 'trial') currentPlan = 'free';
+
+        document.querySelectorAll('[data-plan-card]').forEach(function (card) {
+          if (card.dataset.plan !== currentPlan) return;
+
+          // Reveal the "AKTYWNY" badge
+          var badge = card.querySelector('[data-current-plan]');
+          if (badge) badge.hidden = false;
+
+          // Mark the CTA button as the active plan
+          var btn = card.querySelector('.btn-plan');
+          if (btn) {
+            btn.textContent = 'Tw\u00f3j aktualny plan';
+            btn.removeAttribute('href');
+            btn.removeAttribute('data-plan-checkout');
+            btn.setAttribute('aria-disabled', 'true');
+            btn.style.opacity = '0.65';
+            btn.style.pointerEvents = 'none';
+            btn.style.cursor = 'default';
+          }
+        });
+      })
+      .catch(function () { /* ignore – best-effort UI enhancement */ });
+  }
+
+// ─── Entry point ─────────────────────────────────────────────────────────────
+
+  var page = document.body ? document.body.dataset.page : null;
+
+  if (page === 'login') {
+    initLoginPage();
+  }
+
+  if (page === 'sklep') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initProductsPage();
+    });
+  }
+
+  if (page === 'koszyk') {
+    initCartPage();
+  }
+
+  if (page === 'dashboard') {
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        initDashboardPage();
+      }, 0);
+    });
+  }
+
+  if (page === 'panel-sklepu') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initStorePanelPage();
+    });
+  }
+
+  if (page === 'owner-panel') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initOwnerPanelPage();
+    });
+  }
+
+}());

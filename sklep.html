@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Sklep | QualitetMarket</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="shop.css">
+  <script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>
+  <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; object-src 'none'">
+  <script src="js/security-guard.js"></script>
+</head>
+<body data-page="sklep" class="store-shop has-bottom-nav">
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="QualitetMarket">
+      </div>
+      <div class="app-splash-title">
+        <strong>QualitetMarket</strong>
+        <span>Marketplace B2B/B2C</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/icons/favicon.svg" alt="QualitetMarket" width="40" height="40">
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>Marketplace B2B/B2C</span>
+        </div>
+      </a>
+      <div class="cta-row">
+        <a class="btn btn-secondary" href="koszyk.html" style="position:relative">
+          🛒 Koszyk
+          <span data-cart-badge style="position:absolute;top:-6px;right:-6px;background:#ff4fd8;color:#fff;border-radius:999px;font-size:11px;font-weight:800;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 4px" hidden>0</span>
+        </a>
+        <a class="btn btn-secondary" href="panel-sklepu.html">Panel sklepu</a>
+        <a class="btn btn-primary" href="generator-sklepu.html">Ustawienia sklepu</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap shop-shell" data-store-shop>
+    <div class="hero-grid" data-store-content>
+      <aside class="hero-side hero-side-left">
+        <div class="hero-side-card">
+          <span class="hero-side-title">Popularne kategorie</span>
+          <div class="hero-category-grid">
+            <div class="hero-category-tile">
+              <img src="assets/images/demo/category-electronics.svg" alt="Elektronika" width="26" height="26">
+              <span>Elektronika</span>
+            </div>
+            <div class="hero-category-tile">
+              <img src="assets/images/demo/category-business.svg" alt="Biznes" width="26" height="26">
+              <span>Biznes</span>
+            </div>
+            <div class="hero-category-tile">
+              <img src="assets/images/demo/category-home.svg" alt="Dom i wnętrza" width="26" height="26">
+              <span>Dom i wnętrza</span>
+            </div>
+            <div class="hero-category-tile">
+              <img src="assets/images/demo/category-fashion.svg" alt="Moda" width="26" height="26">
+              <span>Moda</span>
+            </div>
+            <div class="hero-category-tile">
+              <img src="assets/images/demo/category-tools.svg" alt="Narzędzia" width="26" height="26">
+              <span>Narzędzia</span>
+            </div>
+            <div class="hero-category-tile">
+              <img src="assets/images/demo/category-auto.svg" alt="Auto i flota" width="26" height="26">
+              <span>Auto i flota</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-side-card">
+          <span class="hero-side-title">Szybkie filtry</span>
+          <div class="themes-row">
+            <span class="theme-pill">Bestsellery</span>
+            <span class="theme-pill">Nowości</span>
+            <span class="theme-pill">Dostawa 24h</span>
+            <span class="theme-pill">Top marża</span>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-secondary" href="listing.html">Pełny listing</a>
+          </div>
+        </div>
+        <div class="hero-side-card">
+          <span class="hero-side-title">Zaufani dostawcy</span>
+          <div class="hero-logo-grid">
+            <img src="assets/images/demo/supplier-neotech.svg" alt="NeoTech" width="90" height="40">
+            <img src="assets/images/demo/supplier-homehub.svg" alt="HomeHub" width="90" height="40">
+            <img src="assets/images/demo/supplier-fashionlane.svg" alt="FashionLane" width="90" height="40">
+            <img src="assets/images/demo/supplier-autofleet.svg" alt="AutoFleet" width="90" height="40">
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-secondary" href="hurtownie.html">Hurtownie</a>
+          </div>
+        </div>
+      </aside>
+
+      <div class="hero-main">
+      <section class="panel-card store-hero-banner">
+        <div class="store-hero-content">
+          <div class="shop-logo" data-logo-preview>
+            <span>U</span>
+            <img alt="Logo sklepu">
+          </div>
+          <div class="store-hero-info">
+      <span class="eyebrow" data-store-theme></span>
+      <h1 data-store-name>Sklep</h1>
+            <p class="lead" data-store-description></p>
+            <p class="field-hint" data-store-slug></p>
+            <div class="shop-badges">
+              <span class="badge-pill" data-store-plan>Plan: Basic</span>
+              <span class="badge-pill">Oferta premium</span>
+              <span class="badge-pill">Dostawa 24h</span>
+            </div>
+            <div class="cta-row hero-actions">
+              <a class="btn btn-primary" href="listing.html">Odkryj kategorie</a>
+              <a class="btn btn-secondary" href="hurtownie.html">Hurtownie</a>
+              <a class="btn btn-secondary" href="cennik.html">Plan PRO / ELITE</a>
+            </div>
+            <div class="hero-metrics">
+              <div class="metric-tile">
+                <span>Aktywne oferty</span>
+                <strong>12 450</strong>
+              </div>
+              <div class="metric-tile">
+                <span>Hurtownie</span>
+                <strong>128</strong>
+              </div>
+              <div class="metric-tile">
+                <span>Nowości dziś</span>
+                <strong>340</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="store-hero-visual">
+          <img src="assets/images/demo/hero-market.svg" alt="Marketplace Uszefa Qualitet">
+          <div class="hero-floating-cards">
+            <div class="floating-card">
+              <span>Top kategoria</span>
+              <strong>Elektronika</strong>
+              <p>Najwyższa sprzedaż w tym tygodniu</p>
+            </div>
+            <div class="floating-card">
+              <span>Super promocja</span>
+              <strong>-22% PRO</strong>
+              <p>Odblokuj hurtownie premium</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="store-section app-cta-section" id="mobile-sklep">
+        <div class="app-cta-box app-cta-grid">
+          <div class="app-cta-content">
+            <span class="app-cta-icon" aria-hidden="true">📱</span>
+            <span class="eyebrow">Prowadź sklep z telefonu</span>
+            <h2>Sklep, hurtownie i zamówienia w jednym panelu</h2>
+            <p class="hint">Ustawienia, promocje i sprzedaż są dostępne mobilnie. Dodaj platformę do ekranu głównego i pracuj szybciej.</p>
+            <div class="app-cta-actions">
+              <button class="btn btn-primary" type="button" data-app-install-open>Otwórz aplikację</button>
+              <a class="btn btn-secondary" href="hurtownie.html">Hurtownie mobilne</a>
+            </div>
+            <div class="app-instructions">
+              <div>
+                <strong>iPhone</strong>
+                <ul>
+                  <li>Udostępnij</li>
+                  <li>Dodaj do ekranu głównego</li>
+                </ul>
+              </div>
+              <div>
+                <strong>Android</strong>
+                <ul>
+                  <li>Menu przeglądarki</li>
+                  <li>Zainstaluj aplikację</li>
+                  <li>Dodaj do ekranu głównego</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="app-cta-media">
+            <img src="assets/images/demo/product-smartphone.svg" alt="Zarządzanie sklepem z telefonu" loading="lazy" decoding="async">
+            <span class="app-cta-badge">Sklep mobile PRO</span>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="store-section" id="kategorie">
+        <div class="section-head">
+          <span class="eyebrow">Kategorie z ikonami</span>
+          <h2>Otwórz nowe działy sprzedaży</h2>
+          <p>Każda kategoria to osobny świat produktów, ikon i dynamicznych kafli.</p>
+        </div>
+        <div class="category-grid">
+          <article class="category-card">
+            <div class="category-media">
+              <img loading="lazy" decoding="async" class="category-image" src="assets/images/demo/category-electronics.svg" alt="Elektronika">
+              <span class="category-icon" aria-hidden="true">📱</span>
+            </div>
+            <div class="category-info">
+              <h3>Elektronika</h3>
+              <p>Smartfony, audio, smart home</p>
+            </div>
+          </article>
+          <article class="category-card">
+            <div class="category-media">
+              <img loading="lazy" decoding="async" class="category-image" src="assets/images/demo/category-home.svg" alt="Dom i ogród">
+              <span class="category-icon" aria-hidden="true">🏡</span>
+            </div>
+            <div class="category-info">
+              <h3>Dom i ogród</h3>
+              <p>Wyposażenie, dekoracje, outdoor</p>
+            </div>
+          </article>
+          <article class="category-card">
+            <div class="category-media">
+              <img loading="lazy" decoding="async" class="category-image" src="assets/images/demo/category-fashion.svg" alt="Moda">
+              <span class="category-icon" aria-hidden="true">👗</span>
+            </div>
+            <div class="category-info">
+              <h3>Moda</h3>
+              <p>Odzież, obuwie, dodatki premium</p>
+            </div>
+          </article>
+          <article class="category-card">
+            <div class="category-media">
+              <img loading="lazy" decoding="async" class="category-image" src="assets/images/demo/category-auto.svg" alt="Auto">
+              <span class="category-icon" aria-hidden="true">🚗</span>
+            </div>
+            <div class="category-info">
+              <h3>Auto</h3>
+              <p>Akcesoria, opony, detailing</p>
+            </div>
+          </article>
+          <article class="category-card">
+            <div class="category-media">
+              <img loading="lazy" decoding="async" class="category-image" src="assets/images/demo/category-kids.svg" alt="Dziecko">
+              <span class="category-icon" aria-hidden="true">🧸</span>
+            </div>
+            <div class="category-info">
+              <h3>Dziecko</h3>
+              <p>Zabawki, wyprawka, edukacja</p>
+            </div>
+          </article>
+          <article class="category-card">
+            <div class="category-media">
+              <img loading="lazy" decoding="async" class="category-image" src="assets/images/demo/category-beauty.svg" alt="Beauty">
+              <span class="category-icon" aria-hidden="true">💄</span>
+            </div>
+            <div class="category-info">
+              <h3>Beauty</h3>
+              <p>Kosmetyki, pielęgnacja, SPA</p>
+            </div>
+          </article>
+          <article class="category-card">
+            <div class="category-media">
+              <img loading="lazy" decoding="async" class="category-image" src="assets/images/demo/category-business.svg" alt="Biznes">
+              <span class="category-icon" aria-hidden="true">💼</span>
+            </div>
+            <div class="category-info">
+              <h3>Biznes</h3>
+              <p>Biuro, fintech, B2B premium</p>
+            </div>
+          </article>
+          <article class="category-card">
+            <div class="category-media">
+              <img loading="lazy" decoding="async" class="category-image" src="assets/images/demo/category-tools.svg" alt="Narzędzia">
+              <span class="category-icon" aria-hidden="true">🛠️</span>
+            </div>
+            <div class="category-info">
+              <h3>Narzędzia</h3>
+              <p>Profesjonalne zestawy i sprzęt</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="store-section" id="polecane">
+        <div class="section-head">
+          <span class="eyebrow">Polecane produkty</span>
+          <h2>Kafle bestsellerów, które sprzedają się same</h2>
+          <p>Hity sprzedaży, szybka rotacja, widoczny efekt wow.</p>
+        </div>
+        <div class="app-cta-box app-cta-grid">
+          <div class="app-cta-content">
+            <span class="app-cta-icon" aria-hidden="true">📲</span>
+            <span class="eyebrow">Sklep mobilny</span>
+            <h3>Zarządzaj ofertą bezpośrednio z telefonu</h3>
+            <p class="hint">Wystawiaj produkty, aktualizuj ceny i reaguj na zamówienia w aplikacji webowej.</p>
+            <div class="app-cta-actions">
+              <button class="btn btn-primary" type="button" data-app-install-open>Dodaj do ekranu</button>
+              <a class="btn btn-secondary" href="panel-sklepu.html">Panel sklepu</a>
+            </div>
+          </div>
+          <div class="app-cta-media">
+            <img src="assets/images/demo/product-sneakers.svg" alt="Sprzedaż mobilna w sklepie" loading="lazy" decoding="async">
+            <span class="app-cta-badge">Sprzedaż live</span>
+          </div>
+        </div>
+        <div data-store-products-grid></div>
+        <p class="empty" data-store-products-empty hidden>Brak produktów w sklepie.</p>
+      </section>
+
+      <section class="store-section" id="nowosci">
+        <div class="section-head">
+          <span class="eyebrow">Nowe produkty</span>
+          <h2>Świeże premiery z hurtowni</h2>
+          <p>Nowości przyciągające uwagę klientów marketplace.</p>
+        </div>
+        <div data-feed-new-grid></div>
+        <p class="empty" data-feed-new-empty hidden>Ładowanie nowości…</p>
+      </section>
+
+      <section class="store-section" id="promocje">
+        <div class="section-head">
+          <span class="eyebrow">Promocje</span>
+          <h2>Promocyjne kafle z efektem glow</h2>
+          <p>Oferta sezonowa z dynamicznym podświetleniem i CTA.</p>
+        </div>
+        <div class="promo-grid">
+          <article class="promo-card highlight">
+            <span>Promocja tygodnia</span>
+            <strong class="promo-value">-22%</strong>
+            <p>Elektronika PRO z natychmiastową dostawą.</p>
+          </article>
+          <article class="promo-card">
+            <span>Hurtownia dnia</span>
+            <strong class="promo-value">+18%</strong>
+            <p>Większa sprzedaż w domu i ogrodzie.</p>
+          </article>
+          <article class="promo-card">
+            <span>Plan ELITE</span>
+            <strong class="promo-value">VIP</strong>
+            <p>Odblokuj intelligence i wsparcie AI.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="store-section" id="hurtownie">
+        <div class="section-head">
+          <span class="eyebrow">Hurtownie</span>
+          <h2>Topowe hurtownie w jednym miejscu</h2>
+          <p>Łącz się z liderami kategorii i buduj przewagę.</p>
+        </div>
+        <div class="supplier-grid supplier-grid-large">
+          <article class="supplier-card supplier-tile">
+            <img loading="lazy" decoding="async" src="assets/images/demo/supplier-neotech.svg" alt="NeoTech">
+            <h3>NeoTech</h3>
+            <p class="hint">Elektronika i smart home premium</p>
+            <div class="supplier-meta">
+              <span>12 500 produktów</span>
+              <span>Dostawa 24h</span>
+            </div>
+            <a class="btn btn-secondary" href="hurtownie.html">Zobacz hurtownię</a>
+          </article>
+          <article class="supplier-card supplier-tile">
+            <img loading="lazy" decoding="async" src="assets/images/demo/supplier-homehub.svg" alt="HomeHub">
+            <h3>HomeHub</h3>
+            <p class="hint">Dom, ogród i lifestyle premium</p>
+            <div class="supplier-meta">
+              <span>8 900 produktów</span>
+              <span>Nowe kolekcje</span>
+            </div>
+            <a class="btn btn-secondary" href="hurtownie.html">Zobacz hurtownię</a>
+          </article>
+          <article class="supplier-card supplier-tile">
+            <img loading="lazy" decoding="async" src="assets/images/demo/supplier-fashionlane.svg" alt="FashionLane">
+            <h3>FashionLane</h3>
+            <p class="hint">Moda, sneakersy, kolekcje sezonowe</p>
+            <div class="supplier-meta">
+              <span>15 200 produktów</span>
+              <span>Top sprzedaż</span>
+            </div>
+            <a class="btn btn-secondary" href="hurtownie.html">Zobacz hurtownię</a>
+          </article>
+          <article class="supplier-card supplier-tile">
+            <img loading="lazy" decoding="async" src="assets/images/demo/supplier-autofleet.svg" alt="AutoFleet">
+            <h3>AutoFleet</h3>
+            <p class="hint">Auto, narzędzia i detailing PRO</p>
+            <div class="supplier-meta">
+              <span>6 400 produktów</span>
+              <span>Gotowe do wysyłki</span>
+            </div>
+            <a class="btn btn-secondary" href="hurtownie.html">Zobacz hurtownię</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="store-section" id="pro-elite">
+        <div class="section-head">
+          <span class="eyebrow">Banner PRO / ELITE</span>
+          <h2>Odblokuj hurtownie PRO i intelligence ELITE</h2>
+          <p>Włącz pakiety premium, aby uzyskać dostęp do największych dostawców.</p>
+        </div>
+        <div class="plan-cta-grid">
+          <article class="plan-card plan-pro">
+            <div>
+              <span class="plan-tag">PRO</span>
+              <h3>Odblokuj hurtownie PRO</h3>
+              <p>Większa sprzedaż, szybsze dostawy, więcej automatyzacji.</p>
+              <ul>
+                <li>Ekskluzywne hurtownie elektroniki</li>
+                <li>Automatyczne aktualizacje stanów</li>
+                <li>Pakiet marketingowy marketplace</li>
+              </ul>
+              <a class="btn btn-primary" href="cennik.html">Aktywuj PRO</a>
+            </div>
+            <div class="plan-visual">
+              <span>+80 hurtowni</span>
+              <strong>PRO ACCESS</strong>
+            </div>
+          </article>
+          <article class="plan-card plan-elite">
+            <div>
+              <span class="plan-tag">ELITE</span>
+              <h3>Odblokuj intelligence ELITE</h3>
+              <p>AI do prognoz sprzedaży, rekomendacje i automatyczny upsell.</p>
+              <ul>
+                <li>Predictive pricing i analityka</li>
+                <li>Automatyczne kampanie AI</li>
+                <li>Dashboard ELITE z KPI</li>
+              </ul>
+              <a class="btn btn-primary" href="cennik.html">Aktywuj ELITE</a>
+            </div>
+            <div class="plan-visual">
+              <span>AI BOOST</span>
+              <strong>ELITE</strong>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel-card shop-contact">
+        <h2>Kontakt i obsługa</h2>
+        <p class="hint">Dane kontaktowe uzupełnione w generatorze sklepu.</p>
+        <div class="panel-metrics">
+          <div class="metric-card">
+            <span>Email</span>
+            <strong data-store-email>---</strong>
+            <p class="hint">Kontakt do obsługi klienta</p>
+          </div>
+          <div class="metric-card">
+            <span>Telefon</span>
+            <strong data-store-phone>---</strong>
+            <p class="hint">Wsparcie sprzedaży</p>
+          </div>
+          <div class="metric-card">
+            <span>Dostawa</span>
+            <strong data-store-delivery>---</strong>
+            <p class="hint">Deklarowany czas realizacji</p>
+          </div>
+        </div>
+      </section>
+      </div>
+
+      <aside class="hero-side hero-side-right">
+        <div class="hero-side-card">
+          <span class="hero-side-title">Top produkty</span>
+          <div class="hero-product-list" data-feed-top-list>
+            <p class="hint" style="padding:8px 0">Ładowanie…</p>
+          </div>
+        </div>
+        <div class="hero-side-card hero-market-card">
+          <span class="hero-side-title">Rynek w liczbach</span>
+          <img class="hero-market-graphic" src="assets/images/demo/hero-market.svg" alt="Wykres statystyk rynku">
+          <div class="hero-market-stats">
+            <div>
+              <strong>12 450</strong>
+              <span>ofert</span>
+            </div>
+            <div>
+              <strong>128</strong>
+              <span>hurtowni</span>
+            </div>
+            <div>
+              <strong>98%</strong>
+              <span>satysfakcji</span>
+            </div>
+            <div>
+              <strong>24/7</strong>
+              <span>obsługi</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-side-card">
+          <span class="hero-side-title">Plan PRO / ELITE</span>
+          <p class="hint">Odblokuj hurtownie premium, pakiet AI i promocje marketplace.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="cennik.html">Aktywuj plan</a>
+            <a class="btn btn-secondary" href="login.html">Zaloguj</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="panel-card shop-empty" data-store-empty hidden>
+      <h2>Brak aktywnego sklepu</h2>
+      <p class="hint">Najpierw utwórz sklep w generatorze, aby zobaczyć podgląd.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="generator-sklepu.html">Utwórz sklep</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap panel-footer">
+    <div class="panel-footer-inner">
+      <span>© 2026 QualitetMarket — Wszelkie prawa zastrzeżone. Projekt i marka platformy stworzone przez Henryka Ślusarskiego</span>
+      <div class="panel-footer-links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cennik.html">Cennik</a>
+        <a href="index.html">Strona główna</a>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
+    <a href="index.html" rel="nofollow noreferrer" data-nav="index">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 11.5L12 4l9 7.5"></path>
+        <path d="M5 10.5V20h14v-9.5"></path>
+      </svg>
+      <span>Start</span>
+    </a>
+    <a href="sklep.html" rel="nofollow noreferrer" data-nav="sklep">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9h18l-1.5 11H4.5L3 9z"></path>
+        <path d="M7 9V7a5 5 0 0 1 10 0v2"></path>
+      </svg>
+      <span>Sklep</span>
+    </a>
+    <a href="koszyk.html" rel="nofollow noreferrer" data-nav="koszyk" style="position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+      <span data-cart-badge style="position:absolute;top:2px;right:14px;background:#ff4fd8;color:#fff;border-radius:999px;font-size:10px;font-weight:800;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px" hidden>0</span>
+      <span>Koszyk</span>
+    </a>
+    <a href="dashboard.html" rel="nofollow noreferrer" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.2"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.2"></rect>
+      </svg>
+      <span>Panel</span>
+    </a>
+    <a href="login.html" rel="nofollow noreferrer" data-nav="login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c2-3.5 6-5 8-5s6 1.5 8 5"></path>
+      </svg>
+      <span>Konto</span>
+    </a>
+  </nav>
+
+  <script src="js/api.js" defer></script>
+  <script src="js/pwa-connect.js" defer></script>
+  <script src="js/flow.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="stores.js" defer></script>
+  <script src="shop.js" defer></script>
+  <script src="js/cart.js" defer></script>
+</body>
+</html>

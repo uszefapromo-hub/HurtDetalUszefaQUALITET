@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Generator sklepu | QualitetMarket</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body data-page="store-generator" class="store-generator has-bottom-nav">
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="QualitetMarket">
+      </div>
+      <div class="app-splash-title">
+        <strong>QualitetMarket</strong>
+        <span>Marketplace B2B/B2C</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>Marketplace B2B/B2C</span>
+          
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <main class="wrap generator-shell">
+    <section class="page-hero compact">
+      <span class="eyebrow">Kreator sklepu</span>
+      <h1>Generator sklepu</h1>
+      <p class="lead">Uzupełnij dane, aby stworzyć sklep na platformie QualitetMarket.</p>
+    </section>
+
+    <!-- Sklep w 60 sekund -->
+    <section class="panel-card" style="max-width:860px;margin:0 auto 24px;border:2px solid rgba(139,92,246,.45)">
+      <div class="section-head">
+        <span class="eyebrow">🚀 Sklep w 60 sekund</span>
+        <h2>Błyskawiczny start sklepu</h2>
+        <p class="hint">Wpisz nazwę sklepu i wybierz kategorię. System automatycznie: tworzy sklep, importuje pierwsze produkty i ustawia marżę.</p>
+      </div>
+      <div class="owner-toolbar" style="flex-wrap:wrap;gap:12px">
+        <label class="form-field" style="flex:2;min-width:200px">
+          Nazwa sklepu *
+          <input type="text" id="quickName" class="owner-input" placeholder="np. Sklep z elektroniką">
+        </label>
+        <label class="form-field" style="flex:1;min-width:160px">
+          Kategoria
+          <input type="text" id="quickCategory" class="owner-input" placeholder="np. elektronika">
+        </label>
+        <label class="form-field" style="min-width:110px">
+          Marża (%)
+          <input type="number" id="quickMargin" class="owner-input" min="0" max="100" value="20">
+        </label>
+      </div>
+      <div class="cta-row" style="margin-top:12px">
+        <button class="btn btn-primary" type="button" id="quickSetupBtn" style="background:linear-gradient(135deg,#7c3aed,#0ea5e9)">🚀 Utwórz sklep teraz</button>
+        <span class="hint" id="quickStatus"></span>
+      </div>
+      <div id="quickResult" hidden style="margin-top:16px;padding:16px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.3);border-radius:12px">
+        <strong style="color:#22c55e">✅ Sklep został utworzony!</strong>
+        <p id="quickResultMsg" style="color:var(--muted);margin:6px 0 12px"></p>
+        <div class="cta-row">
+          <a class="btn btn-primary" id="quickResultShopLink" href="panel-sklepu.html">Przejdź do panelu sklepu</a>
+          <a class="btn btn-secondary" href="hurtownie.html">Importuj więcej produktów</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Auto-generate section -->
+    <section class="panel-card" style="max-width:860px;margin:0 auto 24px">
+      <div class="section-head">
+        <span class="eyebrow">Szybki start</span>
+        <h2>🤖 Automatyczny generator sklepu</h2>
+        <p class="hint">Opisz swój wymarzony sklep, a system wygeneruje dla Ciebie nazwę, opis, dobierze produkty i stworzy link sprzedażowy.</p>
+      </div>
+      <div class="owner-toolbar" style="flex-wrap:wrap;gap:12px">
+        <label class="form-field" style="flex:1;min-width:180px">
+          Zainteresowania / branża
+          <input type="text" id="genInterests" class="owner-input" placeholder="np. moda, elektronika, dom i ogród">
+        </label>
+        <label class="form-field" style="flex:1;min-width:180px">
+          Typ produktów
+          <input type="text" id="genProductTypes" class="owner-input" placeholder="np. ubrania, gadżety, meble">
+        </label>
+        <label class="form-field" style="min-width:140px">
+          Styl sklepu
+          <select id="genStyle" class="owner-filter">
+            <option value="modern">Modern</option>
+            <option value="premium">Premium</option>
+            <option value="market">Market</option>
+          </select>
+        </label>
+        <label class="form-field" style="min-width:100px">
+          Marża (%)
+          <input type="number" id="genMargin" class="owner-input" min="0" max="100" value="15">
+        </label>
+      </div>
+      <div class="cta-row" style="margin-top:12px">
+        <button class="btn btn-primary" type="button" id="autoGenerateBtn">🤖 Generuj sklep automatycznie</button>
+        <span class="hint" id="genStatus"></span>
+      </div>
+      <div id="genResult" hidden style="margin-top:16px;padding:16px;background:var(--bg-2,#f1f5f9);border-radius:8px">
+        <strong>Wygenerowane dane sklepu:</strong>
+        <div class="owner-toolbar" style="flex-wrap:wrap;gap:12px;margin-top:12px">
+          <div class="form-field">Nazwa sklepu<strong id="genResultName" style="display:block"></strong></div>
+          <div class="form-field">Slug<strong id="genResultSlug" style="display:block"></strong></div>
+        </div>
+        <div class="form-field" style="margin-top:8px">Opis<p id="genResultDesc" style="color:var(--muted);font-size:.95rem"></p></div>
+        <div class="form-field" style="margin-top:8px">Link sprzedażowy<a id="genResultLink" href="#" target="_blank" style="display:block;word-break:break-all"></a></div>
+        <div id="genResultProducts" style="margin-top:8px"></div>
+        <div class="cta-row" style="margin-top:12px">
+          <button class="btn btn-secondary" id="genApplyBtn" type="button">Użyj tych danych w formularzu ↓</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Auto-store operator module -->
+    <section class="panel-card" style="max-width:860px;margin:0 auto 24px" id="qm-auto-store-section">
+      <div class="section-head">
+        <span class="eyebrow">Automatyczny sklep</span>
+        <h2>🤖 Auto-sklep z hurtowni</h2>
+        <p class="hint">Opisz swój sklep, a system automatycznie pobierze najnowsze produkty z hurtowni i ustawi ceny z marżą. Synchronizacja odbywa się co 30 sekund.</p>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="form-field" style="display:block">
+          Opis sklepu
+          <textarea id="qm-store-description" class="qm-auto-store-desc" placeholder="np. Sklep z elektroniką dla domu i biura, najnowsze produkty w atrakcyjnych cenach"></textarea>
+        </label>
+      </div>
+      <div class="cta-row" style="gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" type="button" id="qm-open-store-btn" style="background:linear-gradient(135deg,#7c3aed,#0ea5e9)">🚀 Otwórz sklep i importuj produkty</button>
+        <button class="btn btn-secondary" type="button" id="qm-sync-btn">🔄 Synchronizuj nowości</button>
+      </div>
+      <div id="qm-store-status" style="margin-top:14px;padding:12px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;font-size:14px;line-height:1.7">
+        Sklep jeszcze nie został utworzony.
+      </div>
+      <div id="qm-products-grid" class="products-grid" style="margin-top:20px"></div>
+    </section>
+
+    <section class="app-cta-section">
+      <div class="app-cta-box app-cta-grid">
+        <div class="app-cta-content">
+          <span class="app-cta-icon" aria-hidden="true">📲</span>
+          <span class="eyebrow">Panel mobilny</span>
+          <h2>Twórz sklep z telefonu</h2>
+          <p class="hint">Generator działa również w wersji mobilnej. Dodaj platformę do ekranu głównego i uruchamiaj jak aplikację.</p>
+          <div class="app-cta-actions">
+            <button class="btn btn-primary" type="button" data-app-install-open>Dodaj do ekranu</button>
+            <a class="btn btn-secondary" href="dashboard.html">Wróć do dashboardu</a>
+          </div>
+          <div class="app-instructions">
+            <div>
+              <strong>iPhone</strong>
+              <ul>
+                <li>Udostępnij</li>
+                <li>Dodaj do ekranu głównego</li>
+              </ul>
+            </div>
+            <div>
+              <strong>Android</strong>
+              <ul>
+                <li>Menu przeglądarki</li>
+                <li>Zainstaluj aplikację</li>
+                <li>Dodaj do ekranu głównego</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="app-cta-media">
+          <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80" alt="Projektowanie sklepu w aplikacji" loading="lazy" decoding="async">
+          <span class="app-cta-badge">Start premium</span>
+        </div>
+      </div>
+    </section>
+
+    <form class="panel-card store-form" data-store-generator>
+      <div class="form-grid">
+        <label class="form-field">
+          Nazwa sklepu
+          <input type="text" name="storeName" placeholder="np. QualitetMarket Moda" required>
+        </label>
+        <label class="form-field">
+          Slug sklepu
+          <input type="text" name="storeSlug" placeholder="np. qualitat-market" required>
+          <span class="slug-preview" data-slug-preview>Adres: —</span>
+        </label>
+      </div>
+
+      <div class="form-grid full">
+        <label class="form-field">
+          Opis sklepu
+          <textarea name="storeDescription" placeholder="Opisz krótko co sprzedajesz i dla kogo"></textarea>
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label class="form-field">
+          Logo URL
+          <input type="url" name="storeLogo" placeholder="https://...">
+          <span class="field-hint">Podaj link do logo lub zostaw puste.</span>
+        </label>
+        <div class="form-field">
+          Podgląd logo
+          <div class="logo-preview" data-logo-preview>
+            <span>U</span>
+            <img alt="Logo sklepu">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label class="form-field">
+          Email kontaktowy
+          <input type="email" name="storeEmail" placeholder="kontakt@twojsklep.pl">
+        </label>
+        <label class="form-field">
+          Telefon
+          <input type="tel" name="storePhone" placeholder="+48 000 000 000">
+        </label>
+      </div>
+
+      <div class="form-grid full">
+        <label class="form-field">
+          Czas dostawy
+          <input type="text" name="storeDelivery" placeholder="np. wysyłka w 24h">
+          <span class="field-hint">Informacja pojawi się w podglądzie sklepu.</span>
+        </label>
+      </div>
+
+      <div class="form-grid full">
+        <div class="form-field">
+          Kolory sklepu
+          <div class="color-grid">
+            <label class="form-field">
+              Główny
+              <input type="color" name="primaryColor" value="#35d9ff">
+            </label>
+            <label class="form-field">
+              Akcent
+              <input type="color" name="accentColor" value="#54ffb0">
+            </label>
+            <label class="form-field">
+              Tło
+              <input type="color" name="backgroundColor" value="#f5f7fb">
+            </label>
+          </div>
+          <div class="color-preview" aria-hidden="true">
+            <span class="color-chip" data-primary-chip></span>
+            <span class="color-chip" data-accent-chip></span>
+            <span class="color-chip" data-background-chip></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label class="form-field">
+          Styl sklepu
+          <select name="storeTheme">
+            <option value="modern">Modern</option>
+            <option value="premium">Premium</option>
+            <option value="market">Market</option>
+          </select>
+        </label>
+        <label class="form-field">
+          Marża (%)
+          <input type="number" name="storeMargin" min="0" max="100" step="1" value="15">
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label class="form-field">
+          Plan
+          <select name="storePlan">
+            <option value="basic">Basic</option>
+            <option value="pro">Pro</option>
+            <option value="elite">Elite</option>
+          </select>
+        </label>
+        <label class="form-field">
+          Trial
+          <select name="storeTrial">
+            <option value="true">Tak</option>
+            <option value="false">Nie</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="store-actions">
+        <button class="btn btn-primary" type="submit">ZAPISZ SKLEP</button>
+        <button class="btn btn-secondary" type="button" data-store-preview>PODGLĄD SKLEPU</button>
+        <button class="btn btn-secondary" type="button" data-store-panel>OTWÓRZ PANEL</button>
+      </div>
+    </form>
+  </main>
+
+  <footer class="wrap panel-footer">
+    <div class="panel-footer-inner">
+      <span>© 2026 QualitetMarket — Wszelkie prawa zastrzeżone. Projekt i marka platformy stworzone przez Henryka Ślusarskiego</span>
+      <div class="panel-footer-links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cennik.html">Cennik</a>
+        <a href="index.html">Strona główna</a>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
+    <a href="index.html" rel="nofollow noreferrer" data-nav="index">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 11.5L12 4l9 7.5"></path>
+        <path d="M5 10.5V20h14v-9.5"></path>
+      </svg>
+      <span>Start</span>
+    </a>
+    <a href="sklep.html" rel="nofollow noreferrer" data-nav="sklep">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9h18l-1.5 11H4.5L3 9z"></path>
+        <path d="M7 9V7a5 5 0 0 1 10 0v2"></path>
+      </svg>
+      <span>Sklep</span>
+    </a>
+    <a href="hurtownie.html" rel="nofollow noreferrer" data-nav="hurtownie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="7" width="7" height="10" rx="1.4"></rect>
+        <rect x="14" y="7" width="7" height="10" rx="1.4"></rect>
+        <path d="M6.5 7V5.5a1.5 1.5 0 0 1 3 0V7"></path>
+      </svg>
+      <span>Hurtownie</span>
+    </a>
+    <a href="dashboard.html" rel="nofollow noreferrer" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.2"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.2"></rect>
+      </svg>
+      <span>Panel</span>
+    </a>
+    <a href="login.html" rel="nofollow noreferrer" data-nav="login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c2-3.5 6-5 8-5s6 1.5 8 5"></path>
+      </svg>
+      <span>Konto</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js" defer></script>
+  <script src="stores.js" defer></script>
+  <script src="shop.js" defer></script>
+  <script src="js/auto-store.js" defer></script>
+  <script>
+  (function () {
+    let lastGenerated = null;
+
+    async function generateStore() {
+      const btn    = document.getElementById('autoGenerateBtn');
+      const status = document.getElementById('genStatus');
+      const result = document.getElementById('genResult');
+
+      const interests    = (document.getElementById('genInterests')    || {}).value || '';
+      const productTypes = (document.getElementById('genProductTypes') || {}).value || '';
+      const style        = (document.getElementById('genStyle')        || {}).value || 'modern';
+      const margin       = parseFloat((document.getElementById('genMargin') || {}).value || '15');
+
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Generuję…'; }
+      if (status) status.textContent = '';
+
+      try {
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch('/api/my/store/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+          body: JSON.stringify({ interests, product_types: productTypes, style, margin }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Błąd generowania');
+        }
+        const data = await res.json();
+        lastGenerated = data;
+
+        const el = (id) => document.getElementById(id);
+        if (el('genResultName')) el('genResultName').textContent = data.name || '';
+        if (el('genResultSlug')) el('genResultSlug').textContent = data.slug || '';
+        if (el('genResultDesc')) el('genResultDesc').textContent = data.description || '';
+        if (el('genResultLink')) { el('genResultLink').href = data.sales_link || '#'; el('genResultLink').textContent = data.sales_link || ''; }
+
+        if (data.suggested_products && data.suggested_products.length > 0) {
+          const prod = el('genResultProducts');
+          if (prod) {
+            prod.innerHTML = '<strong>Sugerowane produkty:</strong><ul style="margin-top:4px;padding-left:20px">' +
+              data.suggested_products.map(p => `<li>${p.name} — ${parseFloat(p.selling_price || 0).toFixed(2)} zł</li>`).join('') +
+              '</ul>';
+          }
+        }
+
+        if (result) result.hidden = false;
+        if (status) status.textContent = '✅ Gotowe!';
+      } catch (err) {
+        if (status) status.textContent = '❌ ' + (err.message || 'Błąd generowania. Upewnij się, że jesteś zalogowany.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🤖 Generuj sklep automatycznie'; }
+      }
+    }
+
+    function applyGenerated() {
+      if (!lastGenerated) return;
+      const nameInput = document.querySelector('[name="storeName"]');
+      const slugInput = document.querySelector('[name="storeSlug"]');
+      const descInput = document.querySelector('[name="storeDescription"]');
+      const marginInput = document.querySelector('[name="storeMargin"]');
+      const themeSelect = document.querySelector('[name="storeTheme"]');
+
+      if (nameInput) nameInput.value = lastGenerated.name || '';
+      if (slugInput) slugInput.value = lastGenerated.slug || '';
+      if (descInput) descInput.value = lastGenerated.description || '';
+      if (marginInput) marginInput.value = lastGenerated.margin != null ? lastGenerated.margin : 15;
+      if (themeSelect) themeSelect.value = lastGenerated.style || 'modern';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const genBtn   = document.getElementById('autoGenerateBtn');
+      const applyBtn = document.getElementById('genApplyBtn');
+      if (genBtn)   genBtn.addEventListener('click', generateStore);
+      if (applyBtn) applyBtn.addEventListener('click', applyGenerated);
+
+      // ── Sklep w 60 sekund ──────────────────────────────────────────────────
+      const quickBtn = document.getElementById('quickSetupBtn');
+      if (quickBtn) {
+        quickBtn.addEventListener('click', async () => {
+          const nameInput   = document.getElementById('quickName');
+          const catInput    = document.getElementById('quickCategory');
+          const marginInput = document.getElementById('quickMargin');
+          const statusEl    = document.getElementById('quickStatus');
+          const resultEl    = document.getElementById('quickResult');
+          const msgEl       = document.getElementById('quickResultMsg');
+
+          const name     = (nameInput   || {}).value || '';
+          const category = (catInput    || {}).value || '';
+          const margin   = parseFloat((marginInput || {}).value || '20');
+
+          if (!name.trim()) {
+            if (statusEl) statusEl.textContent = '❌ Wpisz nazwę sklepu';
+            return;
+          }
+
+          quickBtn.disabled = true;
+          quickBtn.textContent = '⏳ Tworzę sklep…';
+          if (statusEl) statusEl.textContent = '';
+
+          try {
+            const apiBase = window.QM_API_BASE || '/api';
+            const token = localStorage.getItem('token') || '';
+            const res = await fetch(apiBase.replace(/\/api$/, '') + '/api/shops/quick-setup', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: 'Bearer ' + token } : {}),
+              },
+              body: JSON.stringify({ name, category: category || undefined, margin }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.error || 'Błąd tworzenia sklepu');
+            }
+            const data = await res.json();
+            if (msgEl) msgEl.textContent = data.message || 'Sklep gotowy!';
+            if (resultEl) resultEl.hidden = false;
+            if (statusEl) statusEl.textContent = '';
+          } catch (err) {
+            if (statusEl) statusEl.textContent = '❌ ' + (err.message || 'Błąd. Upewnij się, że jesteś zalogowany jako sprzedawca.');
+          } finally {
+            quickBtn.disabled = false;
+            quickBtn.textContent = '🚀 Utwórz sklep teraz';
+          }
+        });
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

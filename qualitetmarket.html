@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>QualitetMarket | QualitetMarket</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body data-page="qualitetmarket" class="feature-page has-bottom-nav">
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="QualitetMarket">
+      </div>
+      <div class="app-splash-title">
+        <strong>QualitetMarket</strong>
+        <span>Marketplace B2B/B2C</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>Marketplace B2B/B2C</span>
+          
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html">Start</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="wrap">
+        <span class="eyebrow">Główny Sklep Platformy</span>
+        <h1>QualitetMarket Hurt / Detal</h1>
+        <p class="lead">Główny sklep platformy QualitetMarket — produkty z wiodących hurtowni dostępne dla wszystkich sprzedawców i kupujących.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="hurtownie.html">Importuj produkty</a>
+          <a class="btn btn-secondary" href="dashboard.html">Wróć do dashboardu</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap stats-grid module-stats">
+      <div class="stat-card">
+        <span>Produkty w marketplace</span>
+        <strong>1 284</strong>
+      </div>
+      <div class="stat-card">
+        <span>Sprzedaż dziś</span>
+        <strong>34</strong>
+      </div>
+      <div class="stat-card">
+        <span>Aktywne kampanie</span>
+        <strong>6</strong>
+      </div>
+      <div class="stat-card">
+        <span>Partnerzy premium</span>
+        <strong>128</strong>
+      </div>
+    </section>
+
+    <section class="wrap module-content">
+      <div class="panel-card">
+        <div class="section-head">
+          <span class="eyebrow">QualitetMarket</span>
+          <h2>Polecane produkty</h2>
+          <p class="hint">Produkty z najwyższą sprzedażą i oceną partnerów w tym tygodniu.</p>
+        </div>
+
+        <div class="catalog-bulk-bar" id="catalogBulkBar" style="display:none;">
+          <span class="catalog-bulk-info" id="catalogBulkInfo">0 produktów zaznaczonych</span>
+          <button class="btn btn-primary" type="button" id="catalogBulkAddBtn">Dodaj wybrane produkty</button>
+          <button class="btn btn-secondary" type="button" id="catalogBulkClearBtn">Odznacz wszystkie</button>
+        </div>
+
+        <div class="market-grid" id="catalogGrid">
+          <div class="market-product-card" data-product-id="prod-sluchawki">
+            <label class="catalog-select-label" aria-label="Zaznacz produkt">
+              <input type="checkbox" class="catalog-product-checkbox" value="prod-sluchawki">
+            </label>
+            <div class="market-product-emoji">🎧</div>
+            <div class="market-product-info">
+              <h3>Słuchawki bezprzewodowe Pro X</h3>
+              <p class="hint">Elektronika · NeoTech</p>
+            </div>
+            <div class="market-price-row">
+              <span class="market-price">239 zł</span>
+              <span class="market-badge">⭐ Top seller</span>
+            </div>
+            <button class="btn btn-sm btn-primary catalog-add-btn" type="button" data-product-id="prod-sluchawki">Dodaj do sklepu</button>
+          </div>
+          <div class="market-product-card" data-product-id="prod-smartwatch">
+            <label class="catalog-select-label" aria-label="Zaznacz produkt">
+              <input type="checkbox" class="catalog-product-checkbox" value="prod-smartwatch">
+            </label>
+            <div class="market-product-emoji">⌚</div>
+            <div class="market-product-info">
+              <h3>Smartwatch Sport Edition</h3>
+              <p class="hint">Elektronika · NeoTech</p>
+            </div>
+            <div class="market-price-row">
+              <span class="market-price">499 zł</span>
+              <span class="market-badge">⭐ Top seller</span>
+            </div>
+            <button class="btn btn-sm btn-primary catalog-add-btn" type="button" data-product-id="prod-smartwatch">Dodaj do sklepu</button>
+          </div>
+          <div class="market-product-card" data-product-id="prod-buty">
+            <label class="catalog-select-label" aria-label="Zaznacz produkt">
+              <input type="checkbox" class="catalog-product-checkbox" value="prod-buty">
+            </label>
+            <div class="market-product-emoji">👟</div>
+            <div class="market-product-info">
+              <h3>Buty sportowe Running Pro</h3>
+              <p class="hint">Moda · FashionLane</p>
+            </div>
+            <div class="market-price-row">
+              <span class="market-price">299 zł</span>
+              <span class="market-badge">🔥 Trending</span>
+            </div>
+            <button class="btn btn-sm btn-primary catalog-add-btn" type="button" data-product-id="prod-buty">Dodaj do sklepu</button>
+          </div>
+          <div class="market-product-card" data-product-id="prod-smartfon">
+            <label class="catalog-select-label" aria-label="Zaznacz produkt">
+              <input type="checkbox" class="catalog-product-checkbox" value="prod-smartfon">
+            </label>
+            <div class="market-product-emoji">📱</div>
+            <div class="market-product-info">
+              <h3>Smartfon Ultra Slim 128GB</h3>
+              <p class="hint">Elektronika · NeoTech</p>
+            </div>
+            <div class="market-price-row">
+              <span class="market-price">1 299 zł</span>
+              <span class="market-badge">🔥 Trending</span>
+            </div>
+            <button class="btn btn-sm btn-primary catalog-add-btn" type="button" data-product-id="prod-smartfon">Dodaj do sklepu</button>
+          </div>
+          <div class="market-product-card" data-product-id="prod-fotel">
+            <label class="catalog-select-label" aria-label="Zaznacz produkt">
+              <input type="checkbox" class="catalog-product-checkbox" value="prod-fotel">
+            </label>
+            <div class="market-product-emoji">🛋️</div>
+            <div class="market-product-info">
+              <h3>Fotel biurowy Ergonomic</h3>
+              <p class="hint">Dom i ogród · HomeHub</p>
+            </div>
+            <div class="market-price-row">
+              <span class="market-price">899 zł</span>
+              <span class="market-badge">✨ Nowy</span>
+            </div>
+            <button class="btn btn-sm btn-primary catalog-add-btn" type="button" data-product-id="prod-fotel">Dodaj do sklepu</button>
+          </div>
+          <div class="market-product-card" data-product-id="prod-plecak">
+            <label class="catalog-select-label" aria-label="Zaznacz produkt">
+              <input type="checkbox" class="catalog-product-checkbox" value="prod-plecak">
+            </label>
+            <div class="market-product-emoji">🎒</div>
+            <div class="market-product-info">
+              <h3>Plecak turystyczny 40L</h3>
+              <p class="hint">Sport · AutoFleet</p>
+            </div>
+            <div class="market-price-row">
+              <span class="market-price">189 zł</span>
+              <span class="market-badge">✨ Nowy</span>
+            </div>
+            <button class="btn btn-sm btn-primary catalog-add-btn" type="button" data-product-id="prod-plecak">Dodaj do sklepu</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap section-grid module-features">
+      <article class="feature-card gradient-a">
+        <h2>Marketplace premium</h2>
+        <p class="hint">Sprzedawaj produkty w kanale QualitetMarket z dedykowaną ekspozycją.</p>
+      </article>
+      <article class="feature-card gradient-b">
+        <h2>Promocje kampanii</h2>
+        <p class="hint">Wspólne akcje marketingowe zwiększają konwersję.</p>
+      </article>
+      <article class="feature-card gradient-c">
+        <h2>Raporty sprzedaży</h2>
+        <p class="hint">Monitoruj sprzedaż i segmenty klientów w jednym widoku.</p>
+      </article>
+    </section>
+
+    <footer class="wrap panel-footer">
+      <div class="panel-footer-inner">
+        <span>© 2026 QualitetMarket — Wszelkie prawa zastrzeżone. Projekt i marka platformy stworzone przez Henryka Ślusarskiego</span>
+        <div class="panel-footer-links">
+          <a href="dashboard.html">Dashboard</a>
+          <a href="cennik.html">Cennik</a>
+          <a href="index.html">Strona główna</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
+    <a href="index.html" rel="nofollow noreferrer" data-nav="index">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 11.5L12 4l9 7.5"></path>
+        <path d="M5 10.5V20h14v-9.5"></path>
+      </svg>
+      <span>Start</span>
+    </a>
+    <a href="sklep.html" rel="nofollow noreferrer" data-nav="sklep">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9h18l-1.5 11H4.5L3 9z"></path>
+        <path d="M7 9V7a5 5 0 0 1 10 0v2"></path>
+      </svg>
+      <span>Sklep</span>
+    </a>
+    <a href="hurtownie.html" rel="nofollow noreferrer" data-nav="hurtownie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="7" width="7" height="10" rx="1.4"></rect>
+        <rect x="14" y="7" width="7" height="10" rx="1.4"></rect>
+        <path d="M6.5 7V5.5a1.5 1.5 0 0 1 3 0V7"></path>
+      </svg>
+      <span>Hurtownie</span>
+    </a>
+    <a href="dashboard.html" rel="nofollow noreferrer" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.2"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.2"></rect>
+      </svg>
+      <span>Panel</span>
+    </a>
+    <a href="login.html" rel="nofollow noreferrer" data-nav="login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c2-3.5 6-5 8-5s6 1.5 8 5"></path>
+      </svg>
+      <span>Konto</span>
+    </a>
+  </nav>
+
+  <script src="js/api.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script>
+    (function () {
+      'use strict';
+
+      function initCatalog() {
+        var grid        = document.getElementById('catalogGrid');
+        var bulkBar     = document.getElementById('catalogBulkBar');
+        var bulkInfo    = document.getElementById('catalogBulkInfo');
+        var bulkAddBtn  = document.getElementById('catalogBulkAddBtn');
+        var bulkClearBtn = document.getElementById('catalogBulkClearBtn');
+
+        if (!grid) return;
+
+        function getChecked() {
+          return Array.from(grid.querySelectorAll('.catalog-product-checkbox:checked'))
+            .map(function (cb) { return cb.value; });
+        }
+
+        function updateBulkBar() {
+          var checked = getChecked();
+          if (checked.length > 0) {
+            var n = checked.length;
+            var label;
+            if (n === 1) {
+              label = '1 produkt zaznaczony';
+            } else if (n >= 2 && n <= 4) {
+              label = n + ' produkty zaznaczone';
+            } else {
+              label = n + ' produktów zaznaczonych';
+            }
+            bulkInfo.textContent = label;
+            bulkBar.style.display = '';
+          } else {
+            bulkBar.style.display = 'none';
+          }
+        }
+
+        function getStoreId() {
+          var api = window.QMApi;
+          if (!api) return null;
+          var user = api.Auth.currentUser();
+          return (user && user.store_id) || null;
+        }
+
+        function showToast(msg, type) {
+          var el = document.createElement('div');
+          el.className = 'catalog-toast catalog-toast--' + (type || 'success');
+          el.textContent = msg;
+          document.body.appendChild(el);
+          setTimeout(function () { el.remove(); }, 3000);
+        }
+
+        function markAdded(productId) {
+          var btn = grid.querySelector('.catalog-add-btn[data-product-id="' + productId + '"]');
+          if (btn) {
+            btn.textContent = 'Dodano ✓';
+            btn.disabled = true;
+          }
+        }
+
+        function addSingleProduct(productId) {
+          var api = window.QMApi;
+          if (!api || !api.Auth.isLoggedIn()) {
+            window.location.href = 'login.html';
+            return;
+          }
+          var storeId = getStoreId();
+          if (!storeId) {
+            showToast('Nie znaleziono sklepu. Zaloguj się ponownie.', 'error');
+            return;
+          }
+          api.MyStore.addProduct({ store_id: storeId, product_id: productId })
+            .then(function () {
+              markAdded(productId);
+              showToast('Produkt dodany do sklepu!', 'success');
+            })
+            .catch(function (err) {
+              var msg = (err && err.body && err.body.error) || 'Błąd dodawania produktu';
+              showToast(msg, 'error');
+            });
+        }
+
+        function addBulkProducts(productIds) {
+          var api = window.QMApi;
+          if (!api || !api.Auth.isLoggedIn()) {
+            window.location.href = 'login.html';
+            return;
+          }
+          var storeId = getStoreId();
+          if (!storeId) {
+            showToast('Nie znaleziono sklepu. Zaloguj się ponownie.', 'error');
+            return;
+          }
+          bulkAddBtn.disabled = true;
+          api.MyStore.bulkAddProducts({ store_id: storeId, product_ids: productIds })
+            .then(function (data) {
+              // Only mark products confirmed as added in the response
+              var addedResults = data.results || [];
+              addedResults.forEach(function (sp) {
+                if (sp && sp.product_id) markAdded(sp.product_id);
+              });
+              grid.querySelectorAll('.catalog-product-checkbox:checked').forEach(function (cb) {
+                cb.checked = false;
+              });
+              updateBulkBar();
+              showToast('Dodano ' + (data.added || 0) + ' produktów do sklepu!', 'success');
+            })
+            .catch(function (err) {
+              var msg = (err && err.body && err.body.error) || 'Błąd masowego dodawania';
+              showToast(msg, 'error');
+            })
+            .finally(function () {
+              bulkAddBtn.disabled = false;
+            });
+        }
+
+        // Event delegation for checkboxes
+        grid.addEventListener('change', function (e) {
+          if (e.target.classList.contains('catalog-product-checkbox')) {
+            updateBulkBar();
+          }
+        });
+
+        // Event delegation for single-add buttons
+        grid.addEventListener('click', function (e) {
+          var btn = e.target.closest('.catalog-add-btn');
+          if (btn) {
+            addSingleProduct(btn.dataset.productId);
+          }
+        });
+
+        // Bulk add
+        if (bulkAddBtn) {
+          bulkAddBtn.addEventListener('click', function () {
+            var ids = getChecked();
+            if (ids.length > 0) addBulkProducts(ids);
+          });
+        }
+
+        // Clear selection
+        if (bulkClearBtn) {
+          bulkClearBtn.addEventListener('click', function () {
+            grid.querySelectorAll('.catalog-product-checkbox').forEach(function (cb) {
+              cb.checked = false;
+            });
+            updateBulkBar();
+          });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCatalog);
+      } else {
+        initCatalog();
+      }
+    }());
+  </script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+-- HurtDetalUszefaQUALITET – Initial product catalog seed
+-- Applies after 011_platform_commission.sql
+--
+-- Inserts 210 central-catalog products across 5 categories (50+40+45+35+40):
+--   elektronika | akcesoria do telefonu | dom i ogród | fitness | gadżety
+--
+-- platform_price uses the default tiered margin:
+--   supplier_price ≤  20  → × 1.60
+--   supplier_price ≤ 100  → × 1.40
+--   supplier_price ≤ 300  → × 1.25
+--   supplier_price >  300 → × 1.15
+--
+-- Idempotent: ON CONFLICT (sku) WHERE is_central=true AND sku IS NOT NULL DO NOTHING
+
+INSERT INTO products (
+  id, store_id, supplier_id,
+  name, sku, description,
+  price_net, tax_rate, price_gross,
+  supplier_price, platform_price, min_selling_price,
+  selling_price, margin,
+  stock, category, image_url,
+  is_central, status, created_at
+)
+WITH raw (sku, name, description, category, supplier_price, image_url, stock) AS (VALUES
+
+  -- ─── ELEKTRONIKA (EL-001 … EL-050) ────────────────────────────────────────
+  ('EL-001','Smartfon XPhone Pro 128GB','Flagowy smartfon z ekranem AMOLED 6.7", aparatem 108 MP i baterią 5000 mAh.','elektronika',599.00,'https://picsum.photos/seed/EL001/400/400',150),
+  ('EL-002','Smartfon Budget Max 64GB','Wydajny smartfon z ekranem IPS 6.5", aparatem 50 MP i baterią 4500 mAh.','elektronika',299.00,'https://picsum.photos/seed/EL002/400/400',200),
+  ('EL-003','Tablet MultiTab 10"','Tablet z ekranem 10", procesorem ośmiordzeniowym i pamięcią 4 GB RAM.','elektronika',399.00,'https://picsum.photos/seed/EL003/400/400',120),
+  ('EL-004','Laptop UltraBook 15" i5','Laptop z procesorem Intel i5, 16 GB RAM, dyskiem SSD 512 GB i ekranem FullHD.','elektronika',1799.00,'https://picsum.photos/seed/EL004/400/400',80),
+  ('EL-005','Słuchawki bezprzewodowe BT-700','Słuchawki Bluetooth 5.0 z redukcją szumów ANC i czasem pracy 30 godzin.','elektronika',149.00,'https://picsum.photos/seed/EL005/400/400',300),
+  ('EL-006','Słuchawki dokanałowe ProSound','Słuchawki dokanałowe z dźwiękiem Hi-Fi, mikrofonem i kablem z oplotem nylonowym.','elektronika',79.00,'https://picsum.photos/seed/EL006/400/400',400),
+  ('EL-007','Smartwatch FitTime Pro','Smartwatch z GPS, monitorem tętna, SpO2 i 14-dniową baterią.','elektronika',299.00,'https://picsum.photos/seed/EL007/400/400',180),
+  ('EL-008','Smartwatch Basic BW-200','Inteligentny zegarek z krokomierzem, powiadomieniami i ekranem kolorowym.','elektronika',149.00,'https://picsum.photos/seed/EL008/400/400',250),
+  ('EL-009','Głośnik Bluetooth SoundBoom','Przenośny głośnik Bluetooth 5.0, 20 W, wodoodporny IPX7, bateria 10 h.','elektronika',89.00,'https://picsum.photos/seed/EL009/400/400',350),
+  ('EL-010','Głośnik przenośny MiniSound','Kieszonkowy głośnik Bluetooth 5 W z kolorowym podświetleniem LED.','elektronika',49.00,'https://picsum.photos/seed/EL010/400/400',500),
+  ('EL-011','Kamera sportowa ActionCam 4K','Kamera sportowa 4K 60fps, wodoodporna do 30 m, kąt 170°, WiFi.','elektronika',249.00,'https://picsum.photos/seed/EL011/400/400',120),
+  ('EL-012','Drukarka wielofunkcyjna PrintMaster','Drukarka atramentowa z funkcją skanowania, kopiowania i WiFi.','elektronika',349.00,'https://picsum.photos/seed/EL012/400/400',90),
+  ('EL-013','Monitor LED 24" FullHD','Monitor 24 cale, rozdzielczość 1920×1080, odświeżanie 75 Hz, HDMI+VGA.','elektronika',599.00,'https://picsum.photos/seed/EL013/400/400',60),
+  ('EL-014','Klawiatura mechaniczna GameType','Klawiatura mechaniczna z przełącznikami Blue, podświetleniem RGB i USB.','elektronika',129.00,'https://picsum.photos/seed/EL014/400/400',200),
+  ('EL-015','Mysz bezprzewodowa AirMouse','Mysz bezprzewodowa 2.4 GHz, 1600 DPI, ergonomiczna, bateria AAA.','elektronika',59.00,'https://picsum.photos/seed/EL015/400/400',350),
+  ('EL-016','Pendrive USB 3.0 64GB','Pendrive USB 3.0, pojemność 64 GB, prędkość odczytu 80 MB/s.','elektronika',29.00,'https://picsum.photos/seed/EL016/400/400',600),
+  ('EL-017','Dysk zewnętrzny 1TB PortaDrive','Dysk zewnętrzny HDD 1 TB, USB 3.0, slim, kompatybilny z PC i Mac.','elektronika',199.00,'https://picsum.photos/seed/EL017/400/400',150),
+  ('EL-018','Router WiFi 6 DualBand','Router WiFi 6, dual-band 2.4/5 GHz, prędkość 3000 Mb/s, 4 anteny.','elektronika',249.00,'https://picsum.photos/seed/EL018/400/400',110),
+  ('EL-019','Kamera internetowa FullHD WebCam','Kamera internetowa 1080p 30fps z mikrofonem, USB, plug-and-play.','elektronika',99.00,'https://picsum.photos/seed/EL019/400/400',250),
+  ('EL-020','Projektor mini PocketBeam','Przenośny projektor LED 200 lm, HDMI+USB, rozdzielczość 854×480.','elektronika',449.00,'https://picsum.photos/seed/EL020/400/400',70),
+  ('EL-021','Zestaw słuchawkowy gamingowy HeadSet','Słuchawki gamingowe 7.1 surround, RGB, mikrofon z redukcją szumów, USB.','elektronika',99.00,'https://picsum.photos/seed/EL021/400/400',200),
+  ('EL-022','Tablet graficzny DrawPad A5','Tablet graficzny A5, 8192 poziomów nacisku, kompatybilny z Windows/Mac.','elektronika',179.00,'https://picsum.photos/seed/EL022/400/400',130),
+  ('EL-023','Smart TV Box Android','Smart Box Android 11, 4K HDR, WiFi, Bluetooth, 2/16 GB.','elektronika',149.00,'https://picsum.photos/seed/EL023/400/400',180),
+  ('EL-024','Czytnik e-book InkRead 6"','Czytnik e-booków z ekranem e-ink 6", podświetleniem, WiFi, pamięcią 8 GB.','elektronika',299.00,'https://picsum.photos/seed/EL024/400/400',140),
+  ('EL-025','Konsola do gier RetroBox','Przenośna konsola retro z 2000 wbudowanymi grami i ekranem 3.5".','elektronika',199.00,'https://picsum.photos/seed/EL025/400/400',160),
+  ('EL-026','Zasilacz UPS 600VA','Zasilacz awaryjny UPS 600 VA / 360 W, czas podtrzymania 10 min, 4 gniazda.','elektronika',249.00,'https://picsum.photos/seed/EL026/400/400',80),
+  ('EL-027','Hub USB-C 7w1','Koncentrator USB-C 7 w 1: HDMI 4K, USB 3.0 ×3, SD, microSD, PD 100 W.','elektronika',89.00,'https://picsum.photos/seed/EL027/400/400',300),
+  ('EL-028','Stacja dokująca LaptopDock','Stacja dokująca USB-C: 2×HDMI, 4×USB, Ethernet, audio, PD 65 W.','elektronika',349.00,'https://picsum.photos/seed/EL028/400/400',90),
+  ('EL-029','Mikrofon USB PodcastMic','Mikrofon pojemnościowy USB z filtrem pop i statywem biurkowym.','elektronika',149.00,'https://picsum.photos/seed/EL029/400/400',170),
+  ('EL-030','Głośniki komputerowe 2.1 BassBox','Zestaw głośników 2.1, subwoofer 6 W, satelity 2×3 W, USB+jack 3.5 mm.','elektronika',129.00,'https://picsum.photos/seed/EL030/400/400',140),
+  ('EL-031','Inteligentna żarówka LED Smart','Żarówka E27, 9 W, 16 mln kolorów, WiFi, sterowanie głosowe Alexa/Google.','elektronika',29.00,'https://picsum.photos/seed/EL031/400/400',800),
+  ('EL-032','Inteligentna wtyczka SmartPlug','Gniazdko WiFi 16 A z monitoringiem poboru mocy i harmonogramem.','elektronika',39.00,'https://picsum.photos/seed/EL032/400/400',600),
+  ('EL-033','Termostat inteligentny HomeTemp','Termostat WiFi 3 A z aplikacją, kompatybilny z Alexa i Google Home.','elektronika',149.00,'https://picsum.photos/seed/EL033/400/400',120),
+  ('EL-034','Kamera IP zewnętrzna SafeEye','Kamera IP 2 MP, IR 30 m, WiFi, IP67, detekcja ruchu, zapis na kartę SD.','elektronika',179.00,'https://picsum.photos/seed/EL034/400/400',110),
+  ('EL-035','Alarm domowy SmartAlarm','Zestaw alarmowy WiFi: centrala, 2 czujniki ruchu, syrena, aplikacja.','elektronika',249.00,'https://picsum.photos/seed/EL035/400/400',80),
+  ('EL-036','Waga inteligentna BodyScale WiFi','Waga łazienkowa WiFi: masa ciała, BMI, procent tłuszczu, 12 użytkowników.','elektronika',99.00,'https://picsum.photos/seed/EL036/400/400',200),
+  ('EL-037','Słuchawki ANC NoiseFree','Słuchawki nauszne ANC 40 dB, Bluetooth 5.2, czas pracy 35 h, foldable.','elektronika',349.00,'https://picsum.photos/seed/EL037/400/400',160),
+  ('EL-038','Okulary VR VisionBox','Gogle VR na smartfon 4.7"–6.5", FOV 120°, regulacja soczewek.','elektronika',59.00,'https://picsum.photos/seed/EL038/400/400',250),
+  ('EL-039','Dron QuadFly Mini','Dron zabawkowy 2.4 GHz, 6-osiowy żyroskop, czas lotu 8 min, zasięg 50 m.','elektronika',199.00,'https://picsum.photos/seed/EL039/400/400',100),
+  ('EL-040','Klawiatura Bluetooth BT-Keys','Klawiatura bezprzewodowa Bluetooth 5.0, slim, kompatybilna z iOS/Android.','elektronika',89.00,'https://picsum.photos/seed/EL040/400/400',250),
+  ('EL-041','Mysz gamingowa RGB GameMouse','Mysz gamingowa 12000 DPI, 7 przycisków, podświetlenie RGB, USB.','elektronika',79.00,'https://picsum.photos/seed/EL041/400/400',300),
+  ('EL-042','Pad do gier GamePad Pro','Pad USB/Bluetooth, wibracje, kompatybilny z PC/Android/iOS.','elektronika',99.00,'https://picsum.photos/seed/EL042/400/400',200),
+  ('EL-043','Powerbank 20000mAh UltraCharge','Powerbank 20 000 mAh, Quick Charge 3.0, USB-C PD, 2×USB-A, LCD.','elektronika',99.00,'https://picsum.photos/seed/EL043/400/400',350),
+  ('EL-044','Ładowarka indukcyjna 15W QuickPad','Ładowarka bezprzewodowa Qi 15 W z kablem USB-C, kompatybilna z Magsafe.','elektronika',49.00,'https://picsum.photos/seed/EL044/400/400',400),
+  ('EL-045','Karta dźwiękowa USB AudioBox','Zewnętrzna karta dźwiękowa USB: wejście XLR/jack, wyjście słuchawkowe.','elektronika',69.00,'https://picsum.photos/seed/EL045/400/400',180),
+  ('EL-046','Koncentrator USB 4-portowy','Hub USB 3.0, 4 porty, prędkość 5 Gbps, zasilanie magistrali.','elektronika',39.00,'https://picsum.photos/seed/EL046/400/400',500),
+  ('EL-047','Wentylator biurkowy Smart Fan','Wentylator USB 5 V, 3 prędkości, cichy silnik, składany.','elektronika',29.00,'https://picsum.photos/seed/EL047/400/400',600),
+  ('EL-048','Lampka biurkowa LED Desk Light','Lampka LED z regulacją jasności i temperatury barwy, ładowarka USB.','elektronika',59.00,'https://picsum.photos/seed/EL048/400/400',400),
+  ('EL-049','Opaska fitness BandFit','Opaska sportowa: kroki, tętno, sen, powiadomienia, 7-dniowa bateria.','elektronika',79.00,'https://picsum.photos/seed/EL049/400/400',350),
+  ('EL-050','Kamera IP wewnętrzna HomeCam','Kamera IP 1080p WiFi, obrót 355°/90°, night vision, dwukierunkowe audio.','elektronika',129.00,'https://picsum.photos/seed/EL050/400/400',200),
+
+  -- ─── AKCESORIA DO TELEFONU (AT-001 … AT-040) ──────────────────────────────
+  ('AT-001','Etui silikonowe iPhone 15','Etui silikonowe premium z mikrofibry w środku, matowe wykończenie.','akcesoria do telefonu',39.00,'https://picsum.photos/seed/AT001/400/400',500),
+  ('AT-002','Etui pancerne Armor Case','Etui wojskowe z potrójną ochroną: rama metalowa, plecy TPU+PC.','akcesoria do telefonu',49.00,'https://picsum.photos/seed/AT002/400/400',400),
+  ('AT-003','Szkło hartowane 9H FullGlass','Szkło hartowane 9H z powłoką olejoodporną, pełne pokrycie ekranu.','akcesoria do telefonu',19.00,'https://picsum.photos/seed/AT003/400/400',1000),
+  ('AT-004','Folia matowa AntiGlare','Folia matowa antyrefleksyjna, odporna na odciski palców.','akcesoria do telefonu',9.00,'https://picsum.photos/seed/AT004/400/400',1200),
+  ('AT-005','Powerbank 10000mAh SlimPower','Powerbank 10 000 mAh, grubość 10 mm, USB-C + USB-A, wskaźnik LED.','akcesoria do telefonu',79.00,'https://picsum.photos/seed/AT005/400/400',350),
+  ('AT-006','Powerbank 5000mAh PocketPower','Powerbank 5000 mAh, kieszonkowy, wbudowany kabel USB-C.','akcesoria do telefonu',49.00,'https://picsum.photos/seed/AT006/400/400',400),
+  ('AT-007','Ładowarka sieciowa 65W GaN Charger','Ładowarka GaN 65 W, USB-C PD + USB-A, kompatybilna z laptopami.','akcesoria do telefonu',69.00,'https://picsum.photos/seed/AT007/400/400',300),
+  ('AT-008','Ładowarka sieciowa 20W USB-C','Ładowarka USB-C 20 W PD, kompaktowa, kompatybilna z iPhone i Android.','akcesoria do telefonu',29.00,'https://picsum.photos/seed/AT008/400/400',600),
+  ('AT-009','Kabel USB-C 2m BraidedCable','Kabel USB-C–USB-C 2 m, oplot nylonowy, 60 W PD, transfer 480 Mbps.','akcesoria do telefonu',19.00,'https://picsum.photos/seed/AT009/400/400',800),
+  ('AT-010','Kabel Lightning 1m MFi','Kabel Lightning certyfikowany Apple MFi, oplot bawełniany, 1 m.','akcesoria do telefonu',29.00,'https://picsum.photos/seed/AT010/400/400',700),
+  ('AT-011','Uchwyt samochodowy MagGrip','Uchwyt magnetyczny na kratkę wentylacyjną, kompatybilny z Magsafe.','akcesoria do telefonu',49.00,'https://picsum.photos/seed/AT011/400/400',400),
+  ('AT-012','Uchwyt rowerowy BikeMount','Uchwyt na kierownicę roweru, obrotowy 360°, dla telefonów 4"–7".','akcesoria do telefonu',39.00,'https://picsum.photos/seed/AT012/400/400',350),
+  ('AT-013','Selfie stick z pilotem BT','Selfie stick wysuwany do 90 cm, pilot Bluetooth, statyw składany.','akcesoria do telefonu',59.00,'https://picsum.photos/seed/AT013/400/400',300),
+  ('AT-014','Obiektyw do telefonu 3w1','Zestaw obiektywów: szerokokątny 120°, makro, rybie oko. Klips uniwersalny.','akcesoria do telefonu',49.00,'https://picsum.photos/seed/AT014/400/400',280),
+  ('AT-015','Słuchawki USB-C dokanałowe','Słuchawki przewodowe USB-C z mikrofonem, kompatybilne z Android.','akcesoria do telefonu',29.00,'https://picsum.photos/seed/AT015/400/400',500),
+  ('AT-016','Słuchawki TWS BudsPro','Słuchawki TWS Bluetooth 5.3, aktywna redukcja szumów, etui ładujące 400 mAh.','akcesoria do telefonu',129.00,'https://picsum.photos/seed/AT016/400/400',250),
+  ('AT-017','Etui portfel WalletCase','Etui z klapką i miejscem na 3 karty, ekologiczna skóra PU, magnetyczne.','akcesoria do telefonu',59.00,'https://picsum.photos/seed/AT017/400/400',300),
+  ('AT-018','Ring holder RingStand','Uchwyt pierścieniowy z podstawką, obrotowy 360°, przyklejany.','akcesoria do telefonu',15.00,'https://picsum.photos/seed/AT018/400/400',900),
+  ('AT-019','Ładowarka samochodowa 36W Car Charger','Ładowarka do samochodu USB-C 25 W + USB-A 10 W, Quick Charge 3.0.','akcesoria do telefonu',39.00,'https://picsum.photos/seed/AT019/400/400',400),
+  ('AT-020','Stojak na telefon DeskStand','Aluminiowy stojak biurkowy, regulowany kąt, kompatybilny z etui.','akcesoria do telefonu',45.00,'https://picsum.photos/seed/AT020/400/400',350),
+  ('AT-021','Kabel Micro-USB 2m','Kabel Micro-USB 2 m, oplot nylonowy, szybkie ładowanie 2.4 A.','akcesoria do telefonu',15.00,'https://picsum.photos/seed/AT021/400/400',700),
+  ('AT-022','Adapter USB-C na Jack 3.5mm','Adapter USB-C na jack 3.5 mm z DAC, obsługa dźwięku Hi-Fi.','akcesoria do telefonu',19.00,'https://picsum.photos/seed/AT022/400/400',600),
+  ('AT-023','Czytnik kart SD USB-C','Czytnik kart SD/microSD na złącze USB-C, plug-and-play.','akcesoria do telefonu',25.00,'https://picsum.photos/seed/AT023/400/400',500),
+  ('AT-024','Etui MagSafe silikonowe','Etui z MagSafe do iPhone 14/15, certyfikowane, kilka kolorów.','akcesoria do telefonu',49.00,'https://picsum.photos/seed/AT024/400/400',400),
+  ('AT-025','Pop socket uchwyt PopGrip','Uchwyt PopGrip przyklejany, obrotowy, wymienne wykończenie.','akcesoria do telefonu',25.00,'https://picsum.photos/seed/AT025/400/400',700),
+  ('AT-026','Szkło prywatyzujące Privacy Glass','Szkło hartowane z filtrem prywatyzującym 28°, 9H.','akcesoria do telefonu',29.00,'https://picsum.photos/seed/AT026/400/400',450),
+  ('AT-027','Bateria zewnętrzna MagPower 5000mAh','Powerbank MagSafe 5000 mAh, bezprzewodowe ładowanie 7.5 W.','akcesoria do telefonu',89.00,'https://picsum.photos/seed/AT027/400/400',200),
+  ('AT-028','Etui przezroczyste ClearCase','Etui tpu przezroczyste z ochroną aparatu, antyżółknące.','akcesoria do telefonu',19.00,'https://picsum.photos/seed/AT028/400/400',800),
+  ('AT-029','Kabel USB-C–Lightning MFi 1m','Kabel USB-C do Lightning certyfikowany MFi, szybkie ładowanie 20 W.','akcesoria do telefonu',39.00,'https://picsum.photos/seed/AT029/400/400',400),
+  ('AT-030','Ładowarka bezprzewodowa 3w1 TriCharge','Ładowarka Qi 3 w 1: telefon 15 W, zegarek, słuchawki.','akcesoria do telefonu',99.00,'https://picsum.photos/seed/AT030/400/400',200),
+  ('AT-031','Gimbal do smartfona StabilizerPro','Gimbal 3-osiowy do smartfona, czas pracy 12 h, tryb śledzenia twarzy.','akcesoria do telefonu',199.00,'https://picsum.photos/seed/AT031/400/400',90),
+  ('AT-032','Statyw telescopowy TripodMini','Statyw mini teleskopowy do 130 cm z głowicą kulową i pilotem BT.','akcesoria do telefonu',79.00,'https://picsum.photos/seed/AT032/400/400',180),
+  ('AT-033','Szkło do aparatu CamLens','Szkło ochronne na aparat, zestaw 3 szt., wysoka przezroczystość.','akcesoria do telefonu',19.00,'https://picsum.photos/seed/AT033/400/400',600),
+  ('AT-034','Etui wodoodporne WaterProof','Etui wodoodporne IP68 do 30 m, dla telefonów do 6.8".','akcesoria do telefonu',39.00,'https://picsum.photos/seed/AT034/400/400',350),
+  ('AT-035','Głośnik mini BT PocketBoom','Głośnik Bluetooth 5 W, 6 h odtwarzania, klip do plecaka.','akcesoria do telefonu',55.00,'https://picsum.photos/seed/AT035/400/400',300),
+  ('AT-036','Adapter Lightning na HDMI','Adapter Lightning–HDMI 1080p z portem ładowania, do iPhone/iPad.','akcesoria do telefonu',59.00,'https://picsum.photos/seed/AT036/400/400',250),
+  ('AT-037','Kabel USB-A do USB-C 3m','Kabel USB-A–USB-C 3 m, oplot nylonowy, 3 A, szybkie ładowanie.','akcesoria do telefonu',25.00,'https://picsum.photos/seed/AT037/400/400',500),
+  ('AT-038','Torba na laptopa i akcesoria TechBag','Torba 15.6", wodoodporna, przedziały na tablet i akcesoria.','akcesoria do telefonu',89.00,'https://picsum.photos/seed/AT038/400/400',180),
+  ('AT-039','Ochraniacz ekranu UV UV-Shield','Folia ochronna na zakrzywiony ekran, aplikowana UV.','akcesoria do telefonu',29.00,'https://picsum.photos/seed/AT039/400/400',400),
+  ('AT-040','Ładowarka 5-portowa USB-A MultiCharge','Ładowarka 5-portowa USB-A 50 W, inteligentne zarządzanie mocą.','akcesoria do telefonu',69.00,'https://picsum.photos/seed/AT040/400/400',280),
+
+  -- ─── DOM I OGRÓD (DO-001 … DO-045) ────────────────────────────────────────
+  ('DO-001','Robot sprzątający CleanBot Pro','Robot odkurzający z mapowaniem LiDAR, mopowaniem i automatyczną stacją opróżniania.','dom i ogród',1299.00,'https://picsum.photos/seed/DO001/400/400',50),
+  ('DO-002','Odkurzacz pionowy CycloPower','Odkurzacz bezprzewodowy 2w1, moc 130 W, bateria 45 min, filtr HEPA.','dom i ogród',499.00,'https://picsum.photos/seed/DO002/400/400',80),
+  ('DO-003','Oczyszczacz powietrza AirPure','Oczyszczacz HEPA H13 + aktywny węgiel, 45 m², wskaźnik jakości powietrza, cichy.','dom i ogród',399.00,'https://picsum.photos/seed/DO003/400/400',60),
+  ('DO-004','Nawilżacz powietrza HumiFog','Nawilżacz ultradźwiękowy 4 l, praca do 20 h, pilot, timer.','dom i ogród',149.00,'https://picsum.photos/seed/DO004/400/400',150),
+  ('DO-005','Ekspres do kawy CaféPro','Ekspres ciśnieniowy 15 bar, spieniacz mleka, zbiornik 1.5 l.','dom i ogród',399.00,'https://picsum.photos/seed/DO005/400/400',70),
+  ('DO-006','Ekspres do kawy AeroPress','Przelewowy ekspres do kawy z termotem, 8 filiżanek, stały filtr.','dom i ogród',99.00,'https://picsum.photos/seed/DO006/400/400',200),
+  ('DO-007','Blender kielichowy SmoothBlend','Blender 1500 W, kubeł 1.5 l, 8 prędkości, funkcja ice crush.','dom i ogród',199.00,'https://picsum.photos/seed/DO007/400/400',120),
+  ('DO-008','Mikser ręczny HandMix Pro','Mikser ręczny 400 W, 5 biegów, 2 haki i 2 mieszadła, miarka 1.5 l.','dom i ogród',89.00,'https://picsum.photos/seed/DO008/400/400',180),
+  ('DO-009','Frytkownica beztłuszczowa AirFry','Frytkownica powietrzna 4 l, moc 1500 W, 8 programów, wyświetlacz cyfrowy.','dom i ogród',249.00,'https://picsum.photos/seed/DO009/400/400',100),
+  ('DO-010','Tosty grill sandwich SandwichPress','Opiekacz do kanapek 750 W, powłoka non-stick, abnehmbary płyty.','dom i ogród',79.00,'https://picsum.photos/seed/DO010/400/400',250),
+  ('DO-011','Czajnik elektryczny EcoKettle','Czajnik 1.7 l, moc 2200 W, regulacja temperatury 60–100°C, WiFi.','dom i ogród',129.00,'https://picsum.photos/seed/DO011/400/400',200),
+  ('DO-012','Toster 4-komorowy QuadToast','Toster 4 szczeliny, 7 poziomów brązowienia, zdejmowana taca na okruszki.','dom i ogród',99.00,'https://picsum.photos/seed/DO012/400/400',180),
+  ('DO-013','Pościel mikrofibra SoftDream 200×220','Pościel z mikrofibry 200×220 cm + 2 poszewki, 250g/m², antyalergiczna.','dom i ogród',79.00,'https://picsum.photos/seed/DO013/400/400',300),
+  ('DO-014','Koc sensoryczny HeavyBlanket','Koc obciążeniowy 7 kg, 200×200 cm, bawełna, 7 warstw, zmywalny.','dom i ogród',199.00,'https://picsum.photos/seed/DO014/400/400',120),
+  ('DO-015','Poduszka ortopedyczna NeckRest','Poduszka ortopedyczna z pianki memory, kształt ergonomiczny, pokrowiec bambusowy.','dom i ogród',89.00,'https://picsum.photos/seed/DO015/400/400',200),
+  ('DO-016','Dywan skandynawski BohoRug 160×230','Dywan bawełniany tkany 160×230 cm, wzór geometryczny, do prania.','dom i ogród',249.00,'https://picsum.photos/seed/DO016/400/400',80),
+  ('DO-017','Lampa podłogowa ArchLight','Lampa stojąca z regulowanym ramieniem, żarówka LED E27 12 W w zestawie.','dom i ogród',169.00,'https://picsum.photos/seed/DO017/400/400',100),
+  ('DO-018','Lampka nocna LED TouchLight','Lampka dotykowa LED, 3 temperatury barwy, USB, ściemnianie.','dom i ogród',49.00,'https://picsum.photos/seed/DO018/400/400',400),
+  ('DO-019','Wieszak stojący ClothRack','Wieszak wolnostojący 90 cm, stalowy z regulowaną wysokością.','dom i ogród',99.00,'https://picsum.photos/seed/DO019/400/400',150),
+  ('DO-020','Organizator biurkowy DeskOrganizer','Organizer na biurko: 5 przegródek, bambusowy, taca na dokumenty.','dom i ogród',49.00,'https://picsum.photos/seed/DO020/400/400',350),
+  ('DO-021','Pojemniki próżniowe VacuSet 5szt','Zestaw 5 pojemników próżniowych 0.5–3 l, hermetyczne, przezroczyste.','dom i ogród',59.00,'https://picsum.photos/seed/DO021/400/400',300),
+  ('DO-022','Deska do krojenia bambusowa ChopBoard','Deska bambusowa z rowkiem na soki, 40×30 cm, antypoślizgowe nóżki.','dom i ogród',39.00,'https://picsum.photos/seed/DO022/400/400',400),
+  ('DO-023','Nóż szefa kuchni ProChef 20cm','Nóż szefa kuchni, stal nierdzewna 7Cr17MoV, rękojeść pakkawood.','dom i ogród',79.00,'https://picsum.photos/seed/DO023/400/400',250),
+  ('DO-024','Garnek ceramiczny CeraPoT 24cm','Garnek z powłoką ceramiczną 24 cm / 4 l, indukcja, szkl. pokrywa.','dom i ogród',129.00,'https://picsum.photos/seed/DO024/400/400',150),
+  ('DO-025','Patelnia żeliwna IronPan 26cm','Patelnia żeliwna 26 cm, wstępnie sezonowana, do pieca i indukcji.','dom i ogród',99.00,'https://picsum.photos/seed/DO025/400/400',180),
+  ('DO-026','Waga kuchenna PrecisionScale','Waga elektroniczna do 5 kg, dokładność 1 g, wyświetlacz LCD, platforma ze stali.','dom i ogród',39.00,'https://picsum.photos/seed/DO026/400/400',500),
+  ('DO-027','Suszarka do naczyń SteelDrainer','Suszarka dwupoziomowa ze stali nierdzewnej z tacą ociekową.','dom i ogród',69.00,'https://picsum.photos/seed/DO027/400/400',300),
+  ('DO-028','Zestaw narzędzi ogrodowych GardenKit','Zestaw 6 narzędzi ogrodowych: grabki, łopatka, szpada, mała motyka.','dom i ogród',89.00,'https://picsum.photos/seed/DO028/400/400',200),
+  ('DO-029','Wąż ogrodowy 20m FlexiHose','Wąż ogrodowy rozciągliwy 20 m (do 60 m), dysza 8 trybów w zestawie.','dom i ogród',79.00,'https://picsum.photos/seed/DO029/400/400',200),
+  ('DO-030','Doniczka smart SmartPot WiFi','Doniczka inteligentna 5 l z czujnikiem wilgotności, automatycznym podlewaniem.','dom i ogród',149.00,'https://picsum.photos/seed/DO030/400/400',120),
+  ('DO-031','Zasłony blackout DarkRoom 140×250','Para zasłon zaciemniających 140×250 cm, termiczne, 3 warstwy.','dom i ogród',129.00,'https://picsum.photos/seed/DO031/400/400',150),
+  ('DO-032','Roleta dzień/noc ZebraBlinds','Roleta zebra 80×150 cm, dzień/noc, mocowanie bezinwazyjne.','dom i ogród',99.00,'https://picsum.photos/seed/DO032/400/400',180),
+  ('DO-033','Lustro łazienkowe z LED MirrorLight','Lustro łazienkowe LED 60×80 cm, dotykowy przełącznik, antyparowe.','dom i ogród',249.00,'https://picsum.photos/seed/DO033/400/400',80),
+  ('DO-034','Uchwyt prysznicowy AquaHolder','Uchwyt na słuchawkę prysznicową naścienny, regulacja 0–180°, chrom.','dom i ogród',39.00,'https://picsum.photos/seed/DO034/400/400',400),
+  ('DO-035','Organizer łazienkowy ShowerCaddy','Organizer prysznicowy 3-półkowy, stal nierdzewna, bez wiercenia.','dom i ogród',59.00,'https://picsum.photos/seed/DO035/400/400',350),
+  ('DO-036','Dywanik łazienkowy AntiSlip','Dywanik antypoślizgowy 50×80 cm, bawełna, z antypoślizgowym spodem.','dom i ogród',39.00,'https://picsum.photos/seed/DO036/400/400',500),
+  ('DO-037','Aromatyzer pomieszczeń EssenceBox','Dyfuzor ultradźwiękowy 300 ml, 7 kolorów LED, timer, auto-off.','dom i ogród',69.00,'https://picsum.photos/seed/DO037/400/400',300),
+  ('DO-038','Choinnik sztuczny PineTree 150cm','Choinka sztuczna 150 cm, gęstość 350 gałązek, łatwy montaż, PE/PVC.','dom i ogród',199.00,'https://picsum.photos/seed/DO038/400/400',100),
+  ('DO-039','Lampki choinkowe LED Xmas200','Łańcuch LED 200 szt., 20 m, IP44, 8 trybów, timer, biały ciepły.','dom i ogród',49.00,'https://picsum.photos/seed/DO039/400/400',400),
+  ('DO-040','Karmnik dla ptaków BirdFeeder','Karmnik drewniany 30×20 cm, dach dwuspadowy, zawieszany.','dom i ogród',39.00,'https://picsum.photos/seed/DO040/400/400',300),
+  ('DO-041','Zraszacz obrotowy SpinSprinkler','Zraszacz ogrodowy 3-ramienny, zasięg 12 m, gwint 3/4".','dom i ogród',29.00,'https://picsum.photos/seed/DO041/400/400',350),
+  ('DO-042','Kompostownik ogrodowy CompostBin','Kompostownik plastikowy 300 l, pokrywa z zamkiem, oddechowe boki.','dom i ogród',149.00,'https://picsum.photos/seed/DO042/400/400',80),
+  ('DO-043','Deszczomierz ogrodowy RainMeter','Deszczomierz plastikowy z prętem do wbijania w glebę, skala 0–35 mm.','dom i ogród',19.00,'https://picsum.photos/seed/DO043/400/400',500),
+  ('DO-044','Skrzynka narzędziowa ToolBox','Skrzynka na narzędzia 40×20 cm, plastik PP, zamek, 3 organizer.','dom i ogród',59.00,'https://picsum.photos/seed/DO044/400/400',200),
+  ('DO-045','Wiertarko-wkrętarka akumulatorowa DrillPro','Wiertarko-wkrętarka 20 V, 2 akumulatory 2 Ah, ładowarka, walizka.','dom i ogród',299.00,'https://picsum.photos/seed/DO045/400/400',70),
+
+  -- ─── FITNESS (FT-001 … FT-035) ────────────────────────────────────────────
+  ('FT-001','Mata do jogi YogaMat 6mm','Mata jogi 183×61 cm, grubość 6 mm, antypoślizgowa, TPE, torba w zestawie.','fitness',59.00,'https://picsum.photos/seed/FT001/400/400',400),
+  ('FT-002','Mata fitness GymMat 10mm','Mata do ćwiczeń 180×60 cm, grubość 10 mm, pianka NBR, pasek do noszenia.','fitness',89.00,'https://picsum.photos/seed/FT002/400/400',300),
+  ('FT-003','Zestaw gum oporowych ResistBand 5szt','5 taśm oporowych lateksowych, opory: ekstra lekki–ekstra ciężki, torba.','fitness',49.00,'https://picsum.photos/seed/FT003/400/400',500),
+  ('FT-004','Hantle neoprenowe 2×2kg NeoDumbbells','Para hantli neoprenowych 2×2 kg, antypoślizgowe, kolorowe.','fitness',79.00,'https://picsum.photos/seed/FT004/400/400',250),
+  ('FT-005','Hantle neoprenowe 2×5kg','Para hantli neoprenowych 2×5 kg, ergonomiczny uchwyt.','fitness',129.00,'https://picsum.photos/seed/FT005/400/400',200),
+  ('FT-006','Skakanka szybka SpeedRope','Skakanka z liny stalowej PVC, łożyska kulkowe, regulowana 3 m.','fitness',29.00,'https://picsum.photos/seed/FT006/400/400',600),
+  ('FT-007','Wałek do masażu FoamRoller 45cm','Wałek piankowy 45 cm, gęstość wysoka, rowki masujące.','fitness',49.00,'https://picsum.photos/seed/FT007/400/400',400),
+  ('FT-008','Piłka do masażu MassageBall','Piłka do masażu powięzi 8 cm, kolce, TPE, intensywna terapia.','fitness',19.00,'https://picsum.photos/seed/FT008/400/400',700),
+  ('FT-009','Piłka gimnastyczna GymBall 65cm','Piłka gimnastyczna 65 cm, maksymalne obciążenie 300 kg, pompa w zestawie.','fitness',59.00,'https://picsum.photos/seed/FT009/400/400',300),
+  ('FT-010','Kettlebell żeliwny 8kg IronKettlebell','Kettlebell żeliwny malowany 8 kg, uchwyt z piaskowania.','fitness',89.00,'https://picsum.photos/seed/FT010/400/400',200),
+  ('FT-011','Kettlebell 16kg','Kettlebell żeliwny 16 kg, uchwyt z piaskowania, stabilna podstawa.','fitness',149.00,'https://picsum.photos/seed/FT011/400/400',150),
+  ('FT-012','Drążek do podciągania DoorBar','Drążek doorbar na ościeżnicę bez wiercenia, udźwig 120 kg, 60–90 cm.','fitness',79.00,'https://picsum.photos/seed/FT012/400/400',250),
+  ('FT-013','Kółka do pompek PushUpRings','Para kółek do pompek ze stali, antypoślizgowa podstawa, składane.','fitness',69.00,'https://picsum.photos/seed/FT013/400/400',300),
+  ('FT-014','Ławeczka treningowa FoldBench','Ławeczka składana, kąty 0°/45°/90°, udźwig 300 kg, obicie PCW.','fitness',299.00,'https://picsum.photos/seed/FT014/400/400',60),
+  ('FT-015','Rower stacjonarny HomeBike','Rower spiningowy magnetyczny, 8 poziomów oporu, wyświetlacz LCD.','fitness',899.00,'https://picsum.photos/seed/FT015/400/400',30),
+  ('FT-016','Orbitrek EllipFit Home','Orbitrek magnetyczny, 8 poziomów oporu, komputer treningowy, koła transport.','fitness',699.00,'https://picsum.photos/seed/FT016/400/400',25),
+  ('FT-017','Wioślarz WaterRower 4 opory','Rower wioślarski z oporem powietrznym, wyświetlacz LCD, antypoślizgowe siedzisko.','fitness',599.00,'https://picsum.photos/seed/FT017/400/400',20),
+  ('FT-018','Pas do ćwiczeń WeightBelt XXL','Pas treningowy skórzany 4" z klamrą regulowaną, rozmiary S–XXL.','fitness',89.00,'https://picsum.photos/seed/FT018/400/400',200),
+  ('FT-019','Rękawice fitness TrainGloves','Rękawice z antypoślizgową dłonią, wzmocniony kciuk, oddychające.','fitness',39.00,'https://picsum.photos/seed/FT019/400/400',400),
+  ('FT-020','Licznik kalorii CalCounter','Krokomierz z licznikiem kalorii i przebytego dystansu, klips.','fitness',25.00,'https://picsum.photos/seed/FT020/400/400',500),
+  ('FT-021','Opaska sportowa SportsWrap','Opaska elastyczna na nadgarstek i kostkę, 2 szt., oddychająca.','fitness',15.00,'https://picsum.photos/seed/FT021/400/400',800),
+  ('FT-022','Sutek do butelki SipTop BPA-free','Nakrętka sportowa do butelki 600–1000 ml, BPA-free, zestaw 3 szt.','fitness',15.00,'https://picsum.photos/seed/FT022/400/400',700),
+  ('FT-023','Bidon sportowy 750ml TrailBottle','Bidon ze stali nierdzewnej 750 ml, izolacja 12 h zimno/6 h ciepło.','fitness',49.00,'https://picsum.photos/seed/FT023/400/400',400),
+  ('FT-024','Shaker proteinowy ProShaker 700ml','Shaker z sitkiem, 700 ml, BPA-free, linka mieszająca w zestawie.','fitness',25.00,'https://picsum.photos/seed/FT024/400/400',600),
+  ('FT-025','Torba sportowa GymBag 40L','Torba sportowa 40 l, buty odrębna komora, regulowane paski.','fitness',99.00,'https://picsum.photos/seed/FT025/400/400',200),
+  ('FT-026','Pas do biegania RunningBelt','Pas biodrowy do biegania, kieszeń na telefon do 6.5", wodoodporny.','fitness',45.00,'https://picsum.photos/seed/FT026/400/400',350),
+  ('FT-027','Opaska do biegania LED ArmLED','Opaska odblaskowa LED na rękę/kostkę, USB, tryb stały/migający.','fitness',25.00,'https://picsum.photos/seed/FT027/400/400',500),
+  ('FT-028','Zegarek sportowy GPS RunWatch','Zegarek sportowy GPS, monitoring tętna, 20 trybów sportu, 7-dniowa bateria.','fitness',349.00,'https://picsum.photos/seed/FT028/400/400',80),
+  ('FT-029','Taśma kinesiotaping KineTape','Taśma kinezjologiczna 5 cm×5 m, bawełna, wodoodporna, różne kolory.','fitness',19.00,'https://picsum.photos/seed/FT029/400/400',700),
+  ('FT-030','Bloczek jogi YogaBlock','Bloczek jogi 23×15×7 cm, korek naturalny, trzy poziomy trudności.','fitness',35.00,'https://picsum.photos/seed/FT030/400/400',450),
+  ('FT-031','Pasek do jogi YogaStrap 180cm','Pasek jogi z klamrą D-ring, bawełna organiczna, dł. 180 cm.','fitness',25.00,'https://picsum.photos/seed/FT031/400/400',500),
+  ('FT-032','Platforma do step-aerobiku StepBoard','Deska step regulowana wys. 10/15/20 cm, antypoślizgowa powierzchnia.','fitness',129.00,'https://picsum.photos/seed/FT032/400/400',120),
+  ('FT-033','Hula-hop obciążone MassageHoop','Hula-hop z kręgami masującymi, rozkładane, śr. 100 cm, 1.5 kg.','fitness',79.00,'https://picsum.photos/seed/FT033/400/400',200),
+  ('FT-034','Ciężarki na nadgarstki WristWeight 2×1kg','Para obciążeń na nadgarstki 2×1 kg, rzep, neoprene.','fitness',39.00,'https://picsum.photos/seed/FT034/400/400',400),
+  ('FT-035','Trenażer do boksu PunchBag 60cm','Worek bokserski 60 cm, 12 kg, łańcuch zawieszania, stalowy karabinek.','fitness',199.00,'https://picsum.photos/seed/FT035/400/400',80),
+
+  -- ─── GADŻETY (GA-001 … GA-040) ────────────────────────────────────────────
+  ('GA-001','Taśma LED RGB 5m SmartStrip','Taśma LED RGB 5 m, WiFi, aplikacja, sterowanie głosowe, 16 mln kolorów.','gadżety',49.00,'https://picsum.photos/seed/GA001/400/400',500),
+  ('GA-002','Taśma LED RGBIC 10m','Taśma RGBIC 10 m, efekty segmentowe, muzyka-sync, IP65.','gadżety',89.00,'https://picsum.photos/seed/GA002/400/400',300),
+  ('GA-003','Projektor galaktyczny StarProjector','Projektor gwiazd i kosmosu, 360° obrót, 12 trybów, ładowanie USB.','gadżety',79.00,'https://picsum.photos/seed/GA003/400/400',250),
+  ('GA-004','Kubek termiczny ze wskaźnikiem temp','Kubek termiczny 380 ml z wyświetlaczem temperatury, stal nierdzewna.','gadżety',49.00,'https://picsum.photos/seed/GA004/400/400',400),
+  ('GA-005','Portfel RFID AlumWallet','Portfel aluminiowy RFID Blocking, do 12 kart, wyjmowanie jednym kliknięciem.','gadżety',59.00,'https://picsum.photos/seed/GA005/400/400',400),
+  ('GA-006','Karta lokalizacyjna SlimTracker','Karta GPS/Bluetooth 2 mm, śledzenie w aplikacji, bateria 1 rok.','gadżety',49.00,'https://picsum.photos/seed/GA006/400/400',350),
+  ('GA-007','Mini drukarka kieszonkowa PocketPrint','Drukarka termiczna 57 mm, Bluetooth, zdjęcia i naklejki, zasilanie USB.','gadżety',149.00,'https://picsum.photos/seed/GA007/400/400',150),
+  ('GA-008','Kamera termowizyjna miniThermal','Kamera termowizyjna do smartfona USB-C, 256×192 px, zakres −20–550°C.','gadżety',299.00,'https://picsum.photos/seed/GA008/400/400',70),
+  ('GA-009','Zegar projekcyjny ProjectionClock','Zegar z projektorem sufitowym, budzik, termometr, USB.','gadżety',59.00,'https://picsum.photos/seed/GA009/400/400',300),
+  ('GA-010','Podkładka ładująca i organizer DeskPad','Biurkowa podkładka XXL z ładowarką Qi 10 W i 3 kieszonkami USB.','gadżety',99.00,'https://picsum.photos/seed/GA010/400/400',200),
+  ('GA-011','Mini konsola retro GameKey','Brelok-konsola retro z 500 grami, ekran 1.8", bateria USB.','gadżety',39.00,'https://picsum.photos/seed/GA011/400/400',400),
+  ('GA-012','Magnetyczna tablica Memo MagBoard','Tablica magnetyczna 60×40 cm, biała, z zestawem magnesów i markera.','gadżety',59.00,'https://picsum.photos/seed/GA012/400/400',300),
+  ('GA-013','Kulka antystresowa LED GlowOrb','Kulka antystresowa świecąca 7 kolorów, zmiana koloru przy nacisku.','gadżety',25.00,'https://picsum.photos/seed/GA013/400/400',500),
+  ('GA-014','Zestaw do kaligrafii CalliKit','Pióro kaligraficzne z 6 końcówkami, 3 tuszi i instrukcją.','gadżety',49.00,'https://picsum.photos/seed/GA014/400/400',250),
+  ('GA-015','Gra planszowa strategia QuizMaster','Gra planszowa quizowa, 500 kart, 2–8 graczy, od 14 lat.','gadżety',49.00,'https://picsum.photos/seed/GA015/400/400',200),
+  ('GA-016','Zestaw iluzji optycznych MindTricks','Zestaw 20 iluzji optycznych 3D do złożenia, balsa i karton, trudność średnia.','gadżety',39.00,'https://picsum.photos/seed/GA016/400/400',300),
+  ('GA-017','Długopis 3D PenArt','Długopis 3D z filamentami PLA, temp. 160°C, szybkość regulowana, USB.','gadżety',79.00,'https://picsum.photos/seed/GA017/400/400',200),
+  ('GA-018','Mini wentylator na USB biurkowy','Wentylator biurkowy USB 5 V, cichy, 3 biegów, małe rozmiary.','gadżety',19.00,'https://picsum.photos/seed/GA018/400/400',700),
+  ('GA-019','Pistolet na bańki mydlane BubbleGun','Pistolet elektryczny na bańki mydlane, 2000 bańki/min, LED, zasil. bateryjne.','gadżety',25.00,'https://picsum.photos/seed/GA019/400/400',400),
+  ('GA-020','Stacja meteorologiczna WeatherHub','Stacja pogodowa WiFi: temp./wilg. wew./zew., prognoza 3 dni, wyświetlacz kolorowy.','gadżety',149.00,'https://picsum.photos/seed/GA020/400/400',120),
+  ('GA-021','Lupa z podświetleniem LensLight 10x','Lupa 10× z podświetleniem LED, średnica 80 mm, uchwytem antypoślizg.','gadżety',29.00,'https://picsum.photos/seed/GA021/400/400',450),
+  ('GA-022','Szkatułka z zamkiem na odcisk SecureBox','Szkatułka na skarby z czytnikiem linii papilarnych, USB, kolor antracyt.','gadżety',89.00,'https://picsum.photos/seed/GA022/400/400',180),
+  ('GA-023','Kabel z podświetleniem LED GlowCable','Kabel USB-C świecący, 1 m, 3 kolory do wyboru, nylon.','gadżety',25.00,'https://picsum.photos/seed/GA023/400/400',500),
+  ('GA-024','Latarka głowowa HeadTorch','Latarka czołowa LED 350 lm, wodoodporna IPX6, bateria 10 h, ładowanie USB.','gadżety',49.00,'https://picsum.photos/seed/GA024/400/400',350),
+  ('GA-025','Kalkulator naukowy SciCalc','Kalkulator naukowy 417 funkcji, wyświetlacz 2 linie, egzamin-ready.','gadżety',45.00,'https://picsum.photos/seed/GA025/400/400',300),
+  ('GA-026','Mini klawiatura Bluetooth BT-NumPad','Klawiatura numeryczna BT 5.0, slim, do Mac/Windows/Android.','gadżety',49.00,'https://picsum.photos/seed/GA026/400/400',300),
+  ('GA-027','Uchwyt na telefon monitor PhoneMount','Uchwyt z przyssawką na monitor, obrotowy 360°, teleskopowy.','gadżety',29.00,'https://picsum.photos/seed/GA027/400/400',400),
+  ('GA-028','Termos na jedzenie FoodThermos 500ml','Termos na żywność 500 ml, ciepło 6 h, zimno 12 h, wyjmowany wkład.','gadżety',59.00,'https://picsum.photos/seed/GA028/400/400',300),
+  ('GA-029','Notatnik z długopisem SmartSet','Notatnik A5 + długopis kulkowy w komplecie, twarda oprawa, linie.','gadżety',19.00,'https://picsum.photos/seed/GA029/400/400',500),
+  ('GA-030','Naklejki 3D holograficzne HoloStickers','Arkusz 50 naklejek holograficznych 3D, ozdoba, scrapbooking.','gadżety',9.00,'https://picsum.photos/seed/GA030/400/400',1000),
+  ('GA-031','Mapa na pinezki Travel Map 100×70','Mapa świata 100×70 cm do zaznaczania odwiedzonych miejsc, plakietki.','gadżety',59.00,'https://picsum.photos/seed/GA031/400/400',200),
+  ('GA-032','Ładowarka solarna SolarPanel 10W','Panel słoneczny przenośny 10 W, 2×USB-A, wodoodporny IPX4.','gadżety',99.00,'https://picsum.photos/seed/GA032/400/400',150),
+  ('GA-033','Wykrywacz metalu MetalHunter','Wykrywacz metali do głębokości 20 cm, sygnał dźwiękowy i LED.','gadżety',69.00,'https://picsum.photos/seed/GA033/400/400',120),
+  ('GA-034','Pistolet do kleju GlueGun 40W','Pistolet do kleju na gorąco 40 W z 10 wkładami, długość 185 mm.','gadżety',25.00,'https://picsum.photos/seed/GA034/400/400',400),
+  ('GA-035','Zestaw do naprawy telefonu RepairKit','Zestaw 38 śrubokrętów precyzyjnych + plastikowe otwieraki, etui.','gadżety',39.00,'https://picsum.photos/seed/GA035/400/400',350),
+  ('GA-036','Tester napięcia VoltTest','Tester bezdotykowy napięcia AC 12–1000 V, sygnał dźwiękowy i LED.','gadżety',29.00,'https://picsum.photos/seed/GA036/400/400',400),
+  ('GA-037','Multimetr cyfrowy MultiMeter Auto','Multimetr auto-zakres: V/A/Ω, tester diody, buzzer, podświetlany LCD.','gadżety',49.00,'https://picsum.photos/seed/GA037/400/400',250),
+  ('GA-038','Lampka USB z klipsem ClipLight','Lampka klipsowa LED 10 poziomów jasności, gięta szyja, zasilanie USB.','gadżety',29.00,'https://picsum.photos/seed/GA038/400/400',500),
+  ('GA-039','Zamek szyfrowy CombineLock','Kłódka szyfrowa 4-cyfrowa, stal nierdzewna, wodoodporna.','gadżety',25.00,'https://picsum.photos/seed/GA039/400/400',600),
+  ('GA-040','Opaska na nadgarstek aktywna SmartBand','Opaska sportowa: kroki, kalorie, sen, powiadomienia, OLED, 7 dni baterii.','gadżety',89.00,'https://picsum.photos/seed/GA040/400/400',300)
+),
+-- Compute platform_price once per row using the tiered margin schedule
+priced AS (
+  SELECT
+    r.*,
+    ROUND(r.supplier_price * CASE
+      WHEN r.supplier_price <=  20  THEN 1.60
+      WHEN r.supplier_price <= 100  THEN 1.40
+      WHEN r.supplier_price <= 300  THEN 1.25
+      ELSE                               1.15
+    END, 2) AS platform_price
+  FROM raw r
+)
+SELECT
+  uuid_generate_v4(),
+  NULL::UUID,           -- store_id (central product)
+  NULL::UUID,           -- supplier_id
+  p.name,
+  p.sku,
+  p.description,
+  ROUND(p.supplier_price / 1.23, 2),   -- price_net  (VAT 23%)
+  23,                                   -- tax_rate
+  p.supplier_price,                     -- price_gross = supplier_price
+  p.supplier_price,                     -- supplier_price
+  p.platform_price,                     -- platform_price
+  p.platform_price,                     -- min_selling_price = platform_price
+  p.platform_price,                     -- selling_price = platform_price
+  0,                    -- margin
+  p.stock,
+  p.category,
+  p.image_url,
+  TRUE,                 -- is_central
+  'active',
+  NOW()
+FROM priced p
+ON CONFLICT (sku) WHERE is_central = TRUE AND sku IS NOT NULL DO NOTHING;
