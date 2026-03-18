@@ -1,978 +1,2910 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QualitetMarket | Sklep</title>
-  <style>
-    :root{
-      --bg:#f5f7fb;
-      --surface:#ffffff;
-      --surface-2:#f8fafc;
-      --text:#0f172a;
-      --muted:#64748b;
-      --line:#e2e8f0;
-      --primary:#7c3aed;
-      --primary-2:#6d28d9;
-      --accent:#ff6a00;
-      --danger:#dc2626;
-      --success:#16a34a;
-      --yellow:#f59e0b;
-      --shadow:0 12px 30px rgba(15,23,42,.08);
-      --radius:18px;
-      --container:1440px;
-    }
-
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      font-family:Arial, Helvetica, sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    a{text-decoration:none;color:inherit}
-    img{display:block;max-width:100%}
-    button,input,select{font:inherit}
-
-    .wrap{
-      width:min(var(--container), calc(100% - 28px));
-      margin:0 auto;
-    }
-
-    .top-strip{
-      background:#111827;
-      color:#e5e7eb;
-      font-size:13px;
-    }
-
-    .top-strip .wrap{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-      padding:10px 0;
-    }
-
-    .header{
-      position:sticky;
-      top:0;
-      z-index:100;
-      background:#fff;
-      border-bottom:1px solid var(--line);
-    }
-
-    .header-main{
-      display:grid;
-      grid-template-columns:240px 1fr auto;
-      gap:18px;
-      align-items:center;
-      padding:18px 0;
-    }
-
-    .logo{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-size:28px;
-      font-weight:900;
-      letter-spacing:.2px;
-      color:var(--primary);
-    }
-
-    .logo-badge{
-      width:42px;
-      height:42px;
-      border-radius:14px;
-      background:linear-gradient(135deg,var(--primary),#3b82f6);
-      color:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:22px;
-      font-weight:900;
-      box-shadow:var(--shadow);
-    }
-
-    .search-bar{
-      display:grid;
-      grid-template-columns:1fr 180px 130px;
-      gap:10px;
-      align-items:center;
-    }
-
-    .search-bar input,
-    .search-bar select{
-      width:100%;
-      height:52px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#fff;
-      padding:0 16px;
-      outline:none;
-    }
-
-    .search-bar input:focus,
-    .search-bar select:focus{
-      border-color:var(--primary);
-    }
-
-    .search-btn{
-      height:52px;
-      border:none;
-      border-radius:14px;
-      background:linear-gradient(135deg,var(--primary),var(--primary-2));
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-    }
-
-    .header-actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .action-link{
-      position:relative;
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:13px 15px;
-      font-weight:700;
-      white-space:nowrap;
-    }
-
-    .cart-badge{
-      position:absolute;
-      top:-8px;
-      right:-8px;
-      min-width:22px;
-      height:22px;
-      border-radius:999px;
-      background:var(--danger);
-      color:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:12px;
-      font-weight:800;
-      padding:0 6px;
-    }
-
-    .cat-nav{
-      background:#fff;
-      border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-    }
-
-    .cat-row{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      overflow:auto;
-      padding:12px 0;
-    }
-
-    .cat-chip{
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      padding:10px 14px;
-      border-radius:999px;
-      white-space:nowrap;
-      cursor:pointer;
-      font-weight:700;
-    }
-
-    .cat-chip.active{
-      background:var(--primary);
-      color:#fff;
-      border-color:var(--primary);
-    }
-
-    .hero{
-      padding:20px 0;
-    }
-
-    .hero-grid{
-      display:grid;
-      grid-template-columns:1.4fr .8fr;
-      gap:18px;
-    }
-
-    .hero-main{
-      background:linear-gradient(135deg,#0f172a,#1e293b 60%,#312e81);
-      color:#fff;
-      border-radius:28px;
-      padding:32px;
-      min-height:260px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      box-shadow:var(--shadow);
-    }
-
-    .hero-main h1{
-      margin:0 0 12px;
-      font-size:46px;
-      line-height:1.02;
-      max-width:720px;
-    }
-
-    .hero-main p{
-      margin:0 0 20px;
-      font-size:16px;
-      color:#dbeafe;
-      line-height:1.6;
-      max-width:720px;
-    }
-
-    .hero-buttons{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .hero-btn{
-      border:none;
-      border-radius:14px;
-      padding:14px 18px;
-      font-weight:800;
-      cursor:pointer;
-    }
-
-    .hero-btn.primary{
-      background:#fff;
-      color:#111827;
-    }
-
-    .hero-btn.secondary{
-      background:rgba(255,255,255,.08);
-      color:#fff;
-      border:1px solid rgba(255,255,255,.16);
-    }
-
-    .hero-side{
-      display:grid;
-      gap:18px;
-    }
-
-    .small-promo{
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:24px;
-      padding:20px;
-      box-shadow:var(--shadow);
-      min-height:121px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-    }
-
-    .small-promo strong{
-      font-size:20px;
-      margin-bottom:6px;
-    }
-
-    .small-promo span{
-      color:var(--muted);
-      line-height:1.5;
-      font-size:14px;
-    }
-
-    .section{
-      padding:6px 0 30px;
-    }
-
-    .layout{
-      display:grid;
-      grid-template-columns:280px 1fr;
-      gap:20px;
-      align-items:start;
-    }
-
-    .sidebar{
-      position:sticky;
-      top:156px;
-      display:grid;
-      gap:16px;
-    }
-
-    .card{
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:22px;
-      padding:18px;
-      box-shadow:var(--shadow);
-    }
-
-    .card h3{
-      margin:0 0 14px;
-      font-size:18px;
-    }
-
-    .filter-list{
-      display:grid;
-      gap:10px;
-    }
-
-    .filter-list label{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      color:var(--muted);
-      font-size:14px;
-      cursor:pointer;
-    }
-
-    .price-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-
-    .price-grid input,
-    .sort-select{
-      width:100%;
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:#fff;
-      padding:12px;
-      outline:none;
-    }
-
-    .clear-btn{
-      width:100%;
-      border:none;
-      border-radius:14px;
-      padding:13px 14px;
-      cursor:pointer;
-      font-weight:800;
-      background:#111827;
-      color:#fff;
-    }
-
-    .content-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      gap:16px;
-      margin-bottom:16px;
-      flex-wrap:wrap;
-    }
-
-    .content-head h2{
-      margin:0 0 4px;
-      font-size:30px;
-    }
-
-    .content-head p{
-      margin:0;
-      color:var(--muted);
-    }
-
-    .product-grid{
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:18px;
-    }
-
-    .product-card{
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:22px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-      display:flex;
-      flex-direction:column;
-      transition:transform .16s ease, box-shadow .16s ease;
-    }
-
-    .product-card:hover{
-      transform:translateY(-4px);
-      box-shadow:0 16px 36px rgba(15,23,42,.12);
-    }
-
-    .product-media{
-      position:relative;
-      aspect-ratio:1/1;
-      background:#fff;
-      padding:18px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border-bottom:1px solid var(--line);
-    }
-
-    .product-media img{
-      max-width:100%;
-      max-height:100%;
-      object-fit:contain;
-    }
-
-    .product-badge{
-      position:absolute;
-      top:12px;
-      left:12px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      color:#fff;
-      background:linear-gradient(135deg,var(--accent),#ef4444);
-    }
-
-    .product-fav{
-      position:absolute;
-      top:12px;
-      right:12px;
-      width:36px;
-      height:36px;
-      border-radius:50%;
-      background:#fff;
-      border:1px solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:16px;
-      color:#64748b;
-    }
-
-    .product-body{
-      padding:14px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      flex:1;
-    }
-
-    .product-title{
-      font-size:15px;
-      font-weight:800;
-      line-height:1.35;
-      min-height:42px;
-    }
-
-    .supplier{
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .meta-row{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      font-size:13px;
-      flex-wrap:wrap;
-    }
-
-    .rating{
-      color:var(--yellow);
-      font-weight:800;
-    }
-
-    .sold{
-      color:var(--muted);
-    }
-
-    .price-row{
-      display:flex;
-      align-items:flex-end;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .price{
-      font-size:24px;
-      font-weight:900;
-      line-height:1;
-    }
-
-    .old-price{
-      font-size:14px;
-      color:var(--muted);
-      text-decoration:line-through;
-    }
-
-    .moq{
-      font-size:13px;
-      color:var(--success);
-      font-weight:800;
-    }
-
-    .actions{
-      margin-top:auto;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-
-    .btn{
-      border:none;
-      border-radius:13px;
-      padding:12px 14px;
-      font-weight:800;
-      cursor:pointer;
-    }
-
-    .btn-light{
-      background:#eef2ff;
-      color:var(--primary);
-    }
-
-    .btn-primary{
-      background:linear-gradient(135deg,var(--primary),var(--primary-2));
-      color:#fff;
-    }
-
-    .empty{
-      display:none;
-      background:#fff;
-      border:1px dashed #cbd5e1;
-      border-radius:22px;
-      padding:44px 20px;
-      color:var(--muted);
-      text-align:center;
-    }
-
-    .footer{
-      margin-top:20px;
-      background:#0f172a;
-      color:#cbd5e1;
-      padding:28px 0;
-      font-size:14px;
-    }
-
-    @media (max-width:1280px){
-      .product-grid{grid-template-columns:repeat(3, minmax(0,1fr))}
-    }
-
-    @media (max-width:1100px){
-      .header-main{grid-template-columns:1fr;gap:14px}
-      .hero-grid{grid-template-columns:1fr}
-      .layout{grid-template-columns:1fr}
-      .sidebar{position:static}
-    }
-
-    @media (max-width:768px){
-      .search-bar{grid-template-columns:1fr}
-      .product-grid{grid-template-columns:repeat(2, minmax(0,1fr))}
-      .hero-main h1{font-size:34px}
-    }
-
-    @media (max-width:520px){
-      .wrap{width:min(var(--container), calc(100% - 20px))}
-      .product-grid{grid-template-columns:1fr}
-      .actions{grid-template-columns:1fr}
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>QualitetMarket – Sklep hurtowy online</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg-main: #050712;
+            --bg-elevated: #0b0f1f;
+            --bg-elevated-soft: #101528;
+            --bg-chip: #151a30;
+            --border-subtle: #232842;
+            --accent-primary: #7c3aed;
+            --accent-primary-soft: rgba(124, 58, 237, 0.18);
+            --accent-secondary: #22d3ee;
+            --accent-secondary-soft: rgba(34, 211, 238, 0.18);
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --text-soft: #6b7280;
+            --danger: #f97373;
+            --success: #4ade80;
+            --warning: #facc15;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 999px;
+            --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.55);
+            --shadow-chip: 0 10px 30px rgba(0, 0, 0, 0.45);
+            --transition-fast: 0.18s ease-out;
+            --transition-med: 0.25s ease-out;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #111827 0, #020617 45%, #020617 100%);
+            color: var(--text-main);
+        }
+
+        body {
+            min-height: 100vh;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+        }
+
+        button {
+            font-family: inherit;
+        }
+
+        /* Layout */
+
+        .page {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(18px);
+            background: linear-gradient(to bottom, rgba(3, 7, 18, 0.96), rgba(3, 7, 18, 0.9), rgba(3, 7, 18, 0.85));
+            border-bottom: 1px solid rgba(55, 65, 81, 0.6);
+        }
+
+        .header-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.35), transparent 55%);
+        }
+
+        .logo-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            background: conic-gradient(from 210deg, #22d3ee, #7c3aed, #22d3ee);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #020617;
+            font-weight: 800;
+            font-size: 18px;
+            box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.9);
+        }
+
+        .logo-text-main {
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            font-size: 17px;
+        }
+
+        .logo-text-sub {
+            font-size: 11px;
+            color: var(--text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+        }
+
+        .header-search {
+            flex: 1;
+            position: relative;
+        }
+
+        .header-search input {
+            width: 100%;
+            padding: 10px 40px 10px 38px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.8);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            box-shadow: var(--shadow-chip);
+        }
+
+        .header-search input::placeholder {
+            color: var(--text-soft);
+        }
+
+        .header-search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: var(--text-soft);
+        }
+
+        .header-search-hint {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: var(--text-soft);
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(75, 85, 99, 0.8);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            border-radius: 999px;
+            border: 1px solid transparent;
+            padding: 8px 14px;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-main);
+            transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .btn-ghost {
+            border-color: rgba(75, 85, 99, 0.9);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+        }
+
+        .btn-ghost:hover {
+            background: radial-gradient(circle at top left, rgba(31, 41, 55, 0.95), rgba(15, 23, 42, 0.98));
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-chip);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #22d3ee);
+            border-color: transparent;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.45);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.05);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            border-color: rgba(94, 234, 212, 0.7);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+            color: var(--accent-secondary);
+        }
+
+        .btn-outline:hover {
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 1));
+            box-shadow: 0 12px 30px rgba(34, 211, 238, 0.35);
+        }
+
+        .btn-icon {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .badge-counter {
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: #f97316;
+            color: #020617;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .header-actions-label {
+            display: none;
+        }
+
+        /* Nav bar */
+
+        .nav-bar {
+            border-top: 1px solid rgba(31, 41, 55, 0.9);
+            border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+        }
+
+        .nav-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 6px 20px 10px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--text-soft);
+            white-space: nowrap;
+        }
+
+        .nav-list {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-pill {
+            padding: 7px 14px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-size: 13px;
+            color: var(--text-muted);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .nav-pill span.icon {
+            font-size: 14px;
+        }
+
+        .nav-pill.active {
+            border-color: rgba(124, 58, 237, 0.9);
+            color: var(--accent-secondary);
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.25), rgba(15, 23, 42, 0.98));
+            box-shadow: 0 12px 30px rgba(124, 58, 237, 0.45);
+        }
+
+        .nav-pill:hover {
+            transform: translateY(-1px);
+            border-color: rgba(75, 85, 99, 0.9);
+            box-shadow: var(--shadow-chip);
+        }
+
+        .nav-meta {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--text-soft);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .nav-meta-pill {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.96);
+        }
+
+        /* Main */
+
+        main {
+            flex: 1;
+        }
+
+        .main-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 18px 20px 40px;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            gap: 22px;
+        }
+
+        /* Hero */
+
+        .hero {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+            gap: 22px;
+            margin-bottom: 10px;
+        }
+
+        .hero-main {
+            padding: 20px 22px;
+            border-radius: var(--radius-lg);
+            background:
+                radial-gradient(circle at top left, rgba(124, 58, 237, 0.35), transparent 55%),
+                radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.25), transparent 55%),
+                linear-gradient(135deg, #020617, #020617);
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-main::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(15, 23, 42, 0.7), transparent 55%);
+            pointer-events: none;
+        }
+
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            font-size: 11px;
+            color: var(--text-soft);
+            margin-bottom: 10px;
+        }
+
+        .hero-kicker-badge {
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(34, 197, 94, 0.12);
+            color: #4ade80;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .hero-title {
+            font-size: 26px;
+            line-height: 1.2;
+            margin: 0 0 8px;
+        }
+
+        .hero-title span.accent {
+            background: linear-gradient(135deg, #7c3aed, #22d3ee);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 520px;
+            margin-bottom: 16px;
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .hero-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        .hero-meta-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: radial-gradient(circle at top left, #22d3ee, #7c3aed);
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .hero-note {
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .hero-note strong {
+            color: var(--accent-secondary);
+            font-weight: 500;
+        }
+
+        .hero-side {
+            padding: 16px 16px 14px;
+            border-radius: var(--radius-lg);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .hero-side-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero-side-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--text-soft);
+        }
+
+        .hero-side-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            font-size: 11px;
+            color: var(--accent-secondary);
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .hero-stat {
+            padding: 10px 10px 9px;
+            border-radius: var(--radius-md);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+        }
+
+        .hero-stat-label {
+            font-size: 11px;
+            color: var(--text-soft);
+            margin-bottom: 4px;
+        }
+
+        .hero-stat-value {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .hero-stat-tag {
+            font-size: 10px;
+            color: var(--accent-secondary);
+        }
+
+        .hero-branches {
+            margin-top: 4px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(55, 65, 81, 0.9);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .hero-branch-pill {
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            font-size: 11px;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hero-branch-pill span.dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #22c55e;
+        }
+
+        .hero-branch-pill.offline span.dot {
+            background: #f97373;
+        }
+
+        .hero-side-footer {
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--text-soft);
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .hero-side-footer span.highlight {
+            color: var(--accent-secondary);
+        }
+
+        /* Branches section */
+
+        .branches {
+            grid-column: 1 / -1;
+            margin-top: 6px;
+            margin-bottom: 10px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--text-soft);
+        }
+
+        .section-subtitle {
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        .branches-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .branch-card {
+            border-radius: var(--radius-md);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 10px 10px 9px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: var(--shadow-chip);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+        }
+
+        .branch-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(124, 58, 237, 0.8);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.9);
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.98));
+        }
+
+        .branch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .branch-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .branch-status {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.9);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .branch-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: #22c55e;
+        }
+
+        .branch-status.offline .branch-status-dot {
+            background: #f97373;
+        }
+
+        .branch-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .branch-meta span strong {
+            color: var(--text-muted);
+        }
+
+        .branch-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .branch-badge {
+            font-size: 10px;
+            padding: 3px 7px;
+            border-radius: 999px;
+            background: rgba(34, 211, 238, 0.12);
+            color: var(--accent-secondary);
+        }
+
+        .branch-btn {
+            font-size: 11px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.96);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .branch-btn:hover {
+            border-color: rgba(124, 58, 237, 0.9);
+            color: var(--accent-secondary);
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.98));
+            box-shadow: var(--shadow-chip);
+            transform: translateY(-1px);
+        }
+
+        /* Sidebar filters */
+
+        .sidebar {
+            align-self: flex-start;
+            position: sticky;
+            top: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .filter-panel {
+            border-radius: var(--radius-lg);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 14px 14px 12px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .filter-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--text-soft);
+        }
+
+        .filter-reset {
+            font-size: 11px;
+            color: var(--accent-secondary);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            padding: 0;
+        }
+
+        .filter-group {
+            margin-bottom: 10px;
+            padding: 8px 8px 6px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(31, 41, 55, 0.9);
+        }
+
+        .filter-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-soft);
+            margin-bottom: 6px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .filter-row input[type="number"],
+        .filter-row select {
+            flex: 1;
+            padding: 6px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.96);
+            color: var(--text-main);
+            font-size: 12px;
+            outline: none;
+        }
+
+        .filter-row input[type="number"]::placeholder {
+            color: var(--text-soft);
+        }
+
+        .filter-row span.separator {
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .filter-checkbox input {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--accent-primary);
+        }
+
+        .filter-tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .filter-tag {
+            padding: 4px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.96);
+            font-size: 11px;
+            color: var(--text-soft);
+            cursor: pointer;
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .filter-tag.active {
+            border-color: rgba(124, 58, 237, 0.9);
+            color: var(--accent-secondary);
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.98));
+            box-shadow: var(--shadow-chip);
+            transform: translateY(-1px);
+        }
+
+        .filter-footer {
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .filter-footer span.highlight {
+            color: var(--accent-secondary);
+        }
+
+        /* Product area */
+
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .products-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .products-title {
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--text-soft);
+        }
+
+        .products-meta {
+            font-size: 12px;
+            color: var(--text-soft);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .products-meta-pill {
+            padding: 4px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.96);
+        }
+
+        .products-sort {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .products-sort select {
+            padding: 5px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.96);
+            color: var(--text-main);
+            font-size: 11px;
+            outline: none;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .product-card {
+            border-radius: var(--radius-lg);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 10px 10px 9px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: var(--shadow-chip);
+            transition: transform var(--transition-med), box-shadow var(--transition-med), border-color var(--transition-med), background var(--transition-med);
+        }
+
+        .product-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(124, 58, 237, 0.9);
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.95);
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.98));
+        }
+
+        .product-image-wrapper {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 1));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 10px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image-placeholder {
+            width: 70%;
+            height: 70px;
+            border-radius: 12px;
+            border: 1px dashed rgba(55, 65, 81, 0.9);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .product-badges {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .badge {
+            padding: 3px 7px;
+            border-radius: 999px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            border: 1px solid transparent;
+        }
+
+        .badge-hurt {
+            background: var(--accent-primary-soft);
+            border-color: rgba(124, 58, 237, 0.9);
+            color: #c4b5fd;
+        }
+
+        .badge-24h {
+            background: var(--accent-secondary-soft);
+            border-color: rgba(34, 211, 238, 0.9);
+            color: #a5f3fc;
+        }
+
+        .badge-bestseller {
+            background: rgba(250, 204, 21, 0.12);
+            border-color: rgba(250, 204, 21, 0.9);
+            color: #facc15;
+        }
+
+        .product-branch-tag {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            padding: 3px 7px;
+            border-radius: 999px;
+            font-size: 10px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            color: var(--text-soft);
+        }
+
+        .product-body {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .product-name {
+            font-size: 13px;
+            font-weight: 500;
+            min-height: 32px;
+        }
+
+        .product-name span.category {
+            color: var(--text-soft);
+            font-size: 11px;
+        }
+
+        .product-prices {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .price-netto {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .price-brutto {
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .price-brutto span {
+            color: var(--text-muted);
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .product-meta span strong {
+            color: var(--text-muted);
+        }
+
+        .product-stock {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .stock-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #22c55e;
+        }
+
+        .stock-low .stock-dot {
+            background: #f97373;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .product-footer-left {
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .product-footer-left span.highlight {
+            color: var(--accent-secondary);
+        }
+
+        .product-add-btn {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(124, 58, 237, 0.9);
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.98));
+            color: var(--text-main);
+            font-size: 11px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .product-add-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-chip);
+            border-color: rgba(34, 211, 238, 0.9);
+        }
+
+        .product-add-btn span.icon {
+            font-size: 13px;
+        }
+
+        .product-card.hidden {
+            display: none !important;
+        }
+
+        /* Popular categories */
+
+        .popular-categories {
+            border-radius: var(--radius-lg);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 12px 14px 10px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .popular-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .popular-card {
+            border-radius: var(--radius-md);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 8px 9px 7px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-soft);
+            cursor: pointer;
+            transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .popular-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(124, 58, 237, 0.9);
+            box-shadow: var(--shadow-chip);
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.98));
+        }
+
+        .popular-name {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .popular-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .popular-badge {
+            padding: 3px 7px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.96);
+            font-size: 10px;
+        }
+
+        /* Suppliers */
+
+        .suppliers {
+            border-radius: var(--radius-lg);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 12px 14px 10px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .suppliers-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .supplier-card {
+            border-radius: var(--radius-md);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 9px 9px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-soft);
+            transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .supplier-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(124, 58, 237, 0.9);
+            box-shadow: var(--shadow-chip);
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.98));
+        }
+
+        .supplier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .supplier-name {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .supplier-badge {
+            padding: 3px 7px;
+            border-radius: 999px;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            background: rgba(15, 23, 42, 0.96);
+            font-size: 10px;
+            color: var(--accent-secondary);
+        }
+
+        .supplier-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .supplier-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .supplier-rating span.star {
+            color: #facc15;
+        }
+
+        .supplier-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+        }
+
+        .supplier-footer span.highlight {
+            color: var(--accent-secondary);
+        }
+
+        /* Why us */
+
+        .why-us {
+            border-radius: var(--radius-lg);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 14px 14px 12px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .why-card {
+            border-radius: var(--radius-md);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            padding: 10px 10px 9px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        .why-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.25), rgba(15, 23, 42, 0.98));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .why-title {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .why-text {
+            font-size: 11px;
+        }
+
+        /* Footer */
+
+        footer {
+            border-top: 1px solid rgba(31, 41, 55, 0.9);
+            background: #020617;
+            margin-top: 20px;
+        }
+
+        .footer-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 16px 20px 18px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            transition: color var(--transition-fast);
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-secondary);
+        }
+
+        .footer-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .footer-meta span.highlight {
+            color: var(--accent-secondary);
+        }
+
+        /* Responsive */
+
+        @media (max-width: 1100px) {
+            .main-inner {
+                grid-template-columns: 260px minmax(0, 1fr);
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .branches-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .popular-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .suppliers-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .why-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 900px) {
+            .header-inner {
+                flex-wrap: wrap;
+            }
+
+            .header-actions-label {
+                display: inline;
+            }
+
+            .hero {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .hero-side {
+                order: -1;
+            }
+
+            .main-inner {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .sidebar {
+                position: static;
+                order: -1;
+            }
+
+            .branches-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .popular-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .suppliers-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header-inner {
+                padding: 8px 12px;
+            }
+
+            .nav-inner {
+                padding: 6px 12px 8px;
+            }
+
+            .main-inner {
+                padding: 14px 12px 24px;
+            }
+
+            .hero-main {
+                padding: 16px 14px;
+            }
+
+            .branches-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .products-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .popular-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .suppliers-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .why-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .header-actions {
+                margin-left: auto;
+            }
+
+            .header-search-hint {
+                display: none;
+            }
+
+            .nav-meta {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="top-strip">
-    <div class="wrap">
-      <div>QualitetMarket • sklep marketplace • B2B/B2C • szybki start</div>
-      <div>API: http://localhost:3001/api/products</div>
-    </div>
-  </div>
-
-  <header class="header">
-    <div class="wrap">
-      <div class="header-main">
-        <a href="#" class="logo">
-          <span class="logo-badge">Q</span>
-          <span>QualitetMarket</span>
-        </a>
-
-        <div class="search-bar">
-          <input id="searchInput" type="text" placeholder="Szukaj produktów, marek, dostawców...">
-          <select id="categorySelect">
-            <option value="all">Wszystkie kategorie</option>
-            <option value="electronics">Elektronika</option>
-            <option value="fashion">Moda</option>
-            <option value="home">Dom</option>
-            <option value="sport">Sport</option>
-            <option value="beauty">Beauty</option>
-          </select>
-          <button id="searchBtn" class="search-btn" type="button">Szukaj</button>
-        </div>
-
-        <div class="header-actions">
-          <a class="action-link" href="#">Panel</a>
-          <a class="action-link" href="koszyk.html">
-            Koszyk
-            <span class="cart-badge" id="cartCount">0</span>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <nav class="cat-nav">
-      <div class="wrap">
-        <div class="cat-row">
-          <button class="cat-chip active" data-category="all" type="button">Wszystko</button>
-          <button class="cat-chip" data-category="electronics" type="button">Elektronika</button>
-          <button class="cat-chip" data-category="fashion" type="button">Moda</button>
-          <button class="cat-chip" data-category="home" type="button">Dom i ogród</button>
-          <button class="cat-chip" data-category="sport" type="button">Sport</button>
-          <button class="cat-chip" data-category="beauty" type="button">Beauty</button>
-        </div>
-      </div>
-    </nav>
-  </header>
-
-  <section class="hero">
-    <div class="wrap">
-      <div class="hero-grid">
-        <div class="hero-main">
-          <h1>Normalny sklep marketplace jak AliExpress</h1>
-          <p>
-            Duże karty produktów, promocje, wyszukiwarka, kategorie, filtrowanie i działający koszyk.
-            Produkty pobierają się z Twojego backendu Node.js.
-          </p>
-          <div class="hero-buttons">
-            <button class="hero-btn primary" type="button" onclick="document.getElementById('products').scrollIntoView()">Przeglądaj produkty</button>
-            <button class="hero-btn secondary" type="button">Oferty dnia</button>
-          </div>
-        </div>
-
-        <div class="hero-side">
-          <div class="small-promo">
-            <strong>Oferty hurtowe</strong>
-            <span>Importuj produkty od dostawców i sprzedawaj w swoim sklepie.</span>
-          </div>
-          <div class="small-promo">
-            <strong>Promocje do -40%</strong>
-            <span>Widoczna cena, stara cena, badge rabatowy i szybki zakup.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="products">
-    <div class="wrap">
-      <div class="layout">
-        <aside class="sidebar">
-          <div class="card">
-            <h3>Filtry</h3>
-            <div class="filter-list">
-              <label><input type="checkbox" class="promoFilter" value="discount"> Tylko promocje</label>
-              <label><input type="checkbox" class="promoFilter" value="cheap"> Do 500 zł</label>
-              <label><input type="checkbox" class="promoFilter" value="premium"> Premium 2000+ zł</label>
+<div class="page">
+    <header>
+        <div class="header-inner">
+            <a href="#" class="logo" aria-label="QualitetMarket – strona główna sklepu">
+                <div class="logo-mark">Q</div>
+                <div>
+                    <div class="logo-text-main">QualitetMarket</div>
+                    <div class="logo-text-sub">Hurtownia &amp; marketplace B2B / B2C</div>
+                </div>
+            </a>
+            <div class="header-search" role="search">
+                <span class="header-search-icon">🔍</span>
+                <input id="searchInput" type="search" placeholder="Szukaj produktów, marek lub oddziałów…" aria-label="Szukaj produktów">
+                <span class="header-search-hint">Ctrl + K</span>
             </div>
-          </div>
-
-          <div class="card">
-            <h3>Cena</h3>
-            <div class="price-grid">
-              <input type="number" id="minPrice" placeholder="Od">
-              <input type="number" id="maxPrice" placeholder="Do">
+            <div class="header-actions">
+                <button class="btn btn-ghost" type="button">
+                    <span>🔑</span>
+                    <span class="header-actions-label">Zaloguj</span>
+                </button>
+                <button class="btn btn-ghost" type="button">
+                    <span>📦</span>
+                    <span class="header-actions-label">Panel sprzedawcy</span>
+                </button>
+                <button class="btn btn-primary" type="button">
+                    <span>🛒</span>
+                    <span class="header-actions-label">Koszyk</span>
+                    <span class="badge-counter" id="cartCounter">0</span>
+                </button>
             </div>
-          </div>
-
-          <div class="card">
-            <h3>Sortowanie</h3>
-            <select id="sortSelect" class="sort-select">
-              <option value="default">Domyślnie</option>
-              <option value="priceAsc">Cena rosnąco</option>
-              <option value="priceDesc">Cena malejąco</option>
-              <option value="nameAsc">Nazwa A-Z</option>
-            </select>
-          </div>
-
-          <div class="card">
-            <button id="clearFilters" class="clear-btn" type="button">Wyczyść filtry</button>
-          </div>
-        </aside>
-
-        <main>
-          <div class="content-head">
-            <div>
-              <h2>Produkty</h2>
-              <p id="resultsMeta">Ładowanie produktów...</p>
+        </div>
+        <nav class="nav-bar" aria-label="Kategorie główne">
+            <div class="nav-inner">
+                <div class="nav-label">Kategorie hurtowe</div>
+                <div class="nav-list" id="categoryNav">
+                    <button class="nav-pill active" data-category="all" type="button">
+                        <span class="icon">⚡</span>
+                        <span>Wszystkie</span>
+                    </button>
+                    <button class="nav-pill" data-category="Elektronika" type="button">
+                        <span class="icon">💡</span>
+                        <span>Elektronika</span>
+                    </button>
+                    <button class="nav-pill" data-category="Dom i Ogród" type="button">
+                        <span class="icon">🏡</span>
+                        <span>Dom i Ogród</span>
+                    </button>
+                    <button class="nav-pill" data-category="Moda" type="button">
+                        <span class="icon">👕</span>
+                        <span>Moda</span>
+                    </button>
+                    <button class="nav-pill" data-category="Dziecko" type="button">
+                        <span class="icon">🧸</span>
+                        <span>Dziecko</span>
+                    </button>
+                    <button class="nav-pill" data-category="Sport" type="button">
+                        <span class="icon">🏋️</span>
+                        <span>Sport</span>
+                    </button>
+                    <button class="nav-pill" data-category="Zdrowie i Uroda" type="button">
+                        <span class="icon">💊</span>
+                        <span>Zdrowie i Uroda</span>
+                    </button>
+                    <button class="nav-pill" data-category="Motoryzacja" type="button">
+                        <span class="icon">🚗</span>
+                        <span>Motoryzacja</span>
+                    </button>
+                    <button class="nav-pill" data-category="Supermarket" type="button">
+                        <span class="icon">🛍️</span>
+                        <span>Supermarket</span>
+                    </button>
+                </div>
+                <div class="nav-meta">
+                    <div class="nav-meta-pill">Ponad 48 000 SKU w ofercie</div>
+                    <div>Aktualizacja stanów magazynowych w czasie rzeczywistym</div>
+                </div>
             </div>
-          </div>
+        </nav>
+    </header>
 
-          <div class="product-grid" id="productGrid"></div>
-          <div class="empty" id="emptyState">Brak produktów dla wybranych filtrów.</div>
-        </main>
-      </div>
-    </div>
-  </section>
+    <main>
+        <div class="main-inner">
+            <section class="hero" aria-label="Informacje o hurtowni">
+                <aside class="hero-side" aria-label="Statystyki platformy">
+                    <div class="hero-side-header">
+                        <div class="hero-side-title">Status platformy</div>
+                        <div class="hero-side-badge">Online 24/7</div>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Aktywne produkty</div>
+                            <div class="hero-stat-value">48 320</div>
+                            <div class="hero-stat-tag">SKU w 8 kategoriach</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Dostawcy</div>
+                            <div class="hero-stat-value">312</div>
+                            <div class="hero-stat-tag">Zweryfikowani partnerzy</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Oddziały</div>
+                            <div class="hero-stat-value">6</div>
+                            <div class="hero-stat-tag">Magazyny w Polsce</div>
+                        </div>
+                    </div>
+                    <div class="hero-branches">
+                        <div class="hero-branch-pill">
+                            <span class="dot"></span>
+                            Warszawa · Fulfillment 24h
+                        </div>
+                        <div class="hero-branch-pill">
+                            <span class="dot"></span>
+                            Poznań · Cross-dock
+                        </div>
+                        <div class="hero-branch-pill">
+                            <span class="dot"></span>
+                            Katowice · Logistyka paletowa
+                        </div>
+                        <div class="hero-branch-pill offline">
+                            <span class="dot"></span>
+                            Gdańsk · Serwis planowany
+                        </div>
+                    </div>
+                    <div class="hero-side-footer">
+                        <span>Średni czas realizacji zamówienia: <span class="highlight">&lt; 18 h</span></span>
+                        <span>Śledzenie zamówień w czasie rzeczywistym</span>
+                    </div>
+                </aside>
 
-  <footer class="footer">
-    <div class="wrap">
-      QualitetMarket • frontend sklepu • produkty z API • koszyk w localStorage
-    </div>
-  </footer>
+                <section class="hero-main">
+                    <div class="hero-kicker">
+                        <span class="hero-kicker-badge">Hurt &amp; detal</span>
+                        <span>Jedna platforma dla sklepów, sieci i klientów indywidualnych</span>
+                    </div>
+                    <h1 class="hero-title">
+                        Nowoczesna hurtownia online <span class="accent">QualitetMarket</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Zamawiaj hurtowo i detalicznie w jednym miejscu. Łączymy magazyny wielu dostawców, oddziały w całej Polsce
+                        i inteligentne zarządzanie stanami, aby Twoje zamówienia były zawsze na czas.
+                    </p>
+                    <div class="hero-meta">
+                        <div class="hero-meta-item">
+                            <span class="hero-meta-dot"></span>
+                            Dostawy 24h z wybranych oddziałów
+                        </div>
+                        <div class="hero-meta-item">
+                            <span class="hero-meta-dot"></span>
+                            Ceny netto i brutto w czasie rzeczywistym
+                        </div>
+                        <div class="hero-meta-item">
+                            <span class="hero-meta-dot"></span>
+                            Integracja z systemami B2B / ERP
+                        </div>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" type="button" id="scrollToProducts">
+                            <span>📦</span>
+                            <span>Zobacz produkty</span>
+                        </button>
+                        <button class="btn btn-outline" type="button">
+                            <span>🤝</span>
+                            <span>Dołącz jako dostawca</span>
+                        </button>
+                    </div>
+                    <p class="hero-note">
+                        Obsługujemy zamówienia paletowe, kartonowe i jednostkowe. <strong>Bez minimalnego obrotu rocznego</strong> dla nowych klientów.
+                    </p>
+                </section>
+            </section>
 
-  <script>
-    const API_URL = "http://localhost:3001/api/products";
+            <section class="branches" aria-labelledby="branchesTitle">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title" id="branchesTitle">Oddziały / Hurtownie</h2>
+                        <p class="section-subtitle">Wybierz magazyn, z którego chcesz realizować zamówienia</p>
+                    </div>
+                    <div class="section-subtitle">Możesz łączyć produkty z wielu oddziałów w jednym koszyku</div>
+                </div>
+                <div class="branches-grid">
+                    <article class="branch-card">
+                        <div class="branch-header">
+                            <div class="branch-name">Warszawa</div>
+                            <div class="branch-status">
+                                <span class="branch-status-dot"></span>
+                                Online · 24h
+                            </div>
+                        </div>
+                        <div class="branch-meta">
+                            <span><strong>18 240</strong> produktów</span>
+                            <span>Fulfillment &amp; cross-dock</span>
+                        </div>
+                        <div class="branch-footer">
+                            <span class="branch-badge">Największy magazyn</span>
+                            <button class="branch-btn" type="button">
+                                <span>Przejdź</span>
+                                <span>→</span>
+                            </button>
+                        </div>
+                    </article>
+                    <article class="branch-card">
+                        <div class="branch-header">
+                            <div class="branch-name">Kraków</div>
+                            <div class="branch-status">
+                                <span class="branch-status-dot"></span>
+                                Online
+                            </div>
+                        </div>
+                        <div class="branch-meta">
+                            <span><strong>9 870</strong> produktów</span>
+                            <span>Elektronika &amp; AGD</span>
+                        </div>
+                        <div class="branch-footer">
+                            <span class="branch-badge">Specjalizacja: elektronika</span>
+                            <button class="branch-btn" type="button">
+                                <span>Przejdź</span>
+                                <span>→</span>
+                            </button>
+                        </div>
+                    </article>
+                    <article class="branch-card">
+                        <div class="branch-header">
+                            <div class="branch-name">Gdańsk</div>
+                            <div class="branch-status offline">
+                                <span class="branch-status-dot"></span>
+                                Online · 48h
+                            </div>
+                        </div>
+                        <div class="branch-meta">
+                            <span><strong>6 120</strong> produktów</span>
+                            <span>Import &amp; eksport</span>
+                        </div>
+                        <div class="branch-footer">
+                            <span class="branch-badge">Strefa portowa</span>
+                            <button class="branch-btn" type="button">
+                                <span>Przejdź</span>
+                                <span>→</span>
+                            </button>
+                        </div>
+                    </article>
+                    <article class="branch-card">
+                        <div class="branch-header">
+                            <div class="branch-name">Wrocław</div>
+                            <div class="branch-status">
+                                <span class="branch-status-dot"></span>
+                                Online
+                            </div>
+                        </div>
+                        <div class="branch-meta">
+                            <span><strong>5 430</strong> produktów</span>
+                            <span>Logistyka zachód</span>
+                        </div>
+                        <div class="branch-footer">
+                            <span class="branch-badge">Obsługa sieci retail</span>
+                            <button class="branch-btn" type="button">
+                                <span>Przejdź</span>
+                                <span>→</span>
+                            </button>
+                        </div>
+                    </article>
+                    <article class="branch-card">
+                        <div class="branch-header">
+                            <div class="branch-name">Poznań</div>
+                            <div class="branch-status">
+                                <span class="branch-status-dot"></span>
+                                Online · 24h
+                            </div>
+                        </div>
+                        <div class="branch-meta">
+                            <span><strong>4 980</strong> produktów</span>
+                            <span>FMCG &amp; supermarket</span>
+                        </div>
+                        <div class="branch-footer">
+                            <span class="branch-badge">Szybkie dostawy</span>
+                            <button class="branch-btn" type="button">
+                                <span>Przejdź</span>
+                                <span>→</span>
+                            </button>
+                        </div>
+                    </article>
+                    <article class="branch-card">
+                        <div class="branch-header">
+                            <div class="branch-name">Katowice</div>
+                            <div class="branch-status">
+                                <span class="branch-status-dot"></span>
+                                Online
+                            </div>
+                        </div>
+                        <div class="branch-meta">
+                            <span><strong>3 680</strong> produktów</span>
+                            <span>Przemysł &amp; B2B</span>
+                        </div>
+                        <div class="branch-footer">
+                            <span class="branch-badge">Strefa przemysłowa</span>
+                            <button class="branch-btn" type="button">
+                                <span>Przejdź</span>
+                                <span>→</span>
+                            </button>
+                        </div>
+                    </article>
+                </div>
+            </section>
 
-    let allProducts = [];
-    let activeCategory = "all";
+            <aside class="sidebar" aria-label="Filtry produktów">
+                <section class="filter-panel">
+                    <div class="filter-header">
+                        <h2 class="filter-title">Filtry</h2>
+                        <button class="filter-reset" type="button" id="resetFilters">Wyczyść</button>
+                    </div>
 
-    function guessCategory(product) {
-      const text = `${product.name} ${product.store}`.toLowerCase();
+                    <div class="filter-group">
+                        <div class="filter-label">Zakres cen (netto)</div>
+                        <div class="filter-row">
+                            <input type="number" id="priceMin" placeholder="od" min="0">
+                            <span class="separator">–</span>
+                            <input type="number" id="priceMax" placeholder="do" min="0">
+                        </div>
+                    </div>
 
-      if (
-        text.includes("iphone") ||
-        text.includes("playstation") ||
-        text.includes("sony") ||
-        text.includes("apple") ||
-        text.includes("smart") ||
-        text.includes("laptop")
-      ) return "electronics";
+                    <div class="filter-group">
+                        <div class="filter-label">Dostępność</div>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="onlyInStock">
+                            <span>Tylko produkty dostępne</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="only24h">
+                            <span>Dostawa 24h</span>
+                        </label>
+                    </div>
 
-      if (
-        text.includes("nike") ||
-        text.includes("shoe") ||
-        text.includes("but") ||
-        text.includes("shirt") ||
-        text.includes("hoodie")
-      ) return "fashion";
+                    <div class="filter-group">
+                        <div class="filter-label">Typ sprzedaży</div>
+                        <div class="filter-tag-row" id="saleTypeFilter">
+                            <button class="filter-tag active" type="button" data-sale="all">Wszystkie</button>
+                            <button class="filter-tag" type="button" data-sale="hurt">Hurt</button>
+                            <button class="filter-tag" type="button" data-sale="detal">Detal</button>
+                        </div>
+                    </div>
 
-      if (
-        text.includes("sofa") ||
-        text.includes("lamp") ||
-        text.includes("kitchen") ||
-        text.includes("home")
-      ) return "home";
+                    <div class="filter-group">
+                        <div class="filter-label">Lokalizacja oddziału</div>
+                        <select id="branchFilter">
+                            <option value="all">Wszystkie oddziały</option>
+                            <option value="Warszawa">Warszawa</option>
+                            <option value="Kraków">Kraków</option>
+                            <option value="Gdańsk">Gdańsk</option>
+                            <option value="Wrocław">Wrocław</option>
+                            <option value="Poznań">Poznań</option>
+                            <option value="Katowice">Katowice</option>
+                        </select>
+                    </div>
 
-      if (
-        text.includes("sport") ||
-        text.includes("bike") ||
-        text.includes("ball")
-      ) return "sport";
+                    <div class="filter-group">
+                        <div class="filter-label">Marka</div>
+                        <select id="brandFilter">
+                            <option value="all">Wszystkie marki</option>
+                            <option value="Qualitet">Qualitet</option>
+                            <option value="NordicLine">NordicLine</option>
+                            <option value="UrbanPro">UrbanPro</option>
+                            <option value="KidsJoy">KidsJoy</option>
+                            <option value="FitMotion">FitMotion</option>
+                            <option value="AutoCore">AutoCore</option>
+                        </select>
+                    </div>
 
-      if (
-        text.includes("beauty") ||
-        text.includes("cream") ||
-        text.includes("cosmetic")
-      ) return "beauty";
+                    <div class="filter-group">
+                        <div class="filter-label">Dostawa 24h</div>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="delivery24h">
+                            <span>Preferuj produkty z dostawą 24h</span>
+                        </label>
+                    </div>
 
-      return "electronics";
-    }
+                    <div class="filter-footer">
+                        <span>Aktywne filtry: <span class="highlight" id="activeFiltersCount">0</span></span>
+                        <span>Widoczne produkty: <span class="highlight" id="visibleProductsCount">0</span></span>
+                    </div>
+                </section>
+            </aside>
 
-    function enrichProduct(product, index) {
-      const price = Number(product.price || 0);
-      const oldPrice = Number(product.oldPrice || 0);
-      const discount = oldPrice > price ? Math.round((1 - price / oldPrice) * 100) : 0;
+            <section class="content-area">
+                <section class="products" aria-labelledby="productsTitle">
+                    <div class="products-header">
+                        <div>
+                            <h2 class="products-title" id="productsTitle">Oferta produktów</h2>
+                            <p class="section-subtitle">Przykładowe produkty z różnych kategorii i oddziałów</p>
+                        </div>
+                        <div class="products-meta">
+                            <div class="products-meta-pill">Widok hurtowni · ceny netto / brutto</div>
+                            <div class="products-sort">
+                                <span>Sortuj:</span>
+                                <select id="sortSelect">
+                                    <option value="default">Domyślnie</option>
+                                    <option value="priceAsc">Cena rosnąco</option>
+                                    <option value="priceDesc">Cena malejąco</option>
+                                    <option value="stockDesc">Stan magazynowy</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
-      return {
-        ...product,
-        category: product.category || guessCategory(product),
-        rating: (4.6 + (index % 4) * 0.1).toFixed(1),
-        sold: 80 + index * 19,
-        moq: index % 2 === 0 ? "MOQ: 2 szt." : "MOQ: 1 szt.",
-        badge: discount > 0 ? `-${discount}%` : (index % 2 === 0 ? "HOT" : "NOWOŚĆ")
-      };
-    }
+                    <div class="products-grid" id="productsGrid">
+                        <!-- Produkt 1 -->
+                        <article class="product-card"
+                                 data-name="Monitor LED 27 Qualitet ProLine Q27"
+                                 data-category="Elektronika"
+                                 data-branch="Warszawa"
+                                 data-brand="Qualitet"
+                                 data-sale="hurt"
+                                 data-price-netto="799"
+                                 data-stock="240"
+                                 data-24h="true">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-24h">24H</span>
+                                    <span class="badge badge-bestseller">Bestseller</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Warszawa</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Monitor LED 27" Qualitet ProLine Q27
+                                    <br><span class="category">Elektronika · Qualitet</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">799,00 zł netto</div>
+                                    <div class="price-brutto"><span>982,77 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>5 szt.</strong></span>
+                                    <span>Pakowanie: <strong>karton</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>240 szt.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">&lt; 24h</span> z Warszawy
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
 
-    function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-      const count = cart.reduce((sum, item) => sum + (item.qty || 0), 0);
-      document.getElementById("cartCount").textContent = count;
-    }
+                        <!-- Produkt 2 -->
+                        <article class="product-card"
+                                 data-name="Zestaw narzędzi ogrodowych NordicLine Garden Pro"
+                                 data-category="Dom i Ogród"
+                                 data-branch="Poznań"
+                                 data-brand="NordicLine"
+                                 data-sale="hurt"
+                                 data-price-netto="129"
+                                 data-stock="520"
+                                 data-24h="true">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-24h">24H</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Poznań</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Zestaw narzędzi ogrodowych NordicLine Garden Pro
+                                    <br><span class="category">Dom i Ogród · NordicLine</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">129,00 zł netto</div>
+                                    <div class="price-brutto"><span>158,67 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>10 kpl.</strong></span>
+                                    <span>Pakowanie: <strong>karton</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>520 kpl.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">24h</span> z Poznania
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
 
-    function addToCart(id) {
-      const product = allProducts.find(p => p.id === id);
-      if (!product) return;
+                        <!-- Produkt 3 -->
+                        <article class="product-card"
+                                 data-name="Bluza męska UrbanPro Tech Hoodie"
+                                 data-category="Moda"
+                                 data-branch="Kraków"
+                                 data-brand="UrbanPro"
+                                 data-sale="hurt"
+                                 data-price-netto="89"
+                                 data-stock="120"
+                                 data-24h="false">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-bestseller">Bestseller</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Kraków</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Bluza męska UrbanPro Tech Hoodie
+                                    <br><span class="category">Moda · UrbanPro</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">89,00 zł netto</div>
+                                    <div class="price-brutto"><span>109,47 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>20 szt.</strong></span>
+                                    <span>Rozmiary: <strong>S–XXL</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>120 szt.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">48h</span> z Krakowa
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
 
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-      const existing = cart.find(item => item.id === id);
+                        <!-- Produkt 4 -->
+                        <article class="product-card"
+                                 data-name="Wózek dziecięcy KidsJoy CityMove 3w1"
+                                 data-category="Dziecko"
+                                 data-branch="Warszawa"
+                                 data-brand="KidsJoy"
+                                 data-sale="hurt"
+                                 data-price-netto="1199"
+                                 data-stock="45"
+                                 data-24h="true">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-24h">24H</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Warszawa</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Wózek dziecięcy KidsJoy CityMove 3w1
+                                    <br><span class="category">Dziecko · KidsJoy</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">1 199,00 zł netto</div>
+                                    <div class="price-brutto"><span>1 474,77 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>3 szt.</strong></span>
+                                    <span>Pakowanie: <strong>karton</strong></span>
+                                </div>
+                                <div class="product-stock stock-low">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>45 szt.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">24h</span> z Warszawy
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
 
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        cart.push({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          store: product.store,
-          qty: 1
+                        <!-- Produkt 5 -->
+                        <article class="product-card"
+                                 data-name="Bieżnia elektryczna FitMotion RunPro 500"
+                                 data-category="Sport"
+                                 data-branch="Katowice"
+                                 data-brand="FitMotion"
+                                 data-sale="hurt"
+                                 data-price-netto="2499"
+                                 data-stock="32"
+                                 data-24h="false">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-bestseller">Bestseller</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Katowice</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Bieżnia elektryczna FitMotion RunPro 500
+                                    <br><span class="category">Sport · FitMotion</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">2 499,00 zł netto</div>
+                                    <div class="price-brutto"><span>3 073,77 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>2 szt.</strong></span>
+                                    <span>Gwarancja: <strong>24 m-ce</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>32 szt.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">48h</span> z Katowic
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Produkt 6 -->
+                        <article class="product-card"
+                                 data-name="Zestaw witamin Qualitet Health Daily Pack"
+                                 data-category="Zdrowie i Uroda"
+                                 data-branch="Wrocław"
+                                 data-brand="Qualitet"
+                                 data-sale="hurt"
+                                 data-price-netto="39"
+                                 data-stock="860"
+                                 data-24h="true">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-24h">24H</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Wrocław</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Zestaw witamin Qualitet Health Daily Pack
+                                    <br><span class="category">Zdrowie i Uroda · Qualitet</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">39,00 zł netto</div>
+                                    <div class="price-brutto"><span>47,97 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>50 op.</strong></span>
+                                    <span>Pakowanie: <strong>display</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>860 op.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">24h</span> z Wrocławia
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Produkt 7 -->
+                        <article class="product-card"
+                                 data-name="Olej silnikowy AutoCore Synthetic 5W30"
+                                 data-category="Motoryzacja"
+                                 data-branch="Katowice"
+                                 data-brand="AutoCore"
+                                 data-sale="hurt"
+                                 data-price-netto="79"
+                                 data-stock="410"
+                                 data-24h="true">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-24h">24H</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Katowice</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Olej silnikowy AutoCore Synthetic 5W30
+                                    <br><span class="category">Motoryzacja · AutoCore</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">79,00 zł netto</div>
+                                    <div class="price-brutto"><span>97,17 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>24 szt.</strong></span>
+                                    <span>Pojemność: <strong>5 l</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>410 szt.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">24h</span> z Katowic
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Produkt 8 -->
+                        <article class="product-card"
+                                 data-name="Zestaw kaw Qualitet Supermarket Barista Mix"
+                                 data-category="Supermarket"
+                                 data-branch="Poznań"
+                                 data-brand="Qualitet"
+                                 data-sale="hurt"
+                                 data-price-netto="159"
+                                 data-stock="260"
+                                 data-24h="true">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-24h">24H</span>
+                                    <span class="badge badge-bestseller">Bestseller</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Poznań</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Zestaw kaw Qualitet Supermarket Barista Mix
+                                    <br><span class="category">Supermarket · Qualitet</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">159,00 zł netto</div>
+                                    <div class="price-brutto"><span>195,57 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>12 kpl.</strong></span>
+                                    <span>Pakowanie: <strong>karton</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>260 kpl.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">24h</span> z Poznania
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Produkt 9 -->
+                        <article class="product-card"
+                                 data-name="Laptop biznesowy Qualitet OfficeBook 15"
+                                 data-category="Elektronika"
+                                 data-branch="Kraków"
+                                 data-brand="Qualitet"
+                                 data-sale="hurt"
+                                 data-price-netto="2999"
+                                 data-stock="75"
+                                 data-24h="false">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Kraków</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Laptop biznesowy Qualitet OfficeBook 15
+                                    <br><span class="category">Elektronika · Qualitet</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">2 999,00 zł netto</div>
+                                    <div class="price-brutto"><span>3 688,77 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>3 szt.</strong></span>
+                                    <span>Gwarancja: <strong>36 m-cy</strong></span>
+                                </div>
+                                <div class="product-stock stock-low">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>75 szt.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">48h</span> z Krakowa
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Produkt 10 -->
+                        <article class="product-card"
+                                 data-name="Krzesło biurowe NordicLine ErgoMesh"
+                                 data-category="Dom i Ogród"
+                                 data-branch="Warszawa"
+                                 data-brand="NordicLine"
+                                 data-sale="hurt"
+                                 data-price-netto="349"
+                                 data-stock="190"
+                                 data-24h="true">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-24h">24H</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Warszawa</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Krzesło biurowe NordicLine ErgoMesh
+                                    <br><span class="category">Dom i Ogród · NordicLine</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">349,00 zł netto</div>
+                                    <div class="price-brutto"><span>429,27 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>8 szt.</strong></span>
+                                    <span>Pakowanie: <strong>karton</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>190 szt.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">24h</span> z Warszawy
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Produkt 11 -->
+                        <article class="product-card"
+                                 data-name="Zestaw kosmetyków Qualitet Beauty Essentials"
+                                 data-category="Zdrowie i Uroda"
+                                 data-branch="Gdańsk"
+                                 data-brand="Qualitet"
+                                 data-sale="hurt"
+                                 data-price-netto="59"
+                                 data-stock="310"
+                                 data-24h="false">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Gdańsk</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Zestaw kosmetyków Qualitet Beauty Essentials
+                                    <br><span class="category">Zdrowie i Uroda · Qualitet</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">59,00 zł netto</div>
+                                    <div class="price-brutto"><span>72,57 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>30 kpl.</strong></span>
+                                    <span>Pakowanie: <strong>display</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>310 kpl.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">48h</span> z Gdańska
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Produkt 12 -->
+                        <article class="product-card"
+                                 data-name="Zestaw przekąsek Qualitet Supermarket Snack Box"
+                                 data-category="Supermarket"
+                                 data-branch="Poznań"
+                                 data-brand="Qualitet"
+                                 data-sale="hurt"
+                                 data-price-netto="89"
+                                 data-stock="430"
+                                 data-24h="true">
+                            <div class="product-image-wrapper">
+                                <div class="product-badges">
+                                    <span class="badge badge-hurt">Hurt</span>
+                                    <span class="badge badge-24h">24H</span>
+                                    <span class="badge badge-bestseller">Bestseller</span>
+                                </div>
+                                <div class="product-image-placeholder">
+                                    Zdjęcie produktu
+                                </div>
+                                <div class="product-branch-tag">Oddział: Poznań</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">
+                                    Zestaw przekąsek Qualitet Supermarket Snack Box
+                                    <br><span class="category">Supermarket · Qualitet</span>
+                                </h3>
+                                <div class="product-prices">
+                                    <div class="price-netto">89,00 zł netto</div>
+                                    <div class="price-brutto"><span>109,47 zł</span> brutto</div>
+                                </div>
+                                <div class="product-meta">
+                                    <span>MOQ: <strong>16 kpl.</strong></span>
+                                    <span>Pakowanie: <strong>karton</strong></span>
+                                </div>
+                                <div class="product-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>Stan magazynowy: <strong>430 kpl.</strong></span>
+                                </div>
+                                <div class="product-footer">
+                                    <div class="product-footer-left">
+                                        Dostawa <span class="highlight">24h</span> z Poznania
+                                    </div>
+                                    <button class="product-add-btn" type="button">
+                                        <span class="icon">＋</span>
+                                        <span>Dodaj do koszyka</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="popular-categories" aria-labelledby="popularCategoriesTitle">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title" id="popularCategoriesTitle">Popularne kategorie</h2>
+                            <p class="section-subtitle">Najczęściej wybierane segmenty wśród klientów B2B i B2C</p>
+                        </div>
+                    </div>
+                    <div class="popular-grid">
+                        <article class="popular-card" data-category="Elektronika">
+                            <div class="popular-name">Elektronika użytkowa</div>
+                            <div class="popular-meta">
+                                <span>Monitory, laptopy, akcesoria</span>
+                                <span class="popular-badge">12 430 SKU</span>
+                            </div>
+                        </article>
+                        <article class="popular-card" data-category="Dom i Ogród">
+                            <div class="popular-name">Dom i ogród</div>
+                            <div class="popular-meta">
+                                <span>Meble, oświetlenie, ogród</span>
+                                <span class="popular-badge">8 210 SKU</span>
+                            </div>
+                        </article>
+                        <article class="popular-card" data-category="Moda">
+                            <div class="popular-name">Moda &amp; obuwie</div>
+                            <div class="popular-meta">
+                                <span>Odzież, obuwie, dodatki</span>
+                                <span class="popular-badge">6 980 SKU</span>
+                            </div>
+                        </article>
+                        <article class="popular-card" data-category="Dziecko">
+                            <div class="popular-name">Dziecko</div>
+                            <div class="popular-meta">
+                                <span>Wózki, zabawki, akcesoria</span>
+                                <span class="popular-badge">4 320 SKU</span>
+                            </div>
+                        </article>
+                        <article class="popular-card" data-category="Sport">
+                            <div class="popular-name">Sport &amp; fitness</div>
+                            <div class="popular-meta">
+                                <span>Sprzęt, akcesoria, odzież</span>
+                                <span class="popular-badge">5 110 SKU</span>
+                            </div>
+                        </article>
+                        <article class="popular-card" data-category="Supermarket">
+                            <div class="popular-name">Supermarket &amp; FMCG</div>
+                            <div class="popular-meta">
+                                <span>Produkty szybkorotujące</span>
+                                <span class="popular-badge">10 270 SKU</span>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="suppliers" aria-labelledby="suppliersTitle">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title" id="suppliersTitle">Polecani dostawcy</h2>
+                            <p class="section-subtitle">Zweryfikowani partnerzy z wysoką jakością obsługi i dostępnością towaru</p>
+                        </div>
+                    </div>
+                    <div class="suppliers-grid">
+                        <article class="supplier-card">
+                            <div class="supplier-header">
+                                <div class="supplier-name">Qualitet Distribution</div>
+                                <div class="supplier-badge">Premium</div>
+                            </div>
+                            <div class="supplier-meta">
+                                <div class="supplier-rating">
+                                    <span class="star">★</span>
+                                    <span>4,9 / 5</span>
+                                </div>
+                                <span>Obsługa: cała Polska</span>
+                            </div>
+                            <div class="supplier-footer">
+                                <span>Średni czas wysyłki: <span class="highlight">&lt; 12 h</span></span>
+                                <span>12 800 SKU</span>
+                            </div>
+                        </article>
+                        <article class="supplier-card">
+                            <div class="supplier-header">
+                                <div class="supplier-name">NordicLine Home &amp; Office</div>
+                                <div class="supplier-badge">Verified</div>
+                            </div>
+                            <div class="supplier-meta">
+                                <div class="supplier-rating">
+                                    <span class="star">★</span>
+                                    <span>4,8 / 5</span>
+                                </div>
+                                <span>Specjalizacja: Dom i Ogród</span>
+                            </div>
+                            <div class="supplier-footer">
+                                <span>Średni czas wysyłki: <span class="highlight">24 h</span></span>
+                                <span>3 200 SKU</span>
+                            </div>
+                        </article>
+                        <article class="supplier-card">
+                            <div class="supplier-header">
+                                <div class="supplier-name">UrbanPro Apparel</div>
+                                <div class="supplier-badge">Fashion</div>
+                            </div>
+                            <div class="supplier-meta">
+                                <div class="supplier-rating">
+                                    <span class="star">★</span>
+                                    <span>4,7 / 5</span>
+                                </div>
+                                <span>Specjalizacja: Moda</span>
+                            </div>
+                            <div class="supplier-footer">
+                                <span>Średni czas wysyłki: <span class="highlight">36 h</span></span>
+                                <span>2 450 SKU</span>
+                            </div>
+                        </article>
+                        <article class="supplier-card">
+                            <div class="supplier-header">
+                                <div class="supplier-name">AutoCore Parts</div>
+                                <div class="supplier-badge">Motoryzacja</div>
+                            </div>
+                            <div class="supplier-meta">
+                                <div class="supplier-rating">
+                                    <span class="star">★</span>
+                                    <span>4,9 / 5</span>
+                                </div>
+                                <span>Specjalizacja: Motoryzacja</span>
+                            </div>
+                            <div class="supplier-footer">
+                                <span>Średni czas wysyłki: <span class="highlight">24 h</span></span>
+                                <span>1 980 SKU</span>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="why-us" aria-labelledby="whyUsTitle">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title" id="whyUsTitle">Dlaczego kupować w naszej hurtowni</h2>
+                            <p class="section-subtitle">Platforma zaprojektowana dla sklepów stacjonarnych, e-commerce i sieci handlowych</p>
+                        </div>
+                    </div>
+                    <div class="why-grid">
+                        <article class="why-card">
+                            <div class="why-icon">📦</div>
+                            <div class="why-title">Jedna platforma, wiele oddziałów</div>
+                            <p class="why-text">
+                                Łącz produkty z różnych magazynów w jednym koszyku. System automatycznie optymalizuje podział dostaw
+                                i koszty logistyczne.
+                            </p>
+                        </article>
+                        <article class="why-card">
+                            <div class="why-icon">💰</div>
+                            <div class="why-title">Ceny hurtowe i detaliczne</div>
+                            <p class="why-text">
+                                Pracuj na cenach netto z pełną widocznością cen brutto. Obsługujemy zarówno zamówienia paletowe,
+                                jak i jednostkowe.
+                            </p>
+                        </article>
+                        <article class="why-card">
+                            <div class="why-icon">⚙️</div>
+                            <div class="why-title">Gotowe do integracji</div>
+                            <p class="why-text">
+                                API przygotowane do integracji z systemami ERP, platformami e-commerce i rozwiązaniami B2B.
+                                Dane stanów w czasie rzeczywistym.
+                            </p>
+                        </article>
+                        <article class="why-card">
+                            <div class="why-icon">🕒</div>
+                            <div class="why-title">Szybka logistyka</div>
+                            <p class="why-text">
+                                Dostawy 24h z wybranych oddziałów, śledzenie przesyłek, obsługa zwrotów i reklamacji
+                                w jednym panelu.
+                            </p>
+                        </article>
+                    </div>
+                </section>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-links">
+                <a href="#">O nas</a>
+                <a href="#">Kontakt</a>
+                <a href="#">Dostawcy</a>
+                <a href="#">Regulamin</a>
+                <a href="#">Polityka prywatności</a>
+            </div>
+            <div class="footer-meta">
+                <span>© <span class="highlight">QualitetMarket</span> – nowoczesna hurtownia online</span>
+                <span>Widok sklepu przygotowany do integracji z API</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    (function () {
+        const searchInput = document.getElementById('searchInput');
+        const productsGrid = document.getElementById('productsGrid');
+        const productCards = Array.from(productsGrid.querySelectorAll('.product-card'));
+        const categoryNav = document.getElementById('categoryNav');
+        const navPills = Array.from(categoryNav.querySelectorAll('.nav-pill'));
+        const popularCards = Array.from(document.querySelectorAll('.popular-card'));
+        const saleTypeFilter = document.getElementById('saleTypeFilter');
+        const saleTags = Array.from(saleTypeFilter.querySelectorAll('.filter-tag'));
+        const branchFilter = document.getElementById('branchFilter');
+        const brandFilter = document.getElementById('brandFilter');
+        const onlyInStock = document.getElementById('onlyInStock');
+        const only24h = document.getElementById('only24h');
+        const delivery24h = document.getElementById('delivery24h');
+        const priceMin = document.getElementById('priceMin');
+        const priceMax = document.getElementById('priceMax');
+        const resetFiltersBtn = document.getElementById('resetFilters');
+        const activeFiltersCount = document.getElementById('activeFiltersCount');
+        const visibleProductsCount = document.getElementById('visibleProductsCount');
+        const sortSelect = document.getElementById('sortSelect');
+        const cartCounter = document.getElementById('cartCounter');
+        const scrollToProductsBtn = document.getElementById('scrollToProducts');
+
+        let currentCategory = 'all';
+        let currentSaleType = 'all';
+        let cartItems = 0;
+
+        function getNumeric(value) {
+            const n = parseFloat(value);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function countActiveFilters() {
+            let count = 0;
+            if (currentCategory !== 'all') count++;
+            if (currentSaleType !== 'all') count++;
+            if (branchFilter.value !== 'all') count++;
+            if (brandFilter.value !== 'all') count++;
+            if (onlyInStock.checked) count++;
+            if (only24h.checked) count++;
+            if (delivery24h.checked) count++;
+            if (priceMin.value) count++;
+            if (priceMax.value) count++;
+            if (searchInput.value.trim() !== '') count++;
+            activeFiltersCount.textContent = String(count);
+        }
+
+        function applyFilters() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            const minPrice = priceMin.value ? parseFloat(priceMin.value) : null;
+            const maxPrice = priceMax.value ? parseFloat(priceMax.value) : null;
+            const branch = branchFilter.value;
+            const brand = brandFilter.value;
+            const requireInStock = onlyInStock.checked;
+            const require24h = only24h.checked || delivery24h.checked;
+
+            let visibleCount = 0;
+
+            productCards.forEach(card => {
+                const name = card.dataset.name.toLowerCase();
+                const category = card.dataset.category;
+                const cardBranch = card.dataset.branch;
+                const cardBrand = card.dataset.brand;
+                const sale = card.dataset.sale;
+                const priceNetto = parseFloat(card.dataset.priceNetto || '0');
+                const stock = parseInt(card.dataset.stock || '0', 10);
+                const is24h = card.dataset['24h'] === 'true';
+
+                let visible = true;
+
+                if (searchTerm && !name.includes(searchTerm)) {
+                    visible = false;
+                }
+
+                if (visible && currentCategory !== 'all' && category !== currentCategory) {
+                    visible = false;
+                }
+
+                if (visible && currentSaleType !== 'all' && sale !== currentSaleType) {
+                    visible = false;
+                }
+
+                if (visible && branch !== 'all' && cardBranch !== branch) {
+                    visible = false;
+                }
+
+                if (visible && brand !== 'all' && cardBrand !== brand) {
+                    visible = false;
+                }
+
+                if (visible && requireInStock && stock <= 0) {
+                    visible = false;
+                }
+
+                if (visible && require24h && !is24h) {
+                    visible = false;
+                }
+
+                if (visible && minPrice !== null && priceNetto < minPrice) {
+                    visible = false;
+                }
+
+                if (visible && maxPrice !== null && priceNetto > maxPrice) {
+                    visible = false;
+                }
+
+                if (visible) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            visibleProductsCount.textContent = String(visibleCount);
+            countActiveFilters();
+        }
+
+        function sortProducts() {
+            const value = sortSelect.value;
+            const cards = Array.from(productsGrid.querySelectorAll('.product-card'));
+
+            if (value === 'default') {
+                cards.sort((a, b) => {
+                    return 0;
+                });
+            } else if (value === 'priceAsc') {
+                cards.sort((a, b) => {
+                    return getNumeric(a.dataset.priceNetto) - getNumeric(b.dataset.priceNetto);
+                });
+            } else if (value === 'priceDesc') {
+                cards.sort((a, b) => {
+                    return getNumeric(b.dataset.priceNetto) - getNumeric(a.dataset.priceNetto);
+                });
+            } else if (value === 'stockDesc') {
+                cards.sort((a, b) => {
+                    return getNumeric(b.dataset.stock) - getNumeric(a.dataset.stock);
+                });
+            }
+
+            cards.forEach(card => productsGrid.appendChild(card));
+        }
+
+        function resetFilters() {
+            searchInput.value = '';
+            currentCategory = 'all';
+            currentSaleType = 'all';
+            branchFilter.value = 'all';
+            brandFilter.value = 'all';
+            onlyInStock.checked = false;
+            only24h.checked = false;
+            delivery24h.checked = false;
+            priceMin.value = '';
+            priceMax.value = '';
+            sortSelect.value = 'default';
+
+            navPills.forEach(pill => pill.classList.toggle('active', pill.dataset.category === 'all'));
+            saleTags.forEach(tag => tag.classList.toggle('active', tag.dataset.sale === 'all'));
+
+            sortProducts();
+            applyFilters();
+        }
+
+        searchInput.addEventListener('input', function () {
+            applyFilters();
         });
-      }
 
-      localStorage.setItem("cart", JSON.stringify(cart));
-      updateCartCount();
-      alert("Dodano do koszyka");
-    }
+        navPills.forEach(pill => {
+            pill.addEventListener('click', function () {
+                navPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                currentCategory = pill.dataset.category || 'all';
+                applyFilters();
+            });
+        });
 
-    function renderProducts(products) {
-      const grid = document.getElementById("productGrid");
-      const empty = document.getElementById("emptyState");
-      const meta = document.getElementById("resultsMeta");
+        popularCards.forEach(card => {
+            card.addEventListener('click', function () {
+                const category = card.dataset.category;
+                const targetPill = navPills.find(p => p.dataset.category === category);
+                if (targetPill) {
+                    navPills.forEach(p => p.classList.remove('active'));
+                    targetPill.classList.add('active');
+                    currentCategory = category;
+                    applyFilters();
+                    window.scrollTo({
+                        top: productsGrid.getBoundingClientRect().top + window.scrollY - 120,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
 
-      grid.innerHTML = "";
-      meta.textContent = `Znaleziono ${products.length} produktów`;
+        saleTags.forEach(tag => {
+            tag.addEventListener('click', function () {
+                saleTags.forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+                currentSaleType = tag.dataset.sale || 'all';
+                applyFilters();
+            });
+        });
 
-      if (!products.length) {
-        empty.style.display = "block";
-        return;
-      }
+        [branchFilter, brandFilter, onlyInStock, only24h, delivery24h, priceMin, priceMax].forEach(el => {
+            el.addEventListener('change', function () {
+                applyFilters();
+            });
+        });
 
-      empty.style.display = "none";
+        resetFiltersBtn.addEventListener('click', function () {
+            resetFilters();
+        });
 
-      products.forEach(product => {
-        const oldPriceHtml = product.oldPrice
-          ? `<span class="old-price">${product.oldPrice} zł</span>`
-          : "";
+        sortSelect.addEventListener('change', function () {
+            sortProducts();
+            applyFilters();
+        });
 
-        const card = document.createElement("article");
-        card.className = "product-card";
+        const addButtons = Array.from(document.querySelectorAll('.product-add-btn'));
+        addButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                cartItems++;
+                cartCounter.textContent = String(cartItems);
+                btn.classList.add('added');
+                btn.textContent = 'Dodano';
+                setTimeout(() => {
+                    btn.classList.remove('added');
+                    btn.innerHTML = '<span class="icon">＋</span><span>Dodaj do koszyka</span>';
+                }, 1200);
+            });
+        });
 
-        card.innerHTML = `
-          <div class="product-media">
-            <span class="product-badge">${product.badge}</span>
-            <span class="product-fav">♡</span>
-            <img src="${product.image}" alt="${product.name}">
-          </div>
+        if (scrollToProductsBtn) {
+            scrollToProductsBtn.addEventListener('click', function () {
+                window.scrollTo({
+                    top: productsGrid.getBoundingClientRect().top + window.scrollY - 120,
+                    behavior: 'smooth'
+                });
+            });
+        }
 
-          <div class="product-body">
-            <div class="product-title">${product.name}</div>
-            <div class="supplier">Dostawca: ${product.store}</div>
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+        });
 
-            <div class="meta-row">
-              <span class="rating">★ ${product.rating}</span>
-              <span class="sold">Sprzedano ${product.sold}+</span>
-            </div>
-
-            <div class="price-row">
-              <span class="price">${product.price} zł</span>
-              ${oldPriceHtml}
-            </div>
-
-            <div class="moq">${product.moq}</div>
-
-            <div class="actions">
-              <button class="btn btn-light" type="button">Szczegóły</button>
-              <button class="btn btn-primary" type="button" onclick="addToCart(${product.id})">Dodaj do koszyka</button>
-            </div>
-          </div>
-        `;
-
-        grid.appendChild(card);
-      });
-    }
-
-    function applyFilters() {
-      const search = document.getElementById("searchInput").value.trim().toLowerCase();
-      const categorySelect = document.getElementById("categorySelect").value;
-      const minPrice = Number(document.getElementById("minPrice").value || 0);
-      const maxPrice = Number(document.getElementById("maxPrice").value || 0);
-      const sort = document.getElementById("sortSelect").value;
-      const promoValues = [...document.querySelectorAll(".promoFilter:checked")].map(el => el.value);
-
-      let list = [...allProducts];
-
-      const finalCategory = activeCategory !== "all" ? activeCategory : categorySelect;
-
-      if (finalCategory !== "all") {
-        list = list.filter(p => p.category === finalCategory);
-      }
-
-      if (search) {
-        list = list.filter(p =>
-          p.name.toLowerCase().includes(search) ||
-          p.store.toLowerCase().includes(search)
-        );
-      }
-
-      if (minPrice > 0) {
-        list = list.filter(p => Number(p.price) >= minPrice);
-      }
-
-      if (maxPrice > 0) {
-        list = list.filter(p => Number(p.price) <= maxPrice);
-      }
-
-      if (promoValues.includes("discount")) {
-        list = list.filter(p => Number(p.oldPrice || 0) > Number(p.price || 0));
-      }
-
-      if (promoValues.includes("cheap")) {
-        list = list.filter(p => Number(p.price) <= 500);
-      }
-
-      if (promoValues.includes("premium")) {
-        list = list.filter(p => Number(p.price) >= 2000);
-      }
-
-      if (sort === "priceAsc") {
-        list.sort((a, b) => Number(a.price) - Number(b.price));
-      }
-
-      if (sort === "priceDesc") {
-        list.sort((a, b) => Number(b.price) - Number(a.price));
-      }
-
-      if (sort === "nameAsc") {
-        list.sort((a, b) => a.name.localeCompare(b.name, "pl"));
-      }
-
-      renderProducts(list);
-    }
-
-    async function loadProducts() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        allProducts = data.map((product, index) => enrichProduct(product, index));
-        renderProducts(allProducts);
-      } catch (error) {
-        console.error(error);
-        document.getElementById("resultsMeta").textContent = "Błąd ładowania produktów z API";
-        const empty = document.getElementById("emptyState");
-        empty.style.display = "block";
-        empty.textContent = "Nie udało się pobrać produktów. Sprawdź czy działa node server.js";
-      }
-    }
-
-    document.getElementById("searchBtn").addEventListener("click", applyFilters);
-    document.getElementById("searchInput").addEventListener("input", applyFilters);
-
-    document.getElementById("categorySelect").addEventListener("change", () => {
-      activeCategory = "all";
-      document.querySelectorAll(".cat-chip").forEach(chip => chip.classList.remove("active"));
-      document.querySelector('.cat-chip[data-category="all"]').classList.add("active");
-      applyFilters();
-    });
-
-    document.getElementById("minPrice").addEventListener("input", applyFilters);
-    document.getElementById("maxPrice").addEventListener("input", applyFilters);
-    document.getElementById("sortSelect").addEventListener("change", applyFilters);
-    document.querySelectorAll(".promoFilter").forEach(el => el.addEventListener("change", applyFilters));
-
-    document.getElementById("clearFilters").addEventListener("click", () => {
-      document.getElementById("searchInput").value = "";
-      document.getElementById("categorySelect").value = "all";
-      document.getElementById("minPrice").value = "";
-      document.getElementById("maxPrice").value = "";
-      document.getElementById("sortSelect").value = "default";
-      document.querySelectorAll(".promoFilter").forEach(el => el.checked = false);
-      activeCategory = "all";
-      document.querySelectorAll(".cat-chip").forEach(chip => chip.classList.remove("active"));
-      document.querySelector('.cat-chip[data-category="all"]').classList.add("active");
-      applyFilters();
-    });
-
-    document.querySelectorAll(".cat-chip").forEach(chip => {
-      chip.addEventListener("click", () => {
-        document.querySelectorAll(".cat-chip").forEach(c => c.classList.remove("active"));
-        chip.classList.add("active");
-        activeCategory = chip.dataset.category;
+        sortProducts();
         applyFilters();
-      });
-    });
-
-    updateCartCount();
-    loadProducts();
-  </script>
+    })();
+</script>
 </body>
 </html>
+
