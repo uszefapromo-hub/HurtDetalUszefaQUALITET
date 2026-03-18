@@ -5,6 +5,9 @@
  *
  * parsePagination(req, opts?) – extract page / limit / offset from query params.
  *
+ * Both page and limit are clamped to a minimum of 1 (guarding against
+ * zero/negative query-string values that would produce invalid SQL).
+ *
  * @param {import('express').Request} req
  * @param {{ defaultLimit?: number, maxLimit?: number }} [opts]
  * @returns {{ page: number, limit: number, offset: number }}
