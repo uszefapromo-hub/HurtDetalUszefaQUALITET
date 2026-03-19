@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QualitetMarket - Sklep</title>
+  <script>window.QM_API_BASE = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';</script>
   <style>
     * { box-sizing: border-box; }
 
@@ -17,6 +18,9 @@
       --accent: #7c3aed;
       --accent-2: #22d3ee;
       --price: #36d7ff;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #f87171;
     }
 
     body {
@@ -35,27 +39,27 @@
     }
 
     .header-inner {
-      max-width: 1400px;
+      max-width: 1460px;
       margin: 0 auto;
       padding: 16px 20px;
       display: flex;
       gap: 16px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .logo {
-      min-width: 230px;
-      font-size: 28px;
+      min-width: 260px;
+      font-size: 30px;
       font-weight: 800;
       white-space: nowrap;
     }
 
-    .logo span {
-      color: var(--accent);
-    }
+    .logo span { color: var(--accent); }
 
     .search {
       flex: 1;
+      min-width: 260px;
     }
 
     .search input {
@@ -83,7 +87,7 @@
     }
 
     .page {
-      max-width: 1400px;
+      max-width: 1460px;
       margin: 0 auto;
       padding: 22px 20px 40px;
     }
@@ -101,7 +105,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 290px 1fr;
       gap: 20px;
       align-items: start;
     }
@@ -178,6 +182,15 @@
       outline: none;
     }
 
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      color: #fff;
+      font-size: 14px;
+    }
+
     .reset-btn {
       width: 100%;
       margin-top: 12px;
@@ -190,9 +203,7 @@
       font-weight: 700;
     }
 
-    .content {
-      min-width: 0;
-    }
+    .content { min-width: 0; }
 
     .content-top {
       display: flex;
@@ -206,6 +217,7 @@
     .status {
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.5;
     }
 
     .sort-wrap {
@@ -218,7 +230,7 @@
 
     .products {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 18px;
     }
 
@@ -239,6 +251,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
     }
 
     .card-media img {
@@ -247,6 +260,28 @@
       object-fit: contain;
       display: block;
     }
+
+    .badges {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(17,24,39,0.92);
+      color: #fff;
+    }
+
+    .badge-new { background: rgba(34,197,94,0.9); }
+    .badge-top { background: rgba(124,58,237,0.9); }
+    .badge-seller { background: rgba(34,211,238,0.9); color: #06101f; }
 
     .card-body {
       padding: 16px;
@@ -277,15 +312,37 @@
       min-height: 56px;
     }
 
+    .prices {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: auto;
+    }
+
     .card-price {
       font-size: 30px;
       font-weight: 800;
       color: var(--price);
-      margin-top: auto;
+    }
+
+    .meta-line {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .meta-line span {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .stock {
+      font-size: 13px;
+      color: var(--success);
+      font-weight: 700;
     }
 
     .buy-btn {
-      margin-top: 4px;
+      margin-top: 6px;
       width: 100%;
       height: 44px;
       border: 0;
@@ -296,16 +353,7 @@
       cursor: pointer;
     }
 
-    .empty {
-      grid-column: 1 / -1;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 40px;
-      text-align: center;
-      color: var(--muted);
-    }
-
+    .empty,
     .loader {
       grid-column: 1 / -1;
       background: var(--panel);
@@ -317,39 +365,17 @@
     }
 
     @media (max-width: 980px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        position: static;
-      }
-
-      .header-inner {
-        flex-wrap: wrap;
-      }
-
-      .logo {
-        min-width: auto;
-      }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .header-inner { flex-wrap: wrap; }
+      .logo { min-width: auto; }
     }
 
     @media (max-width: 640px) {
-      .page {
-        padding: 18px 14px 30px;
-      }
-
-      .header-inner {
-        padding: 12px 14px;
-      }
-
-      .page-title {
-        font-size: 34px;
-      }
-
-      .products {
-        grid-template-columns: 1fr;
-      }
+      .page { padding: 18px 14px 30px; }
+      .header-inner { padding: 12px 14px; }
+      .page-title { font-size: 34px; }
+      .products { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -368,7 +394,7 @@
 
   <div class="page">
     <h1 class="page-title">Sklep</h1>
-    <p class="page-subtitle">Kategorie z boku, prawdziwe produkty z API, działający koszyk.</p>
+    <p class="page-subtitle">Działający widok marketplace: produkty z hurtowni i od sprzedawców, z priorytetem dla Twoich ludzi.</p>
 
     <div class="layout">
       <aside class="sidebar">
@@ -388,11 +414,23 @@
         <div class="filter-box">
           <label class="label">Sortowanie</label>
           <select id="sortSelect" class="sort-select">
-            <option value="default">Domyślnie</option>
+            <option value="best">Najlepsze dopasowanie</option>
+            <option value="newest">Nowości</option>
             <option value="priceAsc">Cena rosnąco</option>
             <option value="priceDesc">Cena malejąco</option>
             <option value="titleAsc">Nazwa A-Z</option>
           </select>
+        </div>
+
+        <div class="filter-box">
+          <label class="check-row">
+            <input type="checkbox" id="onlyMarketplace" />
+            <span>Tylko sprzedawcy z platformy</span>
+          </label>
+          <label class="check-row">
+            <input type="checkbox" id="onlyNew" />
+            <span>Tylko nowości</span>
+          </label>
         </div>
 
         <button class="reset-btn" id="resetFilters">Wyczyść filtry</button>
@@ -415,58 +453,23 @@
   </div>
 
   <script>
-    const fallbackProducts = [
-      {
-        id: 1,
-        title: "Fjallraven - Foldsack No. 1 Backpack",
-        price: 109.95,
-        description: "Plecak miejski i podróżny z trwałego materiału.",
-        category: "men's clothing",
-        image: "https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg"
-      },
-      {
-        id: 2,
-        title: "Mens Casual Premium Slim Fit T-Shirts",
-        price: 22.3,
-        description: "Koszulka premium do codziennego noszenia.",
-        category: "men's clothing",
-        image: "https://fakestoreapi.com/img/71-3HjGNDUL._AC_SY879._SX._UX._SY._UY_.jpg"
-      },
-      {
-        id: 3,
-        title: "Solid Gold Petite Micropave",
-        price: 168,
-        description: "Biżuteria w eleganckim stylu.",
-        category: "jewelery",
-        image: "https://fakestoreapi.com/img/71yaEDqVSrL._AC_UL640_QL65_ML3_.jpg"
-      },
-      {
-        id: 4,
-        title: "WD 2TB Elements Portable External Hard Drive",
-        price: 64,
-        description: "Dysk zewnętrzny 2TB do laptopa i PC.",
-        category: "electronics",
-        image: "https://fakestoreapi.com/img/61IBBVJvSDL._AC_SY879_.jpg"
-      },
-      {
-        id: 5,
-        title: "Acer SB220Q 21.5 inches Full HD Monitor",
-        price: 599,
-        description: "Monitor Full HD do biura i domu.",
-        category: "electronics",
-        image: "https://fakestoreapi.com/img/81QpkIctqPL._AC_SX679_.jpg"
-      },
-      {
-        id: 6,
-        title: "BIYLACLESEN Women's 3-in-1 Jacket",
-        price: 56.99,
-        description: "Kurtka damska na chłodniejsze dni.",
-        category: "women's clothing",
-        image: "https://fakestoreapi.com/img/51Y5NI-I5jL._AC_UX679_.jpg"
-      }
+    const API_BASE = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
+
+    const SOURCE_ENDPOINTS = [
+      API_BASE + '/products?status=active&limit=500',
+      API_BASE + '/products?limit=500',
+      API_BASE + '/marketplace/products?status=active&limit=500',
+      API_BASE + '/seller-products?status=active&limit=500',
+      API_BASE + '/catalog/products?status=active&limit=500'
     ];
 
-    let allProducts = [];
+    const FALLBACK_LIVE_ENDPOINT = 'https://fakestoreapi.com/products';
+
+    const MY_PRICE_MULTIPLIER = 1.18;
+    const MY_PRICE_FIXED_ADD = 0;
+
+    let rawOffers = [];
+    let groupedProducts = [];
     let filteredProducts = [];
     let currentCategory = 'all';
 
@@ -476,6 +479,8 @@
     const minPriceInput = document.getElementById('minPrice');
     const maxPriceInput = document.getElementById('maxPrice');
     const sortSelect = document.getElementById('sortSelect');
+    const onlyMarketplaceInput = document.getElementById('onlyMarketplace');
+    const onlyNewInput = document.getElementById('onlyNew');
     const statusEl = document.getElementById('status');
     const visibleCountEl = document.getElementById('visibleCount');
     const cartCountEl = document.getElementById('cartCount');
@@ -486,18 +491,23 @@
         "electronics": "Elektronika",
         "jewelery": "Biżuteria",
         "men's clothing": "Moda męska",
-        "women's clothing": "Moda damska"
+        "women's clothing": "Moda damska",
+        "home": "Dom i Ogród",
+        "sport": "Sport",
+        "beauty": "Uroda",
+        "health": "Zdrowie"
       };
-      return map[category] || category;
+      const key = String(category || '').toLowerCase().trim();
+      return map[key] || category || 'Inne';
     }
 
-    function shortText(text, max = 80) {
-      if (!text) return '';
+    function shortText(text, max = 90) {
+      if (!text) return 'Brak opisu';
       return text.length > max ? text.slice(0, max) + '...' : text;
     }
 
     function formatPrice(price) {
-      return Number(price).toLocaleString('pl-PL', {
+      return Number(price || 0).toLocaleString('pl-PL', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 2
       }) + ' zł';
@@ -532,7 +542,7 @@
         cart.push({
           id: product.id,
           title: product.title,
-          price: product.price,
+          price: product.displayPrice,
           image: product.image,
           qty: 1
         });
@@ -547,18 +557,270 @@
       window.location.href = 'koszyk.html';
     }
 
+    function extractList(data) {
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data.products)) return data.products;
+      if (Array.isArray(data.data)) return data.data;
+      if (Array.isArray(data.items)) return data.items;
+      if (Array.isArray(data.results)) return data.results;
+      return [];
+    }
+
+    function parseDate(value) {
+      if (!value) return null;
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function isNewByDate(dateValue) {
+      const d = parseDate(dateValue);
+      if (!d) return false;
+      const now = Date.now();
+      const diff = now - d.getTime();
+      const days = diff / (1000 * 60 * 60 * 24);
+      return days <= 14;
+    }
+
+    function calculateMyPrice(raw) {
+      const directPrice =
+        raw.seller_price ??
+        raw.your_price ??
+        raw.custom_price ??
+        raw.final_price ??
+        raw.retail_price ??
+        raw.selling_price;
+
+      if (directPrice !== undefined && directPrice !== null && directPrice !== '') {
+        return Number(directPrice);
+      }
+
+      const base =
+        raw.wholesale_price ??
+        raw.purchase_price ??
+        raw.cost_price ??
+        raw.price_net ??
+        raw.price ??
+        0;
+
+      return Number((Number(base) * MY_PRICE_MULTIPLIER) + MY_PRICE_FIXED_ADD);
+    }
+
+    function normalizeOffer(raw, sourceName) {
+      const id = raw.id || raw.product_id || raw.sku || raw.external_id || (sourceName + '-' + Math.random().toString(36).slice(2));
+      const title = raw.title || raw.name || raw.product_name || 'Produkt';
+      const description = raw.description || raw.short_description || raw.desc || '';
+      const category = raw.category || raw.category_name || raw.group_name || 'Inne';
+      const image = raw.image || raw.image_url || raw.photo || raw.thumbnail || '';
+      const stock = Number(raw.stock ?? raw.quantity ?? raw.qty ?? 0);
+
+      const basePrice = Number(
+        raw.wholesale_price ??
+        raw.purchase_price ??
+        raw.cost_price ??
+        raw.price_net ??
+        raw.price ??
+        0
+      );
+
+      const displayPrice = calculateMyPrice(raw);
+
+      const isMarketplaceSeller = Boolean(
+        raw.is_marketplace_seller === true ||
+        raw.is_seller_product === true ||
+        raw.seller_id ||
+        raw.vendor_id ||
+        raw.user_id
+      );
+
+      const isFeatured = Boolean(raw.is_featured || raw.featured || raw.is_promoted || raw.promoted);
+      const isBestseller = Boolean(raw.is_bestseller || raw.bestseller);
+      const isNew = Boolean(raw.is_new || raw.new) || isNewByDate(raw.created_at || raw.createdAt || raw.date_added);
+
+      const supplierName =
+        raw.supplier_name ||
+        raw.wholesaler_name ||
+        raw.vendor_name ||
+        raw.seller_name ||
+        raw.store_name ||
+        sourceName ||
+        'Źródło';
+
+      return {
+        offerId: id,
+        title,
+        description,
+        category,
+        image,
+        stock,
+        basePrice,
+        displayPrice,
+        supplierName,
+        isMarketplaceSeller,
+        isFeatured,
+        isBestseller,
+        isNew,
+        createdAt: raw.created_at || raw.createdAt || raw.date_added || '',
+        raw
+      };
+    }
+
+    function groupOffersIntoProducts(offers) {
+      const map = new Map();
+
+      offers.forEach(offer => {
+        const key = (
+          String(offer.title || '').trim().toLowerCase() +
+          '|' +
+          String(offer.category || '').trim().toLowerCase()
+        );
+
+        if (!map.has(key)) {
+          map.set(key, {
+            id: key,
+            title: offer.title,
+            description: offer.description,
+            category: offer.category,
+            image: offer.image,
+            offers: [],
+            bestOffer: null,
+            displayPrice: 0,
+            totalStock: 0,
+            offersCount: 0,
+            hasMarketplaceSeller: false,
+            isFeatured: false,
+            isBestseller: false,
+            isNew: false,
+            score: 0
+          });
+        }
+
+        const group = map.get(key);
+        group.offers.push(offer);
+        group.totalStock += offer.stock || 0;
+        group.hasMarketplaceSeller = group.hasMarketplaceSeller || offer.isMarketplaceSeller;
+        group.isFeatured = group.isFeatured || offer.isFeatured;
+        group.isBestseller = group.isBestseller || offer.isBestseller;
+        group.isNew = group.isNew || offer.isNew;
+
+        if (!group.image && offer.image) {
+          group.image = offer.image;
+        }
+
+        if (!group.description && offer.description) {
+          group.description = offer.description;
+        }
+      });
+
+      const products = Array.from(map.values()).map(group => {
+        group.offers.sort((a, b) => {
+          const aScore = getOfferPriorityScore(a);
+          const bScore = getOfferPriorityScore(b);
+
+          if (bScore !== aScore) return bScore - aScore;
+          if (a.displayPrice !== b.displayPrice) return a.displayPrice - b.displayPrice;
+          return (b.stock || 0) - (a.stock || 0);
+        });
+
+        group.bestOffer = group.offers[0];
+        group.displayPrice = group.bestOffer ? group.bestOffer.displayPrice : 0;
+        group.offersCount = group.offers.length;
+        group.score = getProductPriorityScore(group);
+
+        return group;
+      });
+
+      return products;
+    }
+
+    function getOfferPriorityScore(offer) {
+      let score = 0;
+      if (offer.isMarketplaceSeller) score += 30;
+      if (offer.isFeatured) score += 25;
+      if (offer.isNew) score += 20;
+      if (offer.isBestseller) score += 20;
+      if ((offer.stock || 0) > 0) score += 10;
+      if (offer.image) score += 5;
+      return score;
+    }
+
+    function getProductPriorityScore(product) {
+      let score = 0;
+      if (product.hasMarketplaceSeller) score += 30;
+      if (product.isFeatured) score += 25;
+      if (product.isNew) score += 20;
+      if (product.isBestseller) score += 20;
+      if (product.offersCount > 1) score += 8;
+      if ((product.totalStock || 0) > 0) score += 8;
+      return score;
+    }
+
+    async function fetchJsonArray(url) {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url);
+      const data = await res.json();
+      return extractList(data);
+    }
+
+    async function loadFromOwnApi() {
+      for (const endpoint of SOURCE_ENDPOINTS) {
+        try {
+          const list = await fetchJsonArray(endpoint);
+          if (Array.isArray(list) && list.length) {
+            return { list, source: endpoint };
+          }
+        } catch (e) {
+          console.warn('Endpoint nie działa:', endpoint, e);
+        }
+      }
+      throw new Error('Brak danych z własnego API');
+    }
+
+    async function loadProducts() {
+      statusEl.textContent = 'Ładowanie produktów z API...';
+
+      try {
+        let sourceName = 'Qualitet API';
+        let rows = [];
+
+        try {
+          const own = await loadFromOwnApi();
+          rows = own.list;
+          sourceName = 'Qualitet API';
+        } catch (ownError) {
+          const fallbackRows = await fetchJsonArray(FALLBACK_LIVE_ENDPOINT);
+          rows = fallbackRows;
+          sourceName = 'Live fallback';
+        }
+
+        rawOffers = rows.map(item => normalizeOffer(item, sourceName));
+        groupedProducts = groupOffersIntoProducts(rawOffers);
+
+        statusEl.textContent =
+          'Załadowano ' + groupedProducts.length + ' produktów i ' + rawOffers.length + ' ofert.';
+
+        renderCategories();
+        applyFilters();
+      } catch (e) {
+        console.error(e);
+        productsEl.innerHTML = '<div class="empty">Nie udało się załadować produktów.</div>';
+        statusEl.textContent = 'Błąd ładowania produktów.';
+      }
+    }
+
     function renderCategories() {
-      const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+      const categories = [...new Set(groupedProducts.map(p => p.category).filter(Boolean))];
 
       categoryListEl.innerHTML = '<button class="category-btn active" data-category="all">Wszystkie</button>';
 
-      categories.forEach(category => {
-        const btn = document.createElement('button');
-        btn.className = 'category-btn';
-        btn.dataset.category = category;
-        btn.textContent = normalizeCategoryName(category);
-        categoryListEl.appendChild(btn);
-      });
+      categories
+        .sort((a, b) => String(normalizeCategoryName(a)).localeCompare(String(normalizeCategoryName(b)), 'pl'))
+        .forEach(category => {
+          const btn = document.createElement('button');
+          btn.className = 'category-btn';
+          btn.dataset.category = category;
+          btn.textContent = normalizeCategoryName(category);
+          categoryListEl.appendChild(btn);
+        });
 
       categoryListEl.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', function () {
@@ -581,30 +843,50 @@
       productsEl.innerHTML = '';
 
       products.forEach(product => {
+        const bestOffer = product.bestOffer || {};
+        const safeTitle = product.title || 'Produkt';
+        const safeCategory = normalizeCategoryName(product.category || 'Inne');
+        const safeDesc = shortText(product.description || bestOffer.description || 'Brak opisu');
+        const safeImage = product.image || bestOffer.image || '';
+        const safeStock = Number(product.totalStock || 0);
+
+        const badges = [];
+        if (product.isNew) badges.push('<span class="badge badge-new">Nowość</span>');
+        if (product.isFeatured || product.isBestseller) badges.push('<span class="badge badge-top">Top</span>');
+        if (product.hasMarketplaceSeller) badges.push('<span class="badge badge-seller">Sprzedawca</span>');
+
         const card = document.createElement('div');
         card.className = 'card';
 
-        const safeTitle = product.title || 'Produkt';
-        const safeCategory = normalizeCategoryName(product.category || 'Inne');
-        const safeDesc = shortText(product.description || 'Brak opisu');
-        const safeImage = product.image || '';
-
         card.innerHTML = `
           <div class="card-media">
+            <div class="badges">${badges.join('')}</div>
             <img src="${safeImage}" alt="${safeTitle}" loading="lazy" />
           </div>
           <div class="card-body">
             <div class="card-category">${safeCategory}</div>
             <div class="card-title">${safeTitle}</div>
             <div class="card-desc">${safeDesc}</div>
-            <div class="card-price">${formatPrice(product.price)}</div>
+
+            <div class="prices">
+              <div class="card-price">od ${formatPrice(product.displayPrice)}</div>
+              <div class="meta-line">Oferty: <span>${product.offersCount}</span></div>
+              <div class="meta-line">Najlepsza oferta: <span>${bestOffer.supplierName || '—'}</span></div>
+              <div class="stock">Stan łączny: ${safeStock}</div>
+            </div>
+
             <button class="buy-btn">Dodaj do koszyka</button>
           </div>
         `;
 
         const buyBtn = card.querySelector('.buy-btn');
         buyBtn.addEventListener('click', function () {
-          addToCart(product);
+          addToCart({
+            id: product.id,
+            title: product.title,
+            displayPrice: product.displayPrice,
+            image: safeImage
+          });
         });
 
         const img = card.querySelector('img');
@@ -627,8 +909,10 @@
       const minPrice = minPriceInput.value ? Number(minPriceInput.value) : null;
       const maxPrice = maxPriceInput.value ? Number(maxPriceInput.value) : null;
       const sort = sortSelect.value;
+      const onlyMarketplace = onlyMarketplaceInput.checked;
+      const onlyNew = onlyNewInput.checked;
 
-      let result = [...allProducts];
+      let result = [...groupedProducts];
 
       if (currentCategory !== 'all') {
         result = result.filter(p => p.category === currentCategory);
@@ -642,19 +926,31 @@
       }
 
       if (minPrice !== null) {
-        result = result.filter(p => Number(p.price) >= minPrice);
+        result = result.filter(p => Number(p.displayPrice) >= minPrice);
       }
 
       if (maxPrice !== null) {
-        result = result.filter(p => Number(p.price) <= maxPrice);
+        result = result.filter(p => Number(p.displayPrice) <= maxPrice);
+      }
+
+      if (onlyMarketplace) {
+        result = result.filter(p => p.hasMarketplaceSeller);
+      }
+
+      if (onlyNew) {
+        result = result.filter(p => p.isNew);
       }
 
       if (sort === 'priceAsc') {
-        result.sort((a, b) => Number(a.price) - Number(b.price));
+        result.sort((a, b) => Number(a.displayPrice) - Number(b.displayPrice));
       } else if (sort === 'priceDesc') {
-        result.sort((a, b) => Number(b.price) - Number(a.price));
+        result.sort((a, b) => Number(b.displayPrice) - Number(a.displayPrice));
       } else if (sort === 'titleAsc') {
         result.sort((a, b) => String(a.title).localeCompare(String(b.title), 'pl'));
+      } else if (sort === 'newest') {
+        result.sort((a, b) => Number(b.isNew) - Number(a.isNew) || b.score - a.score);
+      } else {
+        result.sort((a, b) => b.score - a.score || Number(a.displayPrice) - Number(b.displayPrice));
       }
 
       filteredProducts = result;
@@ -666,7 +962,9 @@
       searchInput.value = '';
       minPriceInput.value = '';
       maxPriceInput.value = '';
-      sortSelect.value = 'default';
+      sortSelect.value = 'best';
+      onlyMarketplaceInput.checked = false;
+      onlyNewInput.checked = false;
 
       categoryListEl.querySelectorAll('.category-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.category === 'all');
@@ -675,31 +973,12 @@
       applyFilters();
     }
 
-    async function loadProducts() {
-      statusEl.textContent = 'Ładowanie produktów z API...';
-
-      try {
-        const res = await fetch('https://fakestoreapi.com/products', { cache: 'no-store' });
-        if (!res.ok) throw new Error('API error ' + res.status);
-
-        const data = await res.json();
-        if (!Array.isArray(data) || !data.length) throw new Error('Puste API');
-
-        allProducts = data;
-        statusEl.textContent = 'Załadowano produkty z API.';
-      } catch (e) {
-        allProducts = fallbackProducts;
-        statusEl.textContent = 'API niedostępne - pokazuję produkty zapasowe.';
-      }
-
-      renderCategories();
-      applyFilters();
-    }
-
     searchInput.addEventListener('input', applyFilters);
     minPriceInput.addEventListener('input', applyFilters);
     maxPriceInput.addEventListener('input', applyFilters);
     sortSelect.addEventListener('change', applyFilters);
+    onlyMarketplaceInput.addEventListener('change', applyFilters);
+    onlyNewInput.addEventListener('change', applyFilters);
     resetFiltersBtn.addEventListener('click', resetFilters);
 
     updateCartCount();
