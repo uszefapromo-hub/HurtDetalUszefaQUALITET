@@ -61,8 +61,6 @@
             font-family: inherit;
         }
 
-        /* Layout */
-
         .page {
             display: flex;
             flex-direction: column;
@@ -244,8 +242,6 @@
             display: none;
         }
 
-        /* Nav bar */
-
         .nav-bar {
             border-top: 1px solid rgba(31, 41, 55, 0.9);
             border-bottom: 1px solid rgba(31, 41, 55, 0.9);
@@ -325,8 +321,6 @@
             background: rgba(15, 23, 42, 0.96);
         }
 
-        /* Main */
-
         main {
             flex: 1;
         }
@@ -339,8 +333,6 @@
             grid-template-columns: 280px minmax(0, 1fr);
             gap: 22px;
         }
-
-        /* Hero */
 
         .hero {
             grid-column: 1 / -1;
@@ -562,8 +554,6 @@
             color: var(--accent-secondary);
         }
 
-        /* Branches section */
-
         .branches {
             grid-column: 1 / -1;
             margin-top: 6px;
@@ -697,8 +687,6 @@
             box-shadow: var(--shadow-chip);
             transform: translateY(-1px);
         }
-
-        /* Sidebar filters */
 
         .sidebar {
             align-self: flex-start;
@@ -837,8 +825,6 @@
             color: var(--accent-secondary);
         }
 
-        /* Product area */
-
         .content-area {
             display: flex;
             flex-direction: column;
@@ -950,6 +936,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
+            z-index: 2;
         }
 
         .badge {
@@ -989,6 +976,7 @@
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid rgba(55, 65, 81, 0.9);
             color: var(--text-soft);
+            z-index: 2;
         }
 
         .product-body {
@@ -1096,6 +1084,11 @@
             border-color: rgba(34, 211, 238, 0.9);
         }
 
+        .product-add-btn:disabled {
+            opacity: 0.85;
+            cursor: default;
+        }
+
         .product-add-btn span.icon {
             font-size: 13px;
         }
@@ -1103,8 +1096,6 @@
         .product-card.hidden {
             display: none !important;
         }
-
-        /* Popular categories */
 
         .popular-categories {
             border-radius: var(--radius-lg);
@@ -1159,8 +1150,6 @@
             background: rgba(15, 23, 42, 0.96);
             font-size: 10px;
         }
-
-        /* Suppliers */
 
         .suppliers {
             border-radius: var(--radius-lg);
@@ -1245,8 +1234,6 @@
             color: var(--accent-secondary);
         }
 
-        /* Why us */
-
         .why-us {
             border-radius: var(--radius-lg);
             background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
@@ -1295,8 +1282,6 @@
             font-size: 11px;
         }
 
-        /* Footer */
-
         footer {
             border-top: 1px solid rgba(31, 41, 55, 0.9);
             background: #020617;
@@ -1340,8 +1325,6 @@
         .footer-meta span.highlight {
             color: var(--accent-secondary);
         }
-
-        /* Responsive */
 
         @media (max-width: 1100px) {
             .main-inner {
@@ -1850,7 +1833,7 @@
                     <div class="products-header">
                         <div>
                             <h2 class="products-title" id="productsTitle">Oferta produktów</h2>
-                            <p class="section-subtitle">Przykładowe produkty z różnych kategorii i oddziałów</p>
+                            <p class="section-subtitle">Produkty ładowane z API</p>
                         </div>
                         <div class="products-meta">
                             <div class="products-meta-pill">Widok hurtowni · ceny netto / brutto</div>
@@ -1866,596 +1849,7 @@
                         </div>
                     </div>
 
-                    <div class="products-grid" id="productsGrid">
-                        <!-- Produkt 1 -->
-                        <article class="product-card"
-                                 data-name="Monitor LED 27 Qualitet ProLine Q27"
-                                 data-category="Elektronika"
-                                 data-branch="Warszawa"
-                                 data-brand="Qualitet"
-                                 data-sale="hurt"
-                                 data-price-netto="799"
-                                 data-stock="240"
-                                 data-24h="true">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-24h">24H</span>
-                                    <span class="badge badge-bestseller">Bestseller</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Warszawa</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Monitor LED 27" Qualitet ProLine Q27
-                                    <br><span class="category">Elektronika · Qualitet</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">799,00 zł netto</div>
-                                    <div class="price-brutto"><span>982,77 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>5 szt.</strong></span>
-                                    <span>Pakowanie: <strong>karton</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>240 szt.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">&lt; 24h</span> z Warszawy
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 2 -->
-                        <article class="product-card"
-                                 data-name="Zestaw narzędzi ogrodowych NordicLine Garden Pro"
-                                 data-category="Dom i Ogród"
-                                 data-branch="Poznań"
-                                 data-brand="NordicLine"
-                                 data-sale="hurt"
-                                 data-price-netto="129"
-                                 data-stock="520"
-                                 data-24h="true">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-24h">24H</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Poznań</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Zestaw narzędzi ogrodowych NordicLine Garden Pro
-                                    <br><span class="category">Dom i Ogród · NordicLine</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">129,00 zł netto</div>
-                                    <div class="price-brutto"><span>158,67 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>10 kpl.</strong></span>
-                                    <span>Pakowanie: <strong>karton</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>520 kpl.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">24h</span> z Poznania
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 3 -->
-                        <article class="product-card"
-                                 data-name="Bluza męska UrbanPro Tech Hoodie"
-                                 data-category="Moda"
-                                 data-branch="Kraków"
-                                 data-brand="UrbanPro"
-                                 data-sale="hurt"
-                                 data-price-netto="89"
-                                 data-stock="120"
-                                 data-24h="false">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-bestseller">Bestseller</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Kraków</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Bluza męska UrbanPro Tech Hoodie
-                                    <br><span class="category">Moda · UrbanPro</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">89,00 zł netto</div>
-                                    <div class="price-brutto"><span>109,47 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>20 szt.</strong></span>
-                                    <span>Rozmiary: <strong>S–XXL</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>120 szt.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">48h</span> z Krakowa
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 4 -->
-                        <article class="product-card"
-                                 data-name="Wózek dziecięcy KidsJoy CityMove 3w1"
-                                 data-category="Dziecko"
-                                 data-branch="Warszawa"
-                                 data-brand="KidsJoy"
-                                 data-sale="hurt"
-                                 data-price-netto="1199"
-                                 data-stock="45"
-                                 data-24h="true">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-24h">24H</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Warszawa</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Wózek dziecięcy KidsJoy CityMove 3w1
-                                    <br><span class="category">Dziecko · KidsJoy</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">1 199,00 zł netto</div>
-                                    <div class="price-brutto"><span>1 474,77 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>3 szt.</strong></span>
-                                    <span>Pakowanie: <strong>karton</strong></span>
-                                </div>
-                                <div class="product-stock stock-low">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>45 szt.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">24h</span> z Warszawy
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 5 -->
-                        <article class="product-card"
-                                 data-name="Bieżnia elektryczna FitMotion RunPro 500"
-                                 data-category="Sport"
-                                 data-branch="Katowice"
-                                 data-brand="FitMotion"
-                                 data-sale="hurt"
-                                 data-price-netto="2499"
-                                 data-stock="32"
-                                 data-24h="false">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-bestseller">Bestseller</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Katowice</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Bieżnia elektryczna FitMotion RunPro 500
-                                    <br><span class="category">Sport · FitMotion</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">2 499,00 zł netto</div>
-                                    <div class="price-brutto"><span>3 073,77 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>2 szt.</strong></span>
-                                    <span>Gwarancja: <strong>24 m-ce</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>32 szt.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">48h</span> z Katowic
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 6 -->
-                        <article class="product-card"
-                                 data-name="Zestaw witamin Qualitet Health Daily Pack"
-                                 data-category="Zdrowie i Uroda"
-                                 data-branch="Wrocław"
-                                 data-brand="Qualitet"
-                                 data-sale="hurt"
-                                 data-price-netto="39"
-                                 data-stock="860"
-                                 data-24h="true">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-24h">24H</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Wrocław</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Zestaw witamin Qualitet Health Daily Pack
-                                    <br><span class="category">Zdrowie i Uroda · Qualitet</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">39,00 zł netto</div>
-                                    <div class="price-brutto"><span>47,97 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>50 op.</strong></span>
-                                    <span>Pakowanie: <strong>display</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>860 op.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">24h</span> z Wrocławia
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 7 -->
-                        <article class="product-card"
-                                 data-name="Olej silnikowy AutoCore Synthetic 5W30"
-                                 data-category="Motoryzacja"
-                                 data-branch="Katowice"
-                                 data-brand="AutoCore"
-                                 data-sale="hurt"
-                                 data-price-netto="79"
-                                 data-stock="410"
-                                 data-24h="true">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-24h">24H</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Katowice</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Olej silnikowy AutoCore Synthetic 5W30
-                                    <br><span class="category">Motoryzacja · AutoCore</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">79,00 zł netto</div>
-                                    <div class="price-brutto"><span>97,17 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>24 szt.</strong></span>
-                                    <span>Pojemność: <strong>5 l</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>410 szt.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">24h</span> z Katowic
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 8 -->
-                        <article class="product-card"
-                                 data-name="Zestaw kaw Qualitet Supermarket Barista Mix"
-                                 data-category="Supermarket"
-                                 data-branch="Poznań"
-                                 data-brand="Qualitet"
-                                 data-sale="hurt"
-                                 data-price-netto="159"
-                                 data-stock="260"
-                                 data-24h="true">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-24h">24H</span>
-                                    <span class="badge badge-bestseller">Bestseller</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Poznań</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Zestaw kaw Qualitet Supermarket Barista Mix
-                                    <br><span class="category">Supermarket · Qualitet</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">159,00 zł netto</div>
-                                    <div class="price-brutto"><span>195,57 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>12 kpl.</strong></span>
-                                    <span>Pakowanie: <strong>karton</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>260 kpl.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">24h</span> z Poznania
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 9 -->
-                        <article class="product-card"
-                                 data-name="Laptop biznesowy Qualitet OfficeBook 15"
-                                 data-category="Elektronika"
-                                 data-branch="Kraków"
-                                 data-brand="Qualitet"
-                                 data-sale="hurt"
-                                 data-price-netto="2999"
-                                 data-stock="75"
-                                 data-24h="false">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Kraków</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Laptop biznesowy Qualitet OfficeBook 15
-                                    <br><span class="category">Elektronika · Qualitet</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">2 999,00 zł netto</div>
-                                    <div class="price-brutto"><span>3 688,77 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>3 szt.</strong></span>
-                                    <span>Gwarancja: <strong>36 m-cy</strong></span>
-                                </div>
-                                <div class="product-stock stock-low">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>75 szt.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">48h</span> z Krakowa
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 10 -->
-                        <article class="product-card"
-                                 data-name="Krzesło biurowe NordicLine ErgoMesh"
-                                 data-category="Dom i Ogród"
-                                 data-branch="Warszawa"
-                                 data-brand="NordicLine"
-                                 data-sale="hurt"
-                                 data-price-netto="349"
-                                 data-stock="190"
-                                 data-24h="true">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-24h">24H</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Warszawa</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Krzesło biurowe NordicLine ErgoMesh
-                                    <br><span class="category">Dom i Ogród · NordicLine</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">349,00 zł netto</div>
-                                    <div class="price-brutto"><span>429,27 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>8 szt.</strong></span>
-                                    <span>Pakowanie: <strong>karton</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>190 szt.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">24h</span> z Warszawy
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 11 -->
-                        <article class="product-card"
-                                 data-name="Zestaw kosmetyków Qualitet Beauty Essentials"
-                                 data-category="Zdrowie i Uroda"
-                                 data-branch="Gdańsk"
-                                 data-brand="Qualitet"
-                                 data-sale="hurt"
-                                 data-price-netto="59"
-                                 data-stock="310"
-                                 data-24h="false">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Gdańsk</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Zestaw kosmetyków Qualitet Beauty Essentials
-                                    <br><span class="category">Zdrowie i Uroda · Qualitet</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">59,00 zł netto</div>
-                                    <div class="price-brutto"><span>72,57 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>30 kpl.</strong></span>
-                                    <span>Pakowanie: <strong>display</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>310 kpl.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">48h</span> z Gdańska
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Produkt 12 -->
-                        <article class="product-card"
-                                 data-name="Zestaw przekąsek Qualitet Supermarket Snack Box"
-                                 data-category="Supermarket"
-                                 data-branch="Poznań"
-                                 data-brand="Qualitet"
-                                 data-sale="hurt"
-                                 data-price-netto="89"
-                                 data-stock="430"
-                                 data-24h="true">
-                            <div class="product-image-wrapper">
-                                <div class="product-badges">
-                                    <span class="badge badge-hurt">Hurt</span>
-                                    <span class="badge badge-24h">24H</span>
-                                    <span class="badge badge-bestseller">Bestseller</span>
-                                </div>
-                                <div class="product-image-placeholder">
-                                    Zdjęcie produktu
-                                </div>
-                                <div class="product-branch-tag">Oddział: Poznań</div>
-                            </div>
-                            <div class="product-body">
-                                <h3 class="product-name">
-                                    Zestaw przekąsek Qualitet Supermarket Snack Box
-                                    <br><span class="category">Supermarket · Qualitet</span>
-                                </h3>
-                                <div class="product-prices">
-                                    <div class="price-netto">89,00 zł netto</div>
-                                    <div class="price-brutto"><span>109,47 zł</span> brutto</div>
-                                </div>
-                                <div class="product-meta">
-                                    <span>MOQ: <strong>16 kpl.</strong></span>
-                                    <span>Pakowanie: <strong>karton</strong></span>
-                                </div>
-                                <div class="product-stock">
-                                    <span class="stock-dot"></span>
-                                    <span>Stan magazynowy: <strong>430 kpl.</strong></span>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-footer-left">
-                                        Dostawa <span class="highlight">24h</span> z Poznania
-                                    </div>
-                                    <button class="product-add-btn" type="button">
-                                        <span class="icon">＋</span>
-                                        <span>Dodaj do koszyka</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-                    </div>
+                    <div class="products-grid" id="productsGrid"></div>
                 </section>
 
                 <section class="popular-categories" aria-labelledby="popularCategoriesTitle">
@@ -2654,172 +2048,281 @@
 </div>
 
 <script>
-    (function () {
-        const searchInput = document.getElementById('searchInput');
-        const productsGrid = document.getElementById('productsGrid');
-        let productCards = Array.from(productsGrid.querySelectorAll('.product-card'));
-        const categoryNav = document.getElementById('categoryNav');
-        const navPills = Array.from(categoryNav.querySelectorAll('.nav-pill'));
-        const popularCards = Array.from(document.querySelectorAll('.popular-card'));
-        const saleTypeFilter = document.getElementById('saleTypeFilter');
-        const saleTags = Array.from(saleTypeFilter.querySelectorAll('.filter-tag'));
-        const branchFilter = document.getElementById('branchFilter');
-        const brandFilter = document.getElementById('brandFilter');
-        const onlyInStock = document.getElementById('onlyInStock');
-        const only24h = document.getElementById('only24h');
-        const delivery24h = document.getElementById('delivery24h');
-        const priceMin = document.getElementById('priceMin');
-        const priceMax = document.getElementById('priceMax');
-        const resetFiltersBtn = document.getElementById('resetFilters');
-        const activeFiltersCount = document.getElementById('activeFiltersCount');
-        const visibleProductsCount = document.getElementById('visibleProductsCount');
-        const sortSelect = document.getElementById('sortSelect');
-        const cartCounter = document.getElementById('cartCounter');
-        const scrollToProductsBtn = document.getElementById('scrollToProducts');
+(function () {
+    const searchInput = document.getElementById('searchInput');
+    const productsGrid = document.getElementById('productsGrid');
+    const categoryNav = document.getElementById('categoryNav');
+    const navPills = Array.from(categoryNav.querySelectorAll('.nav-pill'));
+    const popularCards = Array.from(document.querySelectorAll('.popular-card'));
+    const saleTypeFilter = document.getElementById('saleTypeFilter');
+    const saleTags = Array.from(saleTypeFilter.querySelectorAll('.filter-tag'));
+    const branchFilter = document.getElementById('branchFilter');
+    const brandFilter = document.getElementById('brandFilter');
+    const onlyInStock = document.getElementById('onlyInStock');
+    const only24h = document.getElementById('only24h');
+    const delivery24h = document.getElementById('delivery24h');
+    const priceMin = document.getElementById('priceMin');
+    const priceMax = document.getElementById('priceMax');
+    const resetFiltersBtn = document.getElementById('resetFilters');
+    const activeFiltersCount = document.getElementById('activeFiltersCount');
+    const visibleProductsCount = document.getElementById('visibleProductsCount');
+    const sortSelect = document.getElementById('sortSelect');
+    const cartCounter = document.getElementById('cartCounter');
+    const scrollToProductsBtn = document.getElementById('scrollToProducts');
+    const productsTitle = document.getElementById('productsTitle');
 
-        let currentCategory = 'all';
-        let currentSaleType = 'all';
-        let cartItems = 0;
+    const loginBtn = document.querySelector('.header-actions .btn.btn-ghost:nth-child(1)');
+    const sellerBtn = document.querySelector('.header-actions .btn.btn-ghost:nth-child(2)');
+    const cartBtn = document.querySelector('.header-actions .btn.btn-primary');
+    const branchButtons = Array.from(document.querySelectorAll('.branch-btn'));
 
-        function getNumeric(value) {
-            const n = parseFloat(value);
-            return isNaN(n) ? 0 : n;
+    let currentCategory = 'all';
+    let currentSaleType = 'all';
+    let productCards = [];
+    let originalOrder = [];
+    let cart = [];
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function normalizeCategory(category) {
+        const map = {
+            "electronics": "Elektronika",
+            "jewelery": "Moda",
+            "men's clothing": "Moda",
+            "women's clothing": "Moda",
+            "home": "Dom i Ogród",
+            "dom": "Dom i Ogród",
+            "sport": "Sport",
+            "supermarket": "Supermarket",
+            "health": "Zdrowie i Uroda",
+            "beauty": "Zdrowie i Uroda",
+            "automotive": "Motoryzacja",
+            "kids": "Dziecko",
+            "dziecko": "Dziecko"
+        };
+
+        const key = String(category || '').trim().toLowerCase();
+        return map[key] || category || 'Inne';
+    }
+
+    function formatPrice(val) {
+        const num = parseFloat(val);
+        if (isNaN(num)) return '0,00 zł';
+        return num.toLocaleString('pl-PL', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + ' zł';
+    }
+
+    function calculateGross(net) {
+        const n = parseFloat(net || 0);
+        return n * 1.23;
+    }
+
+    function getProductCards() {
+        return Array.from(productsGrid.querySelectorAll('.product-card'));
+    }
+
+    function refreshProductsReference() {
+        productCards = getProductCards();
+        if (!originalOrder.length || originalOrder.length !== productCards.length) {
+            originalOrder = [...productCards];
         }
+    }
 
-        function countActiveFilters() {
-            let count = 0;
-            if (currentCategory !== 'all') count++;
-            if (currentSaleType !== 'all') count++;
-            if (branchFilter.value !== 'all') count++;
-            if (brandFilter.value !== 'all') count++;
-            if (onlyInStock.checked) count++;
-            if (only24h.checked) count++;
-            if (delivery24h.checked) count++;
-            if (priceMin.value) count++;
-            if (priceMax.value) count++;
-            if (searchInput.value.trim() !== '') count++;
-            activeFiltersCount.textContent = String(count);
+    function getNumeric(value) {
+        const n = parseFloat(value);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function saveCart() {
+        localStorage.setItem('qm_cart', JSON.stringify(cart));
+    }
+
+    function loadCart() {
+        try {
+            cart = JSON.parse(localStorage.getItem('qm_cart') || '[]');
+            if (!Array.isArray(cart)) cart = [];
+        } catch (e) {
+            cart = [];
         }
+        updateCartCounter();
+    }
 
-        function applyFilters() {
-            const searchTerm = searchInput.value.trim().toLowerCase();
-            const minPrice = priceMin.value ? parseFloat(priceMin.value) : null;
-            const maxPrice = priceMax.value ? parseFloat(priceMax.value) : null;
-            const branch = branchFilter.value;
-            const brand = brandFilter.value;
-            const requireInStock = onlyInStock.checked;
-            const require24h = only24h.checked || delivery24h.checked;
+    function updateCartCounter() {
+        cartCounter.textContent = String(cart.reduce((sum, item) => sum + (item.qty || 1), 0));
+    }
 
-            let visibleCount = 0;
-
-            productCards.forEach(card => {
-                const name = card.dataset.name.toLowerCase();
-                const category = card.dataset.category;
-                const cardBranch = card.dataset.branch;
-                const cardBrand = card.dataset.brand;
-                const sale = card.dataset.sale;
-                const priceNetto = parseFloat(card.dataset.priceNetto || '0');
-                const stock = parseInt(card.dataset.stock || '0', 10);
-                const is24h = card.dataset['24h'] === 'true';
-
-                let visible = true;
-
-                if (searchTerm && !name.includes(searchTerm)) {
-                    visible = false;
-                }
-
-                if (visible && currentCategory !== 'all' && category !== currentCategory) {
-                    visible = false;
-                }
-
-                if (visible && currentSaleType !== 'all' && sale !== currentSaleType) {
-                    visible = false;
-                }
-
-                if (visible && branch !== 'all' && cardBranch !== branch) {
-                    visible = false;
-                }
-
-                if (visible && brand !== 'all' && cardBrand !== brand) {
-                    visible = false;
-                }
-
-                if (visible && requireInStock && stock <= 0) {
-                    visible = false;
-                }
-
-                if (visible && require24h && !is24h) {
-                    visible = false;
-                }
-
-                if (visible && minPrice !== null && priceNetto < minPrice) {
-                    visible = false;
-                }
-
-                if (visible && maxPrice !== null && priceNetto > maxPrice) {
-                    visible = false;
-                }
-
-                if (visible) {
-                    card.classList.remove('hidden');
-                    visibleCount++;
-                } else {
-                    card.classList.add('hidden');
-                }
+    function addToCart(product) {
+        const existing = cart.find(item => String(item.id) === String(product.id));
+        if (existing) {
+            existing.qty += 1;
+        } else {
+            cart.push({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.image || '',
+                qty: 1
             });
-
-            visibleProductsCount.textContent = String(visibleCount);
-            countActiveFilters();
         }
+        saveCart();
+        updateCartCounter();
+    }
 
-        function sortProducts() {
-            const value = sortSelect.value;
-            const cards = Array.from(productsGrid.querySelectorAll('.product-card'));
+    function countActiveFilters() {
+        let count = 0;
+        if (currentCategory !== 'all') count++;
+        if (currentSaleType !== 'all') count++;
+        if (branchFilter.value !== 'all') count++;
+        if (brandFilter.value !== 'all') count++;
+        if (onlyInStock.checked) count++;
+        if (only24h.checked) count++;
+        if (delivery24h.checked) count++;
+        if (priceMin.value) count++;
+        if (priceMax.value) count++;
+        if (searchInput.value.trim() !== '') count++;
+        activeFiltersCount.textContent = String(count);
+    }
 
-            if (value === 'default') {
-                cards.sort((a, b) => {
-                    return 0;
-                });
-            } else if (value === 'priceAsc') {
-                cards.sort((a, b) => {
-                    return getNumeric(a.dataset.priceNetto) - getNumeric(b.dataset.priceNetto);
-                });
-            } else if (value === 'priceDesc') {
-                cards.sort((a, b) => {
-                    return getNumeric(b.dataset.priceNetto) - getNumeric(a.dataset.priceNetto);
-                });
-            } else if (value === 'stockDesc') {
-                cards.sort((a, b) => {
-                    return getNumeric(b.dataset.stock) - getNumeric(a.dataset.stock);
-                });
-            }
+    function applyFilters() {
+        refreshProductsReference();
 
-            cards.forEach(card => productsGrid.appendChild(card));
-        }
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const minPrice = priceMin.value ? parseFloat(priceMin.value) : null;
+        const maxPrice = priceMax.value ? parseFloat(priceMax.value) : null;
+        const branch = branchFilter.value;
+        const brand = brandFilter.value;
+        const requireInStock = onlyInStock.checked;
+        const require24h = only24h.checked || delivery24h.checked;
 
-        function resetFilters() {
-            searchInput.value = '';
-            currentCategory = 'all';
-            currentSaleType = 'all';
-            branchFilter.value = 'all';
-            brandFilter.value = 'all';
-            onlyInStock.checked = false;
-            only24h.checked = false;
-            delivery24h.checked = false;
-            priceMin.value = '';
-            priceMax.value = '';
-            sortSelect.value = 'default';
+        let visibleCount = 0;
 
-            navPills.forEach(pill => pill.classList.toggle('active', pill.dataset.category === 'all'));
-            saleTags.forEach(tag => tag.classList.toggle('active', tag.dataset.sale === 'all'));
+        productCards.forEach(card => {
+            const name = String(card.dataset.name || '').toLowerCase();
+            const category = card.dataset.category || '';
+            const cardBranch = card.dataset.branch || '';
+            const cardBrand = card.dataset.brand || '';
+            const sale = card.dataset.sale || '';
+            const priceNetto = parseFloat(card.dataset.priceNetto || '0');
+            const stock = parseInt(card.dataset.stock || '0', 10);
+            const is24h = card.dataset.delivery24h === 'true';
 
-            sortProducts();
-            applyFilters();
-        }
+            let visible = true;
 
-        searchInput.addEventListener('input', function () {
-            applyFilters();
+            if (searchTerm && !name.includes(searchTerm)) visible = false;
+            if (visible && currentCategory !== 'all' && category !== currentCategory) visible = false;
+            if (visible && currentSaleType !== 'all' && sale !== currentSaleType) visible = false;
+            if (visible && branch !== 'all' && cardBranch !== branch) visible = false;
+            if (visible && brand !== 'all' && cardBrand !== brand) visible = false;
+            if (visible && requireInStock && stock <= 0) visible = false;
+            if (visible && require24h && !is24h) visible = false;
+            if (visible && minPrice !== null && priceNetto < minPrice) visible = false;
+            if (visible && maxPrice !== null && priceNetto > maxPrice) visible = false;
+
+            card.classList.toggle('hidden', !visible);
+            if (visible) visibleCount++;
         });
+
+        visibleProductsCount.textContent = String(visibleCount);
+        countActiveFilters();
+    }
+
+    function sortProducts() {
+        refreshProductsReference();
+
+        const value = sortSelect.value;
+        let cards = [...productCards];
+
+        if (value === 'default') {
+            cards = [...originalOrder];
+        } else if (value === 'priceAsc') {
+            cards.sort((a, b) => getNumeric(a.dataset.priceNetto) - getNumeric(b.dataset.priceNetto));
+        } else if (value === 'priceDesc') {
+            cards.sort((a, b) => getNumeric(b.dataset.priceNetto) - getNumeric(a.dataset.priceNetto));
+        } else if (value === 'stockDesc') {
+            cards.sort((a, b) => getNumeric(b.dataset.stock) - getNumeric(a.dataset.stock));
+        }
+
+        cards.forEach(card => productsGrid.appendChild(card));
+        productCards = cards;
+    }
+
+    function resetFilters() {
+        searchInput.value = '';
+        currentCategory = 'all';
+        currentSaleType = 'all';
+        branchFilter.value = 'all';
+        brandFilter.value = 'all';
+        onlyInStock.checked = false;
+        only24h.checked = false;
+        delivery24h.checked = false;
+        priceMin.value = '';
+        priceMax.value = '';
+        sortSelect.value = 'default';
+
+        navPills.forEach(pill => pill.classList.toggle('active', pill.dataset.category === 'all'));
+        saleTags.forEach(tag => tag.classList.toggle('active', tag.dataset.sale === 'all'));
+
+        sortProducts();
+        applyFilters();
+    }
+
+    function bindStaticButtons() {
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function () {
+                window.location.href = '/login.html';
+            });
+        }
+
+        if (sellerBtn) {
+            sellerBtn.addEventListener('click', function () {
+                window.location.href = '/seller.html';
+            });
+        }
+
+        if (cartBtn) {
+            cartBtn.addEventListener('click', function () {
+                window.location.href = '/koszyk.html';
+            });
+        }
+
+        branchButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const card = btn.closest('.branch-card');
+                const nameEl = card ? card.querySelector('.branch-name') : null;
+                const name = nameEl ? nameEl.textContent.trim() : '';
+                if (!name) return;
+
+                branchFilter.value = name;
+                applyFilters();
+
+                window.scrollTo({
+                    top: productsGrid.getBoundingClientRect().top + window.scrollY - 120,
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        if (scrollToProductsBtn) {
+            scrollToProductsBtn.addEventListener('click', function () {
+                window.scrollTo({
+                    top: productsGrid.getBoundingClientRect().top + window.scrollY - 120,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    }
+
+    function bindFilterEvents() {
+        searchInput.addEventListener('input', applyFilters);
 
         navPills.forEach(pill => {
             pill.addEventListener('click', function () {
@@ -2834,11 +2337,13 @@
             card.addEventListener('click', function () {
                 const category = card.dataset.category;
                 const targetPill = navPills.find(p => p.dataset.category === category);
+
                 if (targetPill) {
                     navPills.forEach(p => p.classList.remove('active'));
                     targetPill.classList.add('active');
                     currentCategory = category;
                     applyFilters();
+
                     window.scrollTo({
                         top: productsGrid.getBoundingClientRect().top + window.scrollY - 120,
                         behavior: 'smooth'
@@ -2857,47 +2362,16 @@
         });
 
         [branchFilter, brandFilter, onlyInStock, only24h, delivery24h, priceMin, priceMax].forEach(el => {
-            el.addEventListener('change', function () {
-                applyFilters();
-            });
+            el.addEventListener('change', applyFilters);
+            el.addEventListener('input', applyFilters);
         });
 
-        resetFiltersBtn.addEventListener('click', function () {
-            resetFilters();
-        });
+        resetFiltersBtn.addEventListener('click', resetFilters);
 
         sortSelect.addEventListener('change', function () {
             sortProducts();
             applyFilters();
         });
-
-        const boundButtons = new WeakSet();
-        function bindAddToCartButtons() {
-            const addButtons = Array.from(productsGrid.querySelectorAll('.product-add-btn'));
-            addButtons.forEach(btn => {
-                if (boundButtons.has(btn)) return;
-                boundButtons.add(btn);
-                btn.addEventListener('click', function () {
-                    cartItems++;
-                    cartCounter.textContent = String(cartItems);
-                    btn.classList.add('added');
-                    btn.textContent = 'Dodano';
-                    setTimeout(() => {
-                        btn.classList.remove('added');
-                        btn.innerHTML = '<span class="icon">＋</span><span>Dodaj do koszyka</span>';
-                    }, 1200);
-                });
-            });
-        }
-
-        if (scrollToProductsBtn) {
-            scrollToProductsBtn.addEventListener('click', function () {
-                window.scrollTo({
-                    top: productsGrid.getBoundingClientRect().top + window.scrollY - 120,
-                    behavior: 'smooth'
-                });
-            });
-        }
 
         document.addEventListener('keydown', function (e) {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -2906,136 +2380,208 @@
                 searchInput.select();
             }
         });
+    }
 
+    function bindAddToCartButtons() {
+        const addButtons = Array.from(productsGrid.querySelectorAll('.product-add-btn'));
+
+        addButtons.forEach(btn => {
+            if (btn.dataset.bound === 'true') return;
+            btn.dataset.bound = 'true';
+
+            btn.addEventListener('click', function () {
+                const card = btn.closest('.product-card');
+                if (!card) return;
+
+                const imgEl = card.querySelector('img');
+                const product = {
+                    id: btn.dataset.productId || card.dataset.id || card.dataset.name,
+                    name: card.dataset.name || 'Produkt',
+                    price: parseFloat(card.dataset.priceNetto || '0'),
+                    image: imgEl ? imgEl.src : ''
+                };
+
+                addToCart(product);
+
+                btn.innerHTML = '<span class="icon">✓</span><span>Dodano</span>';
+                btn.disabled = true;
+
+                setTimeout(() => {
+                    btn.innerHTML = '<span class="icon">＋</span><span>Dodaj do koszyka</span>';
+                    btn.disabled = false;
+                }, 1000);
+            });
+        });
+    }
+
+    function createProductCard(p) {
+        const rawCategory = p.category_name || p.category || 'Inne';
+        const category = normalizeCategory(rawCategory);
+        const priceNetto = parseFloat(p.price_net ?? p.price ?? p.selling_price ?? 0);
+        const priceGross = parseFloat(p.price_gross ?? calculateGross(priceNetto));
+        const stock = parseInt(p.stock ?? p.quantity ?? 0, 10);
+        const brand = p.brand || 'Qualitet';
+        const branch = p.branch || 'Warszawa';
+        const saleType = p.sale_type || 'hurt';
+        const is24h = p.is_24h === true || p.is_24h === 1 || stock > 50;
+        const isBestseller = !!p.is_pinned || !!p.bestseller;
+        const imageUrl = p.image_url || p.image || '';
+
+        const article = document.createElement('article');
+        article.className = 'product-card';
+        article.dataset.id = p.id || '';
+        article.dataset.name = p.name || 'Produkt';
+        article.dataset.category = category;
+        article.dataset.branch = branch;
+        article.dataset.brand = brand;
+        article.dataset.sale = saleType;
+        article.dataset.priceNetto = String(priceNetto);
+        article.dataset.stock = String(stock);
+        article.dataset.delivery24h = is24h ? 'true' : 'false';
+
+        article.innerHTML = `
+            <div class="product-image-wrapper">
+                <div class="product-badges">
+                    <span class="badge badge-hurt">${saleType === 'detal' ? 'Detal' : 'Hurt'}</span>
+                    ${is24h ? '<span class="badge badge-24h">24H</span>' : ''}
+                    ${isBestseller ? '<span class="badge badge-bestseller">Bestseller</span>' : ''}
+                </div>
+                ${
+                    imageUrl
+                        ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(p.name || 'Produkt')}" loading="lazy" style="width:100%;height:180px;object-fit:contain;">`
+                        : `<div class="product-image-placeholder">Zdjęcie produktu</div>`
+                }
+                <div class="product-branch-tag">Oddział: ${escapeHtml(branch)}</div>
+            </div>
+            <div class="product-body">
+                <h3 class="product-name">
+                    ${escapeHtml(p.name || 'Produkt')}
+                    <br><span class="category">${escapeHtml(category)} · ${escapeHtml(brand)}</span>
+                </h3>
+                <div class="product-prices">
+                    <div class="price-netto">${formatPrice(priceNetto)} netto</div>
+                    <div class="price-brutto"><span>${formatPrice(priceGross)}</span> brutto</div>
+                </div>
+                <div class="product-meta">
+                    <span>MOQ: <strong>${escapeHtml(String(p.moq || 1))} szt.</strong></span>
+                    <span>Sprzedaż: <strong>${saleType === 'detal' ? 'detal' : 'hurt'}</strong></span>
+                </div>
+                <div class="product-stock ${stock <= 50 ? 'stock-low' : ''}">
+                    <span class="stock-dot"></span>
+                    <span>Stan magazynowy: <strong>${stock} szt.</strong></span>
+                </div>
+                <div class="product-footer">
+                    <div class="product-footer-left">
+                        ${is24h ? 'Dostawa <span class="highlight">24h</span>' : 'Dostawa <span class="highlight">48h</span>'}
+                    </div>
+                    <button class="product-add-btn" type="button" data-product-id="${escapeHtml(p.id || '')}">
+                        <span class="icon">＋</span><span>Dodaj do koszyka</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        return article;
+    }
+
+    function showLoading() {
+        productsGrid.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);">
+                <div style="font-size:2rem;margin-bottom:12px;">⏳</div>
+                <div>Ładowanie produktów…</div>
+            </div>
+        `;
+    }
+
+    function showError() {
+        productsGrid.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);">
+                <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
+                <div>Nie udało się załadować produktów z API.</div>
+                <div style="margin-top:10px;">
+                    <button class="btn btn-primary" type="button" id="retryLoadProducts">Spróbuj ponownie</button>
+                </div>
+            </div>
+        `;
+
+        const retryBtn = document.getElementById('retryLoadProducts');
+        if (retryBtn) {
+            retryBtn.addEventListener('click', loadProducts);
+        }
+    }
+
+    function extractProducts(data) {
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.products)) return data.products;
+        if (Array.isArray(data.data)) return data.data;
+        if (Array.isArray(data.items)) return data.items;
+        return [];
+    }
+
+    function loadProducts() {
+        const API_BASE = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
+        showLoading();
+
+        fetch(API_BASE + '/products?is_central=true&status=active&limit=50&sort=new')
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
+                const products = extractProducts(data);
+
+                if (!products.length) {
+                    productsGrid.innerHTML = `
+                        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);">
+                            <div style="font-size:2rem;margin-bottom:12px;">📦</div>
+                            <div>Brak produktów w katalogu.</div>
+                        </div>
+                    `;
+                    refreshProductsReference();
+                    applyFilters();
+                    return;
+                }
+
+                productsGrid.innerHTML = '';
+                products.forEach(function (p) {
+                    productsGrid.appendChild(createProductCard(p));
+                });
+
+                refreshProductsReference();
+                bindAddToCartButtons();
+                sortProducts();
+                applyFilters();
+
+                const total = data.total ?? products.length;
+                if (productsTitle) {
+                    productsTitle.textContent = 'Oferta produktów (' + total + ')';
+                }
+            })
+            .catch(function (err) {
+                console.error('Błąd ładowania produktów:', err);
+                showError();
+            });
+    }
+
+    bindStaticButtons();
+    bindFilterEvents();
+    loadCart();
+    refreshProductsReference();
+    bindAddToCartButtons();
+    sortProducts();
+    applyFilters();
+
+    window._sklepRefresh = function () {
+        refreshProductsReference();
+        bindAddToCartButtons();
         sortProducts();
         applyFilters();
-        bindAddToCartButtons();
+    };
 
-        window._sklepRefresh = function () {
-            productCards = Array.from(productsGrid.querySelectorAll('.product-card'));
-            sortProducts();
-            applyFilters();
-            bindAddToCartButtons();
-        };
-    })();
-</script>
-<script src="js/api.js"></script>
-<script>
-    (function () {
-        var API_BASE = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
-        var productsGrid = document.getElementById('productsGrid');
-        var productsTitle = document.getElementById('productsTitle');
+    window.QM_reloadProducts = loadProducts;
 
-        function formatPrice(val) {
-            var num = parseFloat(val);
-            if (isNaN(num)) return '0,00 zł';
-            return num.toFixed(2).replace('.', ',') + ' zł';
-        }
-
-        function createProductCard(p) {
-            var priceNetto = parseFloat(p.price_net !== null && p.price_net !== undefined ? p.price_net : (p.selling_price !== null && p.selling_price !== undefined ? p.selling_price : 0));
-            var priceGross = parseFloat(p.price_gross !== null && p.price_gross !== undefined ? p.price_gross : (p.selling_price !== null && p.selling_price !== undefined ? p.selling_price : 0));
-            var stock = parseInt(p.stock || 0, 10);
-            var category = p.category || 'Inne';
-            var is24h = stock > 50;
-            var article = document.createElement('article');
-            article.className = 'product-card';
-            article.dataset.name = p.name || '';
-            article.dataset.category = category;
-            article.dataset.branch = '';
-            article.dataset.brand = p.brand || '';
-            article.dataset.sale = 'hurt';
-            article.dataset.priceNetto = priceNetto.toFixed(2);
-            article.dataset.stock = stock;
-            article.dataset['24h'] = is24h ? 'true' : 'false';
-
-            var badges = '';
-            badges += '<span class="badge badge-hurt">Hurt</span>';
-            if (is24h) badges += '<span class="badge badge-24h">24H</span>';
-            if (p.is_pinned) badges += '<span class="badge badge-bestseller">Bestseller</span>';
-
-            var imgHtml = p.image_url
-                ? '<img src="' + p.image_url.replace(/"/g, '&quot;') + '" alt="' + (p.name || '').replace(/"/g, '&quot;') + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;">'
-                : '<div class="product-image-placeholder">Zdjęcie produktu</div>';
-
-            article.innerHTML =
-                '<div class="product-image-wrapper">' +
-                    '<div class="product-badges">' + badges + '</div>' +
-                    imgHtml +
-                '</div>' +
-                '<div class="product-body">' +
-                    '<h3 class="product-name">' + (p.name || '').replace(/</g, '&lt;') +
-                        '<br><span class="category">' + category.replace(/</g, '&lt;') + '</span>' +
-                    '</h3>' +
-                    '<div class="product-prices">' +
-                        '<div class="price-netto">' + formatPrice(priceNetto) + ' netto</div>' +
-                        '<div class="price-brutto"><span>' + formatPrice(priceGross) + '</span> brutto</div>' +
-                    '</div>' +
-                    '<div class="product-stock">' +
-                        '<span class="stock-dot"></span>' +
-                        '<span>Stan magazynowy: <strong>' + stock + ' szt.</strong></span>' +
-                    '</div>' +
-                    '<div class="product-footer">' +
-                        '<div class="product-footer-left">' +
-                            (p.description ? (p.description.replace(/</g, '&lt;').substring(0, 60) + (p.description.length > 60 ? '…' : '')) : 'Dostępny w magazynie') +
-                        '</div>' +
-                        '<button class="product-add-btn" type="button" data-product-id="' + (p.id || '') + '">' +
-                            '<span class="icon">＋</span><span>Dodaj do koszyka</span>' +
-                        '</button>' +
-                    '</div>' +
-                '</div>';
-            return article;
-        }
-
-        function showLoading() {
-            productsGrid.innerHTML =
-                '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);">' +
-                    '<div style="font-size:2rem;margin-bottom:12px;">⏳</div>' +
-                    '<div>Ładowanie produktów…</div>' +
-                '</div>';
-        }
-
-        function loadProducts() {
-            showLoading();
-            fetch(API_BASE + '/products?is_central=true&status=active&limit=50&sort=new')
-                .then(function (res) {
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    return res.json();
-                })
-                .then(function (data) {
-                    var products = (data && data.products) ? data.products : [];
-                    if (products.length === 0) {
-                        productsGrid.innerHTML =
-                            '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);">' +
-                                '<div style="font-size:2rem;margin-bottom:12px;">📦</div>' +
-                                '<div>Brak produktów w katalogu.</div>' +
-                            '</div>';
-                        if (window._sklepRefresh) window._sklepRefresh();
-                        return;
-                    }
-                    productsGrid.innerHTML = '';
-                    products.forEach(function (p) {
-                        productsGrid.appendChild(createProductCard(p));
-                    });
-                    if (productsTitle && data.total !== null && data.total !== undefined) {
-                        productsTitle.textContent = 'Oferta produktów (' + data.total + ')';
-                    }
-                    if (window._sklepRefresh) window._sklepRefresh();
-                })
-                .catch(function (err) {
-                    console.error('Błąd ładowania produktów:', err);
-                    productsGrid.innerHTML =
-                        '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);">' +
-                            '<div style="font-size:2rem;margin-bottom:12px;">⚠️</div>' +
-                            '<div>Nie udało się załadować produktów. Spróbuj odświeżyć stronę.</div>' +
-                        '</div>';
-                    if (window._sklepRefresh) window._sklepRefresh();
-                });
-        }
-
-        loadProducts();
-    })();
+    loadProducts();
+})();
 </script>
 </body>
 </html>
-
