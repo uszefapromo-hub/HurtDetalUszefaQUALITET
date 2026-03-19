@@ -1,42 +1,19 @@
 const express = require("express");
-const cors = require("cors");
-
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-const products = [
-  {
-    id: 1,
-    name: "iPhone 13",
-    price: 2999,
-    oldPrice: 3499,
-    image: "https://via.placeholder.com/300",
-    store: "Apple Store"
-  },
-  {
-    id: 2,
-    name: "Nike Air Max",
-    price: 499,
-    oldPrice: 699,
-    image: "https://via.placeholder.com/300",
-    store: "Nike"
-  },
-  {
-    id: 3,
-    name: "PlayStation 5",
-    price: 2399,
-    oldPrice: 2699,
-    image: "https://via.placeholder.com/300",
-    store: "Sony"
-  }
-];
-
-app.get("/api/products", (req, res) => {
-  res.json(products);
+app.get("/", (req, res) => {
+  res.send("API działa 🚀");
 });
 
-app.listen(3001, () => {
-  console.log("API działa na http://localhost:3001");
+app.get("/api/products", (req, res) => {
+  res.json([
+    { id: 1, name: "Produkt 1", price: 99 },
+    { id: 2, name: "Produkt 2", price: 149 }
+  ]);
+});
+
+app.listen(PORT, () => {
+  console.log("Serwer działa na porcie " + PORT);
 });
