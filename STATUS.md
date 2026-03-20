@@ -569,12 +569,10 @@ Przed wdrożeniem produkcyjnym należy skonfigurować:
 
 - Next.js `frontend/` – brak podłączenia API (wszystkie dane mockowane)
 - Expo Mobile – Creator/Trending/Stores nie pobierają danych z API
-- Brak obsługi refresh tokenu (JWT wygasa, wymaga ponownego logowania)
 
 ### NASTĘPNE ZADANIA 📋
 
 1. Podłączyć Next.js do backend API (`API_BASE_URL`, auth context)
 2. Podłączyć Expo do real API (zastąpić mock data w index.tsx, stores.tsx, trending.tsx)
-3. Dodać JWT refresh token endpoint w backend + obsługę w frontend
-4. Skonfigurować środowisko produkcyjne (env, CORS, SSL)
-5. Wdrożyć email notifications (nodemailer lub zewnętrzny provider)
+3. Skonfigurować środowisko produkcyjne (env, CORS, SSL)
+4. Wdrożyć email notifications (nodemailer lub zewnętrzny provider)
