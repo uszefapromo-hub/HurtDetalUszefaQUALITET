@@ -9,6 +9,7 @@ const { authenticate, requireRole } = require('../middleware/auth');
 const { validate, sanitizeText } = require('../middleware/validate');
 const { auditLog } = require('../helpers/audit');
 const { parsePagination } = require('../helpers/pagination');
+const { sendOrderConfirmationEmail } = require('../helpers/mailer');
 
 const router = express.Router();
 
@@ -208,6 +209,23 @@ router.post(
         payload: { store_id, total: createdOrder.total },
         ipAddress: req.ip,
       });
+
+      // Send order confirmation to buyer (fire-and-forget; must not block the response)
+      const { id: buyerId, email: buyerEmail } = req.user;
+      db.query('SELECT name FROM users WHERE id = $1', [buyerId])
+        .then((r) => {
+          const buyerName = r.rows[0]?.name || buyerEmail;
+          return sendOrderConfirmationEmail({
+            userId: buyerId,
+            email: buyerEmail,
+            name: buyerName,
+            orderId: createdOrder.id,
+            total: createdOrder.total,
+            items: createdItems,
+          });
+        })
+        .catch(() => {});
+
       return res.status(201).json({ ...createdOrder, items: createdItems });
     } catch (err) {
       console.error('create order error:', err.message);

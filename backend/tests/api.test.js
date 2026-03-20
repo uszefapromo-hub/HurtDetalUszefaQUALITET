@@ -11247,3 +11247,142 @@ describe('Subscription monetization E2E flow', () => {
     expect(stripeMock.subscriptions.retrieve).toHaveBeenCalledWith(STRIPE_SUB);
   });
 });
+
+// ─── POST /api/auth/forgot-password ──────────────────────────────────────────
+
+describe('POST /api/auth/forgot-password', () => {
+  it('returns 422 for missing email', async () => {
+    const res = await request(app).post('/api/auth/forgot-password').send({});
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 422 for invalid email', async () => {
+    const res = await request(app).post('/api/auth/forgot-password').send({ email: 'not-an-email' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 200 and message for registered email (creates reset token)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: SELLER_ID, name: 'Seller' }] })  // SELECT user
+      .mockResolvedValueOnce({ rows: [] })                                    // UPDATE invalidate old tokens
+      .mockResolvedValueOnce({ rows: [] })                                    // INSERT reset token
+      .mockResolvedValueOnce({ rows: [] })                                    // INSERT mail_messages
+      .mockResolvedValueOnce({ rows: [] });                                   // (SMTP skipped in tests)
+
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'seller@test.pl' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('message');
+  });
+
+  it('returns 200 even when email is not registered (no info leak)', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // SELECT user – not found
+
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'nobody@unknown.pl' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('message');
+  });
+});
+
+// ─── POST /api/auth/reset-password ───────────────────────────────────────────
+
+describe('POST /api/auth/reset-password', () => {
+  it('returns 422 for missing token', async () => {
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ password: 'NewPassword1!' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 422 for short password', async () => {
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'sometoken', password: 'short' });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 400 when token does not exist', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] }); // SELECT token – not found
+
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'invalidtoken', password: 'NewPassword1!' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('returns 400 when token has already been used', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{
+        id: 'token-id',
+        user_id: SELLER_ID,
+        expires_at: new Date(Date.now() + 60000),
+        used_at: new Date(),
+      }],
+    });
+
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'usedtoken', password: 'NewPassword1!' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/wykorzystany/);
+  });
+
+  it('returns 400 when token has expired', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{
+        id: 'token-id',
+        user_id: SELLER_ID,
+        expires_at: new Date(Date.now() - 60000), // in the past
+        used_at: null,
+      }],
+    });
+
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'expiredtoken', password: 'NewPassword1!' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/wygasł/);
+  });
+
+  it('resets password and marks token as used with a valid token', async () => {
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 'token-id',
+          user_id: SELLER_ID,
+          expires_at: new Date(Date.now() + 3600000),
+          used_at: null,
+        }],
+      })           // SELECT token
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE users password
+      .mockResolvedValueOnce({ rows: [] }); // UPDATE token used_at
+
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'validtoken', password: 'NewPassword1!' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('message');
+
+    // Verify UPDATE users was called
+    const updateUserCall = db.query.mock.calls.find(
+      (c) => typeof c[0] === 'string' && c[0].includes('UPDATE users') && c[0].includes('password_hash')
+    );
+    expect(updateUserCall).toBeDefined();
+
+    // Verify token was marked as used
+    const markUsedCall = db.query.mock.calls.find(
+      (c) => typeof c[0] === 'string' && c[0].includes('UPDATE password_reset_tokens')
+    );
+    expect(markUsedCall).toBeDefined();
+  });
+});

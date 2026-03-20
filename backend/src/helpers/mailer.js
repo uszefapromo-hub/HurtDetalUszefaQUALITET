@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Mailer helper – sends product import notification emails to the platform admin.
+ * Mailer helper – transactional email delivery for the QualitetMarket platform.
  *
  * Designed to be fire-and-forget (callers do NOT await the returned promise).
  * All errors are caught internally and logged, so this function never rejects.
@@ -11,14 +11,15 @@
  * the mail_messages table with status = 'queued'.
  *
  * Environment variables used:
- *   ADMIN_EMAIL   – primary recipient; if absent, the first owner/admin in the DB is used
+ *   ADMIN_EMAIL   – primary recipient for admin notifications; if absent the first owner/admin in DB is used
+ *   APP_URL       – base URL shown in transactional emails (default: https://uszefaqualitet.pl)
  *   SMTP_HOST     – SMTP server hostname (optional)
  *   SMTP_PORT     – SMTP port (default: 587)
  *   SMTP_SECURE   – 'true' to enable TLS (default: false)
  *   SMTP_USER     – SMTP auth username
  *   SMTP_PASS     – SMTP auth password
  *   SMTP_FROM     – sender address (default: noreply@uszefaqualitet.pl)
- *   DASHBOARD_URL – URL shown in notification emails (default: https://uszefaqualitet.pl/produkty.html)
+ *   DASHBOARD_URL – URL shown in import notification emails (default: https://uszefaqualitet.pl/produkty.html)
  */
 
 // Optional nodemailer – non-critical; gracefully skipped if not installed.
@@ -177,4 +178,169 @@ async function sendImportNotification({
   }
 }
 
-module.exports = { sendImportNotification, resolveAdminEmail };
+// ─── Generic user-addressed mailer ────────────────────────────────────────────
+
+/**
+ * Persists a mail_message row and attempts SMTP delivery.
+ * Internal helper shared by sendWelcomeEmail, sendPasswordResetEmail, sendOrderConfirmationEmail.
+ *
+ * @param {string}      toEmail
+ * @param {string|null} toUserId
+ * @param {string}      subject
+ * @param {string}      body
+ */
+async function sendUserEmail(toEmail, toUserId, subject, body) {
+  const msgId = uuidv4();
+  try {
+    await db.query(
+      `INSERT INTO mail_messages (id, to_email, to_user_id, subject, body, status, created_by, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'queued', NULL, NOW())`,
+      [msgId, toEmail, toUserId || null, subject, body]
+    );
+  } catch (dbErr) {
+    console.error('[mailer] Failed to persist mail_message:', dbErr.message);
+  }
+
+  let sent = false;
+  try {
+    sent = await dispatchSmtp(toEmail, subject, body);
+  } catch (sendErr) {
+    console.error('[mailer] SMTP send error (non-critical):', sendErr.message);
+  }
+
+  if (sent) {
+    try {
+      await db.query(
+        `UPDATE mail_messages SET status = 'sent', sent_at = NOW() WHERE id = $1`,
+        [msgId]
+      );
+    } catch { /* ignore */ }
+  }
+}
+
+// ─── Welcome email ─────────────────────────────────────────────────────────────
+
+/**
+ * Sends a welcome email to a newly registered user.
+ * Fire-and-forget – never throws.
+ *
+ * @param {object} options
+ * @param {string} options.userId
+ * @param {string} options.email
+ * @param {string} options.name
+ */
+async function sendWelcomeEmail({ userId, email, name }) {
+  try {
+    const appUrl = process.env.APP_URL || 'https://uszefaqualitet.pl';
+    const subject = `Witaj na QualitetMarket, ${name}! 🎉`;
+    const body = [
+      `Cześć ${name},`,
+      '',
+      'Dziękujemy za rejestrację na platformie QualitetMarket!',
+      '',
+      'Twoje konto zostało aktywowane. Możesz teraz:',
+      '• Przeglądać katalog produktów',
+      '• Zarządzać swoim sklepem',
+      '• Przyjmować zamówienia od kupujących',
+      '',
+      `Przejdź do swojego panelu: ${appUrl}/dashboard.html`,
+      '',
+      'Pozdrawiamy,',
+      'Zespół QualitetMarket',
+    ].join('\n');
+
+    await sendUserEmail(email, userId, subject, body);
+  } catch (err) {
+    console.error('[mailer] sendWelcomeEmail error (non-critical):', err.message);
+  }
+}
+
+// ─── Password reset email ──────────────────────────────────────────────────────
+
+/**
+ * Sends a password reset link to the user.
+ * Fire-and-forget – never throws.
+ *
+ * @param {object} options
+ * @param {string} options.userId
+ * @param {string} options.email
+ * @param {string} options.name
+ * @param {string} options.token   Plain-text reset token (to be embedded in the link).
+ */
+async function sendPasswordResetEmail({ userId, email, name, token }) {
+  try {
+    const appUrl = process.env.APP_URL || 'https://uszefaqualitet.pl';
+    const resetUrl = `${appUrl}/login.html?reset_token=${encodeURIComponent(token)}`;
+    const subject = 'Reset hasła – QualitetMarket';
+    const body = [
+      `Cześć ${name},`,
+      '',
+      'Otrzymaliśmy prośbę o reset hasła do Twojego konta na QualitetMarket.',
+      '',
+      'Aby ustawić nowe hasło, kliknij poniższy link (ważny przez 1 godzinę):',
+      resetUrl,
+      '',
+      'Jeśli to nie Ty wysłałeś/aś tę prośbę, zignoruj tę wiadomość.',
+      'Twoje hasło pozostanie bez zmian.',
+      '',
+      'Pozdrawiamy,',
+      'Zespół QualitetMarket',
+    ].join('\n');
+
+    await sendUserEmail(email, userId, subject, body);
+  } catch (err) {
+    console.error('[mailer] sendPasswordResetEmail error (non-critical):', err.message);
+  }
+}
+
+// ─── Order confirmation email ──────────────────────────────────────────────────
+
+/**
+ * Sends an order confirmation email to the buyer.
+ * Fire-and-forget – never throws.
+ *
+ * @param {object}   options
+ * @param {string}   options.userId
+ * @param {string}   options.email
+ * @param {string}   options.name
+ * @param {string}   options.orderId
+ * @param {number}   options.total
+ * @param {Array}    options.items    Array of { name, quantity, unit_price }
+ */
+async function sendOrderConfirmationEmail({ userId, email, name, orderId, total, items = [] }) {
+  try {
+    const appUrl = process.env.APP_URL || 'https://uszefaqualitet.pl';
+    const shortId = (String(orderId || '').slice(0, 8) || orderId || '').toUpperCase();
+    const subject = `Potwierdzenie zamówienia #${shortId} – QualitetMarket`;
+    const itemLines = items.map(
+      (item) => `  • ${item.name} × ${item.quantity}  –  ${parseFloat(item.unit_price).toFixed(2)} zł/szt.`
+    );
+    const body = [
+      `Cześć ${name},`,
+      '',
+      `Twoje zamówienie #${shortId} zostało przyjęte.`,
+      '',
+      'Zamówione produkty:',
+      ...itemLines,
+      '',
+      `Łączna kwota: ${parseFloat(total).toFixed(2)} zł`,
+      '',
+      `Szczegóły zamówienia: ${appUrl}/koszyk.html`,
+      '',
+      'Pozdrawiamy,',
+      'Zespół QualitetMarket',
+    ].join('\n');
+
+    await sendUserEmail(email, userId, subject, body);
+  } catch (err) {
+    console.error('[mailer] sendOrderConfirmationEmail error (non-critical):', err.message);
+  }
+}
+
+module.exports = {
+  sendImportNotification,
+  resolveAdminEmail,
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+  sendOrderConfirmationEmail,
+};

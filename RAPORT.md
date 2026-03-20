@@ -18,7 +18,7 @@
 | Usługi backendowe (services/) | 3 |
 | Middleware | 4 |
 | Migracje bazy danych | 50 |
-| Testy automatyczne (Jest) | **867 ✅** |
+| Testy automatyczne (Jest) | **877 ✅** |
 | Strony HTML (frontend PWA) | 39 |
 | Pliki JS frontendu (js/) | 10 |
 
@@ -35,7 +35,7 @@
 | GET | `/api/auth/me` | Profil zalogowanego użytkownika |
 | PUT | `/api/auth/me` | Aktualizacja profilu użytkownika |
 
-> ⚠️ **Brakuje:** `POST /api/auth/forgot-password` oraz `POST /api/auth/reset-password`
+> ✅ Zaimplementowano: `POST /api/auth/forgot-password` i `POST /api/auth/reset-password`
 
 ---
 
@@ -585,8 +585,8 @@ Ekrany mobilne (React Native/Expo):
 | Feed produktów (discovery) | ✅ | ✅ | ✅ | **GOTOWY** |
 | Panel administratora | ✅ | ✅ | ✅ | **GOTOWY** |
 | Strony prawne | ✅ | ✅ | — | **GOTOWY** |
-| Reset hasła | ❌ | ❌ | ❌ | **BRAKUJE** |
-| Emaile transakcyjne | ⚠️ tylko import | ❌ | ❌ | **BRAKUJE** |
+| Reset hasła | ✅ | ✅ | ✅ | **GOTOWY** |
+| Emaile transakcyjne | ✅ | ✅ | ✅ | **GOTOWY** |
 | Next.js ↔ API integracja | — | ❌ | — | **W TRAKCIE** |
 | Expo ↔ API integracja | — | ❌ | — | **W TRAKCIE** |
 
@@ -618,8 +618,8 @@ function parsePagination(req, { defaultLimit = 20, maxLimit = 100 } = {}) {
 ## 9. BRAKI I PRIORYTETY
 
 ### 🔴 KRYTYCZNE (przed produkcją)
-1. **Reset hasła** – brak `POST /api/auth/forgot-password` + `POST /api/auth/reset-password` + UI
-2. **Emaile transakcyjne** – potwierdzenia zamówień, rejestracja (nodemailer/SendGrid)
+1. ~~**Reset hasła**~~ – ✅ zaimplementowane `POST /api/auth/forgot-password` + `POST /api/auth/reset-password` + UI w login.html
+2. ~~**Emaile transakcyjne**~~ – ✅ zaimplementowane: welcome, reset hasła, potwierdzenie zamówienia (nodemailer + mail_messages)
 3. **Konfiguracja .env produkcyjnego** – `JWT_SECRET`, `DB_PASSWORD`, `STRIPE_SECRET_KEY`
 
 ### 🟡 WYSOKIE
@@ -649,7 +649,7 @@ function parsePagination(req, { defaultLimit = 20, maxLimit = 100 } = {}) {
 | Liczba migracji SQL | 50 |
 | Liczba stron HTML | 39 |
 | Aktywnych endpointów API | **256** |
-| Testów automatycznych | **867 ✅** |
+| Testów automatycznych | **877 ✅** |
 
 ---
 

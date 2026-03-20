@@ -179,8 +179,8 @@
 
 ### Frontend
 
-1. ❌ **Email notifications** – brak wysyłki emaili (potwierdzenia zamówień, rejestracji, reset hasła)
-2. ❌ **Reset hasła** – brak endpointu i UI `forgot password / reset password`
+1. ✅ **Email notifications** – wysyłka emaili zaimplementowana: potwierdzenia zamówień, rejestracja (welcome), reset hasła
+2. ✅ **Reset hasła** – endpoint `POST /api/auth/forgot-password` + `POST /api/auth/reset-password` + UI w `login.html`
 3. ❌ **Subdomenowe sklepy** – infrastruktura DNS/reverse proxy dla `*.qualitetmarket.pl`
 4. ❌ **Paginacja w UI** – listy produktów/zamówień nie mają pełnej paginacji po stronie frontendu
 
@@ -193,7 +193,7 @@
 
 ### Backend
 
-1. ❌ **Reset hasła / weryfikacja email** – brak obsługi tokenów reset password
+1. ✅ **Reset hasła / emaile transakcyjne** – `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, tabela `password_reset_tokens`; emaile: welcome, reset hasła, potwierdzenie zamówienia
 2. ❌ **Testy dla modułu collaboration** – testy częściowe
 3. ❌ **Webhooks przychodzące od hurtowni** – brak obsługi webhooków od dostawców
 

@@ -3,13 +3,16 @@
 /**
  * Auth routes – short canonical aliases used by the onboarding flow.
  *
- * POST /api/auth/register  – create a new account (default role: seller)
- * POST /api/auth/login     – obtain a JWT
- * POST /api/auth/refresh   – exchange a valid JWT for a fresh one (extends session)
- * GET  /api/auth/me        – return the authenticated user's profile
- * PUT  /api/auth/me        – update the authenticated user's profile
+ * POST /api/auth/register        – create a new account (default role: seller)
+ * POST /api/auth/login           – obtain a JWT
+ * POST /api/auth/refresh         – exchange a valid JWT for a fresh one (extends session)
+ * GET  /api/auth/me              – return the authenticated user's profile
+ * PUT  /api/auth/me              – update the authenticated user's profile
+ * POST /api/auth/forgot-password – request a password reset link by email
+ * POST /api/auth/reset-password  – set a new password using the reset token
  */
 
+const crypto = require('crypto');
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { body } = require('express-validator');
@@ -22,6 +25,7 @@ const { PLAN_CONFIG } = require('./subscriptions');
 const { nameToSlug, uniqueSlug } = require('../helpers/slug');
 const { getPromoTier } = require('../helpers/promo');
 const { ensureReferralCode } = require('./referral');
+const { sendWelcomeEmail, sendPasswordResetEmail } = require('../helpers/mailer');
 
 const router = express.Router();
 
@@ -108,6 +112,10 @@ router.post(
       }
 
       const token = signToken({ id, email, role });
+
+      // Send welcome email (fire-and-forget – failure must not block the response)
+      sendWelcomeEmail({ userId: id, email, name }).catch(() => {});
+
       return res.status(201).json({
         token,
         user: { id, email, name, role, plan: 'trial' },
@@ -259,6 +267,106 @@ router.put(
       return res.json(result.rows[0]);
     } catch (err) {
       console.error('auth update me error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── POST /api/auth/forgot-password ──────────────────────────────────────────
+// Request a password-reset link.  Always returns 200 to avoid revealing whether
+// a given e-mail address is registered on the platform.
+
+router.post(
+  '/forgot-password',
+  [body('email').isEmail().normalizeEmail()],
+  validate,
+  async (req, res) => {
+    const { email } = req.body;
+    try {
+      const userResult = await db.query(
+        'SELECT id, name FROM users WHERE email = $1',
+        [email]
+      );
+      const user = userResult.rows[0];
+
+      if (user) {
+        // Generate a cryptographically secure token (48 random bytes → 96 hex chars)
+        const token = crypto.randomBytes(48).toString('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        // Invalidate any existing unused tokens for this user before creating a new one
+        await db.query(
+          `UPDATE password_reset_tokens
+             SET used_at = NOW()
+           WHERE user_id = $1 AND used_at IS NULL AND expires_at > NOW()`,
+          [user.id]
+        );
+
+        await db.query(
+          `INSERT INTO password_reset_tokens (id, user_id, token, expires_at, created_at)
+           VALUES ($1, $2, $3, $4, NOW())`,
+          [uuidv4(), user.id, token, expiresAt]
+        );
+
+        // Fire-and-forget; must not block the response even on mail failure
+        sendPasswordResetEmail({ userId: user.id, email, name: user.name, token }).catch(() => {});
+      }
+
+      // Always respond with 200 – never reveal whether the address exists
+      return res.json({ message: 'Jeśli podany adres e-mail istnieje w systemie, wyślemy link do resetowania hasła.' });
+    } catch (err) {
+      console.error('auth forgot-password error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── POST /api/auth/reset-password ───────────────────────────────────────────
+// Set a new password using the token received by email.
+
+router.post(
+  '/reset-password',
+  [
+    body('token').trim().notEmpty(),
+    body('password').isLength({ min: 8 }),
+  ],
+  validate,
+  async (req, res) => {
+    const { token, password } = req.body;
+    try {
+      const tokenResult = await db.query(
+        `SELECT id, user_id, expires_at, used_at
+           FROM password_reset_tokens
+          WHERE token = $1`,
+        [token]
+      );
+      const tokenRow = tokenResult.rows[0];
+
+      if (!tokenRow) {
+        return res.status(400).json({ error: 'Nieprawidłowy lub wygasły token resetowania hasła' });
+      }
+      if (tokenRow.used_at) {
+        return res.status(400).json({ error: 'Token resetowania hasła został już wykorzystany' });
+      }
+      if (new Date(tokenRow.expires_at) < new Date()) {
+        return res.status(400).json({ error: 'Token resetowania hasła wygasł' });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      await db.query(
+        'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+        [passwordHash, tokenRow.user_id]
+      );
+
+      await db.query(
+        'UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1',
+        [tokenRow.id]
+      );
+
+      return res.json({ message: 'Hasło zostało zmienione. Możesz się teraz zalogować.' });
+    } catch (err) {
+      console.error('auth reset-password error:', err.message);
       return res.status(500).json({ error: 'Błąd serwera' });
     }
   }

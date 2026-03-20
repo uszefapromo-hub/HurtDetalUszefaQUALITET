@@ -213,6 +213,21 @@
       return put('/users/me/password', { currentPassword, newPassword });
     },
 
+    /**
+     * Request a password-reset link.
+     * Always resolves (server never reveals whether e-mail exists).
+     */
+    forgotPassword(email) {
+      return post('/auth/forgot-password', { email });
+    },
+
+    /**
+     * Set a new password using the token from the reset e-mail.
+     */
+    resetPassword(token, password) {
+      return post('/auth/reset-password', { token, password });
+    },
+
     isLoggedIn() {
       return Boolean(getToken());
     },
