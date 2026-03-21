@@ -1,410 +1,1627 @@
 <!doctype html>
 <html lang="pl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>QualitetMarket — Master Index Full</title>
-<meta name="description" content="Pełna platforma marketplace/social-commerce pod jednym linkiem.">
-<style>
-:root{--bg:#050b1d;--bg2:#08112b;--card:#101c48;--line:rgba(255,255,255,.09);--text:#f5f7ff;--muted:#aeb9df;--primary:#7c3aed;--primary2:#22d3ee;--accent:#ff7a18;--radius:24px;--shadow:0 28px 70px rgba(0,0,0,.34)}
-*{box-sizing:border-box}html,body{margin:0;padding:0;background:radial-gradient(1200px 700px at 100% -10%, rgba(124,58,237,.22), transparent 50%),radial-gradient(900px 500px at -10% 0%, rgba(34,211,238,.12), transparent 45%),linear-gradient(180deg,var(--bg2),var(--bg) 58%, #030815);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-img{display:block;max-width:100%}button,input,select,textarea{font:inherit}a{text-decoration:none;color:inherit}
-.container{max-width:1480px;margin:0 auto;padding:0 18px}
-.topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;background:rgba(5,11,29,.84);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:12px;cursor:pointer}.logo{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:24px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--primary2))}
-.brand strong{display:block;font-size:22px}.brand span{display:block;font-size:12px;color:var(--muted)}
-.nav{display:flex;gap:10px;flex-wrap:wrap}.nav button,.btn,.btn-ghost,.tab-btn{border:none;border-radius:16px;padding:12px 16px;cursor:pointer;transition:.18s transform}
-.nav button,.btn-ghost,.tab-btn{background:rgba(255,255,255,.04);color:#fff;border:1px solid var(--line)}.btn{background:linear-gradient(135deg,var(--primary),#5b7bff);color:#fff;font-weight:800}.btn-accent{background:linear-gradient(135deg,var(--accent),#ffb347);color:#111;font-weight:900}
-.nav button:hover,.btn:hover,.btn-ghost:hover,.tab-btn:hover{transform:translateY(-1px)}
-.top-actions{display:flex;gap:10px;align-items:center}#cartBadge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:6px;border-radius:999px;background:#fff;color:#111;font-size:12px}
-.page{padding:22px 0 100px}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
-.card,.hero-card,.metric,.feature-card,.product-card,.feed-card,.supplier-card,.panel-card,.price-card,.community-card,.drawer-panel,.modal-card,.notice,.step,.live-card,.auction-card,.seller-card,.category-card,.cta-card{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-.hero-card,.feature-card,.supplier-card,.panel-card,.community-card,.price-card,.live-card,.auction-card,.seller-card,.category-card,.cta-card,.feed-card{padding:18px}.hero-card{padding:28px}
-.badge{display:inline-flex;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:800;background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.34)}
-h1{margin:16px 0 12px;font-size:clamp(34px,5vw,66px);line-height:1.02;max-width:12ch}h2,h3,p{margin-top:0}.muted{color:var(--muted)}
-.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}.hero-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.metric{padding:18px}.metric strong{display:block;font-size:32px}.metric span{font-size:13px;color:var(--muted)}
-.notice{padding:16px 18px;margin-top:18px}.section{margin-top:24px}.section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin:0 0 16px}.section-head h2{margin:0;font-size:30px}
-.grid{display:grid;gap:16px}.grid-5{grid-template-columns:repeat(5,minmax(0,1fr))}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{padding:5px 8px;border-radius:999px;font-size:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
-.controls{display:grid;grid-template-columns:1.3fr .9fr .9fr auto;gap:12px;margin-bottom:18px}.field{width:100%;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:#fff}.field::placeholder{color:#93a0cb}
-.product-card{overflow:hidden;display:flex;flex-direction:column}.product-media{aspect-ratio:1/1;background:linear-gradient(135deg,rgba(124,58,237,.14),rgba(34,211,238,.10));padding:18px}.product-media img{width:100%;height:100%;object-fit:contain}.product-body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
-.title{font-size:16px;font-weight:800;line-height:1.3;min-height:42px}.desc{font-size:13px;color:var(--muted);min-height:38px}.price{font-size:24px;font-weight:900}.old{font-size:12px;text-decoration:line-through;color:var(--muted);margin-left:8px}.actions{display:flex;gap:8px;margin-top:auto}.block{width:100%}
-.feed-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),var(--primary2));font-weight:900}
-.price-card.popular{outline:2px solid rgba(124,58,237,.55)}.price-val{font-size:34px;font-weight:900}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.big-stat{font-size:34px;font-weight:900}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.how-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.step{padding:18px}
-.social-links{display:flex;gap:10px;flex-wrap:wrap}.social-links a{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
-.tab-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.tab-btn.active{background:rgba(124,58,237,.18);border-color:rgba(124,58,237,.45)}
-.status-pill{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800}.status-live{background:rgba(239,68,68,.18);color:#ffb9b9;border:1px solid rgba(239,68,68,.36)}.status-upcoming{background:rgba(245,158,11,.18);color:#ffd79a;border:1px solid rgba(245,158,11,.36)}.status-open{background:rgba(34,197,94,.18);color:#b5ffd1;border:1px solid rgba(34,197,94,.36)}
-.drawer{position:fixed;inset:0;display:none;z-index:70}.drawer.open{display:block}.drawer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}.drawer-panel{position:absolute;top:0;right:0;width:min(430px,100%);height:100%;padding:18px;overflow:auto;background:#08112b}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.icon-btn{border:none;background:transparent;color:#fff;font-size:22px;cursor:pointer}
-.cart-item{display:grid;grid-template-columns:62px 1fr auto;gap:12px;padding:10px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-bottom:10px}.cart-item img{width:62px;height:62px;object-fit:cover;border-radius:12px;background:#fff}.summary{display:grid;gap:10px;margin:16px 0}.summary>div{display:flex;justify-content:space-between}.summary .total{padding-top:12px;border-top:1px solid var(--line);font-size:18px;font-weight:900}
-dialog{border:none;padding:0;background:transparent;color:inherit;width:min(1080px,96vw)}dialog::backdrop{background:rgba(0,0,0,.72)}.modal-card{padding:18px;background:#08112b}.product-modal{display:grid;grid-template-columns:1fr 1fr;gap:18px}.main-image{aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.04)}.main-image img{width:100%;height:100%;object-fit:cover}.checkout-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.order-box,.form-box{padding:18px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
-.mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:65;display:none;grid-template-columns:repeat(5,1fr);gap:8px;padding:10px 12px;background:rgba(5,11,29,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line)}.mobile-nav button{border:none;background:rgba(255,255,255,.04);color:#fff;padding:12px 8px;border-radius:14px}
-.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed rgba(255,255,255,.12);border-radius:18px}
-.footer{margin-top:28px;padding:28px 0 120px;border-top:1px solid var(--line)}.footer-grid{display:grid;grid-template-columns:1.2fr .8fr .8fr .8fr;gap:16px}
-@media (max-width:1180px){.hero,.product-modal,.checkout-grid{grid-template-columns:1fr}.grid-5{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-4,.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr 1fr}.kpis,.how-grid,.footer-grid{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:720px){.desktop-nav{display:none}.mobile-nav{display:grid}h1{max-width:none}.grid-5,.grid-4,.grid-3,.grid-2,.hero-grid,.how-grid,.footer-grid{grid-template-columns:1fr}.controls{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.brand strong{font-size:18px}.topbar{padding:12px}}
-</style>
+  <title>QualitetMarket | Marketplace B2B/B2C — Sklep, Hurtownie, Sprzedawcy, Marki</title>
+  <meta name="description" content="QualitetMarket — platforma marketplace B2B/B2C. Kupuj, sprzedawaj, importuj z hurtowni. Otwórz sklep, zarządzaj produktami, dołącz do programu dla twórców i dostawców.">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/qualitetverse.css">
+  <style>
+    .dual-audience-grid{display:grid;gap:20px;grid-template-columns:1fr 1fr}
+    @media(max-width:640px){.dual-audience-grid{grid-template-columns:1fr}}
+    /* ── Marketplace homepage sections ── */
+    .mkt-section{padding:48px 0}
+    .mkt-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+    .mkt-section-head h2{font-size:clamp(20px,2.8vw,28px);margin:0}
+    .mkt-section-head a{font-size:14px;color:var(--cyan);white-space:nowrap}
+    .mkt-products-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .mkt-stores-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .mkt-auctions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .mkt-hub-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .mkt-community-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .mkt-card{background:var(--card);border:1px solid var(--stroke);border-radius:18px;overflow:hidden;transition:transform .15s,box-shadow .15s}
+    .mkt-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.45)}
+    .mkt-card-img{width:100%;aspect-ratio:4/3;object-fit:contain;background:rgba(139,92,246,.12);display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--muted);padding:8px}
+    .mkt-card-body{padding:12px}
+    .mkt-card-body h4{margin:0 0 4px;font-size:14px;font-weight:600;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .mkt-card-body .price{color:var(--cyan);font-weight:700;font-size:15px}
+    .mkt-card-body .old-price{color:var(--muted);text-decoration:line-through;font-size:12px;margin-left:6px}
+    .mkt-card-body .store-name{color:var(--muted);font-size:12px}
+    .store-card{background:var(--card);border:1px solid var(--stroke);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:transform .15s,box-shadow .15s}
+    .store-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.45)}
+    .store-card-logo{width:52px;height:52px;border-radius:14px;background:var(--purple-soft);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--purple-bright);overflow:hidden}
+    .store-card-logo img{width:100%;height:100%;object-fit:cover}
+    .store-card h4{margin:0;font-size:15px;font-weight:600}
+    .store-card p{margin:0;font-size:12px;color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .store-card .store-badge{font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);align-self:start}
+    .auction-card{background:var(--card);border:1px solid var(--stroke);border-radius:18px;overflow:hidden;position:relative;transition:transform .15s,box-shadow .15s}
+    .auction-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.45)}
+    .auction-card-img{width:100%;aspect-ratio:3/2;object-fit:cover;background:rgba(255,79,216,.08);display:flex;align-items:center;justify-content:center;font-size:42px;color:var(--muted)}
+    .auction-badge{position:absolute;top:10px;left:10px;background:rgba(255,79,216,.9);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
+    .auction-card-body{padding:14px}
+    .auction-card-body h4{margin:0 0 6px;font-size:15px;font-weight:600}
+    .auction-bid{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+    .auction-bid strong{color:var(--pink);font-size:16px}
+    .auction-timer{font-size:11px;color:var(--muted)}
+    .hub-card{background:var(--card);border:1px solid var(--stroke);border-radius:18px;padding:20px;text-align:center;transition:transform .15s,box-shadow .15s;display:block;color:var(--text);text-decoration:none}
+    .hub-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.45);border-color:var(--purple)}
+    .hub-card-icon{font-size:32px;margin-bottom:10px}
+    .hub-card h4{margin:0 0 6px;font-size:15px;font-weight:600}
+    .hub-card p{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
+    .hub-card .hub-badge{display:inline-block;margin-top:8px;font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(139,92,246,.18);color:var(--purple-bright);border:1px solid rgba(139,92,246,.35)}
+    .feed-card{background:var(--card);border:1px solid var(--stroke);border-radius:18px;padding:16px}
+    .feed-card .feed-author{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .feed-avatar{width:36px;height:36px;border-radius:50%;background:var(--purple-soft);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--purple-bright);flex-shrink:0}
+    .feed-card h4{margin:0;font-size:14px;font-weight:600}
+    .feed-card .feed-time{font-size:11px;color:var(--muted)}
+    .feed-card p{margin:0;font-size:13px;color:rgba(255,255,255,.75);line-height:1.6}
+    .feed-card .feed-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .feed-tag{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(0,212,255,.12);color:var(--cyan);border:1px solid rgba(0,212,255,.2)}
+    .live-banner{background:linear-gradient(135deg,rgba(255,79,216,.2),rgba(139,92,246,.25));border:1px solid rgba(255,79,216,.35);border-radius:20px;padding:24px 28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .live-dot{width:12px;height:12px;border-radius:50%;background:#ff4fd8;box-shadow:0 0 10px #ff4fd8;animation:pulse 1.5s infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+    .live-banner h3{margin:0 0 4px;font-size:18px}
+    .live-banner p{margin:0;font-size:13px;color:var(--muted)}
+    .sellers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .seller-card{background:var(--card);border:1px solid var(--stroke);border-radius:18px;padding:16px;text-align:center;transition:transform .15s;display:block;color:var(--text)}
+    .seller-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .seller-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--purple-dark),var(--cyan-dark));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;margin:0 auto 10px}
+    .seller-card h4{margin:0 0 4px;font-size:14px;font-weight:600}
+    .seller-card p{margin:0;font-size:12px;color:var(--muted)}
+    .seller-card .seller-rating{color:var(--yellow);font-size:13px;margin-top:6px}
+    .mkt-skeleton{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:12px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .mkt-skeleton-card{height:200px;border-radius:18px}
+    .nav-dropdown{position:relative}
+    .nav-dropdown-menu{position:absolute;top:calc(100% + 8px);left:0;background:var(--bg-2);border:1px solid var(--stroke);border-radius:14px;padding:8px;min-width:200px;z-index:100;display:none;flex-direction:column;gap:2px;box-shadow:var(--shadow)}
+    .nav-dropdown:hover .nav-dropdown-menu,.nav-dropdown:focus-within .nav-dropdown-menu{display:flex}
+    .nav-dropdown-menu a{padding:10px 14px;border-radius:10px;color:var(--muted);font-size:14px;white-space:nowrap;display:block}
+    .nav-dropdown-menu a:hover{background:rgba(255,255,255,.08);color:#fff}
+    @media(max-width:1024px){
+      .mkt-products-grid,.mkt-stores-grid{grid-template-columns:repeat(3,1fr)}
+      .mkt-hub-grid{grid-template-columns:repeat(3,1fr)}
+      .sellers-grid{grid-template-columns:repeat(3,1fr)}
+    }
+    @media(max-width:768px){
+      .mkt-products-grid,.mkt-stores-grid{grid-template-columns:repeat(2,1fr)}
+      .mkt-auctions-grid{grid-template-columns:repeat(2,1fr)}
+      .mkt-hub-grid{grid-template-columns:repeat(2,1fr)}
+      .mkt-community-grid{grid-template-columns:1fr}
+      .sellers-grid{grid-template-columns:repeat(2,1fr)}
+      .social-icons-row{gap:12px}
+      .social-icon-btn{min-width:80px;padding:14px 12px}
+      .social-video-grid{grid-template-columns:1fr}
+      .social-posts-feed{grid-template-columns:1fr}
+    }
+    @media(max-width:480px){
+      .mkt-products-grid,.mkt-stores-grid,.mkt-auctions-grid,.sellers-grid{grid-template-columns:repeat(2,1fr)}
+      .mkt-hub-grid{grid-template-columns:repeat(2,1fr)}
+      .mkt-section{padding:32px 0}
+      .live-banner{padding:16px}
+    }
+    /* ── Social media icons ── */
+    .social-icons-row{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+    .social-icon-btn{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 20px;border-radius:16px;border:1px solid var(--stroke);background:var(--surface);color:var(--fg);text-decoration:none;font-size:13px;font-weight:600;min-width:90px;transition:transform .15s,box-shadow .15s,border-color .15s}
+    .social-icon-btn:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.2);border-color:var(--purple)}
+    .social-icon-btn svg{flex-shrink:0}
+    .social-tiktok svg{color:#69c9d0}
+    .social-tiktok:hover{border-color:#69c9d0;box-shadow:0 8px 24px rgba(105,201,208,.25)}
+    .social-youtube svg{color:#ff0000}
+    .social-youtube:hover{border-color:#ff0000;box-shadow:0 8px 24px rgba(255,0,0,.2)}
+    .social-instagram svg{color:#e1306c}
+    .social-instagram:hover{border-color:#e1306c;box-shadow:0 8px 24px rgba(225,48,108,.2)}
+    .social-twitter svg{color:var(--fg)}
+    /* ── Social video embed grid ── */
+    .social-video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:20px}
+    .social-video-card{display:flex;flex-direction:column;gap:10px}
+    .social-video-iframe-wrap{position:relative;border-radius:14px;overflow:hidden;background:#000;line-height:0}
+    .social-video-iframe-wrap.aspect-vertical{aspect-ratio:9/16}
+    .social-video-iframe-wrap.aspect-horizontal{aspect-ratio:16/9}
+    .social-video-iframe-wrap iframe{width:100%;height:100%;border:none;display:block}
+    .social-video-label{font-size:13px;color:var(--muted);margin:0}
+    .social-video-product-link{font-size:13px;color:var(--cyan);text-decoration:none;font-weight:600}
+    .social-video-product-link:hover{text-decoration:underline}
+    /* ── Social product posts ── */
+    .social-posts-feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:20px}
+    .social-post-card{border:1px solid var(--stroke);border-radius:18px;overflow:hidden;background:var(--surface);display:flex;flex-direction:column}
+    .social-post-media{aspect-ratio:4/3;position:relative;overflow:hidden;background:#111;line-height:0}
+    .social-post-media img{width:100%;height:100%;object-fit:cover}
+    .social-post-media .social-post-video-badge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700}
+    .social-post-body{padding:16px;flex:1;display:flex;flex-direction:column;gap:8px}
+    .social-post-title{font-weight:700;font-size:15px;margin:0;line-height:1.3}
+    .social-post-desc{color:var(--muted);font-size:13px;line-height:1.5;margin:0;flex:1}
+    .social-post-price{font-weight:700;font-size:16px;color:var(--purple-bright)}
+    .social-post-actions{display:flex;gap:8px;margin-top:auto}
+    .social-post-buy{flex:1;text-align:center;padding:9px 14px;font-size:13px;font-weight:700}
+  </style>
+  <script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>
 </head>
-<body>
-<header class="topbar">
-  <div class="brand" data-route="home"><div class="logo">Q</div><div><strong>QualitetMarket</strong><span>Master index full — wszystko pod jednym linkiem</span></div></div>
-  <nav class="nav desktop-nav">
-    <button data-route="home">Start</button>
-    <button data-route="shop">Sklep</button>
-    <button data-route="feed">Feed</button>
-    <button data-route="suppliers">Hurtownie</button>
-    <button data-route="dashboard">Panel</button>
-  </nav>
-  <div class="top-actions">
-    <button class="btn-ghost" id="searchBtn">Szukaj</button>
-    <button class="btn" id="cartBtn">Koszyk <span id="cartBadge">0</span></button>
-  </div>
-</header>
-
-<main id="view"></main>
-
-<div class="mobile-nav">
-  <button data-route="home">Start</button>
-  <button data-route="shop">Sklep</button>
-  <button data-route="feed">Feed</button>
-  <button data-route="suppliers">B2B</button>
-  <button data-route="dashboard">Panel</button>
-</div>
-
-<aside id="drawer" class="drawer">
-  <div class="drawer-backdrop"></div>
-  <div class="drawer-panel">
-    <div class="drawer-head"><h3 style="margin:0">Koszyk</h3><button class="icon-btn" id="closeDrawer">✕</button></div>
-    <div id="cartItems"></div>
-    <div class="summary">
-      <div><span>Pozycje</span><strong id="sumItems">0</strong></div>
-      <div><span>Suma</span><strong id="sumSubtotal">0 zł</strong></div>
-      <div><span>Dostawa</span><strong id="sumShipping">0 zł</strong></div>
-      <div class="total"><span>Razem</span><strong id="sumTotal">0 zł</strong></div>
+<body data-page="index" class="has-bottom-nav">
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="QualitetMarket">
+      </div>
+      <div class="app-splash-title">
+        <strong>QualitetMarket</strong>
+        <span>Marketplace B2B/B2C</span>
+      </div>
+      <div class="app-splash-loader"></div>
     </div>
-    <button class="btn block" id="checkoutBtn">Przejdź do checkoutu</button>
   </div>
-</aside>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/icons/favicon.svg" alt="QualitetMarket logo" width="42" height="42">
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>Marketplace B2B/B2C</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="index.html" class="active">Start</a>
+        <div class="nav-dropdown">
+          <a href="listing.html">Marketplace ▾</a>
+          <div class="nav-dropdown-menu">
+            <a href="listing.html">🛍️ Sklep / Katalog</a>
+            <a href="feed.html">📱 Feed produktów</a>
+            <a href="auctions.html">🎨 Aukcje</a>
+          </div>
+        </div>
+        <a href="hurtownie.html">Hurtownie</a>
+        <div class="nav-dropdown">
+          <a href="feed.html">Feed ▾</a>
+          <div class="nav-dropdown-menu">
+            <a href="feed.html">📱 Social Commerce</a>
+            <a href="live.html">🔴 Live Sales</a>
+            <a href="community.html">🤝 Społeczność</a>
+          </div>
+        </div>
+        <div class="nav-dropdown">
+          <a href="generator-sklepu.html">Sprzedawaj ▾</a>
+          <div class="nav-dropdown-menu">
+            <a href="generator-sklepu.html">🚀 Otwórz sklep</a>
+            <a href="panel-sklepu.html">🏪 Panel sprzedawcy</a>
+            <a href="cennik.html">💎 Plany / Cennik</a>
+          </div>
+        </div>
+        <div class="nav-dropdown">
+          <a href="zarabiaj.html">Twórcy ▾</a>
+          <div class="nav-dropdown-menu">
+            <a href="zarabiaj.html">🎯 Affiliate / Creator</a>
+            <a href="brand.html">🏷️ Marki</a>
+            <a href="referral-program.html">🎁 Program poleceń</a>
+          </div>
+        </div>
+        <div class="nav-dropdown">
+          <a href="zostan-dostawca.html">Dostawcy ▾</a>
+          <div class="nav-dropdown-menu">
+            <a href="zostan-dostawca.html">📦 Zostań dostawcą</a>
+            <a href="panel-dostawcy.html">⚙️ Panel dostawcy</a>
+          </div>
+        </div>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn topbar-cta" href="generator-sklepu.html">Otwórz Sklep</a>
+      <a class="btn btn-primary topbar-cta" href="owner-panel.html" data-superadmin-link hidden style="background:rgba(255,79,216,.2);border-color:rgba(255,79,216,.5);color:#ffd6f3">🔐 Panel właściciela</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
 
-<dialog id="productDialog"></dialog>
-<dialog id="checkoutDialog"></dialog>
+  <main>
 
-<script>
-const API_URL='https://dummyjson.com/products?limit=0';
-const CART_KEY='qm_master_index_cart_v1';
-const state={products:[],filtered:[],visible:12,cart:JSON.parse(localStorage.getItem(CART_KEY)||'[]'),route:'home',activeHomeTab:'featured'};
+    <!-- ══════════════ HERO ══════════════ -->
+    <section class="hero-new">
+      <div class="wrap hero-new-grid">
 
-const fallback=[
-{id:1001,title:'Smartwatch Active X',brand:'Qualitet',category:'wearables',description:'Lekki zegarek do codziennego użycia, treningu i pracy. Bestseller z wysoką marżą.',price:699,discountPercentage:18,stock:27,thumbnail:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80'},
-{id:1002,title:'Słuchawki ANC Pro',brand:'Qualitet',category:'audio',description:'Bezprzewodowe słuchawki z redukcją szumów i nowoczesnym designem.',price:449,discountPercentage:16,stock:38,thumbnail:'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80'},
-{id:1003,title:'Beauty Set Glow',brand:'Qualitet',category:'beauty',description:'Zestaw beauty z dobrym AOV i potencjałem bundle.',price:189,discountPercentage:14,stock:54,thumbnail:'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=80'},
-{id:1004,title:'Plecak City Travel',brand:'Qualitet',category:'mens-bags',description:'Mocny produkt lifestyle, świetny do sklepu i feedu virali.',price:259,discountPercentage:21,stock:42,thumbnail:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80'},
-{id:1005,title:'Lampa LED Home Mood',brand:'Qualitet',category:'home-decoration',description:'Produkt premium do wnętrz, contentu i sprzedaży impulsowej.',price:219,discountPercentage:12,stock:31,thumbnail:'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=900&q=80'},
-{id:1006,title:'Mikrofon Creator USB',brand:'Qualitet',category:'laptops',description:'Sprzęt dla creatorów i live commerce.',price:329,discountPercentage:17,stock:18,thumbnail:'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=900&q=80'}
-];
-const feedPosts=[
-{author:'Q Trends',time:'Teraz',text:'Viralne produkty z wysoką marżą rosną na feedzie. Zbieraj inspiracje i wrzucaj do sklepu jednym kliknięciem.'},
-{author:'Seller Lab',time:'12 min temu',text:'Zestawy produktów i bundle dają wyższy koszyk niż pojedynczy zakup. Ustaw cross-sell przy produkcie premium.'},
-{author:'Creator Hub',time:'30 min temu',text:'Live commerce + krótkie video to najlepszy ruch na wejściu. Platforma musi wyglądać dynamicznie i zachęcać do scrollowania.'}
-];
-const suppliers=[
-{name:'Kosmetyki i Uroda',desc:'Produkty kosmetyczne i wellness od sprawdzonych dostawców B2B.',margin:'25–55%',sku:'15 100+'},
-{name:'Moda i Odzież',desc:'Odzież, akcesoria i biżuteria od hurtowników B2B.',margin:'18–42%',sku:'12 400+'},
-{name:'Elektronika',desc:'Gadżety, elektronika i akcesoria technologiczne B2B.',margin:'17–39%',sku:'6 700+'},
-{name:'Dom i Ogród',desc:'Wyposażenie domu, dekoracje i artykuły ogrodnicze.',margin:'22–48%',sku:'8 900+'}
-];
-const liveSales=[
-{title:'Live Beauty Sale',host:'Glow Studio',status:'LIVE',viewers:1284},
-{title:'Tech Flash Deals',host:'Qualitet Electronics',status:'LIVE',viewers:932},
-{title:'Home Drop 20:00',host:'Urban Home',status:'UPCOMING',viewers:0}
-];
-const artAuctions=[
-{title:'Modern Abstract No. 12',artist:'ArtDistrict',status:'OPEN',bid:'1 850 zł'},
-{title:'Digital Neon City',artist:'Mirov',status:'OPEN',bid:'2 300 zł'},
-{title:'Luxury Portrait Set',artist:'Studio LX',status:'UPCOMING',bid:'3 900 zł'}
-];
+        <!-- Copy -->
+        <div class="hero-new-copy">
+          <span class="eyebrow">✦ Platforma Marketplace B2B/B2C</span>
+          <h1>Kupuj, sprzedawaj i <span class="text-pink">rozwijaj biznes</span><br>z QualitetMarket</h1>
 
-const $=s=>document.querySelector(s);
-const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const money=v=>new Intl.NumberFormat('pl-PL',{style:'currency',currency:'PLN',maximumFractionDigits:2}).format(Number(v||0));
-const oldPrice=p=>Number(p.discountPercentage)?p.price/(1-p.discountPercentage/100):p.price*1.18;
-const cartCount=()=>state.cart.reduce((s,i)=>s+i.qty,0);
-const cartSubtotal=()=>state.cart.reduce((s,i)=>s+i.qty*i.price,0);
-const ship=()=>state.cart.length?19.99:0;
-const total=()=>cartSubtotal()+ship();
+          <div class="hero-new-dots">
+            <span class="hero-dot hero-dot-pink" aria-hidden="true"></span>
+            <span class="dot-label">Sprzedawcy</span>
+            <span class="hero-dot hero-dot-green" aria-hidden="true"></span>
+            <span class="dot-label">Hurtownie</span>
+            <span class="hero-dot hero-dot-cyan" aria-hidden="true"></span>
+            <span class="dot-label">Marki &amp; Twórcy</span>
+          </div>
 
-async function loadProducts(){
-  try{
-    const res=await fetch(API_URL,{cache:'no-store'});
-    const data=await res.json();
-    state.products=Array.isArray(data.products)&&data.products.length?data.products:fallback;
-  }catch{
-    state.products=fallback;
-  }
-  state.filtered=[...state.products];
-  render();
-}
-function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(state.cart));updateCart();}
-function addToCart(id,qty=1){
-  const p=state.products.find(x=>String(x.id)===String(id));
-  if(!p) return;
-  const ex=state.cart.find(x=>String(x.id)===String(id));
-  if(ex) ex.qty+=qty; else state.cart.push({id:p.id,title:p.title,price:p.price,thumbnail:p.thumbnail,qty});
-  saveCart();
-}
-function removeFromCart(id){state.cart=state.cart.filter(x=>String(x.id)!==String(id));saveCart();}
-function updateCart(){
-  $('#cartBadge').textContent=cartCount();
-  const wrap=$('#cartItems');
-  if(!state.cart.length){wrap.innerHTML='<div class="empty">Koszyk jest pusty.</div>';}
-  else{
-    wrap.innerHTML=state.cart.map(i=>`<div class="cart-item"><img src="${esc(i.thumbnail)}" alt=""><div><strong>${esc(i.title)}</strong><div class="muted">${money(i.price)} / szt.</div><input class="field" style="width:78px;padding:8px 10px;margin-top:6px" type="number" min="1" value="${i.qty}" data-qty="${i.id}"></div><div style="text-align:right"><strong>${money(i.qty*i.price)}</strong><button class="icon-btn" data-remove="${i.id}">✕</button></div></div>`).join('');
-    wrap.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeFromCart(b.dataset.remove));
-    wrap.querySelectorAll('[data-qty]').forEach(inp=>inp.onchange=()=>{const item=state.cart.find(x=>String(x.id)===String(inp.dataset.qty));if(item){item.qty=Math.max(1,Number(inp.value||1));saveCart();}});
-  }
-  $('#sumItems').textContent=cartCount();
-  $('#sumSubtotal').textContent=money(cartSubtotal());
-  $('#sumShipping').textContent=money(ship());
-  $('#sumTotal').textContent=money(total());
-}
-function productCard(p){
-  return `<article class="product-card"><div class="product-media"><img src="${esc(p.thumbnail)}" alt="${esc(p.title)}"></div><div class="product-body"><div class="chips"><span class="chip">${esc(p.category)}</span><span class="chip">${esc(p.brand||'Qualitet')}</span><span class="chip">Stan: ${Math.max(0,Number(p.stock||0))}</span></div><div class="title">${esc(p.title)}</div><div class="desc">${esc((p.description||'').slice(0,94))}</div><div><span class="price">${money(p.price)}</span><span class="old">${money(oldPrice(p))}</span></div><div class="actions"><button class="btn-ghost block" data-view="${p.id}">Zobacz</button><button class="btn block" data-add="${p.id}">Dodaj</button></div></div></article>`;
-}
-function sectionProducts(title,subtitle,items){
-  return `<section class="section"><div class="section-head"><div><h2>${title}</h2><div class="muted">${subtitle}</div></div><button class="btn-ghost" data-route="shop">Zobacz więcej</button></div><div class="grid grid-4">${items.map(productCard).join('')}</div></section>`;
-}
-function featuredBlocks(){
-  return `${sectionProducts('Trending Products','Popularne teraz i najlepiej wyglądające pozycje na wejście.',state.products.slice(0,8))}
-  ${sectionProducts('Produkty które zarabiają','Wysokie marże, szybka rotacja, dobry content.',state.products.slice(8,16))}
-  ${sectionProducts('Nowości','Właśnie dodane i gotowe do promowania.',state.products.slice(16,24))}`;
-}
-function sellerBlocks(){
-  return `<section class="section"><div class="grid grid-2">
-  <div class="panel-card"><h3>Dla sprzedawców</h3><p class="muted">Otwórz sklep online i zarabiaj na marży bez pakowania ani wysyłki.</p><div class="chips"><span class="chip">własne logo</span><span class="chip">import produktów</span><span class="chip">auto zamówienia</span><span class="chip">trial</span></div><div class="actions" style="margin-top:14px"><button class="btn block">Załóż sklep</button><button class="btn-ghost block">Dowiedz się więcej</button></div></div>
-  <div class="panel-card"><h3>Dla kupujących</h3><p class="muted">Przeglądaj oferty od sprawdzonych dostawców. Szybka dostawa, uczciwe ceny i prosta realizacja.</p><div class="chips"><span class="chip">elektronika</span><span class="chip">moda</span><span class="chip">dom</span><span class="chip">sport</span></div><div class="actions" style="margin-top:14px"><button class="btn block" data-route="shop">Przejdź do sklepu</button><button class="btn-ghost block" id="miniCartBtn">Mój koszyk</button></div></div>
-  </div></section>
-  <section class="section"><div class="section-head"><div><h2>Top Stores</h2><div class="muted">Najlepsi sprzedawcy i sklepy na platformie</div></div></div><div class="grid grid-3">
-  ${['TwójSklep','TrendHub','UrbanSeller'].map((name,i)=>`<div class="seller-card"><h3>${name}</h3><p class="muted">Mocny sklep z rosnącą sprzedażą i wysoką reputacją.</p><div class="row"><span>Ocena</span><strong>${(4.8+i*0.03).toFixed(2)}</strong></div><div class="row"><span>Zamówienia</span><strong>${1200+i*340}</strong></div><button class="btn block" style="margin-top:14px">Otwórz sklep</button></div>`).join('')}</div></section>`;
-}
-function creatorBlocks(){
-  return `<section class="section"><div class="section-head"><div><h2>Feed społecznościowy</h2><div class="muted">Przewijaj jak na TikToku, kupuj bez wychodzenia z platformy</div></div><button class="btn-ghost" data-route="feed">Otwórz Feed</button></div><div class="grid grid-3">
-  ${feedPosts.map(p=>`<article class="feed-card"><div class="feed-top"><div class="avatar">${p.author[0]}</div><div><strong>${p.author}</strong><div class="muted">${p.time}</div></div></div><p>${p.text}</p><div class="chips"><span class="chip">viral</span><span class="chip">social</span><span class="chip">sprzedaż</span></div></article>`).join('')}</div></section>
-  <section class="section"><div class="section-head"><div><h2>Creator & Affiliate</h2><div class="muted">Twórcy, polecenia i prowizje</div></div></div><div class="grid grid-3">
-  <div class="community-card"><h3>Program twórców</h3><p class="muted">Polecaj produkty, publikuj treści i zarabiaj na prowizji.</p><button class="btn block">Dołącz</button></div>
-  <div class="community-card"><h3>Affiliate Hub</h3><p class="muted">Linki partnerskie, statystyki i wypłaty w jednym miejscu.</p><button class="btn-ghost block">Prowizje</button></div>
-  <div class="community-card"><h3>Media społecznościowe</h3><p class="muted">Buduj markę wokół produktów i sklepu.</p><button class="btn-ghost block">Promuj</button></div></div></section>`;
-}
-function enterpriseBlocks(){
-  return `<section class="section"><div class="section-head"><div><h2>Hurtownie i Dostawcy</h2><div class="muted">Supplier marketplace i kierunki importu</div></div><button class="btn-ghost" data-route="suppliers">Przeglądaj hurtownie</button></div><div class="grid grid-4">
-  ${suppliers.map(s=>`<article class="supplier-card"><h3>${s.name}</h3><p class="muted">${s.desc}</p><div class="row"><span>Marża</span><strong>${s.margin}</strong></div><div class="row"><span>SKU</span><strong>${s.sku}</strong></div><div class="actions" style="margin-top:14px"><button class="btn-ghost block" data-route="shop">Produkty</button><button class="btn block" data-route="dashboard">Dodaj do panelu</button></div></article>`).join('')}</div></section>
-  <section class="section"><div class="grid grid-4">
-  <div class="panel-card"><h3>Panel sklepu</h3><p class="muted">Zarządzaj swoim sklepem, produktami i zamówieniami.</p></div>
-  <div class="panel-card"><h3>Panel dostawcy</h3><p class="muted">Zarządzaj ofertą hurtową i zamówieniami B2B.</p></div>
-  <div class="panel-card"><h3>Panel artysty</h3><p class="muted">Publikuj dzieła i prowadź aukcje sztuki.</p></div>
-  <div class="panel-card"><h3>Panel firmy</h3><p class="muted">Kampanie reklamowe i widoczność marki.</p></div></div></section>`;
-}
-function liveBlocks(){
-  return `<section class="section"><div class="section-head"><div><h2>Live Sales</h2><div class="muted">Zakupy na żywo i wydarzenia sprzedażowe</div></div></div><div class="grid grid-3">
-  ${liveSales.map(x=>`<article class="live-card"><h3>${x.title}</h3><p class="muted">Prowadzący: ${x.host}</p><div class="status-pill ${x.status==='LIVE'?'status-live':'status-upcoming'}">${x.status}</div><div class="row" style="margin-top:12px"><span>Oglądający</span><strong>${x.viewers}</strong></div><button class="btn block" style="margin-top:14px">${x.status==='LIVE'?'Wejdź teraz':'Przypomnienie'}</button></article>`).join('')}</div></section>
-  <section class="section"><div class="section-head"><div><h2>Aukcje sztuki</h2><div class="muted">Art marketplace i aukcje premium</div></div></div><div class="grid grid-3">
-  ${artAuctions.map(x=>`<article class="auction-card"><h3>${x.title}</h3><p class="muted">Artysta: ${x.artist}</p><div class="status-pill ${x.status==='OPEN'?'status-open':'status-upcoming'}">${x.status}</div><div class="row" style="margin-top:12px"><span>Aktualna oferta</span><strong>${x.bid}</strong></div><button class="btn-ghost block" style="margin-top:14px">${x.status==='OPEN'?'Licytuj':'Obserwuj'}</button></article>`).join('')}</div></section>`;
-}
-function pricingBlocks(){
-  return `<section class="section"><div class="section-head"><div><h2>Plany cenowe</h2><div class="muted">FREE / PRO / BUSINESS / ELITE</div></div></div><div class="grid grid-3">
-  <article class="price-card popular"><h3>SELLER PRO</h3><div class="price-val">79 zł</div><p class="muted">Nielimitowane produkty, import i analityka.</p><button class="btn block">Wybierz</button></article>
-  <article class="price-card"><h3>SELLER BUSINESS</h3><div class="price-val">249 zł</div><p class="muted">Zaawansowana analityka, reklamy i wsparcie 24/7.</p><button class="btn-ghost block">Wybierz</button></article>
-  <article class="price-card"><h3>ELITE</h3><div class="price-val">499 zł</div><p class="muted">AI, nielimitowane działania i wsparcie VIP.</p><button class="btn-ghost block">Wybierz</button></article>
-  </div></section>
-  <section class="section"><div class="grid grid-2">
-  <div class="cta-card"><h3>Aplikacja webowa i mobilna</h3><p class="muted">Panel mobilny działa jak aplikacja. Dodaj platformę do ekranu głównego i zarządzaj sklepem z telefonu.</p><div class="chips"><span class="chip">iPhone</span><span class="chip">Android</span><span class="chip">PWA</span></div></div>
-  <div class="cta-card"><h3>Oferta startowa</h3><p class="muted">Pierwsza fala partnerów, miejsca ograniczone i pakiet startowy dla aktywnych.</p><div class="row"><span>Pozostało miejsc</span><strong>0</strong></div><div class="row"><span>Aktywne sklepy</span><strong>0</strong></div></div></div></section>`;
-}
-function homeView(){
-  const tabs=[['featured','Marketplace'],['sellers','Sprzedawcy'],['creators','Twórcy'],['enterprise','Firmy / B2B'],['live','Live / Aukcje'],['pricing','Plany']];
-  let tabContent='';
-  if(state.activeHomeTab==='featured') tabContent=featuredBlocks();
-  if(state.activeHomeTab==='sellers') tabContent=sellerBlocks();
-  if(state.activeHomeTab==='creators') tabContent=creatorBlocks();
-  if(state.activeHomeTab==='enterprise') tabContent=enterpriseBlocks();
-  if(state.activeHomeTab==='live') tabContent=liveBlocks();
-  if(state.activeHomeTab==='pricing') tabContent=pricingBlocks();
+          <div class="cta-row">
+            <a class="btn-hero-primary" href="generator-sklepu.html">Otwórz Sklep</a>
+            <a class="btn-hero-secondary" href="listing.html">Przeglądaj Marketplace</a>
+          </div>
 
-  return `<div class="container page">
-    <section class="hero">
-      <div class="hero-card">
-        <div class="badge">MASTER INDEX FULL</div>
-        <h1>Kupuj, sprzedawaj i rozwijaj biznes z QualitetMarket</h1>
-        <p class="muted">Sklep, hurtownie, twórcy, marki, społeczność, feed i panele zarządzania w jednym miejscu. To ma prowadzić użytkownika od inspiracji do zakupu i do własnej sprzedaży.</p>
-        <div class="hero-actions">
-          <button class="btn" data-route="shop">Przeglądaj Marketplace</button>
-          <button class="btn-ghost" data-route="feed">Otwórz Feed</button>
-          <button class="btn-accent" data-route="dashboard">Panel właściciela</button>
+          <div class="hero-stats-row">
+            <div class="hero-stat">
+              <div class="hero-stat-icon s-blue" aria-hidden="true">👥</div>
+              <div>
+                <strong>1200+</strong>
+                <span>Partnerów</span>
+              </div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-icon s-orange" aria-hidden="true">📦</div>
+              <div>
+                <strong>4500+</strong>
+                <span>Hurtowni</span>
+              </div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-icon s-purple" aria-hidden="true">🔷</div>
+              <div>
+                <strong>850k+</strong>
+                <span>Produktów</span>
+              </div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-icon s-green" aria-hidden="true">🕐</div>
+              <div>
+                <strong>24/7</strong>
+                <span>Wsparcie</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Device mockup -->
+        <div class="hero-new-visual" aria-hidden="true">
+          <div class="device-laptop">
+            <div class="device-screen-frame">
+              <div class="store-preview">
+                <div class="sp-topbar">
+                  <div class="sp-logo-mark">
+                    <div class="sp-logo-icon">Q</div>
+                    <strong>TwójSklep</strong>
+                  </div>
+                  <div class="sp-nav-items">
+                    <span class="sp-nav-item">Szukaj produktów...</span>
+                  </div>
+                  <div class="sp-icons">🔍 🛒</div>
+                </div>
+                <div class="sp-cats">
+                  <span class="sp-cat">Elektronika</span>
+                  <span class="sp-cat">Moda</span>
+                  <span class="sp-cat">Dom</span>
+                  <span class="sp-cat">Sport</span>
+                  <span class="sp-cat">Uroda</span>
+                  <span class="sp-cat">...</span>
+                </div>
+                <div class="sp-banner">
+                  <p class="sp-banner-headline">Nowe Kolekcje</p>
+                  <span class="sp-banner-discount">-20%</span>
+                </div>
+                <div class="sp-products-grid">
+                  <div class="sp-product">
+                    <div class="sp-product-img">🎧</div>
+                    <div class="sp-product-info">
+                      <div class="sp-stars">★★★★★</div>
+                      <span class="sp-price">239 zł</span>
+                    </div>
+                  </div>
+                  <div class="sp-product">
+                    <div class="sp-product-img">⌚</div>
+                    <div class="sp-product-info">
+                      <div class="sp-stars">★★★★★</div>
+                      <span class="sp-price">499 zł</span>
+                    </div>
+                  </div>
+                  <div class="sp-product">
+                    <div class="sp-product-img">👟</div>
+                    <div class="sp-product-info">
+                      <div class="sp-stars">★★★★★</div>
+                      <span class="sp-price">199 zł</span>
+                    </div>
+                  </div>
+                  <div class="sp-product">
+                    <div class="sp-product-img">📱</div>
+                    <div class="sp-product-info">
+                      <div class="sp-stars">★★★★★</div>
+                      <span class="sp-price">1299 zł</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="device-base"></div>
+            <div class="device-foot"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════ MARKETPLACE SECTIONS ══════════════ -->
+
+    <!-- Quick Navigation Hub -->
+    <section class="mkt-section" id="marketplace-hub">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <h2>🏪 Marketplace QualitetMarket</h2>
+          <a href="listing.html">Przeglądaj wszystko →</a>
+        </div>
+        <div class="mkt-hub-grid">
+          <a class="hub-card" href="listing.html">
+            <div class="hub-card-icon">🛍️</div>
+            <h4>Sklep / Produkty</h4>
+            <p>Tysiące produktów od sprawdzonych dostawców</p>
+            <span class="hub-badge">Marketplace</span>
+          </a>
+          <a class="hub-card" href="feed.html">
+            <div class="hub-card-icon">📱</div>
+            <h4>Feed / Social Commerce</h4>
+            <p>Przewijaj nowości, trendy i bestsellery</p>
+            <span class="hub-badge">Trendy</span>
+          </a>
+          <a class="hub-card" href="hurtownie.html">
+            <div class="hub-card-icon">🏢</div>
+            <h4>Hurtownie</h4>
+            <p>Przeglądaj dostawców i importuj produkty</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="generator-sklepu.html">
+            <div class="hub-card-icon">🚀</div>
+            <h4>Otwórz Sklep</h4>
+            <p>Załóż sklep i zacznij sprzedawać już dziś</p>
+            <span class="hub-badge">Sprzedawcy</span>
+          </a>
+          <a class="hub-card" href="panel-sklepu.html">
+            <div class="hub-card-icon">🏪</div>
+            <h4>Panel Sprzedawcy</h4>
+            <p>Zarządzaj produktami, zamówieniami i zarobkami</p>
+            <span class="hub-badge">Dashboard</span>
+          </a>
+          <a class="hub-card" href="cennik.html">
+            <div class="hub-card-icon">💎</div>
+            <h4>Plany / Cennik</h4>
+            <p>Wybierz plan FREE, PRO, BUSINESS lub ELITE</p>
+            <span class="hub-badge">Subskrypcje</span>
+          </a>
+          <a class="hub-card" href="zarabiaj.html">
+            <div class="hub-card-icon">🎯</div>
+            <h4>Twórcy / Affiliate</h4>
+            <p>Zarabiaj jako creator lub partner afiliacyjny</p>
+            <span class="hub-badge">Creator</span>
+          </a>
+          <a class="hub-card" href="brand.html">
+            <div class="hub-card-icon">🏷️</div>
+            <h4>Marki</h4>
+            <p>Promuj markę i dotrzyj do tysięcy kupujących</p>
+            <span class="hub-badge">Branding</span>
+          </a>
+          <a class="hub-card" href="zostan-dostawca.html">
+            <div class="hub-card-icon">📦</div>
+            <h4>Dostawcy / Supplier</h4>
+            <p>Zostań dostawcą i sprzedawaj hurtowo</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="community.html">
+            <div class="hub-card-icon">🤝</div>
+            <h4>Społeczność</h4>
+            <p>Dołącz do sieci sprzedawców i kupujących</p>
+            <span class="hub-badge">Community</span>
+          </a>
+          <a class="hub-card" href="referral-program.html">
+            <div class="hub-card-icon">🎁</div>
+            <h4>Program Poleceń</h4>
+            <p>Zarabiaj polecając platformę znajomym</p>
+            <span class="hub-badge">Earning</span>
+          </a>
+          <a class="hub-card" href="#kontakt">
+            <div class="hub-card-icon">💬</div>
+            <h4>Kontakt / Pomoc</h4>
+            <p>Regulaminy, pomoc techniczna i informacje</p>
+            <span class="hub-badge">Support</span>
+          </a>
         </div>
       </div>
-      <div class="hero-grid">
-        <div class="metric"><strong>1200+</strong><span>partnerów</span></div>
-        <div class="metric"><strong>4500+</strong><span>hurtowni</span></div>
-        <div class="metric"><strong>${state.products.length || 850000}+</strong><span>produktów</span></div>
-        <div class="metric"><strong>24/7</strong><span>wsparcie</span></div>
+    </section>
+
+    <!-- Social Commerce Feed Banner -->
+    <section class="mkt-section" id="product-feed-promo" style="padding:28px 0">
+      <div class="wrap">
+        <div style="background:linear-gradient(135deg,rgba(108,99,255,.18),rgba(167,139,250,.12));border:1px solid rgba(108,99,255,.35);border-radius:18px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:clamp(15px,2.2vw,22px);font-weight:700;margin-bottom:6px">📱 Odkryj Produkty – Feed Społecznościowy</div>
+            <div style="font-size:14px;color:rgba(255,255,255,.7);max-width:480px">Przewijaj tysiące produktów jak na TikToku. Znajdź bestsellery, nowości i produkty z najwyższą marżą. Dodaj do sklepu jednym kliknięciem.</div>
+          </div>
+          <a href="feed.html" style="display:inline-flex;align-items:center;gap:8px;background:#6c63ff;color:#fff;padding:12px 22px;border-radius:12px;font-weight:700;font-size:15px;white-space:nowrap;text-decoration:none;transition:background .2s" onmouseover="this.style.background='#5548e0'" onmouseout="this.style.background='#6c63ff'">✨ Otwórz Feed →</a>
+        </div>
       </div>
     </section>
 
-    <div class="notice">Tu masz już pełny master index: landing, marketplace, feed, hurtownie, twórców, live sales, aukcje, pricing, panele, sklep, koszyk i checkout.</div>
-
-    <section class="section">
-      <div class="grid grid-5">
-        <div class="feature-card"><h3>Marketplace</h3><p class="muted">Kupuj i sprzedawaj.</p><button class="btn block" data-route="shop">Otwórz</button></div>
-        <div class="feature-card"><h3>Feed</h3><p class="muted">Social commerce i trendy.</p><button class="btn-ghost block" data-route="feed">Scrolluj</button></div>
-        <div class="feature-card"><h3>Hurtownie</h3><p class="muted">Dostawcy i import produktów.</p><button class="btn-ghost block" data-route="suppliers">B2B</button></div>
-        <div class="feature-card"><h3>Twórcy</h3><p class="muted">Affiliate i creator economy.</p><button class="btn-ghost block">Creators</button></div>
-        <div class="feature-card"><h3>Panel</h3><p class="muted">Zarządzanie sprzedażą.</p><button class="btn-ghost block" data-route="dashboard">Panel</button></div>
+    <!-- Trending Products -->
+    <section class="mkt-section" id="trending-products" style="background:rgba(139,92,246,.04);padding-top:40px;padding-bottom:40px">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">🔥 Popularne teraz</span>
+            <h2>Trending Products</h2>
+          </div>
+          <a href="listing.html">Więcej produktów →</a>
+        </div>
+        <div class="mkt-products-grid" id="homepage-trending-products" aria-live="polite">
+          <!-- Skeleton loaders -->
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+        </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="section-head"><div><h2>Odkrywaj platformę</h2><div class="muted">Przełączaj sekcje bez opuszczania strony</div></div></div>
-      <div class="tab-bar">${tabs.map(([key,label])=>`<button class="tab-btn ${state.activeHomeTab===key?'active':''}" data-home-tab="${key}">${label}</button>`).join('')}</div>
-      ${tabContent}
-    </section>
-
-    <section class="section">
-      <div class="section-head"><div><h2>Jak to działa</h2><div class="muted">Prowadzenie użytkownika krok po kroku</div></div></div>
-      <div class="how-grid">
-        <div class="step"><strong>1. Konto</strong><p class="muted">Wejdź do platformy.</p></div>
-        <div class="step"><strong>2. Plan</strong><p class="muted">Wybierz ścieżkę działania.</p></div>
-        <div class="step"><strong>3. Sklep</strong><p class="muted">Uruchom własny front sprzedaży.</p></div>
-        <div class="step"><strong>4. Produkty</strong><p class="muted">Dodaj ofertę z katalogu.</p></div>
-        <div class="step"><strong>5. Sprzedaż</strong><p class="muted">Buduj ruch, treści i zysk.</p></div>
+    <!-- Top Stores -->
+    <section class="mkt-section" id="top-stores">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">🏆 Najlepsi sprzedawcy</span>
+            <h2>Top Stores</h2>
+          </div>
+          <a href="sklep.html">Wszystkie sklepy →</a>
+        </div>
+        <div class="mkt-stores-grid" id="homepage-top-stores" aria-live="polite">
+          <!-- Skeleton loaders -->
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+        </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="section-head"><div><h2>Społeczność i kontakt</h2><div class="muted">Użytkownik ma czuć ruch, markę i kontakt z platformą</div></div></div>
-      <div class="grid grid-2">
-        <div class="community-card"><h3>Posty społeczności</h3><p class="muted">Społeczność ma ciągnąć człowieka głębiej w platformę, nie tylko do jednego zakupu.</p><div class="mini-list">
-          <div class="mini-row"><img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=300&q=80"><div><strong>Jak zwiększyć AOV przez bundle?</strong><div class="muted">Dyskusja społeczności</div></div><button class="btn-ghost">Wejdź</button></div>
-          <div class="mini-row"><img src="https://images.unsplash.com/photo-1522199755839-a2bacb67c546?auto=format&fit=crop&w=300&q=80"><div><strong>Jakie produkty teraz rotują najlepiej?</strong><div class="muted">Dyskusja społeczności</div></div><button class="btn-ghost">Wejdź</button></div>
-        </div></div>
-        <div class="community-card"><h3>Śledź nas</h3><p class="muted">Bądź blisko platformy, inspiracji i partnerów.</p><div class="social-links"><a href="#">Facebook</a><a href="#">TikTok</a><a href="#">YouTube</a><a href="#">Instagram</a><a href="#">X / Twitter</a></div></div>
+    <!-- Supplier Marketplace -->
+    <section class="mkt-section" id="supplier-marketplace" style="background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(139,92,246,.06))">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">📦 Hurtownie i Dostawcy</span>
+            <h2>Supplier Marketplace</h2>
+          </div>
+          <a href="hurtownie.html">Przeglądaj hurtownie →</a>
+        </div>
+        <div class="mkt-hub-grid">
+          <a class="hub-card" href="hurtownie.html">
+            <div class="hub-card-icon">🧴</div>
+            <h4>Kosmetyki i Uroda</h4>
+            <p>Produkty kosmetyczne i wellness od sprawdzonych dostawców</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="hurtownie.html">
+            <div class="hub-card-icon">👗</div>
+            <h4>Moda i Odzież</h4>
+            <p>Odzież, akcesoria i biżuteria od hurtowników</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="hurtownie.html">
+            <div class="hub-card-icon">📱</div>
+            <h4>Elektronika</h4>
+            <p>Gadżety, elektronika i akcesoria technologiczne</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="hurtownie.html">
+            <div class="hub-card-icon">🏠</div>
+            <h4>Dom i Ogród</h4>
+            <p>Wyposażenie domu, dekoracje i artykuły ogrodnicze</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="hurtownie.html">
+            <div class="hub-card-icon">🏋️</div>
+            <h4>Sport i Aktywność</h4>
+            <p>Sprzęt sportowy i akcesoria fitness</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="hurtownie.html">
+            <div class="hub-card-icon">🧸</div>
+            <h4>Zabawki i Dzieci</h4>
+            <p>Produkty dla dzieci, zabawki i akcesoria</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="hurtownie.html">
+            <div class="hub-card-icon">🍎</div>
+            <h4>Żywność i Zdrowie</h4>
+            <p>Suplementy, zdrowa żywność i produkty eco</p>
+            <span class="hub-badge">B2B</span>
+          </a>
+          <a class="hub-card" href="panel-dostawcy.html" style="border-color:var(--cyan);background:rgba(0,212,255,.06)">
+            <div class="hub-card-icon">➕</div>
+            <h4>Zostań Dostawcą</h4>
+            <p>Dołącz jako hurtownik i zacznij sprzedawać B2B</p>
+            <span class="hub-badge" style="background:rgba(0,212,255,.15);color:var(--cyan);border-color:rgba(0,212,255,.3)">Nowe konto</span>
+          </a>
+        </div>
       </div>
     </section>
 
-    <footer class="footer">
-      <div class="footer-grid">
-        <div><h3>QualitetMarket</h3><p class="muted">Marketplace, social commerce, hurtownie i sprzedaż w jednym miejscu.</p></div>
-        <div><h3>Platforma</h3><p class="muted">Sklep, feed, hurtownie, twórcy, panele, checkout.</p></div>
-        <div><h3>Wsparcie</h3><p class="muted">Pomoc 24/7, onboarding i rozwój sprzedaży.</p></div>
-        <div><h3>Kontakt</h3><p class="muted">support@qualitetmarket.com<br>Warszawa, Polska</p></div>
+    <!-- Produkty które zarabiają -->
+    <section class="mkt-section" id="profitable-products">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">💰 Wysokie marże</span>
+            <h2>Produkty które zarabiają</h2>
+          </div>
+          <a href="sklep.html">Zobacz wszystkie →</a>
+        </div>
+        <div class="mkt-products-grid" id="homepage-profitable-products" aria-live="polite">
+          <!-- Skeleton loaders -->
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+        </div>
       </div>
-    </footer>
-  </div>`;
-}
-function shopView(){
-  const categories=[...new Set(state.products.map(p=>p.category))].sort();
-  const visible=state.filtered.slice(0,state.visible);
-  return `<div class="container page"><div class="section-head"><div><h2>Marketplace / Sklep</h2><div class="muted">Tysiące produktów pod jednym linkiem</div></div></div>
-  <div class="controls">
-    <input class="field" id="shopSearch" placeholder="Szukaj produktu, marki, kategorii...">
-    <select class="field" id="shopCategory"><option value="">Wszystkie kategorie</option>${categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select>
-    <select class="field" id="shopSort"><option value="featured">Polecane</option><option value="price-asc">Cena rosnąco</option><option value="price-desc">Cena malejąco</option><option value="name-asc">Nazwa A-Z</option></select>
-    <button class="btn-ghost" id="shopReset">Reset</button>
+    </section>
+
+    <!-- Nowości -->
+    <section class="mkt-section" id="new-products" style="background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(34,197,94,.04))">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">🆕 Właśnie dodane</span>
+            <h2>Nowości</h2>
+          </div>
+          <a href="qualitetmarket.html">QualitetMarket →</a>
+        </div>
+        <div class="mkt-products-grid" id="homepage-new-products" aria-live="polite">
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bestsellery -->
+    <section class="mkt-section" id="bestsellers">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">🏆 Najchętniej kupowane</span>
+            <h2>Bestsellery</h2>
+          </div>
+          <a href="qualitetmarket.html">QualitetMarket →</a>
+        </div>
+        <div class="mkt-products-grid" id="homepage-bestsellers" aria-live="polite">
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Produkty viral z social media -->
+    <section class="mkt-section" id="viral-products" style="background:linear-gradient(135deg,rgba(255,79,216,.07),rgba(250,204,21,.06))">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">🔥 Viral z Social Media</span>
+            <h2>Produkty viral z social media</h2>
+          </div>
+          <a href="qualitetmarket.html">Zobacz wszystkie →</a>
+        </div>
+        <p style="color:var(--muted);font-size:14px;margin:0 0 20px">Produkty polecane przez twórców, popularne na TikTok, YouTube i Reels.</p>
+        <div class="mkt-products-grid" id="homepage-viral-products" aria-live="polite">
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+          <div class="mkt-skeleton mkt-skeleton-card"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Video Embed – TikTok, YouTube, Shorts, Reels -->
+    <section class="mkt-section" id="social-video" style="background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(20,20,40,.9));padding-top:48px;padding-bottom:48px">
+      <div class="wrap">
+        <div class="mkt-section-head" style="color:#fff">
+          <div>
+            <span class="eyebrow" style="color:rgba(255,79,216,.9);margin-bottom:8px;display:inline-block">📱 Video Embed</span>
+            <h2 style="color:#fff">Oglądaj video bez wychodzenia z platformy</h2>
+          </div>
+        </div>
+        <div class="social-video-grid" id="homepage-social-video">
+          <!-- Skeleton video cards -->
+          <div class="social-video-card">
+            <div class="mkt-skeleton" style="aspect-ratio:9/16;border-radius:14px;background:rgba(255,255,255,.08)"></div>
+            <p class="social-video-label" style="color:rgba(255,255,255,.6)">⏳ Ładowanie video…</p>
+          </div>
+          <div class="social-video-card">
+            <div class="mkt-skeleton" style="aspect-ratio:16/9;border-radius:14px;background:rgba(255,255,255,.08)"></div>
+            <p class="social-video-label" style="color:rgba(255,255,255,.6)">⏳ Ładowanie video…</p>
+          </div>
+          <div class="social-video-card">
+            <div class="mkt-skeleton" style="aspect-ratio:9/16;border-radius:14px;background:rgba(255,255,255,.08)"></div>
+            <p class="social-video-label" style="color:rgba(255,255,255,.6)">⏳ Ładowanie video…</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Posty produktowe ze społecznościowych -->
+    <section class="mkt-section" id="social-product-posts">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">📲 Posty produktowe</span>
+            <h2>Produkty ze społecznościowych</h2>
+          </div>
+          <a href="qualitetmarket.html">Kup teraz →</a>
+        </div>
+        <div class="social-posts-feed" id="homepage-social-posts" aria-live="polite">
+          <div class="mkt-skeleton mkt-skeleton-card" style="height:320px"></div>
+          <div class="mkt-skeleton mkt-skeleton-card" style="height:320px"></div>
+          <div class="mkt-skeleton mkt-skeleton-card" style="height:320px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Art Auctions -->
+    <section class="mkt-section" id="art-auctions" style="background:linear-gradient(135deg,rgba(255,79,216,.07),rgba(139,92,246,.07))">
+
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">🎨 Sztuka na aukcji</span>
+            <h2>Art Auctions</h2>
+          </div>
+          <a href="auctions.html">Wszystkie aukcje →</a>
+        </div>
+        <div class="mkt-auctions-grid" id="homepage-art-auctions" aria-live="polite">
+          <!-- Skeleton loaders -->
+          <div class="mkt-skeleton mkt-skeleton-card" style="height:260px"></div>
+          <div class="mkt-skeleton mkt-skeleton-card" style="height:260px"></div>
+          <div class="mkt-skeleton mkt-skeleton-card" style="height:260px"></div>
+        </div>
+        <div style="text-align:center;margin-top:24px">
+          <a class="btn btn-primary" href="auctions.html">🎨 Przeglądaj aukcje sztuki</a>
+          <a class="btn btn-secondary" href="panel-artysty.html" style="margin-left:12px">Zostań artystą</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Sales Banner -->
+    <section class="mkt-section" id="live-sales" style="padding-top:24px;padding-bottom:24px">
+      <div class="wrap">
+        <div class="live-banner">
+          <div class="live-dot"></div>
+          <div style="flex:1;min-width:0">
+            <h3>📡 Live Sales — Sprzedaż na Żywo</h3>
+            <p>Dołącz do transmisji na żywo i odkrywaj ekskluzywne oferty w czasie rzeczywistym</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn btn-primary" href="live.html" style="background:linear-gradient(135deg,#ff4fd8,#7c3aed)">🔴 Oglądaj na żywo</a>
+            <a class="btn btn-secondary" href="listing.html">Oferty specjalne</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Top Sellers -->
+    <section class="mkt-section" id="top-sellers">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">🥇 Najlepsi sprzedawcy</span>
+            <h2>Top Sellers</h2>
+          </div>
+          <a href="reputation.html">Ranking reputacji →</a>
+        </div>
+        <div class="sellers-grid" id="homepage-top-sellers" aria-live="polite">
+          <!-- Skeleton loaders -->
+          <div class="mkt-skeleton" style="height:140px;border-radius:18px"></div>
+          <div class="mkt-skeleton" style="height:140px;border-radius:18px"></div>
+          <div class="mkt-skeleton" style="height:140px;border-radius:18px"></div>
+          <div class="mkt-skeleton" style="height:140px;border-radius:18px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Community Feed -->
+    <section class="mkt-section" id="community-feed" style="background:rgba(0,212,255,.03);padding-top:40px;padding-bottom:40px">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">💬 Społeczność</span>
+            <h2>Posty społeczności</h2>
+          </div>
+          <a href="community.html">Przejdź do społeczności →</a>
+        </div>
+        <div class="mkt-community-grid" id="homepage-community-posts" aria-live="polite">
+          <!-- Skeleton loaders — replaced dynamically by homepage.js -->
+          <div class="mkt-skeleton" style="height:160px;border-radius:18px"></div>
+          <div class="mkt-skeleton" style="height:160px;border-radius:18px"></div>
+          <div class="mkt-skeleton" style="height:160px;border-radius:18px"></div>
+        </div>
+        <div style="text-align:center;margin-top:24px">
+          <a class="btn btn-secondary" href="community.html">💬 Dołącz do dyskusji</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ SOCIAL MEDIA ══════════════ -->
+    <section class="mkt-section" id="social-media" style="background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(255,79,216,.06));padding-top:40px;padding-bottom:40px">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">🌐 Społeczność</span>
+            <h2>Śledź nas w Social Media</h2>
+          </div>
+        </div>
+        <p style="color:var(--muted);font-size:15px;margin:0 0 24px">Bądź na bieżąco z najnowszymi produktami, trendami i ofertami — obserwuj QualitetMarket w mediach społecznościowych.</p>
+        <div class="social-icons-row">
+          <a class="social-icon-btn" href="https://www.facebook.com/qualitetverse" target="_blank" rel="noopener noreferrer" aria-label="Facebook QualitetMarket" title="Facebook">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.563 9.877V14.89h-2.54v-2.89h2.54V9.845c0-2.507 1.493-3.891 3.777-3.891 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.772-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.987A10.003 10.003 0 0 0 22 12"/></svg>
+            <span>Facebook</span>
+          </a>
+          <a class="social-icon-btn social-tiktok" href="https://www.tiktok.com/@qualitetverse" target="_blank" rel="noopener noreferrer" aria-label="TikTok QualitetMarket" title="TikTok">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.74a4.85 4.85 0 0 1-1.01-.05z"/></svg>
+            <span>TikTok</span>
+          </a>
+          <a class="social-icon-btn social-youtube" href="https://www.youtube.com/@qualitetverse" target="_blank" rel="noopener noreferrer" aria-label="YouTube QualitetMarket" title="YouTube">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+            <span>YouTube</span>
+          </a>
+          <a class="social-icon-btn social-instagram" href="https://www.instagram.com/qualitetverse" target="_blank" rel="noopener noreferrer" aria-label="Instagram QualitetMarket" title="Instagram">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+            <span>Instagram</span>
+          </a>
+          <a class="social-icon-btn social-twitter" href="https://x.com/qualitetverse" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter) QualitetMarket" title="X / Twitter">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            <span>X / Twitter</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Panels for sellers/artists/companies/suppliers -->
+    <section class="mkt-section" id="panel-links">
+      <div class="wrap">
+        <div class="mkt-section-head">
+          <div>
+            <span class="eyebrow" style="margin-bottom:8px;display:inline-block">⚙️ Panele zarządzania</span>
+            <h2>Twój panel platformy</h2>
+          </div>
+          <a href="dashboard.html">Dashboard →</a>
+        </div>
+        <div class="mkt-hub-grid">
+          <a class="hub-card" href="panel-sklepu.html">
+            <div class="hub-card-icon">🏪</div>
+            <h4>Panel Sklepu</h4>
+            <p>Zarządzaj swoim sklepem, produktami i zamówieniami</p>
+            <span class="hub-badge">Sprzedawca</span>
+          </a>
+          <a class="hub-card" href="panel-dostawcy.html">
+            <div class="hub-card-icon">🏭</div>
+            <h4>Panel Dostawcy</h4>
+            <p>Zarządzaj ofertą hurtową i zamówieniami B2B</p>
+            <span class="hub-badge">Dostawca</span>
+          </a>
+          <a class="hub-card" href="panel-artysty.html">
+            <div class="hub-card-icon">🎨</div>
+            <h4>Panel Artysty</h4>
+            <p>Publikuj dzieła i prowadź aukcje sztuki</p>
+            <span class="hub-badge">Artysta</span>
+          </a>
+          <a class="hub-card" href="panel-firmy.html">
+            <div class="hub-card-icon">🏢</div>
+            <h4>Panel Firmy</h4>
+            <p>Kampanie reklamowe i widoczność marki na platformie</p>
+            <span class="hub-badge">Firma/Marka</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ DLA SPRZEDAWCÓW I KLIENTÓW ══════════════ -->
+    <section class="wrap" id="dla-kogo" style="padding:40px 0 20px">
+      <div class="section-head centered" style="margin-bottom:24px">
+        <span class="eyebrow">Platforma dwustronna</span>
+        <h2>Dla sprzedawców <span class="text-muted-heading">i klientów</span></h2>
+        <p class="lead" style="max-width:600px;margin:10px auto 0">Otwórz swój sklep dropshipping lub po prostu kup produkty z najlepszych hurtowni — bez pośredników.</p>
+      </div>
+      <div class="dual-audience-grid">
+        <article style="border:1px solid var(--stroke);background:linear-gradient(160deg,rgba(56,189,248,.14),rgba(34,197,94,.08));border-radius:28px;padding:32px;box-shadow:var(--shadow)">
+          <div style="font-size:48px;margin-bottom:14px">🏪</div>
+          <span class="eyebrow">Dla sprzedawców</span>
+          <h3 style="font-size:clamp(20px,3vw,30px);margin:12px 0 10px">Otwórz sklep online w 5 minut</h3>
+          <p style="color:var(--muted);margin:0 0 14px;line-height:1.6">Twórz własny sklep pod swoją marką. Wybieraj produkty z setek hurtowni. Zarabiaj na marży bez pakowania ani wysyłki.</p>
+          <ul style="color:var(--muted);padding-left:18px;margin:0 0 22px;display:flex;flex-direction:column;gap:6px;font-size:14px">
+            <li>✅ Sklep pod własnym logo</li>
+            <li>✅ Tysiące produktów gotowych do sprzedaży</li>
+            <li>✅ Automatyczna obsługa zamówień</li>
+            <li>✅ 7 dni trial za darmo</li>
+          </ul>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn btn-primary" href="generator-sklepu.html">Załóż sklep za darmo</a>
+            <a class="btn btn-secondary" href="zarabiaj.html">Dowiedz się więcej</a>
+          </div>
+        </article>
+        <article style="border:1px solid var(--stroke);background:linear-gradient(160deg,rgba(255,79,216,.12),rgba(250,204,21,.08));border-radius:28px;padding:32px;box-shadow:var(--shadow)">
+          <div style="font-size:48px;margin-bottom:14px">🛒</div>
+          <span class="eyebrow">Dla kupujących</span>
+          <h3 style="font-size:clamp(20px,3vw,30px);margin:12px 0 10px">Tysiące produktów w jednym miejscu</h3>
+          <p style="color:var(--muted);margin:0 0 14px;line-height:1.6">Przeglądaj oferty od sprawdzonych dostawców. Szybka dostawa, uczciwe ceny, prosta realizacja zamówień bezpośrednio na twoją skrzynkę.</p>
+          <ul style="color:var(--muted);padding-left:18px;margin:0 0 22px;display:flex;flex-direction:column;gap:6px;font-size:14px">
+            <li>🔥 Elektronika, moda, dom, sport i więcej</li>
+            <li>🔥 Dostawa 24–72h</li>
+            <li>🔥 Bezpieczne zamówienia</li>
+            <li>🔥 Rejestracja niewymagana</li>
+          </ul>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn btn-primary" href="sklep.html">Przejdź do sklepu</a>
+            <a class="btn btn-secondary" href="koszyk.html">Mój koszyk 🛒</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ══════════════ JAK TO DZIAŁA ══════════════ -->
+    <section class="how-it-works" id="jak-dziala">
+      <div class="wrap">
+        <div class="section-head centered">
+          <h2>Jak To Działa <span class="text-muted-heading">/ How It Works</span></h2>
+        </div>
+
+        <!-- Steps -->
+        <div class="steps-row" role="list">
+          <div class="step-item" role="listitem">
+            <div class="step-circle">👤</div>
+            <span>1. Konto</span>
+          </div>
+          <div class="step-connector" aria-hidden="true"></div>
+          <div class="step-item" role="listitem">
+            <div class="step-circle">📋</div>
+            <span>2. Plan</span>
+          </div>
+          <div class="step-connector" aria-hidden="true"></div>
+          <div class="step-item" role="listitem">
+            <div class="step-circle">🏪</div>
+            <span>3. Sklep</span>
+          </div>
+          <div class="step-connector" aria-hidden="true"></div>
+          <div class="step-item" role="listitem">
+            <div class="step-circle">📦</div>
+            <span>4. Produkty</span>
+          </div>
+          <div class="step-connector" aria-hidden="true"></div>
+          <div class="step-item" role="listitem">
+            <div class="step-circle">💰</div>
+            <span>5. Sprzedaż</span>
+          </div>
+        </div>
+
+        <!-- Flow diagram -->
+        <div class="flow-section">
+          <p class="flow-label">Twoja Droga do Zysku</p>
+          <div class="flow-diagram" role="img" aria-label="Schemat: Ty współpracujesz z Platformą, która łączy z Hurtownią">
+            <div class="flow-node node-you">
+              <strong>Ty</strong>
+              <small>Marka, Marża,<br>Klienci</small>
+            </div>
+            <div class="flow-arrow-box" aria-hidden="true">⇄</div>
+            <div class="flow-node">
+              <strong>Platforma</strong>
+              <small>System,<br>Wsparcie</small>
+            </div>
+            <div class="flow-arrow-box" aria-hidden="true">→</div>
+            <div class="flow-node node-supplier">
+              <strong>Hurtownia</strong>
+              <small>Produkty,<br>Wysyłka</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ PLANY CENOWE ══════════════ -->
+    <section class="pricing-inline-section" id="cennik-inline">
+      <div class="wrap">
+        <div class="section-head centered">
+          <h2>Plany Cenowe <span class="text-muted-heading">/ Pricing Plans</span></h2>
+          <div class="pricing-billing-toggle" role="group" aria-label="Okres rozliczeniowy">
+            <button class="pricing-billing-btn is-active" type="button" data-billing="monthly">Miesięcznie</button>
+            <button class="pricing-billing-btn" type="button" data-billing="yearly">Rocznie<span class="pricing-discount-badge">-20%</span></button>
+          </div>
+        </div>
+
+        <div class="pricing-grid-new">
+          <!-- SELLER PRO (basic) -->
+          <article class="price-card-new card-basic" data-plan-card data-plan="basic">
+            <div class="plan-name">SELLER PRO</div>
+            <div class="plan-price-block">
+              <span class="plan-price">
+                <span data-monthly-price>79 zł</span>
+                <span data-yearly-price>63 zł</span>
+              </span>
+              <span class="plan-period">&nbsp;/ mies.</span>
+            </div>
+            <ul class="plan-features">
+              <li>Nielimitowane produkty</li>
+              <li>Import produktów</li>
+              <li>Analityka sprzedaży</li>
+            </ul>
+            <a class="btn-plan" href="cennik.html#basic">Wybierz</a>
+          </article>
+
+          <!-- SELLER BUSINESS (pro) -->
+          <article class="price-card-new card-pro" data-plan-card data-plan="pro">
+            <span class="badge">Najczęściej wybierany</span>
+            <div class="plan-name">SELLER BUSINESS</div>
+            <div class="plan-price-block">
+              <span class="plan-price">
+                <span data-monthly-price>249 zł</span>
+                <span data-yearly-price>199 zł</span>
+              </span>
+              <span class="plan-period">&nbsp;/ mies.</span>
+            </div>
+            <ul class="plan-features">
+              <li>Zaawansowana analityka</li>
+              <li>Narzędzia reklamowe</li>
+              <li>Priorytetowe wsparcie 24/7</li>
+            </ul>
+            <a class="btn-plan" href="cennik.html#pro">Wybierz</a>
+          </article>
+
+          <!-- ELITE -->
+          <article class="price-card-new card-elite" data-plan-card data-plan="elite">
+            <div class="plan-name">ELITE</div>
+            <div class="plan-price-block">
+              <span class="plan-price">
+                <span data-monthly-price>499 zł</span>
+                <span data-yearly-price>399 zł</span>
+              </span>
+              <span class="plan-period">&nbsp;/ mies.</span>
+            </div>
+            <ul class="plan-features">
+              <li>AI + Analityka</li>
+              <li>Unlimited</li>
+              <li>Wsparcie VIP</li>
+            </ul>
+            <a class="btn-plan" href="cennik.html#elite">Wybierz</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ APP CTA ══════════════ -->
+    <section class="app-cta-section">
+      <div class="wrap app-cta-box app-cta-grid">
+        <div class="app-cta-content">
+          <span class="app-cta-icon" aria-hidden="true">📱</span>
+          <span class="eyebrow">Aplikacja webowa</span>
+          <h2>Zarządzaj sklepem z telefonu</h2>
+          <p class="hint">Panel mobilny działa jak aplikacja. Hurtownie i sklep w jednym miejscu — dodaj platformę do ekranu głównego i uruchamiaj ją jednym kliknięciem.</p>
+          <div class="app-cta-actions">
+            <button class="btn btn-primary" type="button" data-app-install-open>Otwórz aplikację</button>
+            <a class="btn btn-secondary" href="login.html">Wejdź do platformy</a>
+          </div>
+          <div class="app-instructions">
+            <div>
+              <strong>iPhone</strong>
+              <ul>
+                <li>Udostępnij</li>
+                <li>Dodaj do ekranu głównego</li>
+              </ul>
+            </div>
+            <div>
+              <strong>Android</strong>
+              <ul>
+                <li>Menu przeglądarki</li>
+                <li>Zainstaluj aplikację</li>
+                <li>Dodaj do ekranu głównego</li>
+              </ul>
+            </div>
+          </div>
+          <div class="app-dense-grid">
+            <div class="app-dense-card">
+              <img src="assets/images/demo/category-business.svg" alt="Biznes">
+              <span>Sprzedaż mobilna</span>
+              <strong>Sklep w kieszeni</strong>
+            </div>
+            <div class="app-dense-card">
+              <img src="assets/images/demo/supplier-neotech.svg" alt="Hurtownie">
+              <span>Hurtownie</span>
+              <strong>Dostęp 24/7</strong>
+            </div>
+            <div class="app-dense-card">
+              <img src="assets/images/demo/product-smartphone.svg" alt="Powiadomienia">
+              <span>Powiadomienia</span>
+              <strong>Sprzedaż na żywo</strong>
+            </div>
+          </div>
+        </div>
+        <div class="app-cta-media">
+          <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80" alt="Zespół biznesowy pracujący nad sprzedażą" loading="lazy" decoding="async">
+          <span class="app-cta-badge">Premium mobile</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="promo-motion-section" id="materialy-aplikacji">
+      <div class="wrap promo-motion-grid">
+        <div class="promo-motion-copy">
+          <span class="eyebrow">Ruchome kreacje</span>
+          <h2>Gotowe materiały do aplikacji</h2>
+          <p>Przygotowaliśmy zestaw pionowych plansz promocyjnych, które można wykorzystać w aplikacji, reklamach i mediach społecznościowych.</p>
+          <ul class="promo-motion-list">
+            <li>Format pionowy dopasowany do telefonu</li>
+            <li>Automatyczne przejścia dla efektu ruchu</li>
+            <li>Spójna kolorystyka z marką Qualitet</li>
+          </ul>
+        </div>
+        <div class="promo-motion-gallery" aria-label="Podgląd ruchomych plansz Qualitet" aria-live="polite" aria-atomic="true" data-promo-motion>
+          <img class="promo-motion-image" src="https://github.com/user-attachments/assets/085d1513-747e-4d49-8334-5813ae0855a7" alt="Zarabianie u Szefa - grafika promocyjna" loading="lazy" decoding="async">
+          <img class="promo-motion-image" src="https://github.com/user-attachments/assets/bf1aaeec-617f-4741-9bd6-f4924b362ea8" alt="Ty też możesz zarabiać na dropshippingu - grafika promocyjna" loading="lazy" decoding="async">
+          <img class="promo-motion-image" src="https://github.com/user-attachments/assets/5e136c43-153f-4e14-8136-79e0715b622d" alt="Delta dochodu 85 000 zł miesięcznie - grafika promocyjna" loading="lazy" decoding="async">
+          <button class="promo-motion-toggle btn btn-secondary" type="button" data-promo-motion-toggle aria-pressed="false">Zatrzymaj animację</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="promo-section" id="oferta">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Oferta startowa</span>
+          <h2>Dołącz do pierwszej fali partnerów</h2>
+          <p>Podkreśl swoją obecność w sieci dzięki ofertom na start. Liczba miejsc jest ograniczona.</p>
+        </div>
+        <div class="promo-grid">
+          <div class="promo-card" data-counter-box>
+            <span>Pierwszych sprzedawców</span>
+            <strong class="promo-value" data-counter="3" data-counter-label="Pierwszych sprzedawców">0</strong>
+            <p>2 miesiące bez opłat platformowych</p>
+          </div>
+          <div class="promo-card" data-counter-box>
+            <span>Kolejnych sprzedawców</span>
+            <strong class="promo-value" data-counter="2" data-counter-label="Kolejnych sprzedawców">0</strong>
+            <p>1 miesiąc bez opłat platformowych</p>
+          </div>
+          <div class="promo-card highlight" data-counter-box>
+            <span>Dostępne miejsca</span>
+            <strong class="promo-value" data-counter="5" data-counter-label="Dostępne miejsca">0</strong>
+            <p>Aktualny limit puli startowej</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="activity-section" id="aktywność">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Aktywność platformy</span>
+          <h2>System żyje każdego dnia</h2>
+          <p>Stałe tempo rejestracji, sprzedaży i aktywacji sklepów pokazuje, że platforma działa bez przerwy.</p>
+        </div>
+        <div class="activity-grid">
+          <article class="activity-card" data-counter-box>
+            <span>Do platformy dołączyło</span>
+            <strong class="activity-value" data-counter="1247" data-counter-label="Użytkownicy na platformie" data-counter-format="grouped" data-counter-live data-counter-live-min="1" data-counter-live-max="3" data-counter-live-interval="6500">0</strong>
+            <p>zweryfikowanych użytkowników</p>
+          </article>
+          <article class="activity-card" data-counter-box>
+            <span>Aktywne sklepy</span>
+            <strong class="activity-value" data-counter="312" data-counter-label="Aktywne sklepy" data-counter-live data-counter-live-min="0" data-counter-live-max="1" data-counter-live-interval="9000">0</strong>
+            <p>handlujących w systemie</p>
+          </article>
+          <article class="activity-card" data-counter-box>
+            <span>Użytkownicy zarobili</span>
+            <strong class="activity-value" data-counter="128540" data-counter-label="Zarobki użytkowników" data-counter-format="currency" data-counter-live data-counter-live-min="120" data-counter-live-max="420" data-counter-live-interval="7200">0</strong>
+            <p>łącznego przychodu</p>
+          </article>
+          <article class="activity-card" data-counter-box>
+            <span>Dzisiaj sprzedano</span>
+            <strong class="activity-value" data-counter="92" data-counter-label="Sprzedane produkty dzisiaj" data-counter-live data-counter-live-min="1" data-counter-live-max="4" data-counter-live-interval="5200">0</strong>
+            <p>produktów w marketplace</p>
+          </article>
+        </div>
+        <div class="activity-banner" data-counter-box data-slots-total>
+          <div>
+            <h3>Przyjmujemy tylko <span data-slots-total-value></span> osób do testów</h3>
+            <p>Ostatnia pula miejsc dla nowych partnerów z pakietem startowym.</p>
+          </div>
+          <div class="activity-remaining">
+            <span>Pozostało</span>
+            <strong class="activity-value" data-counter="7" data-counter-label="Pozostało miejsc">0</strong>
+            <small>miejsc</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="helper-section" id="poradnik">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Przewodnik</span>
+          <h2>Startuj szybciej dzięki wskazówkom</h2>
+          <p>Kolorowe podpowiedzi prowadzą krok po kroku przez pierwsze działania w platformie.</p>
+        </div>
+        <div class="helper-grid">
+          <article class="helper-card tip" data-helper>
+            <h3>TIP</h3>
+            <p>Zacznij od stworzenia sklepu</p>
+          </article>
+          <article class="helper-card info" data-helper>
+            <h3>INFO</h3>
+            <p>Trwa promocja startowa</p>
+          </article>
+          <article class="helper-card action" data-helper>
+            <h3>ACTION</h3>
+            <p>Wejdź do platformy</p>
+          </article>
+          <article class="helper-card warning" data-helper>
+            <h3>WARNING</h3>
+            <p>Liczba miejsc ograniczona</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="platform-map-section" id="platforma">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Platforma QualitetMarket</span>
+          <h2>Wszystkie moduły w jednym miejscu</h2>
+          <p>Kompletna platforma dla sprzedawców – od panelu zarządzania przez hurtownie aż po AI analitykę.</p>
+        </div>
+        <div class="platform-map-grid">
+          <a class="platform-map-card plan-free" href="login.html">
+            <span class="platform-map-icon" aria-hidden="true">👤</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-free">Dostęp</span>
+              <strong>Logowanie</strong>
+              <p>Wejdź do konta lub zarejestruj się w platformie.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-basic" href="dashboard.html">
+            <span class="platform-map-icon" aria-hidden="true">📊</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-basic">BASIC</span>
+              <strong>Dashboard</strong>
+              <p>Główny panel zarządzania kontem, planem i sklepem.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-basic" href="generator-sklepu.html">
+            <span class="platform-map-icon" aria-hidden="true">⚙️</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-basic">BASIC</span>
+              <strong>Generator sklepu</strong>
+              <p>Kreator i edytor identyfikacji wizualnej sklepu.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-basic" href="sklep.html">
+            <span class="platform-map-icon" aria-hidden="true">🛍️</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-basic">BASIC</span>
+              <strong>Sklep</strong>
+              <p>Podgląd i zarządzanie twoim sklepem online.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-pro" href="hurtownie.html">
+            <span class="platform-map-icon" aria-hidden="true">🏢</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-pro">PRO</span>
+              <strong>Hurtownie</strong>
+              <p>Przeglądaj dostawców i importuj produkty do sklepu.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-pro" href="qualitetmarket.html">
+            <span class="platform-map-icon" aria-hidden="true">🏷️</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-pro">PRO</span>
+              <strong>QualitetMarket</strong>
+              <p>Premium marketplace i kampanie dla partnerów.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-pro" href="listing.html">
+            <span class="platform-map-icon" aria-hidden="true">📋</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-pro">PRO</span>
+              <strong>Listing</strong>
+              <p>Publikacja produktów na kanały sprzedaży.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-pro" href="crm.html">
+            <span class="platform-map-icon" aria-hidden="true">👥</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-pro">PRO</span>
+              <strong>CRM</strong>
+              <p>Segmentacja i zarządzanie relacjami z klientami.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-pro" href="tasks.html">
+            <span class="platform-map-icon" aria-hidden="true">✅</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-pro">PRO</span>
+              <strong>Zadania</strong>
+              <p>Zarządzaj projektami i aktywnością zespołu.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-elite" href="intelligence.html">
+            <span class="platform-map-icon" aria-hidden="true">🧠</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-elite">ELITE</span>
+              <strong>Intelligence</strong>
+              <p>AI analityka, prognozy sprzedaży i rekomendacje.</p>
+            </div>
+          </a>
+          <a class="platform-map-card plan-free" href="cennik.html">
+            <span class="platform-map-icon" aria-hidden="true">💰</span>
+            <div class="platform-map-body">
+              <span class="platform-map-badge badge-free">Plany</span>
+              <strong>Cennik</strong>
+              <p>Sprawdź dostępne plany platformy QualitetMarket.</p>
+            </div>
+          </a>
+        </div>
+        <div class="platform-map-cta">
+          <a class="btn btn-primary" href="login.html">Wejdź do platformy</a>
+          <a class="btn btn-secondary" href="cennik.html">Sprawdź cennik</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Wyniki użytkowników</span>
+          <h2>Efekty, które widać od razu</h2>
+          <p>Partnerzy pokazują realny wzrost sprzedaży dzięki szybkiemu startowi i wsparciu zespołu.</p>
+        </div>
+        <div class="results-grid">
+          <article class="result-card" data-counter-box>
+            <span>Użytkownik zarobił</span>
+            <strong data-counter="1200" data-counter-label="Użytkownik zarobił" data-counter-format="currency">0</strong>
+            <p>w pierwszym miesiącu</p>
+          </article>
+          <article class="result-card" data-counter-box>
+            <span>Sklep sprzedał</span>
+            <strong data-counter="54" data-counter-label="Sprzedane produkty">0</strong>
+            <p>produkty w 7 dni</p>
+          </article>
+          <article class="result-card">
+            <span>Nowy sklep uruchomiony</span>
+            <strong>Aktywny w 24h</strong>
+            <p>pełne wdrożenie panelu</p>
+          </article>
+          <article class="result-card">
+            <span>Plan PRO aktywny</span>
+            <strong>Sprzedaż bez limitu</strong>
+            <p>opiekun dedykowany 24/7</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="calculator-section" id="kalkulator">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Kalkulator sprzedaży</span>
+          <h2>Sprawdź opłacalność sprzedaży</h2>
+          <p>Wprowadź koszt produktu, marżę i planowaną sprzedaż, aby zobaczyć prognozowany zysk.</p>
+        </div>
+        <article class="panel-card calculator-card" data-sales-calculator>
+          <div class="calculator-grid is-columns">
+            <label class="calculator-item">
+              <span>Koszt zakupu (zł)</span>
+              <input type="number" min="0" step="0.01" value="50" data-calc-cost>
+            </label>
+            <label class="calculator-item">
+              <span>Marża (%)</span>
+              <input type="number" min="0" max="300" step="1" value="25" data-calc-margin>
+            </label>
+            <label class="calculator-item">
+              <span>Sprzedaż miesięczna (szt.)</span>
+              <input type="number" min="0" step="1" value="40" data-calc-units>
+            </label>
+          </div>
+          <div class="calculator-grid is-columns calculator-results">
+            <div class="calculator-item">
+              <span>Cena końcowa</span>
+              <strong data-calc-final>0 zł</strong>
+            </div>
+            <div class="calculator-item">
+              <span>Zysk na sztukę</span>
+              <strong data-calc-profit>0 zł</strong>
+            </div>
+            <div class="calculator-item">
+              <span>Zysk miesięczny</span>
+              <strong data-calc-monthly>0 zł</strong>
+            </div>
+          </div>
+          <p class="hint calculator-hint">Wartości są symulacją i pomagają zaplanować strategię cenową.</p>
+        </article>
+        <div class="cta-row calculator-recommendation">
+          <div>
+            <span class="eyebrow">Rekomendowany plan</span>
+            <strong data-recommended-plan>Basic</strong>
+          </div>
+          <a class="btn btn-primary" href="cennik.html" data-recommended-cta>Wybierz plan</a>
+        </div>
+        <div class="section-head">
+          <span class="eyebrow">Kalkulator sklepu</span>
+          <h3>Zaplanuj parametry sklepu</h3>
+          <p>Ustal niszę, budżet oraz cel sprzedaży, aby dobrać plan dla Twojego sklepu.</p>
+        </div>
+        <article class="panel-card calculator-card" data-store-calculator>
+          <div class="calculator-grid is-columns">
+            <label class="calculator-item">
+              <span>Nisza / branża</span>
+              <input type="text" placeholder="np. Elektronika" data-store-niche>
+            </label>
+            <label class="calculator-item">
+              <span>Budżet startowy (zł)</span>
+              <input type="number" min="0" step="100" value="12000" data-store-budget>
+            </label>
+            <label class="calculator-item">
+              <span>Marża (%)</span>
+              <input type="number" min="0" max="300" step="1" value="15" data-store-margin>
+            </label>
+            <label class="calculator-item">
+              <span>Cel miesięczny (zł)</span>
+              <input type="number" min="0" step="100" value="25000" data-store-goal>
+            </label>
+          </div>
+          <div class="calculator-grid is-columns calculator-results">
+            <div class="calculator-item">
+              <span>Plan rekomendowany</span>
+              <strong data-store-plan>Basic</strong>
+            </div>
+          </div>
+          <p class="hint calculator-hint">Parametry są zapisywane, aby przygotować konfigurację sklepu.</p>
+        </article>
+        <div class="section-head">
+          <span class="eyebrow">Kalkulator ruchu</span>
+          <h3>Policz ruch i przychód</h3>
+          <p>Sprawdź ile zamówień wygeneruje ruch w sklepie oraz szacowany przychód.</p>
+        </div>
+        <article class="panel-card calculator-card" data-traffic-calculator>
+          <div class="calculator-grid is-columns">
+            <label class="calculator-item">
+              <span>Odwiedziny / miesiąc</span>
+              <input type="number" min="0" step="100" value="12000" data-traffic-visits>
+            </label>
+            <label class="calculator-item">
+              <span>Konwersja (%)</span>
+              <input type="number" min="0" max="100" step="0.1" value="2.5" data-traffic-conversion>
+            </label>
+            <label class="calculator-item">
+              <span>Średni koszyk (zł)</span>
+              <input type="number" min="0" step="10" value="180" data-traffic-order>
+            </label>
+          </div>
+          <div class="calculator-grid is-columns calculator-results">
+            <div class="calculator-item">
+              <span>Zamówienia / miesiąc</span>
+              <strong data-traffic-orders>0</strong>
+            </div>
+            <div class="calculator-item">
+              <span>Prognoza przychodu</span>
+              <strong data-traffic-revenue>0 zł</strong>
+            </div>
+          </div>
+          <p class="hint calculator-hint">Wyniki pomagają oszacować potrzebny poziom planu i ruchu.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="survey-section" id="ankieta">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Ankieta partnerów</span>
+          <h2>Pomóż nam dopracować platformę</h2>
+          <p>Krótka ankieta pozwala lepiej dopasować narzędzia do potrzeb sprzedawców.</p>
+        </div>
+        <div class="survey-card">
+          <div>
+            <h3>Co usprawniamy?</h3>
+            <ul>
+              <li>Najważniejsze funkcje sklepu i panelu</li>
+              <li>Preferowane kanały sprzedaży</li>
+              <li>Wsparcie marketingowe i logistyczne</li>
+            </ul>
+          </div>
+          <div class="cta-row">
+            <button class="btn btn-primary" type="button" data-survey-open>Wypełnij ankietę</button>
+            <a class="btn btn-secondary" href="login.html">Wejdź do platformy</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer" id="kontakt">
+    <div class="wrap footer-grid">
+      <div>
+        <h4>QualitetMarket</h4>
+        <p>Platforma marketplace B2B/B2C łącząca hurtowników, sprzedawców, artystów i kupujących.</p>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <a class="btn btn-secondary" href="listing.html" style="min-height:36px;font-size:13px;padding:0 14px">🛍️ Marketplace</a>
+          <a class="btn btn-primary" href="generator-sklepu.html" style="min-height:36px;font-size:13px;padding:0 14px">🚀 Załóż Sklep</a>
+        </div>
+      </div>
+      <div>
+        <h4>Platforma</h4>
+        <a href="listing.html">Marketplace</a>
+        <a href="hurtownie.html">Hurtownie</a>
+        <a href="blog.html">Blog</a>
+        <a href="qualitetmarket.html">QualitetMarket</a>
+        <a href="auctions.html">Art Auctions</a>
+        <a href="live.html">Live Sales</a>
+        <a href="reputation.html">Reputacja</a>
+        <a href="referral-program.html">Program Poleceń</a>
+        <a href="cennik.html">Cennik</a>
+      </div>
+      <div>
+        <h4>Panele</h4>
+        <a href="panel-sklepu.html">Panel Sklepu</a>
+        <a href="panel-dostawcy.html">Panel Dostawcy</a>
+        <a href="panel-artysty.html">Panel Artysty</a>
+        <a href="panel-firmy.html">Panel Firmy</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="login.html">Logowanie</a>
+      </div>
+      <div>
+        <h4>Dane firmy</h4>
+        <p>UszefaQualitet Sklep Internetowy Henryk Ślusarski</p>
+        <p>NIP 6661894457 | REGON 300731059</p>
+        <p>ul. Władysława Broniewskiego 5/10</p>
+        <p>62-600 Koło</p>
+        <p>tel. +48 882 914 429</p>
+        <p>email: <a href="mailto:UszefaQualitetpromo@gmail.com">UszefaQualitetpromo@gmail.com</a></p>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">
+          <a href="privacy.html">Polityka prywatności</a>
+          <a href="terms.html">Regulamin</a>
+          <a href="legal.html">Informacje prawne</a>
+        </div>
+      </div>
+    </div>
+    <div class="wrap footer-legal">
+      <small>© 2026 QualitetMarket. Wszelkie prawa zastrzeżone. Projekt i marka platformy stworzone przez Henryka Ślusarskiego</small>
+    </div>
+  </footer>
+
+  <div class="survey-modal" data-survey-modal hidden>
+    <div class="survey-window" role="dialog" aria-modal="true" aria-labelledby="survey-title">
+      <button class="survey-close" type="button" data-survey-close aria-label="Zamknij ankietę">×</button>
+      <span class="eyebrow">Ankieta</span>
+      <h2 id="survey-title">Krótka ankieta partnerów</h2>
+      <p class="hint">Twoja opinia pomoże nam dopracować generator sklepu i ofertę sprzedażową.</p>
+      <form class="form-card survey-form" data-survey-form>
+        <label>
+          Imię i nazwisko
+          <input type="text" name="name" placeholder="Twoje imię" required>
+        </label>
+        <label>
+          Email kontaktowy
+          <input type="email" name="email" placeholder="kontakt@firma.pl" required>
+        </label>
+        <label>
+          Profil działalności
+          <select name="profile" required>
+            <option value="" selected disabled>Wybierz profil</option>
+            <option value="handel">Handel detaliczny</option>
+            <option value="hurt">Hurt</option>
+            <option value="produkcja">Produkcja</option>
+            <option value="inne">Inne</option>
+          </select>
+        </label>
+        <label>
+          Najważniejsza funkcja sklepu
+          <input type="text" name="priority" placeholder="np. szybka wysyłka" required>
+        </label>
+        <label>
+          Dodatkowe uwagi
+          <textarea name="notes" placeholder="Napisz, czego oczekujesz od platformy"></textarea>
+        </label>
+        <div class="cta-row">
+          <button class="btn btn-primary" type="submit">Wyślij ankietę</button>
+          <button class="btn btn-secondary" type="button" data-survey-close>Wróć</button>
+        </div>
+      </form>
+      <p class="survey-success" data-survey-success hidden>Dziękujemy! Ankieta została wysłana.</p>
+    </div>
   </div>
-  <div class="section-head"><div class="muted">Pokazuję ${visible.length} z ${state.filtered.length} produktów</div><button class="btn" id="moreBtn" ${state.visible>=state.filtered.length?'style="display:none"':''}>Pokaż więcej</button></div>
-  <div class="grid grid-4">${visible.map(productCard).join('')}</div></div>`;
-}
-function feedView(){
-  return `<div class="container page"><div class="section-head"><div><h2>Feed / Social Commerce</h2><div class="muted">Treści, produkty, virale i przejścia do sklepu</div></div></div>
-  <div class="grid grid-3">${feedPosts.map(p=>`<article class="feed-card"><div class="feed-top"><div class="avatar">${p.author[0]}</div><div><strong>${p.author}</strong><div class="muted">${p.time}</div></div></div><p>${p.text}</p><div class="chips"><span class="chip">viral</span><span class="chip">reels</span><span class="chip">live</span></div></article>`).join('')}</div>
-  ${sectionProducts('Produkty z feedu','Oglądaj i dodawaj do koszyka bez wychodzenia z feedu.',state.products.slice(0,8))}
-  </div>`;
-}
-function suppliersView(){
-  return `<div class="container page"><div class="section-head"><div><h2>Hurtownie i Dostawcy</h2><div class="muted">Supplier marketplace i kierunki importu</div></div></div><div class="grid grid-4">
-  ${suppliers.map(s=>`<article class="supplier-card"><h3>${s.name}</h3><p class="muted">${s.desc}</p><div class="row"><span>Marża</span><strong>${s.margin}</strong></div><div class="row"><span>SKU</span><strong>${s.sku}</strong></div><div class="actions" style="margin-top:14px"><button class="btn-ghost block" data-route="shop">Produkty</button><button class="btn block" data-route="dashboard">Dodaj do panelu</button></div></article>`).join('')}</div></div>`;
-}
-function dashboardView(){
-  return `<div class="container page"><div class="section-head"><div><h2>Dashboard</h2><div class="muted">Zarządzanie sprzedażą i platformą</div></div></div><div class="kpis">
-  <div class="panel-card"><div class="muted">Przychód dziś</div><div class="big-stat">${money(4821)}</div></div>
-  <div class="panel-card"><div class="muted">Nowe zamówienia</div><div class="big-stat">18</div></div>
-  <div class="panel-card"><div class="muted">Aktywne produkty</div><div class="big-stat">${state.products.length}</div></div>
-  <div class="panel-card"><div class="muted">Konwersja</div><div class="big-stat">3.8%</div></div>
-  </div><div class="grid grid-3" style="margin-top:18px">
-  <div class="panel-card"><h3>Panel sklepu</h3><p class="muted">Zarządzaj produktami, zamówieniami i marżami.</p><button class="btn block" data-route="shop">Otwórz</button></div>
-  <div class="panel-card"><h3>Panel dostawcy</h3><p class="muted">Kontroluj ofertę hurtową i zamówienia B2B.</p><button class="btn-ghost block" data-route="suppliers">Przejdź</button></div>
-  <div class="panel-card"><h3>Panel marki</h3><p class="muted">Promuj markę, kampanie i zasięg na platformie.</p><button class="btn-ghost block">Branding</button></div>
-  </div></div>`;
-}
-function render(){
-  const view=$('#view');
-  if(state.route==='home') view.innerHTML=homeView();
-  if(state.route==='shop') view.innerHTML=shopView();
-  if(state.route==='feed') view.innerHTML=feedView();
-  if(state.route==='suppliers') view.innerHTML=suppliersView();
-  if(state.route==='dashboard') view.innerHTML=dashboardView();
-  wire();
-  updateCart();
-}
-function wire(){
-  document.querySelectorAll('[data-route]').forEach(el=>el.onclick=()=>{state.route=el.dataset.route;location.hash=state.route;render();});
-  document.querySelectorAll('[data-view]').forEach(el=>el.onclick=()=>openProduct(el.dataset.view));
-  document.querySelectorAll('[data-add]').forEach(el=>el.onclick=()=>addToCart(el.dataset.add,1));
-  document.querySelectorAll('[data-home-tab]').forEach(el=>el.onclick=()=>{state.activeHomeTab=el.dataset.homeTab;render();});
-  const m=$('#miniCartBtn'); if(m) m.onclick=()=>$('#drawer').classList.add('open');
-  const search=$('#shopSearch'),cat=$('#shopCategory'),sort=$('#shopSort'),reset=$('#shopReset'),more=$('#moreBtn');
-  if(search) search.oninput=applyFilters;
-  if(cat) cat.onchange=applyFilters;
-  if(sort) sort.onchange=applyFilters;
-  if(reset) reset.onclick=()=>{search.value='';cat.value='';sort.value='featured';applyFilters();};
-  if(more) more.onclick=()=>{state.visible+=12;render();};
-}
-function applyFilters(){
-  const q=($('#shopSearch')?.value||'').trim().toLowerCase();
-  const cat=$('#shopCategory')?.value||'';
-  const sort=$('#shopSort')?.value||'featured';
-  let rows=state.products.filter(p=>{const hay=`${p.title} ${p.description} ${p.brand} ${p.category}`.toLowerCase();return (!q||hay.includes(q))&&(!cat||p.category===cat);});
-  if(sort==='price-asc') rows.sort((a,b)=>a.price-b.price);
-  if(sort==='price-desc') rows.sort((a,b)=>b.price-a.price);
-  if(sort==='name-asc') rows.sort((a,b)=>String(a.title).localeCompare(String(b.title),'pl'));
-  if(sort==='featured') rows.sort((a,b)=>(oldPrice(b)-b.price)-(oldPrice(a)-a.price));
-  state.filtered=rows;state.visible=12;render();
-}
-function openProduct(id){
-  const p=state.products.find(x=>String(x.id)===String(id)); if(!p) return;
-  const dlg=$('#productDialog');
-  dlg.innerHTML=`<div class="modal-card"><div class="row" style="margin-bottom:14px"><h3 style="margin:0">Produkt</h3><button class="icon-btn" id="closeProduct">✕</button></div>
-  <div class="product-modal"><div class="main-image"><img src="${esc(p.thumbnail)}" alt="${esc(p.title)}"></div><div>
-  <div class="chips"><span class="chip">${esc(p.category)}</span><span class="chip">${esc(p.brand||'Qualitet')}</span><span class="chip">Stan: ${Math.max(0,Number(p.stock||0))}</span></div>
-  <h2 style="margin:12px 0 8px">${esc(p.title)}</h2><p class="muted">${esc(p.description||'')}</p>
-  <div style="margin:18px 0"><span class="price">${money(p.price)}</span><span class="old">${money(oldPrice(p))}</span></div>
-  <div class="row" style="margin-bottom:18px"><div><div class="muted">Szacowana marża</div><strong>${Math.round(((oldPrice(p)-p.price)/oldPrice(p))*100)}%</strong></div><div><div class="muted">Dostawa</div><strong>24–72h</strong></div><div><div class="muted">Ocena</div><strong>4.9/5</strong></div></div>
-  <div class="actions"><input id="qty" class="field" style="width:88px" type="number" min="1" value="1"><button class="btn block" id="addFromDialog">Dodaj do koszyka</button><button class="btn-ghost block" id="buyNow">Kup teraz</button></div>
-  </div></div></div>`;
-  dlg.showModal();
-  $('#closeProduct').onclick=()=>dlg.close();
-  $('#addFromDialog').onclick=()=>{addToCart(p.id,Math.max(1,Number($('#qty').value||1)));dlg.close();};
-  $('#buyNow').onclick=()=>{addToCart(p.id,Math.max(1,Number($('#qty').value||1)));dlg.close();openCheckout();};
-}
-function openCheckout(){
-  const dlg=$('#checkoutDialog');
-  dlg.innerHTML=`<div class="modal-card"><div class="row" style="margin-bottom:14px"><h3 style="margin:0">Checkout</h3><button class="icon-btn" id="closeCheckout">✕</button></div>
-  <div class="checkout-grid"><div class="form-box">
-  <div class="grid grid-2"><input class="field" id="coName" placeholder="Imię i nazwisko"><input class="field" id="coEmail" placeholder="Email"></div>
-  <textarea class="field" id="coAddress" placeholder="Adres dostawy" style="min-height:100px;margin-top:12px"></textarea>
-  <div class="grid grid-2" style="margin-top:12px"><select class="field"><option>BLIK</option><option>Karta</option><option>Przelew</option></select><select class="field"><option>Kurier 24–72h</option><option>Paczkomat</option></select></div>
-  <button class="btn block" id="placeOrder" style="margin-top:14px">Złóż zamówienie</button><div id="coMsg" class="muted" style="margin-top:10px"></div></div>
-  <div class="order-box"><h3 style="margin-top:0">Podsumowanie</h3>${state.cart.map(i=>`<div class="row" style="margin-bottom:8px"><span>${esc(i.title)} × ${i.qty}</span><strong>${money(i.price*i.qty)}</strong></div>`).join('')}
-  <hr style="border-color:rgba(255,255,255,.08);border-width:1px 0 0;margin:16px 0"><div class="row"><span>Suma</span><strong>${money(cartSubtotal())}</strong></div><div class="row"><span>Dostawa</span><strong>${money(ship())}</strong></div><div class="row" style="font-size:20px;font-weight:900;margin-top:12px"><span>Razem</span><strong>${money(total())}</strong></div></div></div></div>`;
-  dlg.showModal();
-  $('#closeCheckout').onclick=()=>dlg.close();
-  $('#placeOrder').onclick=()=>{const n=$('#coName').value.trim(),e=$('#coEmail').value.trim(),a=$('#coAddress').value.trim();if(!n||!e||!a){$('#coMsg').textContent='Uzupełnij dane zamówienia.';return;}$('#coMsg').textContent='Zamówienie zapisane lokalnie.';state.cart=[];saveCart();setTimeout(()=>dlg.close(),900);};
-}
-$('#cartBtn').onclick=()=>$('#drawer').classList.add('open');
-$('#closeDrawer').onclick=()=>$('#drawer').classList.remove('open');
-document.querySelector('.drawer-backdrop').onclick=()=>$('#drawer').classList.remove('open');
-$('#checkoutBtn').onclick=()=>{$('#drawer').classList.remove('open');openCheckout();};
-$('#searchBtn').onclick=()=>{state.route='shop';location.hash='shop';render();};
-window.addEventListener('hashchange',()=>{state.route=(location.hash||'#home').replace('#','')||'home';render();});
-state.route=(location.hash||'#home').replace('#','')||'home';
-loadProducts();
-</script>
+
+  <div class="landing-modal" data-landing-modal hidden>
+    <div class="landing-window" role="dialog" aria-modal="true" aria-labelledby="landing-title">
+      <button class="landing-close" type="button" data-landing-close aria-label="Zamknij okno">×</button>
+      <span class="eyebrow">Start w platformie</span>
+      <h2 id="landing-title">Witamy w QualitetMarket</h2>
+      <p class="hint">Krótki przewodnik pomoże Ci wystartować na platformie QualitetMarket.</p>
+      <div class="landing-steps">
+        <div class="landing-step">
+          <strong>Krok 1: Załóż sklep</strong>
+          <span class="hint">Zarejestruj się i skonfiguruj swój sklep w kilka minut.</span>
+        </div>
+        <div class="landing-step">
+          <strong>Krok 2: Importuj produkty</strong>
+          <span class="hint">Wybierz produkty z wiodących hurtowni i dodaj do sklepu.</span>
+        </div>
+        <div class="landing-step">
+          <strong>Krok 3: Zacznij sprzedawać</strong>
+          <span class="hint">Ustaw marże i zacznij zarabiać na dropshippingu.</span>
+        </div>
+      </div>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="generator-sklepu.html">Załóż sklep</a>
+        <button class="btn btn-secondary" type="button" data-landing-survey>Wypełnij ankietę</button>
+        <a class="btn btn-secondary" href="login.html">Wejdź do platformy</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="billing-announcer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+  <div class="activity-toasts" data-activity-toasts aria-live="polite"></div>
+
+  <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
+    <a href="index.html" rel="nofollow noreferrer" data-nav="index">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 11.5L12 4l9 7.5"></path>
+        <path d="M5 10.5V20h14v-9.5"></path>
+      </svg>
+      <span>Start</span>
+    </a>
+    <a href="listing.html" rel="nofollow noreferrer" data-nav="listing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"></rect>
+        <rect x="13" y="3" width="8" height="8" rx="1.5"></rect>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"></rect>
+        <rect x="13" y="13" width="8" height="8" rx="1.5"></rect>
+      </svg>
+      <span>Sklep</span>
+    </a>
+    <a href="hurtownie.html" rel="nofollow noreferrer" data-nav="hurtownie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="7" width="7" height="10" rx="1.4"></rect>
+        <rect x="14" y="7" width="7" height="10" rx="1.4"></rect>
+        <path d="M6.5 7V5.5a1.5 1.5 0 0 1 3 0V7"></path>
+      </svg>
+      <span>Hurt</span>
+    </a>
+    <a href="community.html" rel="nofollow noreferrer" data-nav="community">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <span>Społeczność</span>
+    </a>
+    <a href="dashboard.html" rel="nofollow noreferrer" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.2"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.2"></rect>
+      </svg>
+      <span>Panel</span>
+    </a>
+    <a href="login.html" rel="nofollow noreferrer" data-nav="login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c2-3.5 6-5 8-5s6 1.5 8 5"></path>
+      </svg>
+      <span>Konto</span>
+    </a>
+  </nav>
+
+  <script src="js/api.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/cart.js" defer></script>
+  <script src="js/homepage.js" defer></script>
 </body>
 </html>
