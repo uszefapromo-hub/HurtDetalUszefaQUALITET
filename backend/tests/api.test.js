@@ -3783,6 +3783,105 @@ describe('PUT /api/products/:id – platform_price', () => {
   });
 });
 
+// ─── Auto pricing – computeAutoPrice unit tests ───────────────────────────────
+
+describe('computeAutoPrice (unit)', () => {
+  const { computeAutoPrice, roundAutoPrice } = require('../src/helpers/pricing');
+
+  it('uses 30% margin when cost_price * 0.3 >= 30', () => {
+    // cost=200 → margin=max(60,30)=60 → raw=260 → ceil(260/10)*10-0.01 = 259.99
+    const result = computeAutoPrice(200);
+    expect(result.sell_price).toBe(259.99);
+    expect(result.margin_value).toBeCloseTo(60, 2);
+    expect(result.margin_percent).toBeCloseTo(30, 2);
+  });
+
+  it('uses flat 30 zł margin when cost_price * 0.3 < 30', () => {
+    // cost=50 → margin=max(15,30)=30 → raw=80 → ceil(80/10)*10-0.01 = 79.99
+    const result = computeAutoPrice(50);
+    expect(result.sell_price).toBe(79.99);
+    expect(result.margin_value).toBeCloseTo(30, 2);
+    expect(result.margin_percent).toBeCloseTo(60, 2);
+  });
+
+  it('uses flat 30 zł margin for very low cost_price', () => {
+    // cost=15 → margin=max(4.5,30)=30 → raw=45 → ceil(45/10)*10-0.01 = 49.99
+    const result = computeAutoPrice(15);
+    expect(result.sell_price).toBe(49.99);
+    expect(result.margin_value).toBeCloseTo(30, 2);
+  });
+
+  it('roundAutoPrice snaps to next .99 boundary', () => {
+    expect(roundAutoPrice(80)).toBe(79.99);   // 80 → ceil(80/10)*10-0.01 = 80-0.01 = 79.99
+    expect(roundAutoPrice(81)).toBe(89.99);   // rounds up to 90 - 0.01
+    expect(roundAutoPrice(79.99)).toBe(79.99);
+    expect(roundAutoPrice(10)).toBe(9.99);
+  });
+});
+
+// ─── POST /api/products – auto pricing ───────────────────────────────────────
+
+describe('POST /api/products – auto pricing fields', () => {
+  it('stores cost_price, margin_value, margin_percent and auto sell_price on creation', async () => {
+    // cost_price=100 → margin=max(30,30)=30 → raw=130 → ceil(130/10)*10-0.01=129.99
+    let capturedParams;
+    db.query
+      .mockResolvedValueOnce({ rows: [{ owner_id: SELLER_ID, margin: 15 }] }) // store lookup
+      .mockResolvedValueOnce({ rows: [] }) // loadPlatformTiers → DEFAULT_PLATFORM_TIERS
+      .mockImplementationOnce(async (_sql, params) => {
+        capturedParams = params;
+        return { rows: [{ id: 'prod-auto', store_id: STORE_ID, name: 'Fotel',
+                          cost_price: params[19], margin_value: params[20], margin_percent: params[21],
+                          selling_price: params[12] }] };
+      }); // insert
+
+    const res = await request(app)
+      .post('/api/products')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({ store_id: STORE_ID, name: 'Fotel', price_net: 100 });
+
+    expect(res.status).toBe(201);
+    // cost_price = price_net = 100
+    expect(parseFloat(res.body.cost_price)).toBeCloseTo(100, 2);
+    // margin_value = max(100*0.3, 30) = 30
+    expect(parseFloat(res.body.margin_value)).toBeCloseTo(30, 2);
+    // margin_percent = 30/100*100 = 30
+    expect(parseFloat(res.body.margin_percent)).toBeCloseTo(30, 2);
+    // sell_price = roundAutoPrice(100 + 30) = roundAutoPrice(130) = 129.99
+    expect(parseFloat(res.body.selling_price)).toBeCloseTo(129.99, 2);
+  });
+});
+
+// ─── PUT /api/products/:id – auto pricing ────────────────────────────────────
+
+describe('PUT /api/products/:id – auto pricing fields', () => {
+  it('recomputes cost_price, margin_value, margin_percent and sell_price when price_net changes', async () => {
+    // price_net=200 → margin=max(60,30)=60 → raw=260 → sell_price=259.99
+    let capturedParams;
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: PRODUCT_ID, store_id: null, is_central: true, owner_id: null, price_net: '100.00', tax_rate: '23.00', price_gross: '123.00', selling_price: '129.99', margin: 15 }] }) // fetch
+      .mockResolvedValueOnce({ rows: [] }) // loadPlatformTiers → DEFAULT_PLATFORM_TIERS
+      .mockImplementationOnce(async (_sql, params) => {
+        capturedParams = params;
+        return { rows: [{ id: PRODUCT_ID,
+                          selling_price: params[4],
+                          cost_price: params[13], margin_value: params[14], margin_percent: params[15] }] };
+      }); // update
+
+    const res = await request(app)
+      .put(`/api/products/${PRODUCT_ID}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ price_net: 200 });
+
+    expect(res.status).toBe(200);
+    // sell_price = roundAutoPrice(200 + max(60,30)) = roundAutoPrice(260) = 259.99
+    expect(parseFloat(res.body.selling_price)).toBeCloseTo(259.99, 2);
+    expect(parseFloat(res.body.cost_price)).toBeCloseTo(200, 2);
+    expect(parseFloat(res.body.margin_value)).toBeCloseTo(60, 2);
+    expect(parseFloat(res.body.margin_percent)).toBeCloseTo(30, 2);
+  });
+});
+
 // ─── POST /api/cart – seller_margin pricing ───────────────────────────────────
 
 describe('POST /api/cart – seller_margin-based effective_price', () => {

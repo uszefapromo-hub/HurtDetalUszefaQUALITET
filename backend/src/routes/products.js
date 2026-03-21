@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
-const { computePlatformPrice, dbTiersToArray, DEFAULT_PLATFORM_TIERS } = require('../helpers/pricing');
+const { computePlatformPrice, dbTiersToArray, DEFAULT_PLATFORM_TIERS, computeAutoPrice } = require('../helpers/pricing');
 const { parsePagination } = require('../helpers/pagination');
 
 const router = express.Router();
@@ -167,7 +167,9 @@ router.post(
       }
 
       const price_gross = parseFloat(price_net) * (1 + parseFloat(tax_rate) / 100);
-      const selling_price = price_gross * (1 + margin / 100);
+
+      // Automatic price calculation (no manual overrides on MVP)
+      const autoPrice = computeAutoPrice(parseFloat(price_net));
 
       // Compute platform pricing tiers for the new product
       const tiers = await loadPlatformTiers();
@@ -180,13 +182,15 @@ router.post(
         `INSERT INTO products
            (id, store_id, is_central, supplier_id, name, sku, price_net, tax_rate, price_gross,
             supplier_price, platform_price, min_selling_price,
-            selling_price, margin, category, description, stock, image_url, status, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW())
+            selling_price, margin, category, description, stock, image_url, status,
+            cost_price, margin_value, margin_percent, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,NOW())
          RETURNING *`,
         [id, store_id, isCentral, supplier_id, name, sku, price_net, tax_rate,
          supplierPrice.toFixed(2), supplierPrice.toFixed(2), platformPrice, minSellingPrice,
-         selling_price.toFixed(2), margin,
-         category, description, stock, image_url, status]
+         autoPrice.sell_price.toFixed(2), margin,
+         category, description, stock, image_url, status,
+         parseFloat(price_net).toFixed(2), autoPrice.margin_value.toFixed(2), autoPrice.margin_percent.toFixed(2)]
       );
       return res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -249,12 +253,19 @@ router.put(
       let newSupplierPrice = null;
       let newPlatformPrice = null;
       let newMinSellingPrice = null;
+      let newCostPrice = null;
+      let newMarginValue = null;
+      let newMarginPercent = null;
       if (price_net !== undefined || tax_rate !== undefined) {
         const pn = parseFloat(price_net !== undefined ? price_net : product.price_net);
         const tr = parseFloat(tax_rate !== undefined ? tax_rate : product.tax_rate);
-        const margin = parseFloat(product.margin);
         newPriceGross = (pn * (1 + tr / 100)).toFixed(2);
-        newSellingPrice = (pn * (1 + tr / 100) * (1 + margin / 100)).toFixed(2);
+        // Automatic price calculation (no manual overrides on MVP)
+        const autoPrice = computeAutoPrice(pn);
+        newSellingPrice = autoPrice.sell_price.toFixed(2);
+        newCostPrice = pn.toFixed(2);
+        newMarginValue = autoPrice.margin_value.toFixed(2);
+        newMarginPercent = autoPrice.margin_percent.toFixed(2);
         // Recompute platform pricing tiers when supplier price changes
         const tiers = await loadPlatformTiers();
         newSupplierPrice = parseFloat(newPriceGross);
@@ -277,8 +288,11 @@ router.put(
            description       = COALESCE($11, description),
            image_url         = COALESCE($12, image_url),
            status            = COALESCE($13, status),
+           cost_price        = COALESCE($14, cost_price),
+           margin_value      = COALESCE($15, margin_value),
+           margin_percent    = COALESCE($16, margin_percent),
            updated_at        = NOW()
-         WHERE id = $14
+         WHERE id = $17
          RETURNING *`,
         [
           name || null,
@@ -295,6 +309,9 @@ router.put(
           description !== undefined ? description : null,
           image_url || null,
           status || null,
+          newCostPrice,
+          newMarginValue,
+          newMarginPercent,
           req.params.id,
         ]
       );
