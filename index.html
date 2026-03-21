@@ -1,2 +1,127 @@
-[InternetShortcut]
-URL=https://github.com/uszefapromo-hub/HurtDetalUszefaQUALITET/blob/main/sklep.html
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>QualitetMarket — Sklep</title>
+  <meta name="description" content="QualitetMarket — sklep z produktami z API, koszykiem i checkoutem lokalnym.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="#" class="brand" aria-label="QualitetMarket">
+        <div class="brand-logo">Q</div>
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>API + fallback + koszyk</span>
+        </div>
+      </a>
+
+      <div class="top-actions">
+        <button id="reloadProductsBtn" class="btn btn-secondary" type="button">Odśwież</button>
+        <button id="scrollCartBtn" class="btn btn-primary" type="button">Koszyk</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-card">
+        <div class="hero-badge">GOTOWE POD WYMIANĘ</div>
+        <h1>Sklep ładuje produkty z API i nie wisi bez końca</h1>
+        <p class="hero-text">
+          Najpierw próbujemy publiczne API. Gdy API nie odpowie, automatycznie wchodzą lokalne produkty awaryjne,
+          więc sklep zawsze pokazuje ofertę.
+        </p>
+
+        <div class="hero-stats">
+          <div class="stat">
+            <strong id="statProducts">0</strong>
+            <span>produktów</span>
+          </div>
+          <div class="stat">
+            <strong id="statCartCount">0</strong>
+            <span>w koszyku</span>
+          </div>
+          <div class="stat">
+            <strong id="statCartTotal">0 zł</strong>
+            <span>wartość</span>
+          </div>
+          <div class="stat">
+            <strong id="statMode">LIVE</strong>
+            <span>tryb</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="notice">
+        Źródło produktów: <strong id="sourceLabel">ładowanie...</strong>
+      </div>
+    </div>
+  </section>
+
+  <main class="container layout">
+    <section class="shop-section" id="shopSection">
+      <div class="toolbar">
+        <input id="searchInput" class="field" type="search" placeholder="Szukaj produktu, marki, kategorii...">
+        <select id="categorySelect" class="field">
+          <option value="">Wszystkie kategorie</option>
+        </select>
+        <select id="sortSelect" class="field">
+          <option value="featured">Polecane</option>
+          <option value="price-asc">Cena rosnąco</option>
+          <option value="price-desc">Cena malejąco</option>
+          <option value="name-asc">Nazwa A-Z</option>
+        </select>
+        <button id="resetFiltersBtn" class="btn btn-secondary" type="button">Reset</button>
+      </div>
+
+      <div class="section-head">
+        <div>
+          <h2>Sklep</h2>
+          <p id="productsInfo" class="muted">Ładowanie produktów...</p>
+        </div>
+      </div>
+
+      <div id="statusBox" class="status" aria-live="polite"></div>
+      <div id="productsGrid" class="products-grid"></div>
+    </section>
+
+    <aside class="cart-panel" id="cartPanel">
+      <div class="cart-head">
+        <div>
+          <h3>Koszyk</h3>
+          <p class="muted small">Zapis lokalny w przeglądarce</p>
+        </div>
+        <button id="clearCartBtn" class="icon-btn" type="button" aria-label="Wyczyść koszyk">🗑️</button>
+      </div>
+
+      <div id="cartItems" class="cart-items"></div>
+
+      <div class="summary">
+        <div class="summary-row"><span>Pozycje</span><strong id="sumItems">0</strong></div>
+        <div class="summary-row"><span>Suma</span><strong id="sumSubtotal">0 zł</strong></div>
+        <div class="summary-row"><span>Dostawa</span><strong id="sumShipping">0 zł</strong></div>
+        <div class="summary-row total"><span>Razem</span><strong id="sumTotal">0 zł</strong></div>
+      </div>
+
+      <div class="checkout">
+        <input id="customerName" class="field" type="text" placeholder="Imię i nazwisko">
+        <input id="customerEmail" class="field" type="email" placeholder="Email">
+        <textarea id="customerAddress" class="field textarea" placeholder="Adres dostawy"></textarea>
+        <button id="checkoutBtn" class="btn btn-primary" type="button">Złóż zamówienie</button>
+        <div id="checkoutStatus" class="status" aria-live="polite"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      © 2026 QualitetMarket
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
