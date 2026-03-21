@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <title>Dashboard sprzedawcy | QualitetMarket</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="../assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="../panel.css">
+  <script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>
+  <style>
+    .seller-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .seller-product-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    .seller-product-card img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      background: #f3f4f6;
+    }
+    .seller-product-card .card-body {
+      padding: 10px 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .seller-product-card .card-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+    .seller-product-card .card-price {
+      font-size: 0.85rem;
+      color: #7c3aed;
+      font-weight: 700;
+    }
+    .seller-product-card .btn-add {
+      margin-top: auto;
+      padding: 7px 10px;
+      font-size: 0.8rem;
+      border: none;
+      border-radius: 6px;
+      background: #7c3aed;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .seller-product-card .btn-add:disabled {
+      background: #a78bfa;
+      cursor: default;
+    }
+    .seller-product-card .btn-add.added {
+      background: #16a34a;
+    }
+    .seller-tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 0;
+    }
+    .seller-tab-bar button {
+      padding: 8px 18px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #6b7280;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      border-radius: 0;
+    }
+    .seller-tab-bar button.active {
+      color: #7c3aed;
+      border-bottom-color: #7c3aed;
+      font-weight: 700;
+    }
+    .seller-tab-panel { display: none; }
+    .seller-tab-panel.active { display: block; }
+    .seller-status-msg {
+      padding: 10px 0;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .seller-img-placeholder {
+      width: 100%;
+      height: 140px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #d1d5db;
+    }
+  </style>
+</head>
+<body data-page="seller-dashboard" class="dashboard-page has-bottom-nav">
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="../assets/icons/icon-192.svg" alt="QualitetMarket">
+      </div>
+      <div class="app-splash-title">
+        <strong>QualitetMarket</strong>
+        <span>Marketplace B2B/B2C</span>
+      </div>
+      <div class="app-splash-loader"></div>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="../index.html">
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>Marketplace B2B/B2C</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="../index.html">Start</a>
+        <a href="../dashboard.html">Dashboard</a>
+        <a href="../cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="../dashboard.html">Panel</a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
+
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <nav class="sidebar-nav" aria-label="Menu sprzedawcy">
+        <a href="../dashboard.html">Dashboard</a>
+        <a class="active" href="dashboard.html">Produkty katalogu</a>
+        <a href="../panel-sklepu.html">Panel sklepu</a>
+        <a href="../cennik.html">Subskrypcja</a>
+        <a href="../sklep.html">Podgląd sklepu</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-main">
+      <section class="panel-card dashboard-welcome">
+        <span class="eyebrow">Sprzedawca</span>
+        <h1>Dashboard sprzedawcy</h1>
+        <p class="hint">Wybieraj produkty z katalogu i dodawaj je do swojego sklepu.</p>
+      </section>
+
+      <section class="panel-card">
+        <div class="seller-tab-bar" role="tablist" aria-label="Sekcje dashboardu">
+          <button type="button" role="tab" aria-selected="true" data-seller-tab="catalog" class="active">📦 Katalog produktów</button>
+          <button type="button" role="tab" aria-selected="false" data-seller-tab="mine">🛒 Moje produkty</button>
+        </div>
+
+        <!-- ── TAB: Katalog ───────────────────────────────────────────── -->
+        <div class="seller-tab-panel active" id="seller-tab-catalog" role="tabpanel">
+          <p class="seller-status-msg" id="catalog-status">Ładowanie katalogu…</p>
+          <div class="seller-grid" id="catalog-grid"></div>
+        </div>
+
+        <!-- ── TAB: Moje produkty ────────────────────────────────────── -->
+        <div class="seller-tab-panel" id="seller-tab-mine" role="tabpanel">
+          <p class="seller-status-msg" id="mine-status" hidden>Brak aktywowanych produktów. Przejdź do katalogu i dodaj produkty do sklepu.</p>
+          <div class="seller-grid" id="mine-grid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav class="bottom-nav" aria-label="Nawigacja główna">
+    <a href="../index.html" rel="nofollow noreferrer" data-nav="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12L12 3l9 9"></path>
+        <path d="M9 21V12h6v9"></path>
+      </svg>
+      <span>Start</span>
+    </a>
+    <a href="../sklep.html" rel="nofollow noreferrer" data-nav="sklep">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <path d="M16 10a4 4 0 0 1-8 0"></path>
+      </svg>
+      <span>Sklep</span>
+    </a>
+    <a href="../dashboard.html" rel="nofollow noreferrer" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.2"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.2"></rect>
+      </svg>
+      <span>Panel</span>
+    </a>
+    <a href="../login.html" rel="nofollow noreferrer" data-nav="login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c2-3.5 6-5 8-5s6 1.5 8 5"></path>
+      </svg>
+      <span>Konto</span>
+    </a>
+  </nav>
+
+  <script src="../js/api.js" defer></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var STORAGE_KEY = 'seller_products';
+
+      // ── Role guard ────────────────────────────────────────────────────────────
+      function getUser() {
+        try { return JSON.parse(localStorage.getItem('qm_user') || 'null'); } catch (e) { console.error('[seller/dashboard] Failed to parse user data:', e); return null; }
+      }
+
+      function guardRole() {
+        var user = getUser();
+        if (!user || (user.role !== 'seller' && user.role !== 'admin' && user.role !== 'owner')) {
+          window.location.replace('../sklep.html');
+          return false;
+        }
+        return true;
+      }
+
+      // ── localStorage helpers ──────────────────────────────────────────────────
+      function loadSellerProducts() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { console.error('[seller/dashboard] Failed to parse seller_products:', e); return []; }
+      }
+
+      function saveSellerProducts(list) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) { console.error('[seller/dashboard] Failed to save seller_products:', e); }
+      }
+
+      function isActivated(productId, sellerId) {
+        return loadSellerProducts().some(function (p) {
+          return p.product_id === productId && p.seller_id === sellerId;
+        });
+      }
+
+      function activateProduct(product, sellerId) {
+        var list = loadSellerProducts();
+        if (list.some(function (p) { return p.product_id === product.id && p.seller_id === sellerId; })) {
+          return false; // already added
+        }
+        list.push({ product_id: product.id, seller_id: sellerId, active: true, _product: product });
+        saveSellerProducts(list);
+        return true;
+      }
+
+      // ── Image helper ──────────────────────────────────────────────────────────
+      function productImageEl(product) {
+        var imageUrl = product.image_url || product.thumbnail_url || product.image || '';
+        if (imageUrl) {
+          var img = document.createElement('img');
+          img.src = imageUrl;
+          img.alt = product.name || '';
+          img.loading = 'lazy';
+          img.onerror = function () {
+            var ph = document.createElement('div');
+            ph.className = 'seller-img-placeholder';
+            ph.textContent = '📦';
+            img.parentNode && img.parentNode.replaceChild(ph, img);
+          };
+          return img;
+        }
+        var ph = document.createElement('div');
+        ph.className = 'seller-img-placeholder';
+        ph.textContent = '📦';
+        return ph;
+      }
+
+      // ── Format price ──────────────────────────────────────────────────────────
+      function formatPrice(val) {
+        if (val == null || val === '') return '—';
+        var n = parseFloat(val);
+        if (isNaN(n)) return '—';
+        return n.toFixed(2).replace('.', ',') + ' zł';
+      }
+
+      // ── Build catalog card ────────────────────────────────────────────────────
+      function buildCatalogCard(product, sellerId) {
+        var card = document.createElement('div');
+        card.className = 'seller-product-card';
+
+        card.appendChild(productImageEl(product));
+
+        var body = document.createElement('div');
+        body.className = 'card-body';
+
+        var name = document.createElement('div');
+        name.className = 'card-name';
+        name.textContent = product.name || '(bez nazwy)';
+        body.appendChild(name);
+
+        var price = document.createElement('div');
+        price.className = 'card-price';
+        var displayPrice = product.selling_price || product.sell_price || product.price_gross || product.price;
+        price.textContent = formatPrice(displayPrice);
+        body.appendChild(price);
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-add';
+        var already = isActivated(product.id, sellerId);
+        btn.textContent = already ? '✔ W moim sklepie' : 'Dodaj do mojego sklepu';
+        if (already) { btn.disabled = true; btn.classList.add('added'); }
+        btn.addEventListener('click', function () {
+          var added = activateProduct(product, sellerId);
+          if (added) {
+            btn.textContent = '✔ W moim sklepie';
+            btn.disabled = true;
+            btn.classList.add('added');
+          }
+        });
+        body.appendChild(btn);
+
+        card.appendChild(body);
+        return card;
+      }
+
+      // ── Build "my products" card ──────────────────────────────────────────────
+      function buildMineCard(entry) {
+        var product = entry._product || {};
+        var card = document.createElement('div');
+        card.className = 'seller-product-card';
+
+        card.appendChild(productImageEl(product));
+
+        var body = document.createElement('div');
+        body.className = 'card-body';
+
+        var name = document.createElement('div');
+        name.className = 'card-name';
+        name.textContent = product.name || '(produkt #' + entry.product_id + ')';
+        body.appendChild(name);
+
+        var price = document.createElement('div');
+        price.className = 'card-price';
+        var displayPrice = product.selling_price || product.sell_price || product.price_gross || product.price;
+        price.textContent = formatPrice(displayPrice);
+        body.appendChild(price);
+
+        var statusBadge = document.createElement('div');
+        statusBadge.style.cssText = 'font-size:0.75rem;color:#16a34a;font-weight:600;margin-top:4px';
+        statusBadge.textContent = entry.active ? '● Aktywny' : '○ Nieaktywny';
+        body.appendChild(statusBadge);
+
+        card.appendChild(body);
+        return card;
+      }
+
+      // ── Render catalog ────────────────────────────────────────────────────────
+      function renderCatalog(products, sellerId) {
+        var statusEl = document.getElementById('catalog-status');
+        var grid = document.getElementById('catalog-grid');
+        grid.innerHTML = '';
+
+        if (!products || products.length === 0) {
+          statusEl.textContent = 'Brak produktów w katalogu.';
+          statusEl.hidden = false;
+          return;
+        }
+        statusEl.hidden = true;
+        products.forEach(function (p) {
+          grid.appendChild(buildCatalogCard(p, sellerId));
+        });
+      }
+
+      // ── Render "mine" tab ─────────────────────────────────────────────────────
+      function renderMine(sellerId) {
+        var statusEl = document.getElementById('mine-status');
+        var grid = document.getElementById('mine-grid');
+        grid.innerHTML = '';
+
+        var list = loadSellerProducts().filter(function (p) { return p.seller_id === sellerId; });
+
+        if (list.length === 0) {
+          statusEl.hidden = false;
+          return;
+        }
+        statusEl.hidden = true;
+        list.forEach(function (entry) {
+          grid.appendChild(buildMineCard(entry));
+        });
+      }
+
+      // ── Tab switching ─────────────────────────────────────────────────────────
+      function initTabs(sellerId) {
+        var tabBtns = document.querySelectorAll('[data-seller-tab]');
+        tabBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var tabId = btn.dataset.sellerTab;
+            tabBtns.forEach(function (b) {
+              b.classList.toggle('active', b.dataset.sellerTab === tabId);
+              b.setAttribute('aria-selected', b.dataset.sellerTab === tabId ? 'true' : 'false');
+            });
+            document.querySelectorAll('.seller-tab-panel').forEach(function (panel) {
+              panel.classList.toggle('active', panel.id === 'seller-tab-' + tabId);
+            });
+            if (tabId === 'mine') renderMine(sellerId);
+          });
+        });
+      }
+
+      // ── Init ──────────────────────────────────────────────────────────────────
+      document.addEventListener('DOMContentLoaded', function () {
+        if (!guardRole()) return;
+
+        var user = getUser();
+        var sellerId = user && (user.id || user.userId || user.user_id || '');
+
+        initTabs(sellerId);
+
+        // Load products from central catalog via QMApi or direct fetch
+        function fetchProducts() {
+          var statusEl = document.getElementById('catalog-status');
+          statusEl.textContent = 'Ładowanie katalogu…';
+          statusEl.hidden = false;
+
+          var apiBase = (window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api');
+          var token = '';
+          try { token = localStorage.getItem('qm_token') || ''; } catch (e) { console.error('[seller/dashboard] Failed to retrieve token:', e); }
+
+          var headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = 'Bearer ' + token;
+
+          fetch(apiBase + '/products?is_central=true&limit=50&status=active', { headers: headers })
+            .then(function (res) {
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              return res.json();
+            })
+            .then(function (data) {
+              var products = Array.isArray(data) ? data : (data.products || []);
+              renderCatalog(products, sellerId);
+            })
+            .catch(function (err) {
+              statusEl.textContent = 'Nie udało się załadować katalogu. Spróbuj ponownie później.';
+              statusEl.hidden = false;
+              console.error('[seller/dashboard] catalog fetch error:', err);
+            });
+        }
+
+        fetchProducts();
+
+        // Hide splash screen
+        var splash = document.querySelector('[data-app-splash]');
+        if (splash) {
+          setTimeout(function () { splash.style.display = 'none'; }, 600);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
