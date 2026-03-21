@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Checkout | QualitetMarket</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    body{
+      font-family: Inter, sans-serif;
+      background:#0b0b0f;
+      color:#fff;
+      margin:0;
+      padding:20px;
+    }
+    .container{
+      max-width:800px;
+      margin:0 auto;
+    }
+    h1{
+      margin-bottom:20px;
+    }
+    input{
+      width:100%;
+      padding:10px;
+      margin-bottom:10px;
+      border-radius:8px;
+      border:1px solid #222;
+      background:#111;
+      color:#fff;
+    }
+    .summary{
+      border:1px solid #222;
+      padding:15px;
+      border-radius:10px;
+      margin-bottom:20px;
+    }
+    button{
+      background:#7c3aed;
+      color:#fff;
+      border:none;
+      padding:12px;
+      width:100%;
+      border-radius:10px;
+      font-size:16px;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Checkout</h1>
+
+  <div class="summary" id="order-summary"></div>
+
+  <h3>Dane klienta</h3>
+  <input id="name" placeholder="Imię i nazwisko">
+  <input id="email" placeholder="Email">
+  <input id="address" placeholder="Adres">
+
+  <button onclick="pay()">Zapłać</button>
+</div>
+
+<script>
+let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+function renderSummary(){
+  const el = document.getElementById("order-summary");
+
+  if(cart.length === 0){
+    el.innerHTML = "Koszyk pusty";
+    return;
+  }
+
+  let total = 0;
+
+  el.innerHTML = "";
+
+  cart.forEach(item=>{
+    total += item.price * item.qty;
+    el.innerHTML += `<div>${item.name} x${item.qty}</div>`;
+  });
+
+  el.innerHTML += `<hr><strong>Razem: ${total.toFixed(2)} zł</strong>`;
+}
+
+function pay(){
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+
+  if(!name || !email){
+    alert("Uzupełnij dane");
+    return;
+  }
+
+  // MOCK płatności (na teraz)
+  setTimeout(()=>{
+    localStorage.removeItem("cart");
+    window.location.href = "success.html";
+  },1000);
+}
+
+renderSummary();
+</script>
+
+</body>
+</html>
