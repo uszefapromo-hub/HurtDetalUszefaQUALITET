@@ -81,10 +81,15 @@
     @media(max-width:760px){
       .cart-grid{grid-template-columns:1fr}
       .checkout-card{position:static}
+      .cart-shell{padding-left:14px;padding-right:14px}
     }
     @media(max-width:480px){
       .cart-item{flex-wrap:wrap}
       .cart-item-subtotal{flex-basis:100%;text-align:left}
+      .cart-header h1{font-size:clamp(22px,7vw,32px)}
+      .checkout-card{padding:18px}
+      .cart-items-card{padding:16px}
+      .btn-checkout{min-height:54px;font-size:17px}
     }
   </style>
   <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; object-src 'none'">
