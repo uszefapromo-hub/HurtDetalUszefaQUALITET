@@ -1,128 +1,24 @@
+
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>QualitetMarket — Sklep</title>
-  <meta name="description" content="Marketplace z pełnym katalogiem produktów, kategoriami, koszykiem i checkoutem lokalnym.">
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QualitetMarket SPA</title>
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <div class="brand">
-        <div class="brand-logo">Q</div>
-        <div>
-          <strong>QualitetMarket</strong>
-          <span>Katalog + kategorie + koszyk</span>
-        </div>
-      </div>
+<header>
+<h1>QualitetMarket</h1>
+<nav>
+<button onclick="go('home')">Start</button>
+<button onclick="go('shop')">Sklep</button>
+<button onclick="go('cart')">Koszyk</button>
+</nav>
+</header>
 
-      <div class="topbar-actions">
-        <button id="refreshBtn" class="btn btn-secondary" type="button">Odśwież</button>
-        <button id="scrollCartBtn" class="btn btn-primary" type="button">Koszyk</button>
-      </div>
-    </div>
-  </header>
+<main id="app"></main>
 
-  <section class="hero">
-    <div class="container">
-      <div class="hero-card">
-        <div class="badge">GOTOWE DO PUBLIKACJI</div>
-        <h1>Pełny sklep z dużym katalogiem i wszystkimi kategoriami z feedu</h1>
-        <p class="hero-text">
-          Ta wersja ładuje cały katalog z feedu produktowego. Gdy feed nie odpowie, automatycznie przełącza się
-          na lokalny katalog awaryjny, więc strona nie zostaje pusta.
-        </p>
-
-        <div class="hero-stats">
-          <div class="stat">
-            <strong id="statProducts">0</strong>
-            <span>produktów</span>
-          </div>
-          <div class="stat">
-            <strong id="statCategories">0</strong>
-            <span>kategorii</span>
-          </div>
-          <div class="stat">
-            <strong id="statCartCount">0</strong>
-            <span>w koszyku</span>
-          </div>
-          <div class="stat">
-            <strong id="statMode">LIVE</strong>
-            <span>tryb</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="notice">
-        Źródło katalogu: <strong id="sourceLabel">ładowanie...</strong>
-      </div>
-    </div>
-  </section>
-
-  <main class="container layout">
-    <section>
-      <div class="toolbar">
-        <input id="searchInput" class="field" type="search" placeholder="Szukaj produktu, marki, kategorii...">
-        <select id="categorySelect" class="field">
-          <option value="">Wszystkie kategorie</option>
-        </select>
-        <select id="sortSelect" class="field">
-          <option value="featured">Polecane</option>
-          <option value="price-asc">Cena rosnąco</option>
-          <option value="price-desc">Cena malejąco</option>
-          <option value="name-asc">Nazwa A-Z</option>
-        </select>
-        <button id="resetFiltersBtn" class="btn btn-secondary" type="button">Reset</button>
-      </div>
-
-      <div class="section-head">
-        <div>
-          <h2>Produkty</h2>
-          <p id="productsInfo" class="muted">Ładowanie produktów...</p>
-        </div>
-        <div class="section-head-actions">
-          <button id="loadMoreBtn" class="btn btn-secondary" type="button">Pokaż więcej</button>
-        </div>
-      </div>
-
-      <div id="statusBox" class="status" aria-live="polite"></div>
-      <div id="productsGrid" class="products-grid"></div>
-    </section>
-
-    <aside id="cartPanel" class="cart-panel">
-      <div class="cart-head">
-        <div>
-          <h3>Koszyk</h3>
-          <p class="muted small">Zapis lokalny w przeglądarce</p>
-        </div>
-        <button id="clearCartBtn" class="icon-btn" type="button" aria-label="Wyczyść koszyk">🗑️</button>
-      </div>
-
-      <div id="cartItems" class="cart-items"></div>
-
-      <div class="summary">
-        <div class="summary-row"><span>Pozycje</span><strong id="sumItems">0</strong></div>
-        <div class="summary-row"><span>Suma</span><strong id="sumSubtotal">0 zł</strong></div>
-        <div class="summary-row"><span>Dostawa</span><strong id="sumShipping">0 zł</strong></div>
-        <div class="summary-row total"><span>Razem</span><strong id="sumTotal">0 zł</strong></div>
-      </div>
-
-      <div class="checkout">
-        <input id="customerName" class="field" type="text" placeholder="Imię i nazwisko">
-        <input id="customerEmail" class="field" type="email" placeholder="Email">
-        <textarea id="customerAddress" class="field textarea" placeholder="Adres dostawy"></textarea>
-        <button id="checkoutBtn" class="btn btn-primary" type="button">Złóż zamówienie</button>
-        <div id="checkoutStatus" class="status" aria-live="polite"></div>
-      </div>
-    </aside>
-  </main>
-
-  <footer class="footer">
-    <div class="container">© 2026 QualitetMarket</div>
-  </footer>
-
-  <script src="app.js"></script>
+<script src="assets/app.js"></script>
 </body>
 </html>
