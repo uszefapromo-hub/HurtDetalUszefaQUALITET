@@ -190,6 +190,41 @@ function estimatePaymentFee(amount, ratePercent = 2.9, fixedFee = 0.30) {
   return parseFloat((a * (ratePercent / 100) + fixedFee).toFixed(2));
 }
 
+// ─── Automatic product pricing ─────────────────────────────────────────────────
+
+/**
+ * Round a price to the next multiple of 10, then subtract 0.01
+ * (e.g. 80 → 79.99, 261 → 269.99).
+ *
+ * @param {number} price
+ * @returns {number}
+ */
+function roundAutoPrice(price) {
+  return Math.ceil(price / 10) * 10 - 0.01;
+}
+
+/**
+ * Compute automatic selling price from cost_price.
+ *
+ * Rules (no exceptions, no manual overrides):
+ *   margin      = Math.max(cost_price × 0.3, 30)
+ *   sell_price  = roundAutoPrice(cost_price + margin)
+ *
+ * @param {number} costPrice – product cost / purchase price (price_net)
+ * @returns {{ sell_price: number, margin_value: number, margin_percent: number }}
+ */
+function computeAutoPrice(costPrice) {
+  const cost = parseFloat(costPrice) || 0;
+  const marginValue = Math.max(cost * 0.3, 30);
+  const sellPrice = roundAutoPrice(cost + marginValue);
+  const marginPercent = cost > 0 ? (marginValue / cost) * 100 : 0;
+  return {
+    sell_price:     sellPrice,
+    margin_value:   parseFloat(marginValue.toFixed(2)),
+    margin_percent: parseFloat(marginPercent.toFixed(2)),
+  };
+}
+
 module.exports = {
   DEFAULT_PLATFORM_TIERS,
   DEFAULT_RESELLER_MARGIN_PCT,
@@ -204,4 +239,6 @@ module.exports = {
   computeExpectedResellerProfit,
   computeRealProfit,
   estimatePaymentFee,
+  roundAutoPrice,
+  computeAutoPrice,
 };
