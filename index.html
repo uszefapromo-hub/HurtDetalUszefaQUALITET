@@ -643,7 +643,12 @@
   </aside>
 
   <script>
-    const API_URL = "https://qualitet-market-production.up.railway.app/api/products";
+    const API_BASE = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
+    const API_ENDPOINTS = [
+      API_BASE + '/products?limit=100',
+      API_BASE + '/products?status=active&limit=100',
+      'https://fakestoreapi.com/products'
+    ];
 
     let allProducts = [];
     let currentCategory = "all";
@@ -665,28 +670,45 @@
 
     function normalizeProducts(data) {
       if (Array.isArray(data)) return data;
-      if (Array.isArray(data.products)) return data.products;
+      if (data && Array.isArray(data.products)) return data.products;
+      if (data && Array.isArray(data.data)) return data.data;
+      if (data && Array.isArray(data.items)) return data.items;
+      if (data && Array.isArray(data.results)) return data.results;
       return [];
     }
 
+    function normalizeProduct(p) {
+      const name = p.name || p.title || p.product_name || p.nazwa || 'Produkt';
+      const category = (p.category || p.category_name || p.kategoria || 'inne').toString().toLowerCase();
+      const id = p.id ?? p.product_id ?? (name + '-' + category).replace(/\s+/g, '-').toLowerCase();
+      return {
+        id,
+        name,
+        description: p.description || p.short_description || p.desc || p.opis || '',
+        price: Number(p.selling_price ?? p.price ?? p.retail_price ?? p.cena ?? 0),
+        category,
+        image: p.image_url || p.image || p.photo || p.thumbnail || p.zdjecie || ''
+      };
+    }
+
     function getName(product) {
-      return product.name || product.nazwa || "Produkt";
+      return product.name || product.title || product.nazwa || "Produkt";
     }
 
     function getPrice(product) {
-      return product.price ?? product.cena ?? 0;
+      return product.price ?? product.selling_price ?? product.cena ?? 0;
     }
 
     function getDescription(product) {
-      return product.description || product.opis || "Produkt dostępny w sklepie QualitetMarket.";
+      return product.description || product.short_description || product.opis || "Produkt dostępny w sklepie QualitetMarket.";
     }
 
     function getCategory(product) {
-      return (product.category || product.kategoria || "elektronika").toString().toLowerCase();
+      return (product.category || product.category_name || product.kategoria || "inne").toString().toLowerCase();
     }
 
     function getImage(product) {
-      return product.image || product.imageUrl || product.thumbnail || product.zdjecie || "";
+      return product.image_url || product.image || product.imageUrl || product.thumbnail || product.photo || product.zdjecie || "";
     }
 
     function updateCartCount() {
@@ -853,6 +875,13 @@
       }).join("");
     }
 
+    async function fetchProducts(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      return normalizeProducts(data).map(normalizeProduct);
+    }
+
     async function loadProducts() {
       const statusText = document.getElementById("statusText");
       const errorBox = document.getElementById("errorBox");
@@ -861,32 +890,40 @@
       errorBox.style.display = "none";
       errorBox.innerHTML = "";
 
-      try {
-        const response = await fetch(API_URL);
+      let products = [];
+      let lastError = null;
 
-        if (!response.ok) {
-          throw new Error("API zwróciło błąd: " + response.status);
+      for (const url of API_ENDPOINTS) {
+        try {
+          const list = await fetchProducts(url);
+          if (list.length > 0) {
+            products = list;
+            console.log('Załadowano produkty z:', url, '(' + list.length + ')');
+            break;
+          }
+        } catch (err) {
+          lastError = err;
+          console.warn('Endpoint niedostępny:', url, err.message);
         }
+      }
 
-        const data = await response.json();
-        allProducts = normalizeProducts(data);
-
-        statusText.textContent = "Załadowano produktów: " + allProducts.length;
-        renderProducts();
-      } catch (error) {
+      if (products.length === 0 && lastError) {
         allProducts = [];
         renderProducts();
         statusText.textContent = "Błąd ładowania";
-
         errorBox.style.display = "block";
         errorBox.innerHTML = `
           <strong>Nie udało się pobrać produktów z API.</strong><br><br>
           Szczegóły błędu:<br>
-          <strong>${escapeHtml(error.message)}</strong>
+          <strong>${escapeHtml(lastError.message)}</strong>
         `;
-
-        console.error("Błąd ładowania produktów:", error);
+        console.error("Błąd ładowania produktów:", lastError);
+        return;
       }
+
+      allProducts = products;
+      statusText.textContent = "Załadowano produktów: " + allProducts.length;
+      renderProducts();
     }
 
     function checkout() {
