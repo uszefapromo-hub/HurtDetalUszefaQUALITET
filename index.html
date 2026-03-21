@@ -664,29 +664,35 @@
     }
 
     function normalizeProducts(data) {
-      if (Array.isArray(data)) return data;
-      if (Array.isArray(data.products)) return data.products;
-      return [];
+      let list;
+      if (Array.isArray(data)) {
+        list = data;
+      } else if (data && Array.isArray(data.products)) {
+        list = data.products;
+      } else {
+        list = [];
+      }
+      return list.filter(p => p && typeof p === "object");
     }
 
     function getName(product) {
-      return product.name || product.nazwa || "Produkt";
+      return String(product.name || product.nazwa || "Produkt");
     }
 
     function getPrice(product) {
-      return product.price ?? product.cena ?? 0;
+      return product.selling_price ?? product.price_gross ?? product.price_net ?? product.price ?? product.cena ?? 0;
     }
 
     function getDescription(product) {
-      return product.description || product.opis || "Produkt dostępny w sklepie QualitetMarket.";
+      return String(product.description || product.opis || "Produkt dostępny w sklepie QualitetMarket.");
     }
 
     function getCategory(product) {
-      return (product.category || product.kategoria || "elektronika").toString().toLowerCase();
+      return String(product.category || product.kategoria || "elektronika").toLowerCase();
     }
 
     function getImage(product) {
-      return product.image || product.imageUrl || product.thumbnail || product.zdjecie || "";
+      return product.image_url || product.image || product.imageUrl || product.thumbnail || product.zdjecie || "";
     }
 
     function updateCartCount() {
@@ -774,6 +780,78 @@
       renderProducts();
     }
 
+    function buildProductCard(product) {
+      const id = product.id != null ? product.id : (product.sku || product.external_id || String(Math.random().toString(36).slice(2)));
+      const name = getName(product);
+      const description = getDescription(product);
+      const price = getPrice(product);
+      const image = getImage(product);
+
+      const article = document.createElement("article");
+      article.className = "product-card";
+
+      const imageDiv = document.createElement("div");
+      imageDiv.className = "product-image";
+      if (image) {
+        const img = document.createElement("img");
+        img.src = image;
+        img.alt = name;
+        img.addEventListener("error", function () {
+          while (imageDiv.firstChild) imageDiv.removeChild(imageDiv.firstChild);
+          const icon = document.createElement("span");
+          icon.textContent = "🛒";
+          imageDiv.appendChild(icon);
+        });
+        imageDiv.appendChild(img);
+      } else {
+        const icon = document.createElement("span");
+        icon.textContent = "🛒";
+        imageDiv.appendChild(icon);
+      }
+
+      const body = document.createElement("div");
+      body.className = "product-body";
+
+      const titleDiv = document.createElement("div");
+      titleDiv.className = "product-title";
+      titleDiv.textContent = name;
+
+      const descDiv = document.createElement("div");
+      descDiv.className = "product-desc";
+      descDiv.textContent = description;
+
+      const metaDiv = document.createElement("div");
+      metaDiv.className = "product-meta";
+
+      const priceWrapper = document.createElement("div");
+      const priceDiv = document.createElement("div");
+      priceDiv.className = "price";
+      priceDiv.textContent = formatPrice(price);
+      const priceNote = document.createElement("div");
+      priceNote.className = "price-note";
+      priceNote.textContent = "Dostępny online";
+      priceWrapper.appendChild(priceDiv);
+      priceWrapper.appendChild(priceNote);
+
+      const btn = document.createElement("button");
+      btn.className = "btn btn-main";
+      btn.textContent = "Do koszyka";
+      btn.addEventListener("click", function () {
+        addToCart({ id: id, name: name, price: Number(price) || 0 });
+      });
+
+      metaDiv.appendChild(priceWrapper);
+      metaDiv.appendChild(btn);
+
+      body.appendChild(titleDiv);
+      body.appendChild(descDiv);
+      body.appendChild(metaDiv);
+
+      article.appendChild(imageDiv);
+      article.appendChild(body);
+      return article;
+    }
+
     function renderProducts() {
       const grid = document.getElementById("productsGrid");
       const emptyBox = document.getElementById("emptyBox");
@@ -781,11 +859,12 @@
       const sortValue = document.getElementById("sortSelect").value;
 
       let filtered = allProducts.filter(product => {
+        if (!product || typeof product !== "object") return false;
         const name = getName(product).toLowerCase();
         const desc = getDescription(product).toLowerCase();
         const category = getCategory(product);
 
-        const searchOk = name.includes(searchValue) || desc.includes(searchValue);
+        const searchOk = !searchValue || name.includes(searchValue) || desc.includes(searchValue);
         const categoryOk = currentCategory === "all" || category === currentCategory;
 
         return searchOk && categoryOk;
@@ -808,49 +887,8 @@
       }
 
       emptyBox.style.display = "none";
-
-      grid.innerHTML = filtered.map(product => {
-        const id = product.id ?? getName(product);
-        const name = getName(product);
-        const description = getDescription(product);
-        const price = getPrice(product);
-        const image = getImage(product);
-
-        const safeName = escapeHtml(name);
-        const safeDesc = escapeHtml(description);
-        const safePrice = formatPrice(price);
-
-        const addId = String(id).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-        const addName = String(name).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-
-        return `
-          <article class="product-card">
-            <div class="product-image">
-              ${
-                image
-                  ? `<img src="${escapeHtml(image)}" alt="${safeName}" onerror="this.parentNode.innerHTML='<span>🛒</span>'">`
-                  : `<span>🛒</span>`
-              }
-            </div>
-
-            <div class="product-body">
-              <div class="product-title">${safeName}</div>
-              <div class="product-desc">${safeDesc}</div>
-
-              <div class="product-meta">
-                <div>
-                  <div class="price">${safePrice}</div>
-                  <div class="price-note">Dostępny online</div>
-                </div>
-
-                <button class="btn btn-main" onclick="addToCart({id:'${addId}', name:'${addName}', price:${Number(price) || 0}})">
-                  Do koszyka
-                </button>
-              </div>
-            </div>
-          </article>
-        `;
-      }).join("");
+      grid.innerHTML = "";
+      filtered.forEach(product => grid.appendChild(buildProductCard(product)));
     }
 
     async function loadProducts() {
