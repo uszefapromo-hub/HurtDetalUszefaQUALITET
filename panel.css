@@ -363,3 +363,4 @@ body{
 .product-body .price{font-size:18px;font-weight:800;color:#00d4ff}
 .product-body .meta{font-size:12px;line-height:1.5;color:rgba(255,255,255,.65)}
 .qm-auto-store-desc{width:100%;min-height:100px;border-radius:14px;padding:14px;background:#0f172a;color:#fff;border:1px solid rgba(255,255,255,.1);resize:vertical}
+.status-active{color:#4ade80;font-weight:600}.status-pending{color:#fbbf24;font-weight:600}.status-draft{color:rgba(255,255,255,.5);font-weight:600}
