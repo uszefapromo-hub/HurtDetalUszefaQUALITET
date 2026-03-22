@@ -19,14 +19,25 @@
       background:radial-gradient(circle, rgba(124,58,237,.22), rgba(124,58,237,0) 70%);
       pointer-events:none
     }
-    .demo-box{
-      border:1px solid rgba(124,58,237,.22);
-      background:linear-gradient(180deg,rgba(124,58,237,.10),rgba(124,58,237,.04));
+    .topbar-back{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:42px;height:42px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:inherit;text-decoration:none;cursor:pointer;
+      font-size:20px;line-height:1
+    }
+    .topbar-left{
+      display:flex;align-items:center;gap:12px;
+    }
+    .launch-box{
+      border:1px solid rgba(34,197,94,.22);
+      background:linear-gradient(180deg,rgba(34,197,94,.10),rgba(34,197,94,.04));
       border-radius:16px;padding:14px 16px;margin:0 0 16px
     }
-    .demo-box strong{display:block;margin-bottom:6px}
-    .demo-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-    .demo-note{font-size:.9rem;opacity:.82;margin-top:10px}
+    .launch-box strong{display:block;margin-bottom:6px}
+    .launch-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .auth-only-panel{margin-top:6px}
     .app-cta-section{margin-top:28px}
     .mobile-bottom-extra{margin-top:22px}
     .mobile-bottom-card{
@@ -60,6 +71,7 @@
       border:1px solid rgba(255,255,255,.08)
     }
     .mobile-mock-card strong{display:block;margin-bottom:4px}
+    .login-direct-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     @media (max-width: 900px){
       .mobile-bottom-card{grid-template-columns:1fr}
     }
@@ -81,12 +93,15 @@
 
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="index.html">
-        <div>
-          <strong>QualitetMarket</strong>
-          <span>Marketplace B2B/B2C</span>
-        </div>
-      </a>
+      <div class="topbar-left">
+        <button class="topbar-back" type="button" onclick="history.back()" aria-label="Wróć">←</button>
+        <a class="brand" href="index.html">
+          <div>
+            <strong>QualitetMarket</strong>
+            <span>Marketplace B2B/B2C</span>
+          </div>
+        </a>
+      </div>
       <nav class="nav" aria-label="Główna nawigacja">
         <a href="index.html">Start</a>
         <a href="dashboard.html">Dashboard</a>
@@ -100,18 +115,17 @@
   <main class="wrap auth-layout">
     <section class="panel-card auth-card">
       <h1>Logowanie</h1>
-      <div class="auth-tabs" role="tablist">
-        <button class="auth-tab-btn active" role="tab" aria-selected="true" data-auth-tab="email" aria-controls="auth-panel-email">Email</button>
-        <button class="auth-tab-btn" role="tab" aria-selected="false" data-auth-tab="demo" aria-controls="auth-panel-demo"><span aria-hidden="true">🔥</span> Demo (lokalnie)</button>
+
+      <div class="launch-box">
+        <strong>Uruchamianie platformy</strong>
+        <div>Idziemy już w stronę normalnego uruchomienia. Bez demo — logowanie ma prowadzić do realnego wejścia, panelu i generatora sklepu.</div>
+        <div class="launch-actions">
+          <a class="btn btn-primary" href="generator-sklepu.html">Uruchom sklep</a>
+          <a class="btn btn-secondary" href="dashboard.html">Przejdź do panelu</a>
+        </div>
       </div>
 
-      <div id="auth-panel-email" class="auth-tab-panel" role="tabpanel">
-        <div class="demo-box">
-          <strong>Szybki start</strong>
-          <div>Nie chcesz backendu na start? Użyj zakładki <b>Demo (lokalnie)</b> i wejdź prosto do panelu.</div>
-          <div class="demo-note">To działa od razu w przeglądarce i nadaje się do testów platformy.</div>
-        </div>
-
+      <div id="auth-panel-email" class="auth-only-panel">
         <form class="form-card" data-login-form>
           <label>
             Email
@@ -127,6 +141,10 @@
           </div>
           <div style="text-align:center;margin-top:12px">
             <button type="button" class="btn-link" data-forgot-password-btn style="background:none;border:none;color:var(--accent,#7c3aed);font-size:.875rem;cursor:pointer;text-decoration:underline;padding:0">Nie pamiętam hasła</button>
+          </div>
+          <div class="login-direct-row">
+            <a class="btn btn-secondary" href="index.html">← Wróć na start</a>
+            <a class="btn btn-secondary" href="generator-sklepu.html">Generator sklepu</a>
           </div>
         </form>
 
@@ -157,23 +175,6 @@
           </div>
         </form>
       </div>
-
-      <div id="auth-panel-demo" class="auth-tab-panel" role="tabpanel" hidden>
-        <p class="hint" style="margin-bottom:16px">Logowanie demo — tylko do testów lokalnych. Nie wymaga backendu.</p>
-        <div class="form-card">
-          <p style="margin-bottom:12px">Wejdź do platformy jednym kliknięciem i od razu testuj dashboard, sklep i panele.</p>
-          <div class="demo-actions">
-            <button class="btn btn-primary" type="button" data-demo-login-btn>Wejdź jako sprzedawca (demo)</button>
-            <button class="btn btn-secondary" type="button" data-demo-owner-btn>Wejdź jako owner (demo)</button>
-          </div>
-          <p class="hint" style="margin-top:16px">
-            🔗 Platforma lokalnie:
-            <a href="sklep.html">sklep.html</a> ·
-            <a href="index.html">index.html</a> ·
-            <a href="dashboard.html">dashboard.html</a>
-          </p>
-        </div>
-      </div>
     </section>
 
     <section class="app-cta-section">
@@ -186,22 +187,6 @@
           <div class="app-cta-actions">
             <button class="btn btn-primary" type="button" data-app-install-open>Zainstaluj aplikację</button>
             <a class="btn btn-secondary" href="cennik.html">Sprawdź plany</a>
-          </div>
-          <div class="app-instructions">
-            <div>
-              <strong>iPhone</strong>
-              <ul>
-                <li>Udostępnij</li>
-                <li>Dodaj do ekranu głównego</li>
-              </ul>
-            </div>
-            <div>
-              <strong>Android</strong>
-              <ul>
-                <li>Menu przeglądarki</li>
-                <li>Zainstaluj aplikację</li>
-              </ul>
-            </div>
           </div>
         </div>
         <div class="app-cta-media">
@@ -432,32 +417,6 @@
           submitBtn.disabled = false;
           submitBtn.textContent = 'Zmień hasło';
         }
-      });
-    }
-
-    var demoSellerBtn = document.querySelector('[data-demo-login-btn]');
-    if (demoSellerBtn) {
-      demoSellerBtn.addEventListener('click', function () {
-        localStorage.setItem('qm_user', JSON.stringify({
-          role: 'seller',
-          name: 'Demo Seller',
-          email: 'demo@qualitetmarket.pl',
-          mode: 'demo'
-        }));
-        window.location.href = 'dashboard.html';
-      });
-    }
-
-    var demoOwnerBtn = document.querySelector('[data-demo-owner-btn]');
-    if (demoOwnerBtn) {
-      demoOwnerBtn.addEventListener('click', function () {
-        localStorage.setItem('qm_user', JSON.stringify({
-          role: 'owner',
-          name: 'Demo Owner',
-          email: 'owner@qualitetmarket.pl',
-          mode: 'demo'
-        }));
-        window.location.href = 'owner-panel.html';
       });
     }
 
