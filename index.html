@@ -1,6 +1,4 @@
-from pathlib import Path
-
-html = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
@@ -484,8 +482,3 @@ function go(page){
 
 </body>
 </html>
-"""
-
-path = Path("/mnt/data/index_gotowy.html")
-path.write_text(html, encoding="utf-8")
-print(path)
