@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Produkt - QualitetMarket</title>
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:#08112b;color:#fff}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+    .btn{border:none;border-radius:12px;padding:10px 14px;background:#6d5dfc;color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+    .box{display:grid;grid-template-columns:1fr 1fr;gap:24px;background:#111c44;border-radius:18px;padding:18px}
+    img{width:100%;border-radius:16px;background:#fff}
+    .muted{color:#b8c3ea}
+    .price{font-size:30px;font-weight:800;margin:14px 0}
+    @media(max-width:800px){.box{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Produkt</h1>
+      <a class="btn" href="sklep.html">← Wróć do sklepu</a>
+    </div>
+    <div id="product"></div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://dummyjson.com/products/';
+    const FALLBACK = {
+      1001:{id:1001,title:'Smartwatch Active X',description:'Lekki zegarek do codziennego użycia.',price:699,brand:'Qualitet',category:'wearables',thumbnail:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80'},
+      1002:{id:1002,title:'Słuchawki ANC Pro',description:'Bezprzewodowe słuchawki z redukcją szumów.',price:449,brand:'Qualitet',category:'audio',thumbnail:'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80'},
+      1003:{id:1003,title:'Beauty Set Glow',description:'Zestaw beauty z dobrym AOV.',price:189,brand:'Qualitet',category:'beauty',thumbnail:'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=80'},
+      1004:{id:1004,title:'Plecak City Travel',description:'Mocny produkt lifestyle.',price:259,brand:'Qualitet',category:'bags',thumbnail:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80'}
+    };
+
+    const id = new URLSearchParams(location.search).get('id');
+
+    async function loadProduct(){
+      if(!id){
+        document.getElementById('product').innerHTML = '<p>Brak ID produktu.</p>';
+        return;
+      }
+      try{
+        const res = await fetch(API_BASE + id,{cache:'no-store'});
+        const data = await res.json();
+        if(data && data.id) return render(data);
+        render(FALLBACK[id]);
+      }catch(e){
+        render(FALLBACK[id]);
+      }
+    }
+
+    function render(p){
+      if(!p){
+        document.getElementById('product').innerHTML = '<p>Nie znaleziono produktu.</p>';
+        return;
+      }
+      document.getElementById('product').innerHTML = `
+        <div class="box">
+          <div><img src="${p.thumbnail}" alt="${p.title}"></div>
+          <div>
+            <div class="muted">${p.category || ''} · ${p.brand || ''}</div>
+            <h2>${p.title}</h2>
+            <p class="muted">${p.description || ''}</p>
+            <div class="price">${p.price} zł</div>
+            <button class="btn" onclick='addToCart(${p.id}, ${JSON.stringify(p.title)})'>Dodaj do koszyka</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function addToCart(id,title){
+      const cart = JSON.parse(localStorage.getItem('qm_cart') || '[]');
+      const item = cart.find(x => x.id === id);
+      if(item) item.qty += 1;
+      else cart.push({id:id,title:title,qty:1});
+      localStorage.setItem('qm_cart', JSON.stringify(cart));
+      alert('Dodano do koszyka');
+    }
+
+    loadProduct();
+  </script>
+</body>
+</html>
