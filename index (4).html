@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QualitetMarket — SaaS Commerce Platform</title>
+<style>
+:root{--bg1:#040816;--bg2:#0c1633;--bg3:#101d46;--card:#101a40;--card2:#14245a;--text:#fff;--muted:#aeb8df;--stroke:rgba(255,255,255,.08);--primary1:#5f9cff;--primary2:#9f5fff;--cyan:#61dafb;--shadow:0 20px 50px rgba(0,0,0,.28);--radius:22px}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;font-family:Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 80% 0%, rgba(159,95,255,.18), transparent 22%),radial-gradient(circle at 15% 10%, rgba(95,156,255,.16), transparent 22%),linear-gradient(135deg,var(--bg1),var(--bg2) 48%,var(--bg3))}
+a{color:inherit;text-decoration:none} img{max-width:100%;display:block}
+.wrap{max-width:1260px;margin:0 auto;padding:0 20px}
+.topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(18px);background:rgba(4,8,22,.72);border-bottom:1px solid var(--stroke)}
+.topbar-inner{min-height:84px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.logo{display:flex;align-items:center;gap:12px}.logo-circle{width:48px;height:48px;border-radius:18px;background:linear-gradient(135deg,var(--primary1),var(--primary2));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;box-shadow:0 12px 28px rgba(95,156,255,.24)}
+.logo-meta b{font-size:28px;letter-spacing:-.6px}.logo-meta small{display:block;color:var(--muted);margin-top:2px}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:12px 16px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--primary1),var(--primary2));color:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 14px 28px rgba(95,156,255,.18);transition:transform .18s ease, box-shadow .18s ease}
+.btn:hover{transform:translateY(-2px);box-shadow:0 18px 36px rgba(95,156,255,.24)}
+.btn-soft{background:rgba(255,255,255,.05);border:1px solid var(--stroke);box-shadow:none}
+.nav{display:flex;gap:10px;flex-wrap:wrap;padding:14px 0 0}.nav .btn,.nav .btn-soft{min-width:112px}
+.hero{padding:34px 0 20px}.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:stretch}
+.hero-main,.hero-side{border:1px solid var(--stroke);border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));box-shadow:var(--shadow)}
+.hero-main{padding:30px;position:relative;overflow:hidden}.hero-main::after{content:"";position:absolute;right:-50px;top:-50px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle, rgba(97,218,251,.18), rgba(97,218,251,0) 70%)}
+.kicker,.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--stroke);font-size:12px;font-weight:800;color:#dbd8ff}
+.hero h1{margin:16px 0 16px;font-size:clamp(40px,6vw,76px);line-height:.97;letter-spacing:-2px}
+.hero p{margin:0;max-width:720px;color:var(--muted);font-size:clamp(18px,2vw,24px);line-height:1.45}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px}
+.hero-stat{padding:16px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--stroke)} .hero-stat strong{display:block;font-size:28px;margin-bottom:4px}.hero-stat span{color:var(--muted);font-size:13px;line-height:1.45}
+.hero-side{padding:18px;display:flex;flex-direction:column;gap:14px}
+.metric-card,.stack-card{padding:18px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid var(--stroke)} .metric-card small,.stack-card small{display:block;color:var(--muted);margin-bottom:8px}.metric-card strong{font-size:32px}
+.progress{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:12px}.progress span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary1),var(--primary2))}
+.stack-row{display:flex;justify-content:space-between;gap:12px;color:#dfe7ff;font-size:14px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}.stack-row:last-child{border-bottom:0}
+.section{padding:26px 0}.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}.section-head h2{margin:0;font-size:clamp(24px,3.2vw,38px);letter-spacing:-.8px}.section-head p{margin:0;color:var(--muted);max-width:760px;line-height:1.6}
+.social-bar{overflow:hidden;border:1px solid var(--stroke);border-radius:999px;background:rgba(255,255,255,.04);backdrop-filter:blur(10px)} .social-track{display:flex;gap:12px;padding:14px;width:max-content;animation:marquee 28s linear infinite}.social-bar:hover .social-track{animation-play-state:paused}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.social-pill{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:12px 15px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:14px;font-weight:700}
+.social-pill.facebook{box-shadow:inset 0 0 0 1px rgba(24,119,242,.35)} .social-pill.tiktok{box-shadow:inset 0 0 0 1px rgba(105,201,208,.35)} .social-pill.youtube{box-shadow:inset 0 0 0 1px rgba(255,0,0,.35)} .social-pill.instagram{box-shadow:inset 0 0 0 1px rgba(225,48,108,.35)}
+.apps-grid,.catalog-grid,.card-grid,.market-grid,.social-grid,.mobile-grid{display:grid;gap:18px}.apps-grid{grid-template-columns:repeat(5,1fr)}.catalog-grid{grid-template-columns:repeat(6,1fr)}.card-grid{grid-template-columns:repeat(3,1fr)}.market-grid{grid-template-columns:repeat(3,1fr)}.social-grid{grid-template-columns:1.1fr .9fr}.mobile-grid{grid-template-columns:1fr 1fr}
+.app-card,.card,.market-card,.catalog-card,.social-card,.mobile-card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--stroke);border-radius:var(--radius);box-shadow:var(--shadow);transition:transform .18s ease}.app-card:hover,.card:hover,.market-card:hover,.catalog-card:hover,.social-card:hover{transform:translateY(-4px)}
+.app-card,.catalog-card{text-align:center;padding:18px}.card,.social-card,.mobile-card{padding:22px}.market-card{overflow:hidden}
+.app-icon{width:58px;height:58px;border-radius:18px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+.app-card h3,.card h3,.market-card h3,.social-card h3,.mobile-card h3{margin:0 0 8px}.app-card p,.card p,.market-card p,.catalog-card p,.social-card p,.mobile-card p{margin:0;color:var(--muted);line-height:1.55;font-size:14px}
+.market-thumb{aspect-ratio:4/3;background:linear-gradient(135deg,rgba(95,156,255,.18),rgba(159,95,255,.2));display:flex;align-items:center;justify-content:center;font-size:54px}
+.market-body{padding:16px}.meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.meta-pill{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#dbe5ff}.price-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-weight:700}.price-row .price{font-size:22px;color:var(--cyan)}
+.catalog-card{min-height:136px;display:flex;flex-direction:column;justify-content:center}.catalog-card strong{display:block;font-size:18px;margin-bottom:6px}.catalog-badge{display:inline-block;margin-top:10px;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;background:rgba(95,156,255,.15);border:1px solid rgba(95,156,255,.28);color:#dce9ff}
+.video-shell{border-radius:20px;overflow:hidden;background:#0b0b12;border:1px solid rgba(255,255,255,.08)} .video-shell iframe{width:100%;aspect-ratio:16/9;border:0;display:block}
+.live-list{display:flex;flex-direction:column;gap:12px;margin-top:14px}.live-item{padding:14px 15px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)} .live-item strong{display:block;margin-bottom:5px}.live-item span{color:var(--muted);font-size:13px}
+.live-dot{width:10px;height:10px;border-radius:50%;background:#ff4fd8;box-shadow:0 0 10px #ff4fd8;display:inline-block;margin-right:8px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.62;transform:scale(1.28)}}
+.cta-banner{padding:22px 24px;border-radius:24px;border:1px solid rgba(95,156,255,.22);background:linear-gradient(90deg,rgba(95,156,255,.18),rgba(159,95,255,.18));display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.cta-banner p{margin:0;color:#dfe7ff}
+.mobile-mock{min-height:300px;border-radius:26px;padding:14px;background:linear-gradient(180deg,#0a1126,#111b3f);border:1px solid rgba(255,255,255,.08)} .mock-top{display:flex;justify-content:space-between;align-items:center;color:#cfd8ff;font-size:13px;margin-bottom:16px}.mock-mini{padding:14px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);margin-bottom:10px} .mock-mini strong{display:block;margin-bottom:5px}.mock-mini span{color:var(--muted);font-size:13px}
+.footer{padding:28px 0 70px;color:var(--muted);font-size:14px}
+@media (max-width:1180px){.hero-grid,.social-grid,.mobile-grid{grid-template-columns:1fr}.catalog-grid{grid-template-columns:repeat(3,1fr)}.apps-grid{grid-template-columns:repeat(3,1fr)}.card-grid,.market-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){.topbar-inner{min-height:unset;padding:14px 0;flex-direction:column;align-items:flex-start}.hero-stats{grid-template-columns:repeat(2,1fr)}.apps-grid,.card-grid,.market-grid,.catalog-grid{grid-template-columns:1fr}.nav .btn,.nav .btn-soft{flex:1}}
+@media (max-width:520px){.hero h1{font-size:40px}.hero-stats{grid-template-columns:1fr}.nav{display:grid;grid-template-columns:repeat(2,1fr)}.logo-meta b{font-size:22px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="logo">
+      <div class="logo-circle">Q</div>
+      <div class="logo-meta"><b>QualitetMarket</b><small>Platforma sprzedaży • social commerce • B2B • SaaS</small></div>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-soft" href="login.html">Login</a>
+      <a class="btn" href="koszyk.html">Koszyk</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="nav">
+    <a class="btn btn-soft" href="index.html">Start</a>
+    <a class="btn" href="sklep.html">Sklep</a>
+    <a class="btn btn-soft" href="feed.html">Feed</a>
+    <a class="btn btn-soft" href="hurtownie.html">B2B</a>
+    <a class="btn btn-soft" href="generator-sklepu.html">Generator</a>
+    <a class="btn btn-soft" href="dashboard.html">Panel</a>
+  </div>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="hero-main">
+        <span class="kicker">🔥 SOCIAL + MARKETPLACE + PANELE + B2B</span>
+        <h1>Jedna platforma.<br>Wszystko w jednym miejscu.</h1>
+        <p>Twórz sklepy, sprzedawaj przez social media, podpinaj hurtownie, zarządzaj produktami i rozwijaj biznes jak nowoczesny SaaS commerce system.</p>
+        <div class="hero-cta">
+          <a class="btn" href="generator-sklepu.html">⚡ Stwórz sklep w 60 sekund</a>
+          <a class="btn btn-soft" href="sklep.html">🛒 Otwórz marketplace</a>
+          <a class="btn btn-soft" href="dashboard.html">📊 Panel sterowania</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><strong>24/7</strong><span>sprzedaż, feed i zarządzanie</span></div>
+          <div class="hero-stat"><strong>B2B</strong><span>dostawcy i hurtownie w jednym miejscu</span></div>
+          <div class="hero-stat"><strong>LIVE</strong><span>social commerce i live shopping</span></div>
+          <div class="hero-stat"><strong>AI</strong><span>generator startu i automatyzacja sklepu</span></div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="metric-card"><small>Przychód dzisiaj</small><strong>12 480 zł</strong><div class="progress"><span style="width:74%"></span></div></div>
+        <div class="metric-card"><small>Aktywne zamówienia</small><strong>184</strong><div class="progress"><span style="width:58%"></span></div></div>
+        <div class="stack-card">
+          <small>Stack platformy</small>
+          <div class="stack-row"><span>Sklep i katalogi</span><b>Gotowe</b></div>
+          <div class="stack-row"><span>Koszyk i demo checkout</span><b>Live</b></div>
+          <div class="stack-row"><span>Feed / live / twórcy</span><b>Social</b></div>
+          <div class="stack-row"><span>Panele i generator</span><b>SaaS</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="social-bar">
+      <div class="social-track">
+        <a class="social-pill youtube" href="live.html">▶ YouTube live sprzedaż</a>
+        <a class="social-pill tiktok" href="feed.html">♪ TikTok bestsellery</a>
+        <a class="social-pill facebook" href="feed.html">f Facebook produkty</a>
+        <a class="social-pill instagram" href="feed.html">◎ Instagram Reels</a>
+        <span class="social-pill">📦 Nowe hurtownie</span>
+        <span class="social-pill">🛒 Trendujące katalogi</span>
+        <span class="social-pill">🚀 Creatorzy i afiliacja</span>
+        <span class="social-pill">💬 Społeczność sprzedawców</span>
+        <a class="social-pill youtube" href="live.html">▶ YouTube live sprzedaż</a>
+        <a class="social-pill tiktok" href="feed.html">♪ TikTok bestsellery</a>
+        <a class="social-pill facebook" href="feed.html">f Facebook produkty</a>
+        <a class="social-pill instagram" href="feed.html">◎ Instagram Reels</a>
+        <span class="social-pill">📦 Nowe hurtownie</span>
+        <span class="social-pill">🛒 Trendujące katalogi</span>
+        <span class="social-pill">🚀 Creatorzy i afiliacja</span>
+        <span class="social-pill">💬 Społeczność sprzedawców</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><span class="eyebrow">Aplikacje społecznościowe</span><h2>Sprzedawaj tam, gdzie ludzie spędzają czas</h2></div>
+      <p>Pod social commerce: Facebook, TikTok, Instagram, YouTube, live selling, afilianci, twórcy i community. To ma przyciągać ruch, a nie być zwykłym katalogiem.</p>
+    </div>
+    <div class="apps-grid">
+      <a class="app-card" href="feed.html"><div class="app-icon">f</div><h3>Facebook</h3><p>Posty produktowe, community, social traffic.</p></a>
+      <a class="app-card" href="feed.html"><div class="app-icon">♪</div><h3>TikTok</h3><p>Shorty, trendujące produkty i virale sprzedażowe.</p></a>
+      <a class="app-card" href="feed.html"><div class="app-icon">◎</div><h3>Instagram</h3><p>Stories, reels i estetyczne prezentacje marek.</p></a>
+      <a class="app-card" href="live.html"><div class="app-icon">▶</div><h3>YouTube</h3><p>Live sprzedaż, poradniki i content creatorów.</p></a>
+      <a class="app-card" href="community.html"><div class="app-icon">💬</div><h3>Społeczność</h3><p>Twórcy, sprzedawcy i marki w jednym miejscu.</p></a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><span class="eyebrow">Core platformy</span><h2>Moduły SaaS, które prowadzą do sprzedaży</h2></div>
+      <p>Każdy moduł ma swoją rolę: ruch, katalog, produkty, generator, panel, hurtownie i zakupy. To ma wyglądać jak pełna platforma produktowa.</p>
+    </div>
+    <div class="card-grid">
+      <div class="card"><h3>🛒 Marketplace</h3><p>Sklep z produktami, kartą produktu, koszykiem i katalogiem pod sprzedaż online.</p><a class="btn" href="sklep.html">Wejdź do sklepu</a></div>
+      <div class="card"><h3>⚡ Generator sklepu</h3><p>Tworzenie sklepu w 60 sekund, onboarding i szybki start dla nowych sprzedawców.</p><a class="btn" href="generator-sklepu.html">Uruchom generator</a></div>
+      <div class="card"><h3>📊 Dashboard</h3><p>Panel do zarządzania sprzedażą, kontem, ruchem, twórcami i operacjami sklepu.</p><a class="btn" href="dashboard.html">Otwórz panel</a></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><span class="eyebrow">Kategorie i katalogi</span><h2>Sklep musi mieć katalog, kategorie i wejścia sprzedażowe</h2></div>
+      <p>To jest blok pod marketplace: wejście w kategorie, katalogi i segmenty, żeby użytkownik wiedział co kupować i gdzie kliknąć.</p>
+    </div>
+    <div class="catalog-grid">
+      <a class="catalog-card" href="sklep.html"><strong>Elektronika</strong><p>Gadżety, audio, smart home, akcesoria.</p><span class="catalog-badge">Top sprzedaż</span></a>
+      <a class="catalog-card" href="sklep.html"><strong>Dom i ogród</strong><p>Produkty do domu, organizacja i dekoracje.</p><span class="catalog-badge">Katalog</span></a>
+      <a class="catalog-card" href="sklep.html"><strong>Beauty</strong><p>Kosmetyki, pielęgnacja, zestawy premium.</p><span class="catalog-badge">Trend</span></a>
+      <a class="catalog-card" href="sklep.html"><strong>Fashion</strong><p>Styl, dodatki, akcesoria i lifestyle.</p><span class="catalog-badge">Nowe</span></a>
+      <a class="catalog-card" href="sklep.html"><strong>Sport</strong><p>Aktywność, outdoor, trening i zdrowie.</p><span class="catalog-badge">Hot</span></a>
+      <a class="catalog-card" href="sklep.html"><strong>B2B Hurt</strong><p>Hurtownie, dostawcy i import katalogów.</p><span class="catalog-badge">B2B</span></a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><span class="eyebrow">Przykładowe oferty</span><h2>Układ marketplace pod sprzedaż</h2></div>
+      <p>Lepsza ekspozycja produktów, cena, etykiety i CTA. To daje wrażenie prawdziwego marketplace, a nie pustej strony.</p>
+    </div>
+    <div class="market-grid">
+      <article class="market-card"><div class="market-thumb">🎧</div><div class="market-body"><div class="meta-row"><span class="meta-pill">Audio</span><span class="meta-pill">Bestseller</span></div><h3>Słuchawki ANC Pro</h3><p>Bezprzewodowe słuchawki premium z redukcją szumów i mocnym AOV.</p><div class="price-row"><span class="price">449 zł</span><a class="btn btn-soft" href="sklep.html">Zobacz</a></div></div></article>
+      <article class="market-card"><div class="market-thumb">⌚</div><div class="market-body"><div class="meta-row"><span class="meta-pill">Wearables</span><span class="meta-pill">Nowe</span></div><h3>Smartwatch Active X</h3><p>Nowoczesny zegarek do codziennej sprzedaży i kampanii social commerce.</p><div class="price-row"><span class="price">699 zł</span><a class="btn btn-soft" href="sklep.html">Zobacz</a></div></div></article>
+      <article class="market-card"><div class="market-thumb">💄</div><div class="market-body"><div class="meta-row"><span class="meta-pill">Beauty</span><span class="meta-pill">Trend</span></div><h3>Beauty Set Glow</h3><p>Zestaw do kampanii influencerów, shortów i sprzedaży live.</p><div class="price-row"><span class="price">189 zł</span><a class="btn btn-soft" href="sklep.html">Zobacz</a></div></div></article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><span class="eyebrow">Social commerce</span><h2>Video, live i sprzedaż z mediów</h2></div>
+      <p>To jest hook sprzedażowy. Pokazujesz produkt, zbierasz uwagę, budujesz zaufanie i kierujesz do zakupu lub feedu.</p>
+    </div>
+    <div class="social-grid">
+      <div class="social-card">
+        <div class="video-shell"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="QualitetMarket video" loading="lazy" allowfullscreen></iframe></div>
+        <h3>Video sprzedażowe jak short / reel</h3>
+        <p>Blok video daje ruch, pokazuje energię platformy i wzmacnia odbiór marki jako nowoczesnego commerce SaaS.</p>
+        <a class="btn" href="feed.html">Przejdź do feedu</a>
+      </div>
+      <div class="social-card">
+        <h3>Live commerce teraz</h3>
+        <div class="live-list">
+          <div class="live-item"><strong><span class="live-dot"></span>Live sprzedaż elektroniki</strong><span>128 ogląda teraz</span></div>
+          <div class="live-item"><strong><span class="live-dot"></span>Nowe produkty z hurtowni</strong><span>76 ogląda teraz</span></div>
+          <div class="live-item"><strong><span class="live-dot"></span>Promo creatorów</strong><span>54 ogląda teraz</span></div>
+        </div>
+        <a class="btn" href="live.html">Oglądaj live</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="cta-banner">
+      <p><b>Gotowe pod start:</b> sklep, social, katalogi, panele, hurtownie, mobile i wejście demo. Wszystko pod jednym brandem.</p>
+      <a class="btn" href="dashboard.html">Wejdź do panelu</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><span class="eyebrow">Mobile app feeling</span><h2>Aplikacja mobilna na dole strony</h2></div>
+      <p>To jest dodatkowy blok premium — wygląda jak mobilny panel i domyka stronę jak pełny produkt SaaS.</p>
+    </div>
+    <div class="mobile-grid">
+      <div class="mobile-card">
+        <h3>Platforma działa też jak aplikacja</h3>
+        <p>Po wejściu z telefonu możesz korzystać z platformy jak z aplikacji mobilnej: sklep, panel, zamówienia, live i generator w jednym miejscu.</p>
+        <div class="hero-cta">
+          <a class="btn" href="dashboard.html">Otwórz panel</a>
+          <a class="btn btn-soft" href="sklep.html">Przejdź do sklepu</a>
+        </div>
+      </div>
+      <div class="mobile-card">
+        <div class="mobile-mock">
+          <div class="mock-top"><span>QualitetMarket App</span><span>● online</span></div>
+          <div class="mock-mini"><strong>Nowe zamówienia</strong><span>12 oczekujących</span></div>
+          <div class="mock-mini"><strong>Generator sklepu</strong><span>Sklep 60 sekund aktywny</span></div>
+          <div class="mock-mini"><strong>Panel właściciela</strong><span>Wgląd do platformy i ruchu</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">© 2026 QualitetMarket — SaaS commerce platform pod sklep, social media, hurtownie i sprzedaż.</footer>
+</main>
+</body>
+</html>
