@@ -2,6 +2,14 @@
   "version": 2,
   "buildCommand": "",
   "outputDirectory": ".",
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "qualitet-market.com" }],
+      "destination": "https://www.qualitet-market.com/$1",
+      "permanent": true
+    }
+  ],
   "routes": [
     { "src": "/sklep",     "dest": "/sklep.html",   "status": 301 },
     { "src": "/sklep/(.*)", "dest": "/sklep.html",  "status": 200 },

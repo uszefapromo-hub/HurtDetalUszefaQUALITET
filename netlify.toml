@@ -2,6 +2,13 @@
   publish = "."
   command = ""
 
+# Redirect bare domain to www
+[[redirects]]
+  from = "https://qualitet-market.com/*"
+  to = "https://www.qualitet-market.com/:splat"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/"
   to = "/index.html"
