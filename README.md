@@ -2,6 +2,10 @@
 
 Link do podglądu platformy: https://uszefaqualitet.pl
 
+## 🚀 Wdrożenie (Netlify / Vercel / GitHub Pages / Railway)
+
+Instrukcja szybkiego wystawienia panelu publicznie: [`DEPLOY.md`](DEPLOY.md)
+
 ## Backend API
 
 Pełna dokumentacja backendu: [`backend/README.md`](backend/README.md)
