@@ -89,7 +89,7 @@
         </div>
       </section>
 
-      <div data-owner-content>
+      <div data-owner-content hidden>
 
         <!-- TAB: OVERVIEW -->
         <div class="owner-tab-panel" data-owner-tab-panel="overview">
@@ -978,6 +978,31 @@
               <h2>Aktywność operatorów</h2>
             </div>
             <div class="list-cards" data-op-activity-list></div>
+          </section>
+
+          <section class="panel-card">
+            <div class="section-head">
+              <span class="eyebrow">Nowy operator</span>
+              <h2>Dodaj operatora</h2>
+              <p class="hint">Utwórz konto operatora z dostępem do wybranych funkcji platformy.</p>
+            </div>
+            <form class="form-card" data-add-operator-form>
+              <div class="owner-toolbar">
+                <label class="form-field">
+                  Imię i nazwisko
+                  <input class="owner-input" type="text" name="name" placeholder="Jan Kowalski" required>
+                </label>
+                <label class="form-field">
+                  Adres e-mail
+                  <input class="owner-input" type="email" name="email" placeholder="operator@firma.pl" required>
+                </label>
+              </div>
+              <div class="cta-row" style="margin-top:12px">
+                <button class="btn btn-primary" type="submit">Dodaj operatora</button>
+                <span class="hint" data-add-operator-success hidden>✅ Operator dodany!</span>
+                <span class="hint" data-add-operator-error hidden style="color:#ff7272"></span>
+              </div>
+            </form>
           </section>
         </div>
 
