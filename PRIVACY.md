@@ -2,7 +2,7 @@
 
 **Effective date:** 1 January 2026  
 **Data Controller:** Henryk Ślusarski  
-**Platform:** QualitetVerse (uszefaqualitet.pl)
+**Platform:** QualitetVerse (qualitet-market.com)
 
 ---
 

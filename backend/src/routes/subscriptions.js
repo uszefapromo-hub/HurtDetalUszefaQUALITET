@@ -387,7 +387,7 @@ router.post(
         [subId, shopId, plan, config.product_limit, config.commission_rate, expiresAt]
       );
 
-      const base = process.env.APP_URL || 'https://uszefaqualitet.pl';
+      const base = process.env.APP_URL || 'https://www.qualitet-market.com';
       const envKey = `STRIPE_PRICE_ID_${plan.toUpperCase()}`;
       const stripePriceId = process.env[envKey];
 
@@ -488,7 +488,7 @@ router.post(
         });
       }
 
-      const base = process.env.APP_URL || 'https://uszefaqualitet.pl';
+      const base = process.env.APP_URL || 'https://www.qualitet-market.com';
 
       // Prefer a pre-configured recurring Price ID; fall back to one-time payment
       const envKey = `STRIPE_PRICE_ID_${plan.toUpperCase()}`;
@@ -627,7 +627,7 @@ router.get('/my-billing', authenticate, async (req, res) => {
       }
     }
 
-    const base = process.env.APP_URL || 'https://uszefaqualitet.pl';
+    const base = process.env.APP_URL || 'https://www.qualitet-market.com';
     let customerPortalUrl = null;
     if (stripe && user.stripe_customer_id) {
       try {

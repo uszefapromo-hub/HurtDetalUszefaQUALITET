@@ -1819,7 +1819,7 @@ router.post(
             },
           });
           await transporter.sendMail({
-            from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@uszefaqualitet.pl',
+            from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@qualitet-market.com',
             to,
             subject,
             text: msgBody,

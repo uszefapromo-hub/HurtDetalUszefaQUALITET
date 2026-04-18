@@ -24,7 +24,7 @@ const router = express.Router();
 const REFERRAL_COMMISSION_RATE = 0.02;
 
 // Base URL for building invite links
-const BASE_URL = process.env.FRONTEND_URL || 'https://uszefaqualitet.pl';
+const BASE_URL = process.env.FRONTEND_URL || 'https://www.qualitet-market.com';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

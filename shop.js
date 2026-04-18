@@ -115,7 +115,7 @@
     if(!preview){
       return;
     }
-    preview.textContent = slug ? `Adres: uszefaqualitet.pl/${slug}` : 'Adres: —';
+    preview.textContent = slug ? `Adres: qualitet-market.com/${slug}` : 'Adres: —';
   }
 
   function normalizeMargin(rawValue){
@@ -468,7 +468,7 @@
   }
 
   function loadShopFromApi(slug, shop){
-    const apiBase = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
+    const apiBase = window.QM_API_BASE || 'https://api.qualitet-market.com/api';
     const content = shop.querySelector('[data-store-content]');
     const emptyState = shop.querySelector('[data-store-empty]');
 
@@ -645,7 +645,7 @@
   }
 
   function loadFeedSection(gridEl, emptyEl, section, limit){
-    const apiBase = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
+    const apiBase = window.QM_API_BASE || 'https://api.qualitet-market.com/api';
     const safeLimit = Math.max(1, Math.min(100, parseInt(limit) || 20));
     fetch(`${apiBase}/feed?section=${encodeURIComponent(section)}&limit=${safeLimit}`)
       .then(r => r.ok ? r.json() : null)
@@ -738,7 +738,7 @@
   }
 
   function loadStoreFeedProducts(shop){
-    const apiBase = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
+    const apiBase = window.QM_API_BASE || 'https://api.qualitet-market.com/api';
 
     // Recommended products → #polecane grid
     const recGrid = shop.querySelector('[data-store-products-grid]');

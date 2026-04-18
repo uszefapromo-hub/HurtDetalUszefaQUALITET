@@ -12,7 +12,7 @@
   'use strict';
 
   const API_BASE = (typeof window !== 'undefined' && window.QM_API_BASE)
-    || 'https://api.uszefaqualitet.pl/api';
+    || 'https://api.qualitet-market.com/api';
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 

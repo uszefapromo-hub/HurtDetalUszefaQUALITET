@@ -12,7 +12,7 @@
   <link rel="icon" type="image/svg+xml" sizes="192x192" href="../assets/icons/icon-192.svg">
   <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.svg">
   <link rel="stylesheet" href="../panel.css">
-  <script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>
+  <script>window.QM_API_BASE = 'https://api.qualitet-market.com/api';</script>
   <style>
     .seller-grid {
       display: grid;
@@ -584,7 +584,7 @@
           statusEl.textContent = 'Ładowanie katalogu…';
           statusEl.hidden = false;
 
-          var apiBase = (window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api');
+          var apiBase = (window.QM_API_BASE || 'https://api.qualitet-market.com/api');
           var token = '';
           try { token = localStorage.getItem('qm_token') || ''; } catch (e) { console.error('[seller/dashboard] Failed to retrieve token:', e); }
 

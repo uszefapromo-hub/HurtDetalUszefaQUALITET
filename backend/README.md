@@ -353,7 +353,7 @@ Testy używają mocków bazy danych – nie wymagają połączenia z PostgreSQL.
 
 ### Konfiguracja
 
-- [ ] Ustaw `API_BASE_URL` w frontend (np. `https://api.uszefaqualitet.pl/api`)
+- [ ] Ustaw `API_BASE_URL` w frontend (np. `https://api.qualitet-market.com/api`)
 - [ ] Obsłuż token JWT – przechowuj w `localStorage` jako `qm_token`
 - [ ] Dodaj nagłówek `Authorization: Bearer <token>` do każdego żądania
 
