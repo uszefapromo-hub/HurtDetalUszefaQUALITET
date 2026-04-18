@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QualitetMarket — Centrum publikacji i integracji</title>
+  <style>
+    :root{
+      --bg:#07111f;--bg2:#0d1830;--panel:#111c31;--panel2:#16233d;--stroke:rgba(255,255,255,.08);
+      --text:#f5f7fb;--muted:#9db0d0;--accent:#8b5cf6;--accent2:#00d4ff;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--radius:18px;
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#050c18,#0a1527 30%,#09121f);color:var(--text)}
+    .wrap{max-width:1500px;margin:0 auto;padding:24px}
+    .hero,.card{background:rgba(17,28,49,.92);border:1px solid var(--stroke);border-radius:var(--radius);box-shadow:0 18px 48px rgba(0,0,0,.28)}
+    .hero{padding:24px;margin-bottom:18px}
+    h1,h2,h3{margin:0 0 12px} p{color:var(--muted);line-height:1.55}
+    .grid{display:grid;gap:16px}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{padding:18px}
+    .field{display:grid;gap:6px;margin-bottom:10px}
+    label{font-size:12px;color:#c2d0e7}
+    input,textarea,select{width:100%;border-radius:12px;border:1px solid var(--stroke);background:var(--panel2);color:var(--text);padding:12px}
+    textarea{min-height:120px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{border:1px solid var(--stroke);background:rgba(255,255,255,.03);color:var(--text);border-radius:12px;padding:10px 14px;cursor:pointer}
+    .btn:hover{background:rgba(255,255,255,.08)}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),#6d28d9);border-color:transparent}
+    .btn-success{background:linear-gradient(135deg,#15803d,#22c55e);border-color:transparent}
+    .btn-warn{background:linear-gradient(135deg,#b45309,#f59e0b);border-color:transparent}
+    .status{padding:12px;border-radius:14px;border:1px solid var(--stroke);background:rgba(255,255,255,.02);white-space:pre-wrap}
+    .pill{display:inline-flex;padding:6px 10px;border-radius:999px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.22);color:#bff4ff;font-size:12px;margin:0 8px 8px 0}
+    .editor{min-height:420px}
+    .small{font-size:12px;color:var(--muted)}
+    .list a{display:block;padding:10px 12px;border:1px solid var(--stroke);border-radius:12px;background:rgba(255,255,255,.02);margin-bottom:8px;color:var(--text);text-decoration:none}
+    @media(max-width:1024px){.grid-3,.grid-2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>🚀 Centrum publikacji i integracji</h1>
+      <p>Tu ustawiasz Stripe, Netlify, Zoho Mail, domenę i generujesz pliki konfiguracyjne bez wychodzenia z ekranu. Owner panel służy do zarządzania platformą, a ten ekran do publikacji, integracji i plików.</p>
+      <div>
+        <span class="pill">www.qualitet-market.com</span>
+        <span class="pill">Stripe checkout + webhook</span>
+        <span class="pill">Netlify deploy hook</span>
+        <span class="pill">Zoho SMTP</span>
+        <span class="pill">Pliki .env / netlify.toml / CNAME</span>
+      </div>
+    </section>
+
+    <section class="grid grid-3">
+      <article class="card">
+        <h2>Połączenie z backendem</h2>
+        <div class="field"><label>API base URL</label><input id="apiBase" placeholder="https://api.qualitet-market.com/api"></div>
+        <div class="field"><label>Owner Bearer token</label><input id="apiToken" type="password" placeholder="token owner/admin"></div>
+        <div class="row">
+          <button class="btn btn-primary" onclick="saveLocal()">Zapisz lokalnie</button>
+          <button class="btn" onclick="loadStatus()">Pobierz status</button>
+        </div>
+        <p class="small">Ta strona zapisuje token i API lokalnie w przeglądarce. Do zapisu konfiguracji na backendzie musisz być zalogowany jako owner/admin.</p>
+      </article>
+
+      <article class="card">
+        <h2>Akcje publikacji</h2>
+        <div class="field"><label>Netlify build hook URL</label><input id="netlifyBuildHook" placeholder="https://api.netlify.com/build_hooks/..."></div>
+        <div class="row">
+          <button class="btn btn-success" onclick="saveAndSync()">Zapisz na backendzie</button>
+          <button class="btn btn-warn" onclick="triggerDeploy()">Odpal deploy Netlify</button>
+        </div>
+        <p class="small">Netlify używa build hooków do uruchamiania deployów. Zmiennych środowiskowych nie da się bezpiecznie osadzić w samym froncie — zapisujemy je po stronie backendu. citeturn945526search0turn916300search1</p>
+      </article>
+
+      <article class="card">
+        <h2>Akcje poczty</h2>
+        <div class="field"><label>Adres testowy</label><input id="mailTestTo" placeholder="np. owner@qualitet-market.com"></div>
+        <div class="row">
+          <button class="btn" onclick="sendTestMail()">Wyślij test Zoho SMTP</button>
+          <button class="btn" onclick="renderTemplates()">Odśwież pliki</button>
+        </div>
+        <p class="small">Zoho Mail dla klientów pocztowych używa IMAP/SMTP i przy 2FA może wymagać hasła aplikacji. citeturn916300search2turn916300search5</p>
+      </article>
+    </section>
+
+    <section class="grid grid-2" style="margin-top:16px">
+      <article class="card">
+        <h2>Stripe</h2>
+        <div class="field"><label>APP URL</label><input id="appUrl" value="https://www.qualitet-market.com"></div>
+        <div class="field"><label>STRIPE_SECRET_KEY</label><input id="stripeSecret" type="password" placeholder="sk_live_... lub sk_test_..."></div>
+        <div class="field"><label>STRIPE_PUBLISHABLE_KEY</label><input id="stripePublishable" placeholder="pk_live_... lub pk_test_..."></div>
+        <div class="field"><label>STRIPE_WEBHOOK_SECRET</label><input id="stripeWebhook" type="password" placeholder="whsec_..."></div>
+        <div class="grid grid-2">
+          <div class="field"><label>Price ID Basic</label><input id="priceBasic" placeholder="price_..."></div>
+          <div class="field"><label>Price ID Pro</label><input id="pricePro" placeholder="price_..."></div>
+          <div class="field"><label>Price ID Elite</label><input id="priceElite" placeholder="price_..."></div>
+          <div class="field"><label>Price ID Premium</label><input id="pricePremium" placeholder="price_..."></div>
+          <div class="field"><label>Price ID Supplier Basic</label><input id="priceSupplierBasic" placeholder="price_..."></div>
+          <div class="field"><label>Price ID Supplier Pro</label><input id="priceSupplierPro" placeholder="price_..."></div>
+          <div class="field"><label>Price ID Brand</label><input id="priceBrand" placeholder="price_..."></div>
+          <div class="field"><label>Price ID Artist Pro</label><input id="priceArtistPro" placeholder="price_..."></div>
+        </div>
+        <p class="small">Stripe Checkout działa przez tworzenie Checkout Session po stronie serwera, a webhook endpoint służy do odbierania zdarzeń. To już dopiąłem w backendzie; teraz wystarczy wpisać klucze i sekrety. citeturn916300search0turn916300search6turn916300search12</p>
+      </article>
+
+      <article class="card">
+        <h2>Zoho Mail</h2>
+        <div class="field"><label>Adres organizacji / owner</label><input id="zohoOrgEmail" placeholder="owner@qualitet-market.com"></div>
+        <div class="grid grid-2">
+          <div class="field"><label>SMTP host</label><input id="smtpHost" value="smtp.zoho.eu"></div>
+          <div class="field"><label>SMTP port</label><input id="smtpPort" value="465"></div>
+          <div class="field"><label>SMTP secure</label><select id="smtpSecure"><option value="true">true</option><option value="false">false</option></select></div>
+          <div class="field"><label>SMTP from</label><input id="smtpFrom" placeholder="noreply@qualitet-market.com"></div>
+          <div class="field"><label>SMTP user</label><input id="smtpUser" placeholder="noreply@qualitet-market.com"></div>
+          <div class="field"><label>SMTP pass / hasło aplikacji</label><input id="smtpPass" type="password" placeholder="hasło SMTP / app password"></div>
+          <div class="field"><label>IMAP host</label><input id="imapHost" value="imap.zoho.eu"></div>
+          <div class="field"><label>IMAP port</label><input id="imapPort" value="993"></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid grid-2" style="margin-top:16px">
+      <article class="card">
+        <h2>Netlify + domena</h2>
+        <div class="grid grid-2">
+          <div class="field"><label>Public domain</label><input id="publicDomain" value="https://www.qualitet-market.com"></div>
+          <div class="field"><label>Allowed origins</label><input id="allowedOrigins" value="https://www.qualitet-market.com,http://localhost:3000"></div>
+          <div class="field"><label>Netlify site ID</label><input id="netlifySiteId" placeholder="site-id"></div>
+          <div class="field"><label>Netlify access token</label><input id="netlifyToken" type="password" placeholder="personal access token"></div>
+          <div class="field"><label>Publish directory</label><input id="netlifyPublish" value="."></div>
+          <div class="field"><label>Build command</label><input id="netlifyCommand" placeholder="npm run build"></div>
+          <div class="field"><label>Production branch</label><input id="netlifyBranch" value="main"></div>
+        </div>
+        <p class="small">Netlify pozwala ustawiać env-y w UI, CLI, API albo pliku konfiguracyjnym, a build hooki uruchamiają nowe deploye. citeturn916300search1turn945526search0turn945526search5</p>
+      </article>
+
+      <article class="card">
+        <h2>Pliki do publikacji</h2>
+        <div class="field">
+          <label>Wybierz plik do edycji / eksportu</label>
+          <select id="templateSelector" onchange="renderTemplates()">
+            <option value="env">backend/storage/runtime-config.json</option>
+            <option value="dotenv">backend/.env</option>
+            <option value="netlify">netlify.toml</option>
+            <option value="cname">CNAME</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn" onclick="copyTemplate()">Kopiuj</button>
+          <button class="btn" onclick="downloadTemplate()">Pobierz plik</button>
+          <button class="btn" onclick="renderTemplates()">Generuj ponownie</button>
+        </div>
+        <textarea id="templateOutput" class="editor"></textarea>
+      </article>
+    </section>
+
+
+    <section class="grid grid-2" style="margin-top:16px">
+      <article class="card" id="suppliersConfig">
+        <h2>Hurtownie i auto import</h2>
+        <div class="grid grid-2">
+          <div class="field"><label>BigBuy API Key</label><input id="bigbuyApiKey" type="password" placeholder="wklej klucz BigBuy"></div>
+          <div class="field"><label>BigBuy Secret / Token</label><input id="bigbuySecret" type="password" placeholder="wklej sekret BigBuy"></div>
+          <div class="field"><label>BaseLinker token</label><input id="baselinkerToken" type="password" placeholder="jeśli używasz"></div>
+          <div class="field"><label>IdoSell API key</label><input id="idosellApiKey" type="password" placeholder="jeśli używasz"></div>
+          <div class="field"><label>XML / CSV feed URL</label><input id="xmlFeedUrl" placeholder="https://dostawca.pl/feed.xml"></div>
+          <div class="field"><label>Auto import co 24h</label><select id="autoImportEnabled"><option value="true">true</option><option value="false">false</option></select></div>
+        </div>
+        <p class="small">Wpisujesz klucze tylko raz. Potem możesz pobrać gotowy plik konfiguracyjny i wkleić go do backendu albo zostawić zapis lokalny do dalszej konfiguracji.</p>
+      </article>
+
+      <article class="card" id="aiConfig">
+        <h2>AI, analityka i ułatwienia</h2>
+        <div class="grid grid-2">
+          <div class="field"><label>OpenAI API key</label><input id="openaiApiKey" type="password" placeholder="opcjonalnie"></div>
+          <div class="field"><label>ElevenLabs API key</label><input id="elevenlabsApiKey" type="password" placeholder="opcjonalnie"></div>
+          <div class="field"><label>Meta Pixel ID</label><input id="metaPixelId" placeholder="1234567890"></div>
+          <div class="field"><label>Google Analytics Measurement ID</label><input id="gaMeasurementId" placeholder="G-XXXXXXXXXX"></div>
+        </div>
+        <p class="small">Te pola są opcjonalne. Uzupełniasz je tylko wtedy, gdy chcesz od razu mieć reklamy, analitykę i automaty AI.</p>
+      </article>
+    </section>
+
+    <section class="grid grid-2" style="margin-top:16px">
+      <article class="card" id="launchChecklist">
+        <h2>Checklista startowa</h2>
+        <div id="launchChecklistBox" class="status">Trwa analiza konfiguracji…</div>
+      </article>
+      <article class="card">
+        <h2>Co jeszcze musisz zrobić ręcznie</h2>
+        <div class="list">
+          <a href="#suppliersConfig">1. Wpisz klucze hurtowni</a>
+          <a href="#aiConfig">2. Wpisz klucze AI i analityki</a>
+          <a href="#templateOutput">3. Pobierz backend/.env lub runtime-config.json</a>
+          <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener">4. Wejdź do Stripe i skopiuj klucze</a>
+          <a href="https://www.bigbuy.eu/account/settings/api" target="_blank" rel="noopener">5. Wejdź do BigBuy i skopiuj API</a>
+          <a href="hurtownie.html" target="_blank">6. Otwórz hurtownie i sprawdź katalog</a>
+          <a href="sklep.html" target="_blank">7. Otwórz sklep i sprawdź produkty</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid grid-2" style="margin-top:16px">
+      <article class="card">
+        <h2>Status</h2>
+        <div id="statusBox" class="status">Brak odczytu. Kliknij "Pobierz status".</div>
+      </article>
+      <article class="card">
+        <h2>Szybkie pliki / sekcje</h2>
+        <div class="list">
+          <a href="owner-panel.html" target="_parent">← Wróć do owner panelu</a>
+          <a href="dashboard.html" target="_blank">dashboard.html</a>
+          <a href="sklep.html" target="_blank">sklep.html</a>
+          <a href="cennik.html" target="_blank">cennik.html</a>
+          <a href="panel-sklepu.html" target="_blank">panel-sklepu.html</a>
+          <a href="panel-dostawcy.html" target="_blank">panel-dostawcy.html</a>
+          <a href="panel-artysty.html" target="_blank">panel-artysty.html</a>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <script>
+    
+    const STORE_KEY = 'qualitet.publish.center';
+
+    function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+    function setVal(id, value){ const el = document.getElementById(id); if(el) el.value = value || ''; }
+    function boolVal(id){ return val(id) === 'true'; }
+
+    function getPayload(){
+      return {
+        app: {
+          app_url: val('appUrl'),
+          dashboard_url: (val('publicDomain') || '') + '/owner-panel.html',
+          allowed_origins: val('allowedOrigins'),
+          public_domain: val('publicDomain'),
+          api_base_url: val('apiBase'),
+        },
+        stripe: {
+          secret_key: val('stripeSecret'),
+          publishable_key: val('stripePublishable'),
+          webhook_secret: val('stripeWebhook'),
+          price_ids: {
+            basic: val('priceBasic'),
+            pro: val('pricePro'),
+            elite: val('priceElite'),
+            premium: val('pricePremium'),
+            supplier_basic: val('priceSupplierBasic'),
+            supplier_pro: val('priceSupplierPro'),
+            brand: val('priceBrand'),
+            artist_pro: val('priceArtistPro')
+          }
+        },
+        suppliers: {
+          bigbuy_api_key: val('bigbuyApiKey'),
+          bigbuy_secret: val('bigbuySecret'),
+          baselinker_token: val('baselinkerToken'),
+          idosell_api_key: val('idosellApiKey'),
+          xml_feed_url: val('xmlFeedUrl'),
+          auto_import_enabled: boolVal('autoImportEnabled')
+        },
+        ai: {
+          openai_api_key: val('openaiApiKey'),
+          elevenlabs_api_key: val('elevenlabsApiKey'),
+          meta_pixel_id: val('metaPixelId'),
+          ga_measurement_id: val('gaMeasurementId')
+        },
+        netlify: {
+          site_id: val('netlifySiteId'),
+          access_token: val('netlifyToken'),
+          build_hook_url: val('netlifyBuildHook'),
+          publish_dir: val('netlifyPublish'),
+          build_command: val('netlifyCommand'),
+          production_branch: val('netlifyBranch'),
+        },
+        zoho: {
+          org_email: val('zohoOrgEmail'),
+          smtp_host: val('smtpHost'),
+          smtp_port: val('smtpPort'),
+          smtp_secure: val('smtpSecure'),
+          smtp_user: val('smtpUser'),
+          smtp_pass: val('smtpPass'),
+          smtp_from: val('smtpFrom'),
+          imap_host: val('imapHost'),
+          imap_port: val('imapPort'),
+        }
+      };
+    }
+
+    function saveLocal(){
+      localStorage.setItem(STORE_KEY, JSON.stringify({ payload:getPayload(), token: val('apiToken') }));
+      setStatus('Zapisano lokalnie w przeglądarce.');
+      renderTemplates();
+      renderChecklist();
+    }
+
+    function loadLocal(){
+      try{
+        const raw = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+        if(raw.payload){
+          const p = raw.payload;
+          setVal('apiToken', raw.token || '');
+          setVal('apiBase', p.app?.api_base_url || '');
+          setVal('appUrl', p.app?.app_url || 'https://www.qualitet-market.com');
+          setVal('publicDomain', p.app?.public_domain || 'https://www.qualitet-market.com');
+          setVal('allowedOrigins', p.app?.allowed_origins || 'https://www.qualitet-market.com,http://localhost:3000');
+          setVal('stripeSecret', p.stripe?.secret_key || '');
+          setVal('stripePublishable', p.stripe?.publishable_key || '');
+          setVal('stripeWebhook', p.stripe?.webhook_secret || '');
+          setVal('priceBasic', p.stripe?.price_ids?.basic || '');
+          setVal('pricePro', p.stripe?.price_ids?.pro || '');
+          setVal('priceElite', p.stripe?.price_ids?.elite || '');
+          setVal('pricePremium', p.stripe?.price_ids?.premium || '');
+          setVal('priceSupplierBasic', p.stripe?.price_ids?.supplier_basic || '');
+          setVal('priceSupplierPro', p.stripe?.price_ids?.supplier_pro || '');
+          setVal('priceBrand', p.stripe?.price_ids?.brand || '');
+          setVal('priceArtistPro', p.stripe?.price_ids?.artist_pro || '');
+          setVal('netlifySiteId', p.netlify?.site_id || '');
+          setVal('netlifyToken', p.netlify?.access_token || '');
+          setVal('netlifyBuildHook', p.netlify?.build_hook_url || '');
+          setVal('netlifyPublish', p.netlify?.publish_dir || '.');
+          setVal('netlifyCommand', p.netlify?.build_command || '');
+          setVal('netlifyBranch', p.netlify?.production_branch || 'main');
+          setVal('zohoOrgEmail', p.zoho?.org_email || '');
+          setVal('smtpHost', p.zoho?.smtp_host || 'smtp.zoho.eu');
+          setVal('smtpPort', p.zoho?.smtp_port || '465');
+          setVal('smtpSecure', p.zoho?.smtp_secure || 'true');
+          setVal('smtpFrom', p.zoho?.smtp_from || '');
+          setVal('smtpUser', p.zoho?.smtp_user || '');
+          setVal('smtpPass', p.zoho?.smtp_pass || '');
+          setVal('imapHost', p.zoho?.imap_host || 'imap.zoho.eu');
+          setVal('imapPort', p.zoho?.imap_port || '993');
+          setVal('bigbuyApiKey', p.suppliers?.bigbuy_api_key || '');
+          setVal('bigbuySecret', p.suppliers?.bigbuy_secret || '');
+          setVal('baselinkerToken', p.suppliers?.baselinker_token || '');
+          setVal('idosellApiKey', p.suppliers?.idosell_api_key || '');
+          setVal('xmlFeedUrl', p.suppliers?.xml_feed_url || '');
+          setVal('autoImportEnabled', String(p.suppliers?.auto_import_enabled ?? false));
+          setVal('openaiApiKey', p.ai?.openai_api_key || '');
+          setVal('elevenlabsApiKey', p.ai?.elevenlabs_api_key || '');
+          setVal('metaPixelId', p.ai?.meta_pixel_id || '');
+          setVal('gaMeasurementId', p.ai?.ga_measurement_id || '');
+        }
+      }catch(e){}
+      renderTemplates();
+      renderChecklist();
+    }
+
+    async function api(path, method='GET', body){
+      const base = val('apiBase').replace(/\/$/,'');
+      const token = val('apiToken');
+      if(!base) throw new Error('Brak API base URL');
+      const res = await fetch(base + path, {
+        method,
+        headers: { 'Content-Type':'application/json', ...(token ? { Authorization:`Bearer ${token}` } : {}) },
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const text = await res.text();
+      let data;
+      try{ data = JSON.parse(text); }catch{ data = text; }
+      if(!res.ok) throw new Error(typeof data === 'string' ? data : JSON.stringify(data,null,2));
+      return data;
+    }
+
+    async function loadStatus(){
+      try{
+        const data = await api('/admin/integrations');
+        setStatus(JSON.stringify(data, null, 2));
+      }catch(err){
+        setStatus('Nie udało się pobrać statusu.\n' + err.message);
+      }
+    }
+
+    async function saveAndSync(){
+      try{
+        saveLocal();
+        const data = await api('/admin/integrations', 'PATCH', getPayload());
+        setStatus('Zapisano konfigurację na backendzie.\n\n' + JSON.stringify(data, null, 2));
+      }catch(err){
+        setStatus('Błąd zapisu konfiguracji.\n' + err.message);
+      }
+    }
+
+    async function sendTestMail(){
+      try{
+        const to = val('mailTestTo') || val('smtpUser') || val('zohoOrgEmail');
+        const data = await api('/admin/integrations/test-mail', 'POST', { to });
+        setStatus(JSON.stringify(data, null, 2));
+      }catch(err){
+        setStatus('Błąd testu maila.\n' + err.message);
+      }
+    }
+
+    async function triggerDeploy(){
+      try{
+        const data = await api('/admin/integrations/netlify/deploy', 'POST', {});
+        setStatus(JSON.stringify(data, null, 2));
+      }catch(err){
+        setStatus('Błąd deploya Netlify.\n' + err.message);
+      }
+    }
+
+    function renderTemplates(){
+      const p = getPayload();
+      const runtimeConfig = JSON.stringify(p, null, 2);
+      const map = {
+        env: runtimeConfig,
+        dotenv: [
+          'APP_URL=' + (p.app.app_url || 'https://www.qualitet-market.com'),
+          'PUBLIC_DOMAIN=' + (p.app.public_domain || 'https://www.qualitet-market.com'),
+          'API_BASE_URL=' + (p.app.api_base_url || ''),
+          'ALLOWED_ORIGINS=' + (p.app.allowed_origins || 'https://www.qualitet-market.com,http://localhost:3000'),
+          'STRIPE_SECRET_KEY=' + p.stripe.secret_key,
+          'STRIPE_PUBLISHABLE_KEY=' + p.stripe.publishable_key,
+          'STRIPE_WEBHOOK_SECRET=' + p.stripe.webhook_secret,
+          'STRIPE_PRICE_ID_BASIC=' + p.stripe.price_ids.basic,
+          'STRIPE_PRICE_ID_PRO=' + p.stripe.price_ids.pro,
+          'STRIPE_PRICE_ID_ELITE=' + p.stripe.price_ids.elite,
+          'STRIPE_PRICE_ID_PREMIUM=' + p.stripe.price_ids.premium,
+          'STRIPE_PRICE_ID_SUPPLIER_BASIC=' + p.stripe.price_ids.supplier_basic,
+          'STRIPE_PRICE_ID_SUPPLIER_PRO=' + p.stripe.price_ids.supplier_pro,
+          'STRIPE_PRICE_ID_BRAND=' + p.stripe.price_ids.brand,
+          'STRIPE_PRICE_ID_ARTIST_PRO=' + p.stripe.price_ids.artist_pro,
+          'BIGBUY_API_KEY=' + p.suppliers.bigbuy_api_key,
+          'BIGBUY_SECRET=' + p.suppliers.bigbuy_secret,
+          'BASELINKER_TOKEN=' + p.suppliers.baselinker_token,
+          'IDOSELL_API_KEY=' + p.suppliers.idosell_api_key,
+          'SUPPLIER_XML_FEED_URL=' + p.suppliers.xml_feed_url,
+          'SUPPLIER_AUTO_IMPORT=' + String(p.suppliers.auto_import_enabled),
+          'OPENAI_API_KEY=' + p.ai.openai_api_key,
+          'ELEVENLABS_API_KEY=' + p.ai.elevenlabs_api_key,
+          'META_PIXEL_ID=' + p.ai.meta_pixel_id,
+          'GA_MEASUREMENT_ID=' + p.ai.ga_measurement_id,
+          'SMTP_HOST=' + p.zoho.smtp_host,
+          'SMTP_PORT=' + p.zoho.smtp_port,
+          'SMTP_SECURE=' + p.zoho.smtp_secure,
+          'SMTP_USER=' + p.zoho.smtp_user,
+          'SMTP_PASS=' + p.zoho.smtp_pass,
+          'SMTP_FROM=' + p.zoho.smtp_from,
+          'ADMIN_EMAIL=' + p.zoho.org_email,
+          'NETLIFY_BUILD_HOOK_URL=' + p.netlify.build_hook_url,
+          'NETLIFY_ACCESS_TOKEN=' + p.netlify.access_token,
+          'NETLIFY_SITE_ID=' + p.netlify.site_id
+        ].join('\n'),
+        netlify: [
+          '[build]',
+          `  publish = "${p.netlify.publish_dir || '.'}"`,
+          `  command = "${p.netlify.build_command || ''}"`,
+          '',
+          '[[redirects]]',
+          '  from = "/"',
+          '  to = "/index.html"',
+          '  status = 200',
+          '',
+          '[[headers]]',
+          '  for = "/*"',
+          '  [headers.values]',
+          `    Content-Security-Policy = "frame-ancestors 'self'; frame-src 'self' https://www.youtube.com https://www.tiktok.com https://js.stripe.com https://hooks.stripe.com; object-src 'none'"`
+        ].join('\n'),
+        cname: (p.app.public_domain || 'https://www.qualitet-market.com').replace(/^https?:\/\//,'').replace(/\/$/,''),
+      };
+      document.getElementById('templateOutput').value = map[document.getElementById('templateSelector').value];
+    }
+
+    function copyTemplate(){
+      navigator.clipboard.writeText(document.getElementById('templateOutput').value);
+      setStatus('Skopiowano plik do schowka.');
+    }
+
+    function downloadTemplate(){
+      const selector = document.getElementById('templateSelector').value;
+      const names = { env:'runtime-config.json', dotenv:'.env', netlify:'netlify.toml', cname:'CNAME' };
+      const blob = new Blob([document.getElementById('templateOutput').value], { type:'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = names[selector];
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+      setStatus('Pobrano plik ' + names[selector]);
+    }
+
+    function setStatus(message){
+      document.getElementById('statusBox').textContent = message;
+    }
+
+    function checklistItem(ok, title, detail){
+      return `<div style="padding:12px;border:1px solid var(--stroke);border-radius:14px;margin-bottom:10px;background:${ok ? 'rgba(34,197,94,.12)' : 'rgba(245,158,11,.12)'}"><strong>${ok ? '✅' : '⚠️'} ${title}</strong><div class="small">${detail}</div></div>`;
+    }
+
+    function renderChecklist(){
+      const p = getPayload();
+      const priceOk = Object.values(p.stripe.price_ids).filter(Boolean).length >= 1;
+      const html = [
+        checklistItem(!!p.app.api_base_url, 'API platformy', p.app.api_base_url || 'Wpisz URL API'),
+        checklistItem(!!p.stripe.secret_key && !!p.stripe.publishable_key && !!p.stripe.webhook_secret, 'Stripe', 'Klucze sekretne, publiczne i webhook'),
+        checklistItem(priceOk, 'Cenniki Stripe', priceOk ? 'Co najmniej 1 price_id jest wpisane' : 'Wpisz przynajmniej 1 price_id'),
+        checklistItem(!!p.suppliers.bigbuy_api_key || !!p.suppliers.xml_feed_url || !!p.suppliers.baselinker_token, 'Hurtownie', 'BigBuy, BaseLinker albo feed XML'),
+        checklistItem(!!p.netlify.site_id || !!p.netlify.build_hook_url, 'Publikacja', 'Netlify site ID lub build hook'),
+        checklistItem(!!p.zoho.smtp_user && !!p.zoho.smtp_pass, 'Mail', 'SMTP user i hasło'),
+        checklistItem(!!p.ai.openai_api_key || !!p.ai.meta_pixel_id || !!p.ai.ga_measurement_id, 'AI / marketing', 'Opcjonalne dodatki')
+      ].join('');
+      document.getElementById('launchChecklistBox').innerHTML = html;
+    }
+
+    window.addEventListener('load', function(){
+      loadLocal();
+      const ids = ['apiBase','appUrl','publicDomain','allowedOrigins','stripeSecret','stripePublishable','stripeWebhook','priceBasic','pricePro','priceElite','pricePremium','priceSupplierBasic','priceSupplierPro','priceBrand','priceArtistPro','bigbuyApiKey','bigbuySecret','baselinkerToken','idosellApiKey','xmlFeedUrl','autoImportEnabled','openaiApiKey','elevenlabsApiKey','metaPixelId','gaMeasurementId','zohoOrgEmail','smtpHost','smtpPort','smtpSecure','smtpFrom','smtpUser','smtpPass','imapHost','imapPort','netlifySiteId','netlifyToken','netlifyBuildHook','netlifyPublish','netlifyCommand','netlifyBranch'];
+      ids.forEach(function(id){
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', function(){ saveLocal(); });
+        if(el && el.tagName === 'SELECT') el.addEventListener('change', function(){ saveLocal(); });
+      });
+    });
+</script>
+</body>
+</html>

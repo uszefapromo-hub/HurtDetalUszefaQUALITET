@@ -610,7 +610,7 @@
           const data = await api.Auctions.listArtworks({ artist_id: user ? user.id : undefined, limit: 50 });
           artworks = data.artworks || data.items || [];
         } else {
-          artworks = getDemoArtworks();
+          artworks = [];
         }
 
         document.querySelector('[data-stat-artworks]').textContent = artworks.length;
@@ -642,19 +642,10 @@
         `).join('');
       } catch (_e) {
         if (loading) loading.hidden = true;
-        const demos = getDemoArtworks();
-        document.querySelector('[data-stat-artworks]').textContent = demos.length;
-        document.querySelector('[data-stat-sold]').textContent = demos.filter(a => a.status === 'sold').length;
-        grid.innerHTML = demos.map((a, i) => `
-          <div class="artwork-card">
-            <div class="artwork-card__thumb">${artEmoji(i)}</div>
-            <div class="artwork-card__body">
-              <div class="artwork-card__title">${escHtml(a.title)}</div>
-              <div class="artwork-card__meta">${escHtml(a.medium)}</div>
-              <span class="status-pill ${STATUS_CLASSES[a.status] || 'available'}">${STATUS_LABELS[a.status] || 'Dostępne'}</span>
-            </div>
-          </div>
-        `).join('');
+        document.querySelector('[data-stat-artworks]').textContent = '0';
+        document.querySelector('[data-stat-sold]').textContent = '0';
+        if (empty) empty.hidden = false;
+        grid.innerHTML = "";
       }
     }
 
@@ -673,7 +664,7 @@
           const data = await api.Auctions.list({ status: 'active', artist_id: user ? user.id : undefined, limit: 20 });
           auctions = data.auctions || data.items || [];
         } else {
-          auctions = getDemoAuctions();
+          auctions = [];
         }
 
         document.querySelector('[data-stat-active-auctions]').textContent = auctions.length;
@@ -703,20 +694,10 @@
         });
       } catch (_e) {
         if (loading) loading.hidden = true;
-        const demos = getDemoAuctions();
-        document.querySelector('[data-stat-active-auctions]').textContent = demos.length;
-        table.hidden = false;
-        tbody.innerHTML = demos.map(a => `
-          <tr>
-            <td><strong>${escHtml(a.title)}</strong></td>
-            <td>${formatPrice(a.current_price)}</td>
-            <td>${a.bid_count}</td>
-            <td><span class="countdown" data-ends="${escHtml(a.ends_at)}">${escHtml(new Date(a.ends_at).toLocaleString('pl-PL'))}</span></td>
-          </tr>
-        `).join('');
-        table.querySelectorAll('.countdown[data-ends]').forEach(el => {
-          if (el.dataset.ends) startCountdown(el, el.dataset.ends);
-        });
+        document.querySelector('[data-stat-active-auctions]').textContent = '0';
+        if (empty) empty.hidden = false;
+        table.hidden = true;
+        tbody.innerHTML = "";
       }
     }
 
@@ -740,7 +721,7 @@
           const data = await api.Auctions.listArtworks({ artist_id: user ? user.id : undefined, status: 'sold', limit: 50 });
           artworks = data.artworks || data.items || [];
         } else {
-          artworks = getDemoArtworks().filter(a => a.status === 'sold');
+          artworks = [].filter(a => a.status === 'sold');
         }
 
         if (soldLoading) soldLoading.hidden = true;
@@ -918,15 +899,8 @@
       });
     });
 
-    /* ── Demo data fallbacks ── */
-    function getDemoArtworks() {
-      return [
-        { title: 'Krajobraz o świcie', medium: 'Olej na płótnie', year_created: 2023, status: 'available', image_url: null },
-        { title: 'Portret w błękicie', medium: 'Akwarela', year_created: 2022, status: 'on_auction', image_url: null },
-        { title: 'Abstrakcja #7', medium: 'Akryl na płótnie', year_created: 2024, status: 'sold', image_url: null },
-        { title: 'Miasto nocą', medium: 'Pastel', year_created: 2023, status: 'available', image_url: null },
-      ];
-    }
+    /* ── Empty-state fallbacks ── */
+    function [] { return []; }
 
     function getDemoAuctions() {
       return [

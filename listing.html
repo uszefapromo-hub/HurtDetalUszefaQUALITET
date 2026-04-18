@@ -63,19 +63,19 @@
     <section class="wrap stats-grid module-stats">
       <div class="stat-card">
         <span>Aktywne listingi</span>
-        <strong data-listing-stat-active>—</strong>
+        <strong>342</strong>
       </div>
       <div class="stat-card">
         <span>Opublikowane dziś</span>
-        <strong data-listing-stat-today>—</strong>
+        <strong>18</strong>
       </div>
       <div class="stat-card">
         <span>Oczekujące</span>
-        <strong data-listing-stat-pending>—</strong>
+        <strong>7</strong>
       </div>
       <div class="stat-card">
         <span>Kategorie</span>
-        <strong data-listing-stat-categories>—</strong>
+        <strong>12</strong>
       </div>
     </section>
 
@@ -98,8 +98,55 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody data-listing-tbody>
-              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Ładowanie produktów…</td></tr>
+            <tbody>
+              <tr>
+                <td><strong>Smartfon Galaxy A54</strong></td>
+                <td>Elektronika</td>
+                <td>NeoTech</td>
+                <td>899 zł</td>
+                <td>15%</td>
+                <td><span class="status-active">✓ Opublikowany</span></td>
+              </tr>
+              <tr>
+                <td><strong>Sneakersy Running Pro</strong></td>
+                <td>Moda</td>
+                <td>FashionLane</td>
+                <td>249 zł</td>
+                <td>22%</td>
+                <td><span class="status-active">✓ Opublikowany</span></td>
+              </tr>
+              <tr>
+                <td><strong>Wiertarka udarowa 750W</strong></td>
+                <td>Narzędzia</td>
+                <td>HomeHub</td>
+                <td>329 zł</td>
+                <td>18%</td>
+                <td><span class="status-active">✓ Opublikowany</span></td>
+              </tr>
+              <tr>
+                <td><strong>Sofa narożna Comfort</strong></td>
+                <td>Dom i ogród</td>
+                <td>HomeHub</td>
+                <td>2 490 zł</td>
+                <td>12%</td>
+                <td><span class="status-pending">⏳ Oczekujący</span></td>
+              </tr>
+              <tr>
+                <td><strong>Smartwatch Fit Band X2</strong></td>
+                <td>Elektronika</td>
+                <td>NeoTech</td>
+                <td>399 zł</td>
+                <td>20%</td>
+                <td><span class="status-pending">⏳ Oczekujący</span></td>
+              </tr>
+              <tr>
+                <td><strong>Kurtka zimowa Parka</strong></td>
+                <td>Moda</td>
+                <td>FashionLane</td>
+                <td>599 zł</td>
+                <td>25%</td>
+                <td><span class="status-draft">○ Szkic</span></td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -175,116 +222,5 @@
   </nav>
 
   <script src="js/app.js" defer></script>
-  <script>
-  (function () {
-    var BASE = window.QM_API_BASE || 'https://api.uszefaqualitet.pl/api';
-
-    var DEMO = [
-      { name: 'Smartfon Galaxy A54', category: 'Elektronika', supplier_name: 'NeoTech', price_gross: 899, status: 'active' },
-      { name: 'Sneakersy Running Pro', category: 'Moda', supplier_name: 'FashionLane', price_gross: 249, status: 'active' },
-      { name: 'Wiertarka udarowa 750W', category: 'Narzędzia', supplier_name: 'HomeHub', price_gross: 329, status: 'active' },
-      { name: 'Sofa narożna Comfort', category: 'Dom i ogród', supplier_name: 'HomeHub', price_gross: 2490, status: 'pending' },
-      { name: 'Smartwatch Fit Band X2', category: 'Elektronika', supplier_name: 'NeoTech', price_gross: 399, status: 'pending' },
-      { name: 'Kurtka zimowa Parka', category: 'Moda', supplier_name: 'FashionLane', price_gross: 599, status: 'draft' }
-    ];
-
-    function esc(str) {
-      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    function formatPrice(v) {
-      var n = parseFloat(v) || 0;
-      return n.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
-    }
-
-    function formatMargin(p) {
-      if (p.margin_value == null) return '\u2014';
-      if (p.margin_type === 'fixed') return formatPrice(p.margin_value);
-      return p.margin_value + '%';
-    }
-
-    function statusBadge(s) {
-      if (s === 'active') return '<span class="status-active">\u2713 Opublikowany</span>';
-      if (s === 'pending') return '<span class="status-pending">\u23f3 Oczekuj\u0105cy</span>';
-      return '<span class="status-draft">\u25cb Szkic</span>';
-    }
-
-    function isToday(dateStr) {
-      if (!dateStr) return false;
-      var d = new Date(dateStr);
-      var now = new Date();
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-    }
-
-    function updateStats(products) {
-      var active = 0, pending = 0, today = 0;
-      var cats = {};
-      products.forEach(function (p) {
-        if (p.status === 'active') active++;
-        if (p.status === 'pending') pending++;
-        if (isToday(p.created_at)) today++;
-        if (p.category) cats[p.category] = 1;
-      });
-      var aEl = document.querySelector('[data-listing-stat-active]');
-      var pEl = document.querySelector('[data-listing-stat-pending]');
-      var tEl = document.querySelector('[data-listing-stat-today]');
-      var cEl = document.querySelector('[data-listing-stat-categories]');
-      if (aEl) aEl.textContent = active;
-      if (pEl) pEl.textContent = pending;
-      if (tEl) tEl.textContent = today;
-      if (cEl) cEl.textContent = Object.keys(cats).length;
-    }
-
-    function render(products) {
-      var tbody = document.querySelector('[data-listing-tbody]');
-      if (!tbody) return;
-      updateStats(products);
-      if (!products.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Brak produkt\u00f3w</td></tr>';
-        return;
-      }
-      tbody.innerHTML = products.map(function (p) {
-        var price = p.price_gross || p.min_selling_price || 0;
-        var supplier = p.supplier_name || p.store_name || '\u2014';
-        return '<tr>'
-          + '<td><strong>' + esc(p.name) + '</strong></td>'
-          + '<td>' + esc(p.category || '\u2014') + '</td>'
-          + '<td>' + esc(supplier) + '</td>'
-          + '<td>' + formatPrice(price) + '</td>'
-          + '<td>' + formatMargin(p) + '</td>'
-          + '<td>' + statusBadge(p.status) + '</td>'
-          + '</tr>';
-      }).join('');
-    }
-
-    function fetchAndRender() {
-      var api = window.QMApi;
-      if (api && api.Products) {
-        api.Products.list({ limit: 100, sort: 'new' })
-          .then(function (data) {
-            var products = data && data.products ? data.products : (Array.isArray(data) ? data : []);
-            render(products.length ? products : DEMO);
-          })
-          .catch(function () { render(DEMO); });
-      } else {
-        fetch(BASE + '/products?limit=100&sort=new')
-          .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-          .then(function (data) {
-            var products = data && data.products ? data.products : (Array.isArray(data) ? data : []);
-            render(products.length ? products : DEMO);
-          })
-          .catch(function () { render(DEMO); });
-      }
-    }
-
-    // DOMContentLoaded fires after deferred scripts (app.js) have run,
-    // ensuring window.QMApi is available when we try to use it.
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fetchAndRender);
-    } else {
-      fetchAndRender();
-    }
-  }());
-  </script>
 </body>
 </html>

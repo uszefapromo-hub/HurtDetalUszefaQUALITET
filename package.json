@@ -1,15 +1,12 @@
 {
-  "name": "qualitet-market",
-  "version": "1.0.0",
+  "name": "qualitetmarket",
   "private": true,
-  "description": "Static QualitetMarket deployment for Railway",
+  "version": "1.0.0",
+  "description": "QualitetMarket launcher",
   "scripts": {
-    "start": "serve -s . -l $PORT"
-  },
-  "dependencies": {
-    "serve": "^14.2.4"
-  },
-  "engines": {
-    "node": ">=20"
+    "start": "node index.js",
+    "start:frontend": "node index.js",
+    "start:backend": "cd backend && npm start",
+    "migrate": "cd backend && npm run migrate"
   }
 }

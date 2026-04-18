@@ -1,0 +1,19 @@
+QUALITET MARKET — PACZKA STARTOWA
+
+1. Opublikuj cały folder na Netlify / hostingu statycznym.
+2. Otwórz publish-center.html
+3. Wpisz:
+   - API platformy
+   - Stripe keys + webhook + price IDs
+   - klucze hurtowni albo feed XML
+   - SMTP / Zoho
+4. Klikaj pola — zapisuje się lokalnie automatycznie.
+5. Pobierz wygenerowany backend/.env albo runtime-config.json.
+6. Wklej wygenerowane wartości do backendu, jeśli uruchamiasz backend osobno.
+7. Otwórz sklep.html i hurtownie.html, sprawdź koszyk i integracje.
+
+W paczce dodałem:
+- centrum startu z checklistą
+- pola na hurtownie, AI, Stripe, domenę, Netlify
+- skróty do konfiguracji ze sklepu i paneli
+- nowocześniejszy hero w sklepie

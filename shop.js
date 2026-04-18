@@ -581,7 +581,7 @@
     btn.type = 'button';
     btn.textContent = 'Dodaj do koszyka';
     btn.addEventListener('click', () => {
-      if(window.QMCart){ window.QMCart.addToCart({id: p.id, name: p.name || 'Produkt', price: price, img: p.image_url || ''}); }
+      if(window.QMCart){ window.QMCart.addItem(p.id, p.name || 'Produkt', price); }
     });
 
     body.appendChild(nameEl);

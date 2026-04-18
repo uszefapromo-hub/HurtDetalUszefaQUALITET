@@ -1,0 +1,11 @@
+Zrobione porządki:
+- usunięte widoczne logowanie demo z login.html
+- wyłączone fallbacki demo w panelu artysty
+- uproszczony backend/server.js -> uruchamia prawdziwy backend src/app.js
+- usunięty zbędny js/server.js
+- usunięty katalog backend/tests z paczki publikacyjnej
+- usunięta migracja cleanup_demo_data z paczki publikacyjnej
+- poprawione komunikaty o danych demo / zastępczych
+- dodany plik START_TUTAJ.txt
+
+Cel tej paczki: jedna czystsza wersja do końcowego składania i wdrożenia.

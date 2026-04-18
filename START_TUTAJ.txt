@@ -1,0 +1,21 @@
+QUALITET - PACZKA STARTOWA FINAL
+
+1. Najpierw uruchom backend:
+   cd backend
+   npm install
+   npm run start
+
+2. Front statyczny otwieraj z katalogu głównego lub wrzuć na Netlify/Vercel.
+
+3. Najważniejsze pliki:
+   - index.html -> wejście platformy
+   - sklep.html -> sklep
+   - owner-panel.html -> centrum dowodzenia właściciela
+   - backend/.env.example -> wzór konfiguracji
+
+4. Co jeszcze trzeba zrobić ręcznie:
+   - dodać realne produkty / import hurtowni
+   - wpisać prawdziwe klucze Stripe i mail
+   - zrobić test zamówienia i logowania
+
+Ta paczka ma usunięte najważniejsze demo, duplikaty i rzeczy testowe.

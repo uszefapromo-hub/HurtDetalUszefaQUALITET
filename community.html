@@ -532,41 +532,7 @@
 
     // ── Load posts feed ───────────────────────────────────────────────────────
 
-    var DEMO_POSTS = [
-      {
-        id: 'demo-1',
-        author_name: 'Marek K.',
-        content: 'Właśnie uruchomiłem swój sklep na QualitetMarket! Pierwsze produkty z katalogu BigBuy już online. Zapraszam do przeglądania 🎉',
-        media_urls: [],
-        post_type: 'general',
-        likes_count: 14,
-        comments_count: 3,
-        created_at: new Date(Date.now() - 1800000).toISOString(),
-        product_id: null,
-      },
-      {
-        id: 'demo-2',
-        author_name: 'Anna W.',
-        content: 'Polecam te słuchawki BT Pro — niesamowita jakość dźwięku w tej cenie! Kupiłam przez dropship, klienci super zadowoleni 🎧',
-        media_urls: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=60'],
-        post_type: 'product',
-        likes_count: 38,
-        comments_count: 7,
-        created_at: new Date(Date.now() - 7200000).toISOString(),
-        product_id: null,
-      },
-      {
-        id: 'demo-3',
-        author_name: 'Piotr J.',
-        content: 'Tip dla nowych sprzedawców: ustawiajcie marżę min. 30% i korzystajcie z narzędzia do generowania opisów AI — oszczędza masę czasu 💡',
-        media_urls: [],
-        post_type: 'general',
-        likes_count: 22,
-        comments_count: 5,
-        created_at: new Date(Date.now() - 14400000).toISOString(),
-        product_id: null,
-      },
-    ];
+    var DEMO_POSTS = [];
 
     function loadPosts(append) {
       if (state.loading) return;

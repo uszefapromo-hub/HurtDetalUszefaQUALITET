@@ -104,6 +104,7 @@
     }
   </style>
   <script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>
+  <script src="js/qm-runtime.js"></script>
 </head>
 <body data-page="panel-dostawcy" class="dashboard-page has-bottom-nav">
 
@@ -899,5 +900,12 @@
     }
   }())
   </script>
+
+<style>
+.qm-launcher{position:fixed;right:18px;bottom:18px;z-index:9999;background:linear-gradient(135deg,#8b5cf6,#00d4ff);color:#fff;padding:12px 16px;border-radius:999px;font:700 14px/1 Arial,sans-serif;text-decoration:none;box-shadow:0 12px 30px rgba(0,0,0,.28)}
+.qm-launcher:hover{transform:translateY(-1px)}
+</style>
+<a class="qm-launcher" href="publish-center.html">⚙ Centrum startu</a>
+
 </body>
 </html>

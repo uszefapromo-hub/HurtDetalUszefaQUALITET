@@ -1,376 +1,457 @@
 <!doctype html>
 <html lang="pl">
 <head>
+  <title>Koszyk — QualitetMarket</title>
   <meta charset="utf-8">
-  <title>Koszyk | QualitetMarket</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/qualitetverse.css">
   <style>
-    body{
-      font-family: Inter, Arial, sans-serif;
-      background:#0b0b0f;
-      color:#fff;
-      margin:0;
-      padding:20px;
+    .cart-shell{max-width:900px;margin:0 auto;padding-bottom:60px}
+    .cart-grid{display:grid;gap:24px;grid-template-columns:1fr 360px;align-items:start;margin-top:28px}
+    .cart-items-card{border:1px solid var(--stroke);background:var(--card);border-radius:24px;padding:24px;box-shadow:var(--shadow)}
+    .cart-item{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--stroke)}
+    .cart-item:last-child{border-bottom:none;padding-bottom:0}
+    .cart-item-img{width:64px;height:64px;border-radius:12px;background:rgba(148,163,184,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:28px;overflow:hidden}
+    .cart-item-img img{width:100%;height:100%;object-fit:contain}
+    .cart-item-info{flex:1;min-width:0}
+    .cart-item-name{font-weight:700;font-size:15px;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cart-item-price{font-size:14px;color:var(--muted)}
+    .cart-item-controls{display:flex;align-items:center;gap:8px;margin-top:10px}
+    .qty-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--stroke);background:rgba(148,163,184,.12);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+    .qty-btn:hover{background:rgba(148,163,184,.22)}
+    .qty-value{min-width:28px;text-align:center;font-weight:700;font-size:15px}
+    .cart-item-remove{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px 8px;border-radius:8px;line-height:1}
+    .cart-item-remove:hover{color:#ff4f4f;background:rgba(255,79,79,.1)}
+    .cart-item-subtotal{font-weight:800;font-size:16px;text-align:right;white-space:nowrap;flex-shrink:0;padding-top:4px}
+
+    .cart-empty{text-align:center;padding:60px 20px}
+    .cart-empty-icon{font-size:60px;margin-bottom:16px}
+    .cart-empty h2{font-size:24px;margin:0 0 10px}
+    .cart-empty p{color:var(--muted);margin:0 0 24px}
+
+    .checkout-card{border:1px solid var(--stroke);background:var(--card);border-radius:24px;padding:24px;box-shadow:var(--shadow);position:sticky;top:calc(var(--topbar-height,90px) + 16px)}
+    .checkout-card h2{margin:0 0 18px;font-size:20px}
+    .checkout-row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--stroke);font-size:14px}
+    .checkout-row:last-of-type{border-bottom:none}
+    .checkout-row.total{font-weight:800;font-size:18px;padding-top:14px;border-top:1px solid var(--stroke);border-bottom:none}
+    .checkout-form{margin-top:18px;display:flex;flex-direction:column;gap:12px}
+    .checkout-field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--text)}
+    .checkout-field input,.checkout-field textarea{padding:10px 14px;border-radius:12px;border:1px solid var(--stroke);background:rgba(15,23,42,.7);color:var(--text);font-size:14px;font-family:inherit}
+    .checkout-field input:focus,.checkout-field textarea:focus{outline:2px solid #35d9ff;outline-offset:1px}
+    .checkout-field textarea{resize:vertical;min-height:72px}
+    .btn-checkout{width:100%;min-height:52px;border-radius:16px;border:0;cursor:pointer;font-weight:800;font-size:16px;background:linear-gradient(135deg,#0ea5e9,#16a34a);color:#fff;box-shadow:0 8px 28px rgba(14,165,233,.35);margin-top:6px;transition:transform .15s,box-shadow .15s}
+    .btn-checkout:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(14,165,233,.45)}
+    .btn-checkout:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+    .order-success{text-align:center;padding:40px 20px}
+    .order-success-icon{font-size:64px;margin-bottom:16px}
+    .order-success h2{font-size:28px;margin:0 0 10px}
+    .order-success p{color:var(--muted);margin:0 0 6px}
+    .order-number{font-weight:800;font-size:18px;color:#35d9ff;margin:12px 0 24px}
+
+    .payment-methods{display:flex;flex-direction:column;gap:8px;margin:4px 0 8px}
+    .payment-method-option{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:1px solid var(--stroke);background:rgba(148,163,184,.08);cursor:pointer;transition:border-color .15s,background .15s}
+    .payment-method-option:hover{background:rgba(148,163,184,.16)}
+    .payment-method-option input[type=radio]{accent-color:#35d9ff;width:16px;height:16px;flex-shrink:0}
+    .payment-method-option input[type=radio]:checked + .pm-label{color:#35d9ff}
+    .payment-method-option:has(input:checked){border-color:#35d9ff;background:rgba(53,217,255,.08)}
+    .pm-label{display:flex;align-items:center;gap:7px;font-weight:600;font-size:14px}
+    .pm-icon{font-size:18px;line-height:1}
+
+    .payment-info-box{background:rgba(53,217,255,.07);border:1px solid rgba(53,217,255,.25);border-radius:14px;padding:16px 18px;font-size:13px;line-height:1.6;margin-top:4px}
+    .payment-info-box strong{color:#35d9ff}
+    .payment-info-box p{margin:0 0 6px}
+    .payment-info-box p:last-child{margin:0}
+
+    .cart-header{display:flex;align-items:center;gap:16px;margin-bottom:4px}
+    .cart-header h1{font-size:clamp(26px,4vw,40px);margin:0}
+    .cart-back{color:var(--muted);font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+    .cart-back:hover{color:#fff}
+    .cart-count-label{color:var(--muted);font-size:15px}
+
+    @media(max-width:760px){
+      .cart-grid{grid-template-columns:1fr}
+      .checkout-card{position:static}
     }
-    .container{
-      max-width:900px;
-      margin:0 auto;
-    }
-    h1{
-      margin-bottom:20px;
-    }
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:20px;
-      flex-wrap:wrap;
-    }
-    .cart-item{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      padding:14px;
-      border:1px solid #222;
-      border-radius:14px;
-      margin-bottom:10px;
-      background:#11131a;
-    }
-    .item-main{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .item-name{
-      font-size:16px;
-      font-weight:700;
-    }
-    .item-meta{
-      font-size:14px;
-      color:#b8bfd6;
-    }
-    button,.btn{
-      background:#7c3aed;
-      color:#fff;
-      border:none;
-      padding:10px 14px;
-      border-radius:10px;
-      cursor:pointer;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .danger{
-      background:#ef4444;
-    }
-    .ghost{
-      background:#1f2433;
-    }
-    .qty-box{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .qty-label{
-      min-width:34px;
-      text-align:center;
-      font-weight:700;
-    }
-    .summary{
-      margin-top:24px;
-      border:1px solid #222;
-      border-radius:16px;
-      padding:18px;
-      background:#11131a;
-    }
-    .summary-row{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:10px;
-      color:#dfe5ff;
-    }
-    .summary-row.total{
-      margin-top:14px;
-      padding-top:14px;
-      border-top:1px solid #2a3043;
-      font-size:22px;
-      font-weight:800;
-      color:#fff;
-    }
-    .checkout-box{
-      margin-top:24px;
-      border:1px solid #222;
-      border-radius:16px;
-      padding:18px;
-      background:#11131a;
-    }
-    .checkout-box h2{
-      margin-top:0;
-      margin-bottom:16px;
-    }
-    .field{
-      width:100%;
-      padding:14px 16px;
-      border-radius:14px;
-      border:1px solid #2b3248;
-      background:#131827;
-      color:#fff;
-      outline:none;
-      margin-bottom:12px;
-      box-sizing:border-box;
-    }
-    .field::placeholder{
-      color:#98a2c6;
-    }
-    .actions{
-      margin-top:20px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .notice{
-      margin-top:12px;
-      color:#b8bfd6;
-      font-size:14px;
-    }
-    .success{
-      color:#86efac;
-      font-weight:700;
-      margin-top:12px;
-    }
-    .empty{
-      padding:18px;
-      border:1px dashed #2b3248;
-      border-radius:14px;
-      color:#b8bfd6;
-      background:#11131a;
-    }
-    @media (max-width:700px){
-      .cart-item{
-        flex-direction:column;
-        align-items:flex-start;
-      }
-      .qty-box{
-        width:100%;
-      }
-      .qty-box button{
-        flex:1;
-      }
+    @media(max-width:480px){
+      .cart-item{flex-wrap:wrap}
+      .cart-item-subtotal{flex-basis:100%;text-align:left}
     }
   </style>
+  <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; object-src 'none'">
+  <script src="js/security-guard.js"></script>
+  <script src="js/qm-runtime.js"></script>
 </head>
-<body>
-
-<div class="container">
-  <div class="topbar">
-    <h1>Twój koszyk</h1>
-    <a class="btn ghost" href="sklep.html">← Wróć do sklepu</a>
-  </div>
-
-  <div id="cart-items"></div>
-
-  <div class="summary">
-    <div class="summary-row"><span>Pozycje</span><strong id="cart-count">0</strong></div>
-    <div class="summary-row"><span>Suma produktów</span><strong id="cart-subtotal">0,00 zł</strong></div>
-    <div class="summary-row"><span>Dostawa</span><strong id="cart-shipping">0,00 zł</strong></div>
-    <div class="summary-row total"><span>Razem</span><strong id="cart-total">0,00 zł</strong></div>
-  </div>
-
-  <div class="actions">
-    <button onclick="clearCart()" class="danger">Wyczyść</button>
-  </div>
-
-  <div class="checkout-box">
-    <h2>Dane klienta</h2>
-    <input id="name" class="field" placeholder="Imię i nazwisko">
-    <input id="email" class="field" placeholder="Email">
-    <input id="address" class="field" placeholder="Adres">
-    <div class="actions">
-      <button onclick="payDemo()">Zapłać demo</button>
+<body data-page="koszyk" class="has-bottom-nav">
+  <div class="app-splash" data-app-splash>
+    <div class="app-splash-card">
+      <div class="app-splash-logo">
+        <img src="assets/icons/icon-192.svg" alt="QualitetMarket">
+      </div>
+      <div class="app-splash-title">
+        <strong>QualitetMarket</strong>
+        <span>Koszyk zakupowy</span>
+      </div>
+      <div class="app-splash-loader"></div>
     </div>
-    <div class="notice">Płatność demo zapisuje zamówienie lokalnie i czyści koszyk.</div>
-    <div id="checkout-message"></div>
   </div>
-</div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>Platforma dropshipping</span>
+        </div>
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a href="sklep.html">Sklep</a>
+        <a href="hurtownie.html">Hurtownie</a>
+        <a href="zarabiaj.html">Sprzedawaj</a>
+        <a href="cennik.html">Cennik</a>
+      </nav>
+      <a class="btn btn-primary topbar-cta" href="koszyk.html" style="position:relative">
+        🛒 Koszyk
+        <span data-cart-badge style="position:absolute;top:-6px;right:-6px;background:#ff4fd8;color:#fff;border-radius:999px;font-size:11px;font-weight:800;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 4px" hidden>0</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-label="Otwórz menu" data-menu-toggle>☰</button>
+    </div>
+  </header>
 
-<script>
-const CART_KEYS = ["cart", "qm_cart"];
-let cart = loadCart();
+  <main class="wrap cart-shell">
 
-function loadCart(){
-  for (const key of CART_KEYS){
-    try{
-      const data = JSON.parse(localStorage.getItem(key) || "[]");
-      if(Array.isArray(data) && data.length) return normalizeCart(data);
-    }catch(e){}
-  }
-  return [];
-}
-
-function normalizeCart(items){
-  return items
-    .map((item, index) => ({
-      id: String(item.id ?? item.productId ?? index),
-      name: item.name || item.title || "Produkt",
-      price: Number(item.price ?? item.unitPrice ?? 0) || 0,
-      qty: Math.max(1, Number(item.qty ?? item.quantity ?? 1) || 1)
-    }))
-    .filter(item => item.name);
-}
-
-function save(){
-  localStorage.setItem("cart", JSON.stringify(cart));
-  localStorage.setItem("qm_cart", JSON.stringify(cart));
-  renderCart();
-}
-
-function money(value){
-  const num = Number(value) || 0;
-  return num.toFixed(2).replace(".", ",") + " zł";
-}
-
-function renderCart(){
-  const container = document.getElementById("cart-items");
-  const totalEl = document.getElementById("cart-total");
-  const subtotalEl = document.getElementById("cart-subtotal");
-  const shippingEl = document.getElementById("cart-shipping");
-  const countEl = document.getElementById("cart-count");
-
-  container.innerHTML = "";
-
-  if(cart.length === 0){
-    container.innerHTML = "<div class='empty'>Koszyk jest pusty.</div>";
-    countEl.innerText = "0";
-    subtotalEl.innerText = "0,00 zł";
-    shippingEl.innerText = "0,00 zł";
-    totalEl.innerText = "0,00 zł";
-    return;
-  }
-
-  let subtotal = 0;
-  let count = 0;
-
-  cart.forEach(item => {
-    const price = Number(item.price) || 0;
-    const qty = Math.max(1, Number(item.qty) || 1);
-    const lineTotal = price * qty;
-
-    subtotal += lineTotal;
-    count += qty;
-
-    const div = document.createElement("div");
-    div.className = "cart-item";
-    div.innerHTML = `
-      <div class="item-main">
-        <div class="item-name">${escapeHtml(item.name)}</div>
-        <div class="item-meta">Cena: ${money(price)} · Ilość: ${qty} · Razem: ${money(lineTotal)}</div>
+    <!-- Success state -->
+    <div class="panel-card order-success" data-order-success hidden>
+      <div class="order-success-icon" data-success-icon>✅</div>
+      <div class="eyebrow" data-success-eyebrow>Zamówienie przyjęte</div>
+      <h2 data-success-heading>Dziękujemy za zakup!</h2>
+      <p class="order-number" data-order-number></p>
+      <p data-success-subtext>Potwierdzenie zostanie wysłane na podany adres e-mail.</p>
+      <p style="color:var(--muted);font-size:14px;margin-top:6px">Czas realizacji zamówienia: <strong style="color:#fff">24–72h</strong></p>
+      <div data-payment-info style="max-width:420px;margin:16px auto 0"></div>
+      <div class="cta-row" style="justify-content:center;margin-top:24px">
+        <a class="btn btn-primary" href="sklep.html">Kontynuuj zakupy</a>
+        <a class="btn btn-secondary" href="index.html">Strona główna</a>
       </div>
-      <div class="qty-box">
-        <button class="ghost" onclick="decreaseQty('${item.id}')">-</button>
-        <span class="qty-label">${qty}</span>
-        <button onclick="increaseQty('${item.id}')">+</button>
-        <button onclick="removeItem('${item.id}')" class="danger">Usuń</button>
+    </div>
+
+    <!-- Cart content -->
+    <div data-cart-content>
+      <div class="cart-header" style="margin-top:32px">
+        <a class="cart-back" href="sklep.html">← Sklep</a>
+        <h1>Koszyk</h1>
+        <span class="cart-count-label" data-cart-count-label></span>
       </div>
-    `;
-    container.appendChild(div);
-  });
 
-  const shipping = subtotal > 0 ? 15 : 0;
-  const total = subtotal + shipping;
+      <!-- Empty cart -->
+      <div class="cart-empty" data-cart-empty hidden>
+        <div class="cart-empty-icon">🛒</div>
+        <h2>Twój koszyk jest pusty</h2>
+        <p>Dodaj produkty ze sklepu, aby złożyć zamówienie.</p>
+        <a class="btn btn-primary" href="sklep.html">Przejdź do sklepu</a>
+      </div>
 
-  countEl.innerText = String(count);
-  subtotalEl.innerText = money(subtotal);
-  shippingEl.innerText = money(shipping);
-  totalEl.innerText = money(total);
-}
+      <!-- Cart with items -->
+      <div class="cart-grid" data-cart-filled>
+        <div class="cart-items-card">
+          <div data-cart-items-list></div>
+        </div>
 
-function increaseQty(id){
-  const item = cart.find(p => p.id === id);
-  if(item) item.qty = (Number(item.qty) || 1) + 1;
-  save();
-}
+        <div class="checkout-card">
+          <h2>Podsumowanie</h2>
+          <div data-cart-summary>
+            <div class="checkout-row"><span>Produkty</span><span data-summary-count>—</span></div>
+            <div class="checkout-row total"><span>Razem</span><span data-summary-total>—</span></div>
+          </div>
 
-function decreaseQty(id){
-  const item = cart.find(p => p.id === id);
-  if(item){
-    const next = (Number(item.qty) || 1) - 1;
-    if(next <= 0){
-      cart = cart.filter(p => p.id !== id);
-    } else {
-      item.qty = next;
-    }
-  }
-  save();
-}
+          <form class="checkout-form" data-checkout-form novalidate>
+            <div class="checkout-field">
+              <label for="chk-name">Imię i nazwisko *</label>
+              <input id="chk-name" name="name" type="text" placeholder="Jan Kowalski" required autocomplete="name">
+            </div>
+            <div class="checkout-field">
+              <label for="chk-email">Adres e-mail *</label>
+              <input id="chk-email" name="email" type="email" placeholder="jan@przykład.pl" required autocomplete="email">
+            </div>
+            <div class="checkout-field">
+              <label for="chk-phone">Telefon</label>
+              <input id="chk-phone" name="phone" type="tel" placeholder="+48 000 000 000" autocomplete="tel">
+            </div>
+            <div class="checkout-field">
+              <label for="chk-address">Adres dostawy *</label>
+              <textarea id="chk-address" name="address" placeholder="ul. Przykładowa 1, 00-001 Warszawa" required autocomplete="street-address"></textarea>
+            </div>
+            <div class="checkout-field">
+              <label>Metoda płatności *</label>
+              <div class="payment-methods" role="radiogroup" aria-label="Wybierz metodę płatności">
+                <label class="payment-method-option">
+                  <input type="radio" name="payment_method" value="transfer" checked>
+                  <span class="pm-label"><span class="pm-icon">🏦</span>Przelew bankowy</span>
+                </label>
+                <label class="payment-method-option">
+                  <input type="radio" name="payment_method" value="blik">
+                  <span class="pm-label"><span class="pm-icon">📱</span>BLIK</span>
+                </label>
+                <label class="payment-method-option">
+                  <input type="radio" name="payment_method" value="card">
+                  <span class="pm-label"><span class="pm-icon">💳</span>Karta płatnicza</span>
+                </label>
+                <label class="payment-method-option">
+                  <input type="radio" name="payment_method" value="p24">
+                  <span class="pm-label"><span class="pm-icon">🔄</span>Przelewy24</span>
+                </label>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5">
+              Składając zamówienie akceptujesz <a href="#" style="color:#35d9ff">regulamin</a> i <a href="#" style="color:#35d9ff">politykę prywatności</a>.
+            </div>
+            <button class="btn-checkout" type="submit" data-checkout-btn>Złóż zamówienie</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
 
-function removeItem(id){
-  cart = cart.filter(p => p.id !== id);
-  save();
-}
+  <nav class="bottom-nav" data-bottom-nav aria-label="Nawigacja dolna">
+    <a href="index.html" rel="nofollow noreferrer" data-nav="index">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 11.5L12 4l9 7.5"></path>
+        <path d="M5 10.5V20h14v-9.5"></path>
+      </svg>
+      <span>Start</span>
+    </a>
+    <a href="sklep.html" rel="nofollow noreferrer" data-nav="sklep">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9h18l-1.5 11H4.5L3 9z"></path>
+        <path d="M7 9V7a5 5 0 0 1 10 0v2"></path>
+      </svg>
+      <span>Sklep</span>
+    </a>
+    <a href="koszyk.html" rel="nofollow noreferrer" data-nav="koszyk" style="position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+      <span data-cart-badge style="position:absolute;top:2px;right:14px;background:#ff4fd8;color:#fff;border-radius:999px;font-size:10px;font-weight:800;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px" hidden>0</span>
+      <span>Koszyk</span>
+    </a>
+    <a href="dashboard.html" rel="nofollow noreferrer" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.2"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.2"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.2"></rect>
+      </svg>
+      <span>Panel</span>
+    </a>
+    <a href="login.html" rel="nofollow noreferrer" data-nav="login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c2-3.5 6-5 8-5s6 1.5 8 5"></path>
+      </svg>
+      <span>Konto</span>
+    </a>
+  </nav>
 
-function clearCart(){
-  cart = [];
-  save();
-}
+  <script src="js/api.js" defer></script>
+  <script src="js/pwa-connect.js" defer></script>
+  <script src="js/flow.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/cart.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      var cart = window.QMCart;
+      if(!cart){ return; }
 
-function payDemo(){
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const address = document.getElementById("address").value.trim();
-  const msg = document.getElementById("checkout-message");
+      var successEl = document.querySelector('[data-order-success]');
+      var contentEl = document.querySelector('[data-cart-content]');
+      var emptyEl = document.querySelector('[data-cart-empty]');
+      var filledEl = document.querySelector('[data-cart-filled]');
+      var listEl = document.querySelector('[data-cart-items-list]');
+      var countLabel = document.querySelector('[data-cart-count-label]');
+      var summaryCount = document.querySelector('[data-summary-count]');
+      var summaryTotal = document.querySelector('[data-summary-total]');
+      var form = document.querySelector('[data-checkout-form]');
+      var submitBtn = document.querySelector('[data-checkout-btn]');
 
-  if(cart.length === 0){
-    msg.innerHTML = '<div class="notice">Koszyk jest pusty.</div>';
-    return;
-  }
+      function escapeHtml(str){
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
 
-  if(!name || !email || !address){
-    msg.innerHTML = '<div class="notice">Uzupełnij dane klienta.</div>';
-    return;
-  }
+      // ── Handle payment gateway return (?payment=success or ?payment=cancel) ──
+      var urlParams = new URLSearchParams(window.location.search);
+      var paymentResult = urlParams.get('payment');
+      if(paymentResult === 'success'){
+        cart.clearCart();
+        var orderNum = '';
+        try{ orderNum = sessionStorage.getItem('qm_last_order') || ''; }catch(_){}
+        var numEl = document.querySelector('[data-order-number]');
+        if(numEl){ numEl.textContent = orderNum ? 'Numer zam\u00f3wienia: ' + orderNum : ''; }
+        var infoBox = document.querySelector('[data-payment-info]');
+        if(infoBox){
+          infoBox.innerHTML = '<div class="payment-info-box"><p>✅ <strong>P\u0142atno\u015b\u0107 zaksi\u0119gowana</strong></p><p>Twoje zam\u00f3wienie zosta\u0142o op\u0142acone i jest teraz przetwarzane.</p></div>';
+        }
+        if(contentEl) contentEl.hidden = true;
+        if(successEl) successEl.hidden = false;
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+      if(paymentResult === 'cancel'){
+        var banner = document.createElement('div');
+        banner.style.cssText = 'background:rgba(255,79,79,.12);border:1px solid rgba(255,79,79,.3);border-radius:14px;padding:14px 18px;font-size:14px;color:#ff9f9f;margin-bottom:16px';
+        banner.textContent = '\u26a0\ufe0f P\u0142atno\u015b\u0107 anulowana. Mo\u017cesz op\u0142aci\u0107 ponownie lub wybra\u0107 inn\u0105 metod\u0119 p\u0142atno\u015bci.';
+        var cartHeader = document.querySelector('.cart-header');
+        if(cartHeader) cartHeader.insertAdjacentElement('afterend', banner);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
 
-  const subtotal = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Math.max(1, Number(item.qty) || 1))), 0);
-  const order = {
-    id: "QM-" + Date.now(),
-    customer: {name, email, address},
-    items: cart,
-    subtotal,
-    shipping: subtotal > 0 ? 15 : 0,
-    total: subtotal + (subtotal > 0 ? 15 : 0),
-    createdAt: new Date().toISOString(),
-    mode: "demo"
-  };
+      function render(){
+        var items = cart.getCart();
+        var count = cart.getCartCount(items);
+        var total = cart.getCartTotal(items);
 
-  const orders = JSON.parse(localStorage.getItem("qm_orders") || "[]");
-  orders.push(order);
-  localStorage.setItem("qm_orders", JSON.stringify(orders));
+        if(countLabel){ countLabel.textContent = count > 0 ? count + ' ' + (count === 1 ? 'produkt' : count < 5 ? 'produkty' : 'produktów') : ''; }
+        if(summaryCount){ summaryCount.textContent = count + ' szt.'; }
+        if(summaryTotal){ summaryTotal.textContent = cart.formatPrice(total); }
 
-  cart = [];
-  save();
+        if(count === 0){
+          if(emptyEl) emptyEl.hidden = false;
+          if(filledEl) filledEl.hidden = true;
+          return;
+        }
+        if(emptyEl) emptyEl.hidden = true;
+        if(filledEl) filledEl.hidden = false;
 
-  document.getElementById("name").value = "";
-  document.getElementById("email").value = "";
-  document.getElementById("address").value = "";
+        if(!listEl) return;
+        listEl.innerHTML = '';
+        items.forEach(function(item){
+          var subtotal = (Number(item.price) || 0) * (Number(item.qty) || 1);
+          var div = document.createElement('div');
+          div.className = 'cart-item';
+          div.innerHTML =
+            '<div class="cart-item-img">' +
+              (item.img ? '<img src="' + item.img + '" alt="' + escapeHtml(item.name) + '">' : '<span>📦</span>') +
+            '</div>' +
+            '<div class="cart-item-info">' +
+              '<p class="cart-item-name">' + escapeHtml(item.name) + '</p>' +
+              '<p class="cart-item-price">' + cart.formatPrice(item.price) + ' / szt.</p>' +
+              '<div class="cart-item-controls">' +
+                '<button class="qty-btn" type="button" data-qty-dec data-id="' + escapeHtml(item.id) + '" aria-label="Zmniejsz ilość">−</button>' +
+                '<span class="qty-value">' + (Number(item.qty) || 1) + '</span>' +
+                '<button class="qty-btn" type="button" data-qty-inc data-id="' + escapeHtml(item.id) + '" aria-label="Zwiększ ilość">+</button>' +
+              '</div>' +
+            '</div>' +
+            '<strong class="cart-item-subtotal">' + cart.formatPrice(subtotal) + '</strong>' +
+            '<button class="cart-item-remove" type="button" data-remove data-id="' + escapeHtml(item.id) + '" aria-label="Usuń z koszyka">×</button>';
+          listEl.appendChild(div);
+        });
+      }
 
-  msg.innerHTML = '<div class="success">Zamówienie demo zapisane. Numer: ' + order.id + '</div>';
-}
+      if(listEl){
+        listEl.addEventListener('click', function(e){
+          var decBtn = e.target.closest('[data-qty-dec]');
+          var incBtn = e.target.closest('[data-qty-inc]');
+          var remBtn = e.target.closest('[data-remove]');
+          if(decBtn){
+            var id = decBtn.dataset.id;
+            var items = cart.getCart();
+            var item = items.filter(function(i){ return i.id === id; })[0];
+            if(item && (Number(item.qty) || 1) <= 1){
+              cart.removeFromCart(id);
+            } else if(item){
+              cart.updateQty(id, (Number(item.qty) || 1) - 1);
+            }
+            render();
+          } else if(incBtn){
+            var id = incBtn.dataset.id;
+            var items = cart.getCart();
+            var item = items.filter(function(i){ return i.id === id; })[0];
+            if(item){ cart.updateQty(id, (Number(item.qty) || 1) + 1); }
+            render();
+          } else if(remBtn){
+            cart.removeFromCart(remBtn.dataset.id);
+            render();
+          }
+        });
+      }
 
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+      if(form){
+        form.addEventListener('submit', function(e){
+          e.preventDefault();
+          var items = cart.getCart();
+          if(!items.length) return;
+          if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Sk\u0142adam zam\u00f3wienie...'; }
+          var fd = new FormData(form);
+          var formData = {
+            name: fd.get('name') || '',
+            email: fd.get('email') || '',
+            phone: fd.get('phone') || '',
+            address: fd.get('address') || '',
+            payment_method: fd.get('payment_method') || 'transfer'
+          };
 
-renderCart();
-</script>
+          function showSuccess(orderNum, paymentInfoHtml){
+            cart.clearCart();
+            var numEl = document.querySelector('[data-order-number]');
+            if(numEl){ numEl.textContent = 'Numer zam\u00f3wienia: ' + (orderNum || '\u2014'); }
+            var infoBox = document.querySelector('[data-payment-info]');
+            if(infoBox){ infoBox.innerHTML = paymentInfoHtml || ''; }
+            if(contentEl) contentEl.hidden = true;
+            if(successEl) successEl.hidden = false;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Z\u0142\u00f3\u017c zam\u00f3wienie'; }
+          }
+
+          function localOrder(){
+            var order = cart.saveOrder(formData, items);
+            try{ sessionStorage.setItem('qm_last_order', order.number); }catch(_){}
+            showSuccess(order.number, '');
+          }
+
+          // Flow 6: try API order creation first
+          if(typeof window.QM_API_CREATE_ORDER === 'function'){
+            window.QM_API_CREATE_ORDER(formData, items)
+              .then(function(apiOrder){
+                var num = apiOrder && (apiOrder.order_number || apiOrder.id || '');
+                try{ if(num) sessionStorage.setItem('qm_last_order', num); }catch(_){}
+                showSuccess(num, '');
+              })
+              .catch(function(){
+                // API unavailable or user not logged in – fall back
+                localOrder();
+              });
+          } else {
+            setTimeout(function(){
+              localOrder();
+            }, 400);
+          }
+        });
+      }
+
+      render();
+    });
+  </script>
+
+  <footer class="site-footer">
+    <div class="wrap site-footer-inner">
+      <p>© 2026 QualitetMarket. Wszelkie prawa zastrzeżone.</p>
+      <p>Projekt i marka platformy stworzone przez Henryka Ślusarskiego</p>
+    </div>
+  </footer>
+
+<style>
+.qm-launcher{position:fixed;right:18px;bottom:18px;z-index:9999;background:linear-gradient(135deg,#8b5cf6,#00d4ff);color:#fff;padding:12px 16px;border-radius:999px;font:700 14px/1 Arial,sans-serif;text-decoration:none;box-shadow:0 12px 30px rgba(0,0,0,.28)}
+.qm-launcher:hover{transform:translateY(-1px)}
+</style>
+<a class="qm-launcher" href="publish-center.html">⚙ Centrum startu</a>
 
 </body>
 </html>

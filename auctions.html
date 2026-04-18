@@ -534,20 +534,12 @@
     }
 
     function renderDemoAuctions(container, empty) {
-      const demos = [
-        { id: 'd1', title: 'Krajobraz o świcie', artist_name: 'Anna Kowalska', starting_price: 450, current_price: 620, bid_count: 8, status: 'active', ends_at: new Date(Date.now() + 3600000 * 47).toISOString(), artwork_image: null },
-        { id: 'd2', title: 'Portret w błękicie', artist_name: 'Marek Nowak', starting_price: 300, current_price: 300, bid_count: 0, status: 'active', ends_at: new Date(Date.now() + 3600000 * 120).toISOString(), artwork_image: null },
-        { id: 'd3', title: 'Abstrakcja #7', artist_name: 'Julia Wiśniewska', starting_price: 890, current_price: 1250, bid_count: 14, status: 'active', ends_at: new Date(Date.now() + 3600000 * 2).toISOString(), artwork_image: null },
-        { id: 'd4', title: 'Miasto nocą', artist_name: 'Piotr Zając', starting_price: 550, current_price: 710, bid_count: 5, status: 'active', ends_at: new Date(Date.now() + 3600000 * 72).toISOString(), artwork_image: null },
-        { id: 'd5', title: 'Morze w burzy', artist_name: 'Katarzyna Lis', starting_price: 1200, current_price: 1200, bid_count: 0, status: 'active', ends_at: new Date(Date.now() + 3600000 * 96).toISOString(), artwork_image: null },
-        { id: 'd6', title: 'Kwiaty w wazonie', artist_name: 'Tomasz Wróbel', starting_price: 250, current_price: 380, bid_count: 11, status: 'active', ends_at: new Date(Date.now() + 3600000 * 6).toISOString(), artwork_image: null },
-      ];
       container.innerHTML = '';
-      demos.forEach((a, i) => { container.insertAdjacentHTML('beforeend', renderCard(a, i)); });
-      empty.style.display = 'none';
-      document.getElementById('stat-auctions').textContent = demos.length;
-      document.getElementById('stat-artists').textContent = 24;
-      document.getElementById('stat-artworks').textContent = 87;
+      empty.style.display = 'block';
+      empty.innerHTML = 'Aukcje pojawią się po dodaniu realnych dzieł i licytacji.';
+      document.getElementById('stat-auctions').textContent = '0';
+      document.getElementById('stat-artists').textContent = '0';
+      document.getElementById('stat-artworks').textContent = '0';
     }
 
     /* ── Load stats ── */

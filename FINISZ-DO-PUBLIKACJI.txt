@@ -1,0 +1,4 @@
+1. Rozpakuj.
+2. Otworz index.html.
+3. Wrzuc folder na Netlify jako Deploy manually.
+4. Dodaj domeny: www.qualitet-market.com oraz qualitet-market.com.

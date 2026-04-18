@@ -12,70 +12,6 @@
   <link rel="icon" type="image/svg+xml" sizes="192x192" href="assets/icons/icon-192.svg">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
   <link rel="stylesheet" href="panel.css">
-  <style>
-    .auth-card{position:relative;overflow:hidden}
-    .auth-card::before{
-      content:"";position:absolute;inset:auto -80px -80px auto;width:220px;height:220px;border-radius:50%;
-      background:radial-gradient(circle, rgba(124,58,237,.22), rgba(124,58,237,0) 70%);
-      pointer-events:none
-    }
-    .topbar-back{
-      display:inline-flex;align-items:center;justify-content:center;
-      width:42px;height:42px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.04);
-      color:inherit;text-decoration:none;cursor:pointer;
-      font-size:20px;line-height:1
-    }
-    .topbar-left{
-      display:flex;align-items:center;gap:12px;
-    }
-    .launch-box{
-      border:1px solid rgba(34,197,94,.22);
-      background:linear-gradient(180deg,rgba(34,197,94,.10),rgba(34,197,94,.04));
-      border-radius:16px;padding:14px 16px;margin:0 0 16px
-    }
-    .launch-box strong{display:block;margin-bottom:6px}
-    .launch-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-    .auth-only-panel{margin-top:6px}
-    .app-cta-section{margin-top:28px}
-    .mobile-bottom-extra{margin-top:22px}
-    .mobile-bottom-card{
-      display:grid;grid-template-columns:1.1fr .9fr;gap:18px;
-      padding:20px;border-radius:22px;
-      border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg,rgba(15,23,42,.92),rgba(17,24,39,.82))
-    }
-    .mobile-bottom-copy h3{margin:0 0 10px}
-    .mobile-bottom-copy p{margin:0 0 14px}
-    .mobile-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-    .mobile-chip{
-      padding:8px 10px;border-radius:999px;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.08);
-      font-size:.82rem
-    }
-    .mobile-mock{
-      min-height:260px;border-radius:24px;padding:14px;
-      background:linear-gradient(180deg,#0b1225,#121c3f);
-      border:1px solid rgba(255,255,255,.08);
-      box-shadow:0 18px 40px rgba(0,0,0,.28)
-    }
-    .mobile-mock-top{
-      display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;
-      font-size:.82rem;opacity:.8
-    }
-    .mobile-mock-card{
-      padding:14px;border-radius:18px;margin-bottom:10px;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.08)
-    }
-    .mobile-mock-card strong{display:block;margin-bottom:4px}
-    .login-direct-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    @media (max-width: 900px){
-      .mobile-bottom-card{grid-template-columns:1fr}
-    }
-  </style>
 </head>
 <body data-page="login" class="auth-page has-bottom-nav">
   <div class="app-splash" data-app-splash>
@@ -90,18 +26,15 @@
       <div class="app-splash-loader"></div>
     </div>
   </div>
-
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <div class="topbar-left">
-        <button class="topbar-back" type="button" onclick="history.back()" aria-label="Wróć">←</button>
-        <a class="brand" href="index.html">
-          <div>
-            <strong>QualitetMarket</strong>
-            <span>Marketplace B2B/B2C</span>
-          </div>
-        </a>
-      </div>
+      <a class="brand" href="index.html">
+        <div>
+          <strong>QualitetMarket</strong>
+          <span>Marketplace B2B/B2C</span>
+          
+        </div>
+      </a>
       <nav class="nav" aria-label="Główna nawigacja">
         <a href="index.html">Start</a>
         <a href="dashboard.html">Dashboard</a>
@@ -115,17 +48,13 @@
   <main class="wrap auth-layout">
     <section class="panel-card auth-card">
       <h1>Logowanie</h1>
-
-      <div class="launch-box">
-        <strong>Uruchamianie platformy</strong>
-        <div>Idziemy już w stronę normalnego uruchomienia. Bez demo — logowanie ma prowadzić do realnego wejścia, panelu i generatora sklepu.</div>
-        <div class="launch-actions">
-          <a class="btn btn-primary" href="generator-sklepu.html">Uruchom sklep</a>
-          <a class="btn btn-secondary" href="dashboard.html">Przejdź do panelu</a>
-        </div>
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab-btn active" role="tab" aria-selected="true" data-auth-tab="email" aria-controls="auth-panel-email">Email</button>
+        
       </div>
 
-      <div id="auth-panel-email" class="auth-only-panel">
+      <!-- Standard email login -->
+      <div id="auth-panel-email" class="auth-tab-panel" role="tabpanel">
         <form class="form-card" data-login-form>
           <label>
             Email
@@ -139,44 +68,9 @@
             <button class="btn btn-primary" type="submit">Zaloguj</button>
             <button class="btn btn-secondary" type="button" data-register-btn>Utwórz konto</button>
           </div>
-          <div style="text-align:center;margin-top:12px">
-            <button type="button" class="btn-link" data-forgot-password-btn style="background:none;border:none;color:var(--accent,#7c3aed);font-size:.875rem;cursor:pointer;text-decoration:underline;padding:0">Nie pamiętam hasła</button>
-          </div>
-          <div class="login-direct-row">
-            <a class="btn btn-secondary" href="index.html">← Wróć na start</a>
-            <a class="btn btn-secondary" href="generator-sklepu.html">Generator sklepu</a>
-          </div>
-        </form>
-
-        <form class="form-card" id="forgot-password-form" style="display:none" data-forgot-form>
-          <h2 style="font-size:1.1rem;margin-bottom:8px">Resetowanie hasła</h2>
-          <p class="hint" style="margin-bottom:16px">Podaj swój adres e-mail, a wyślemy Ci link do ustawienia nowego hasła.</p>
-          <label>
-            Email
-            <input type="email" name="forgot_email" placeholder="email@domena.pl" autocomplete="email" required>
-          </label>
-          <div id="forgot-password-msg" role="alert" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:.875rem"></div>
-          <div class="cta-row auth-actions">
-            <button class="btn btn-primary" type="submit">Wyślij link</button>
-            <button class="btn btn-secondary" type="button" data-back-to-login-btn>Wróć do logowania</button>
-          </div>
-        </form>
-
-        <form class="form-card" id="reset-password-form" style="display:none" data-reset-form>
-          <h2 style="font-size:1.1rem;margin-bottom:8px">Nowe hasło</h2>
-          <p class="hint" style="margin-bottom:16px">Wpisz swoje nowe hasło (minimum 8 znaków).</p>
-          <label>
-            Nowe hasło
-            <input type="password" name="new_password" placeholder="••••••••" autocomplete="new-password" required minlength="8">
-          </label>
-          <div id="reset-password-msg" role="alert" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:.875rem"></div>
-          <div class="cta-row auth-actions">
-            <button class="btn btn-primary" type="submit">Zmień hasło</button>
-          </div>
         </form>
       </div>
     </section>
-
     <section class="app-cta-section">
       <div class="app-cta-box app-cta-grid">
         <div class="app-cta-content">
@@ -188,49 +82,26 @@
             <button class="btn btn-primary" type="button" data-app-install-open>Zainstaluj aplikację</button>
             <a class="btn btn-secondary" href="cennik.html">Sprawdź plany</a>
           </div>
+          <div class="app-instructions">
+            <div>
+              <strong>iPhone</strong>
+              <ul>
+                <li>Udostępnij</li>
+                <li>Dodaj do ekranu głównego</li>
+              </ul>
+            </div>
+            <div>
+              <strong>Android</strong>
+              <ul>
+                <li>Menu przeglądarki</li>
+                <li>Zainstaluj aplikację</li>
+              </ul>
+            </div>
+          </div>
         </div>
         <div class="app-cta-media">
           <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80" alt="Biznesowy styl aplikacji QualitetMarket" loading="lazy" decoding="async">
           <span class="app-cta-badge">Wejdź do PRO</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="mobile-bottom-extra">
-      <div class="mobile-bottom-card">
-        <div class="mobile-bottom-copy">
-          <span class="eyebrow">Mobile first</span>
-          <h3>Aplikacja mobilna na dole strony</h3>
-          <p class="hint">To jest dodatkowy blok zachęcający do wejścia z telefonu, instalacji aplikacji i przejścia do panelu zarządzania.</p>
-          <div class="app-cta-actions">
-            <a class="btn btn-primary" href="dashboard.html">Otwórz panel</a>
-            <a class="btn btn-secondary" href="sklep.html">Przejdź do sklepu</a>
-          </div>
-          <div class="mobile-chip-row">
-            <span class="mobile-chip">PWA</span>
-            <span class="mobile-chip">Dashboard</span>
-            <span class="mobile-chip">Sklep</span>
-            <span class="mobile-chip">Generator</span>
-            <span class="mobile-chip">Live</span>
-          </div>
-        </div>
-        <div class="mobile-mock">
-          <div class="mobile-mock-top">
-            <span>QualitetMarket App</span>
-            <span>● live</span>
-          </div>
-          <div class="mobile-mock-card">
-            <strong>Nowe zamówienia</strong>
-            <span class="hint">12 oczekujących</span>
-          </div>
-          <div class="mobile-mock-card">
-            <strong>Sklep 60 sekund</strong>
-            <span class="hint">Generator aktywny</span>
-          </div>
-          <div class="mobile-mock-card">
-            <strong>Panel właściciela</strong>
-            <span class="hint">Zarządzaj całą platformą</span>
-          </div>
         </div>
       </div>
     </section>
@@ -288,143 +159,9 @@
     </a>
   </nav>
 
-  <script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>
   <script src="js/api.js" defer></script>
   <script src="js/pwa-connect.js" defer></script>
   <script src="js/flow.js" defer></script>
   <script src="js/app.js" defer></script>
-  <script>
-  (function () {
-    'use strict';
-
-    function showMsg(elId, msg, isError) {
-      var el = document.getElementById(elId);
-      if (!el) return;
-      el.textContent = msg;
-      el.style.display = 'block';
-      el.style.background = isError ? '#fee2e2' : '#dcfce7';
-      el.style.color      = isError ? '#991b1b' : '#166534';
-    }
-
-    function hideMsg(elId) {
-      var el = document.getElementById(elId);
-      if (el) el.style.display = 'none';
-    }
-
-    function showLoginForm() {
-      var loginForm = document.querySelector('[data-login-form]');
-      if (loginForm) loginForm.style.display = '';
-      document.getElementById('forgot-password-form').style.display = 'none';
-      document.getElementById('reset-password-form').style.display  = 'none';
-    }
-
-    function showForgotForm() {
-      var loginForm = document.querySelector('[data-login-form]');
-      if (loginForm) loginForm.style.display = 'none';
-      document.getElementById('forgot-password-form').style.display = '';
-      document.getElementById('reset-password-form').style.display  = 'none';
-    }
-
-    function showResetForm() {
-      var loginForm = document.querySelector('[data-login-form]');
-      if (loginForm) loginForm.style.display = 'none';
-      document.getElementById('forgot-password-form').style.display = 'none';
-      document.getElementById('reset-password-form').style.display  = '';
-    }
-
-    var forgotBtn = document.querySelector('[data-forgot-password-btn]');
-    if (forgotBtn) {
-      forgotBtn.addEventListener('click', function () { showForgotForm(); });
-    }
-
-    var backBtn = document.querySelector('[data-back-to-login-btn]');
-    if (backBtn) {
-      backBtn.addEventListener('click', function () { showLoginForm(); });
-    }
-
-    var forgotForm = document.getElementById('forgot-password-form');
-    if (forgotForm) {
-      forgotForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        hideMsg('forgot-password-msg');
-        var email = (forgotForm.querySelector('[name="forgot_email"]') || {}).value || '';
-        if (!email) {
-          showMsg('forgot-password-msg', 'Podaj adres e-mail.', true);
-          return;
-        }
-        var submitBtn = forgotForm.querySelector('[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Wysyłanie…';
-        try {
-          var apiBase = window.QM_API_BASE || 'http://localhost:3000/api';
-          var res = await fetch(apiBase + '/auth/forgot-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email }),
-          });
-          var data = await res.json();
-          if (res.ok) {
-            showMsg('forgot-password-msg', data.message || 'Link wysłany!', false);
-          } else {
-            showMsg('forgot-password-msg', data.error || 'Wystąpił błąd. Spróbuj ponownie.', true);
-          }
-        } catch (err) {
-          showMsg('forgot-password-msg', 'Brak połączenia z serwerem. Sprawdź internet.', true);
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Wyślij link';
-        }
-      });
-    }
-
-    var resetForm = document.getElementById('reset-password-form');
-    if (resetForm) {
-      resetForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        hideMsg('reset-password-msg');
-        var password = (resetForm.querySelector('[name="new_password"]') || {}).value || '';
-        if (password.length < 8) {
-          showMsg('reset-password-msg', 'Hasło musi mieć co najmniej 8 znaków.', true);
-          return;
-        }
-        var token = new URLSearchParams(window.location.search).get('reset_token') || '';
-        if (!token) {
-          showMsg('reset-password-msg', 'Brak tokenu resetującego. Użyj linku z e-maila.', true);
-          return;
-        }
-        var submitBtn = resetForm.querySelector('[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Zmieniam hasło…';
-        try {
-          var apiBase = window.QM_API_BASE || 'http://localhost:3000/api';
-          var res = await fetch(apiBase + '/auth/reset-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: token, password: password }),
-          });
-          var data = await res.json();
-          if (res.ok) {
-            showMsg('reset-password-msg', (data.message || 'Hasło zmienione!') + ' Za chwilę zostaniesz przekierowany do logowania.', false);
-            setTimeout(function () {
-              window.location.href = 'login.html';
-            }, 2500);
-          } else {
-            showMsg('reset-password-msg', data.error || 'Wystąpił błąd. Spróbuj ponownie.', true);
-          }
-        } catch (err) {
-          showMsg('reset-password-msg', 'Brak połączenia z serwerem. Sprawdź internet.', true);
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Zmień hasło';
-        }
-      });
-    }
-
-    if (new URLSearchParams(window.location.search).get('reset_token')) {
-      document.addEventListener('DOMContentLoaded', function () { showResetForm(); });
-      if (document.readyState !== 'loading') showResetForm();
-    }
-  }());
-  </script>
 </body>
 </html>

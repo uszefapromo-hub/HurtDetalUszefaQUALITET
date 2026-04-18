@@ -1,8 +1,4 @@
 # Netlify _redirects – backup for netlify.toml
-
-# Redirect bare domain to www
-https://qualitet-market.com/*  https://www.qualitet-market.com/:splat  301!
-
 /        /index.html   200
 /sklep   /sklep.html   301
 /sklep/* /sklep.html   200
