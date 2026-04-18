@@ -2,20 +2,20 @@
   publish = "."
   command = ""
 
-# ── Canonical domain: redirect non-www to www ────────────────────────────────
+# ── Canonical domain: non-www → www ──────────────────────────────────────────
 [[redirects]]
   from = "https://qualitet-market.com/*"
   to   = "https://www.qualitet-market.com/:splat"
   status = 301
   force  = true
 
-# ── Root ─────────────────────────────────────────────────────────────────────
+# ── Home ─────────────────────────────────────────────────────────────────────
 [[redirects]]
   from = "/"
   to   = "/index.html"
   status = 200
 
-# ── Shop / Koszyk / Checkout (clean URLs with sub-paths) ─────────────────────
+# ── Shop / koszyk / checkout clean URLs ──────────────────────────────────────
 [[redirects]]
   from = "/sklep"
   to   = "/sklep.html"
@@ -56,81 +56,81 @@
   to   = "/sklep.html"
   status = 200
 
-# ── Clean URLs for all pages (no .html extension) ────────────────────────────
+# ── Clean URL rewrites for every HTML page ────────────────────────────────────
 [[redirects]]
   from = "/affiliate"
   to   = "/affiliate.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/auctions"
   to   = "/auctions.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/blog"
   to   = "/blog.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/brand"
   to   = "/brand.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/cennik"
   to   = "/cennik.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/community"
   to   = "/community.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/crm"
   to   = "/crm.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/dashboard"
   to   = "/dashboard.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/feed"
   to   = "/feed.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/generator-sklepu"
   to   = "/generator-sklepu.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/hurtownie"
   to   = "/hurtownie.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/intelligence"
   to   = "/intelligence.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/legal"
   to   = "/legal.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/linki-sprzedazowe"
   to   = "/linki-sprzedazowe.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/listing"
   to   = "/listing.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/listing/*"
@@ -140,57 +140,57 @@
 [[redirects]]
   from = "/live"
   to   = "/live.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/login"
   to   = "/login.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/market-landing"
   to   = "/market-landing.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/operator-panel"
   to   = "/operator-panel.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/owner-panel"
   to   = "/owner-panel.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/panel-artysty"
   to   = "/panel-artysty.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/panel-dostawcy"
   to   = "/panel-dostawcy.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/panel-firmy"
   to   = "/panel-firmy.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/panel-sklepu"
   to   = "/panel-sklepu.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/privacy"
   to   = "/privacy.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/product"
   to   = "/product.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/product/*"
@@ -200,97 +200,98 @@
 [[redirects]]
   from = "/publish-center"
   to   = "/publish-center.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/qualitetmarket"
   to   = "/qualitetmarket.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/qualitetverse"
   to   = "/qualitetverse.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/referral-program"
   to   = "/referral-program.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/reputation"
   to   = "/reputation.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/skrypty"
   to   = "/skrypty.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/success"
   to   = "/success.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/suppliers"
   to   = "/suppliers.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/tasks"
   to   = "/tasks.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/terms"
   to   = "/terms.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/zarabiaj"
   to   = "/zarabiaj.html"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/zostan-dostawca"
   to   = "/zostan-dostawca.html"
-  status = 301
+  status = 200
 
-# ── Catch-all: unmatched paths → custom 404 ──────────────────────────────────
+# ── Catch-all: custom 404 instead of Netlify's default ───────────────────────
 [[redirects]]
   from = "/*"
   to   = "/404.html"
   status = 200
 
-# ── Security & response headers ──────────────────────────────────────────────
+# ── Security & cache headers ──────────────────────────────────────────────────
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options        = "SAMEORIGIN"
-    X-Content-Type-Options = "nosniff"
-    X-XSS-Protection       = "1; mode=block"
-    Referrer-Policy        = "strict-origin-when-cross-origin"
-    Permissions-Policy     = "camera=(), microphone=(), geolocation=(), payment=(self https://js.stripe.com)"
-    Content-Security-Policy = """
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' https://js.stripe.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      font-src 'self' https://fonts.gstatic.com;
-      img-src 'self' data: blob: https:;
-      connect-src 'self' https://api.qualitet-market.com https://api.stripe.com https://hooks.stripe.com;
-      frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.youtube.com https://www.tiktok.com;
-      frame-ancestors 'self';
-      object-src 'none';
-      worker-src 'self' blob:;
-      media-src 'self' blob: https:;
-    """
+    X-Frame-Options           = "SAMEORIGIN"
+    X-Content-Type-Options    = "nosniff"
+    X-XSS-Protection          = "1; mode=block"
+    Referrer-Policy           = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    Permissions-Policy        = "camera=(), microphone=(), geolocation=(), payment=(self https://js.stripe.com)"
+    Content-Security-Policy   = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.qualitet-market.com https://api.stripe.com https://hooks.stripe.com; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.youtube.com https://www.tiktok.com; frame-ancestors 'self'; object-src 'none'; worker-src 'self' blob:; media-src 'self' blob: https:"
 
 # HTML – always revalidate
 [[headers]]
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# Service Worker must never be cached so updates propagate immediately
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+
+# Web App Manifest – short TTL so installs pick up changes quickly
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
 
 # ── Long-term cache for versioned static assets ───────────────────────────────
 [[headers]]
@@ -332,14 +333,3 @@
   for = "/*.woff2"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-# manifest and service worker must always be fresh
-[[headers]]
-  for = "/manifest.json"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/service-worker.js"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
