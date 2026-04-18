@@ -2,69 +2,294 @@
   publish = "."
   command = ""
 
+# ── Canonical domain: non-www → www ──────────────────────────────────────────
+[[redirects]]
+  from = "https://qualitet-market.com/*"
+  to   = "https://www.qualitet-market.com/:splat"
+  status = 301
+  force  = true
+
+# ── Home ─────────────────────────────────────────────────────────────────────
 [[redirects]]
   from = "/"
-  to = "/index.html"
+  to   = "/index.html"
   status = 200
 
+# ── Shop / koszyk / checkout clean URLs ──────────────────────────────────────
 [[redirects]]
   from = "/sklep"
-  to = "/sklep.html"
+  to   = "/sklep.html"
   status = 301
 
 [[redirects]]
   from = "/sklep/*"
-  to = "/sklep.html"
+  to   = "/sklep.html"
   status = 200
 
 [[redirects]]
   from = "/koszyk"
-  to = "/koszyk.html"
+  to   = "/koszyk.html"
   status = 301
 
 [[redirects]]
   from = "/koszyk/*"
-  to = "/koszyk.html"
+  to   = "/koszyk.html"
   status = 200
 
 [[redirects]]
   from = "/checkout"
-  to = "/koszyk.html"
+  to   = "/koszyk.html"
   status = 301
 
 [[redirects]]
   from = "/checkout/*"
-  to = "/koszyk.html"
+  to   = "/koszyk.html"
   status = 200
 
 [[redirects]]
   from = "/shop"
-  to = "/sklep.html"
+  to   = "/sklep.html"
   status = 301
 
 [[redirects]]
   from = "/shop/*"
-  to = "/sklep.html"
+  to   = "/sklep.html"
   status = 200
 
-# Catch-all: route all unmatched paths to our 404 handler instead of Netlify's own page
+# ── Clean URL rewrites for every HTML page ────────────────────────────────────
+[[redirects]]
+  from = "/login"
+  to   = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
+  to   = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/panel-sklepu"
+  to   = "/panel-sklepu.html"
+  status = 200
+
+[[redirects]]
+  from = "/owner-panel"
+  to   = "/owner-panel.html"
+  status = 200
+
+[[redirects]]
+  from = "/operator-panel"
+  to   = "/operator-panel.html"
+  status = 200
+
+[[redirects]]
+  from = "/panel-artysty"
+  to   = "/panel-artysty.html"
+  status = 200
+
+[[redirects]]
+  from = "/panel-dostawcy"
+  to   = "/panel-dostawcy.html"
+  status = 200
+
+[[redirects]]
+  from = "/panel-firmy"
+  to   = "/panel-firmy.html"
+  status = 200
+
+[[redirects]]
+  from = "/affiliate"
+  to   = "/affiliate.html"
+  status = 200
+
+[[redirects]]
+  from = "/live"
+  to   = "/live.html"
+  status = 200
+
+[[redirects]]
+  from = "/intelligence"
+  to   = "/intelligence.html"
+  status = 200
+
+[[redirects]]
+  from = "/zarabiaj"
+  to   = "/zarabiaj.html"
+  status = 200
+
+[[redirects]]
+  from = "/hurtownie"
+  to   = "/hurtownie.html"
+  status = 200
+
+[[redirects]]
+  from = "/brand"
+  to   = "/brand.html"
+  status = 200
+
+[[redirects]]
+  from = "/cennik"
+  to   = "/cennik.html"
+  status = 200
+
+[[redirects]]
+  from = "/crm"
+  to   = "/crm.html"
+  status = 200
+
+[[redirects]]
+  from = "/qualitetverse"
+  to   = "/qualitetverse.html"
+  status = 200
+
+[[redirects]]
+  from = "/qualitetmarket"
+  to   = "/qualitetmarket.html"
+  status = 200
+
+[[redirects]]
+  from = "/generator-sklepu"
+  to   = "/generator-sklepu.html"
+  status = 200
+
+[[redirects]]
+  from = "/listing"
+  to   = "/listing.html"
+  status = 200
+
+[[redirects]]
+  from = "/listing/*"
+  to   = "/listing.html"
+  status = 200
+
+[[redirects]]
+  from = "/product"
+  to   = "/product.html"
+  status = 200
+
+[[redirects]]
+  from = "/product/*"
+  to   = "/product.html"
+  status = 200
+
+[[redirects]]
+  from = "/feed"
+  to   = "/feed.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog"
+  to   = "/blog.html"
+  status = 200
+
+[[redirects]]
+  from = "/community"
+  to   = "/community.html"
+  status = 200
+
+[[redirects]]
+  from = "/auctions"
+  to   = "/auctions.html"
+  status = 200
+
+[[redirects]]
+  from = "/suppliers"
+  to   = "/suppliers.html"
+  status = 200
+
+[[redirects]]
+  from = "/zostan-dostawca"
+  to   = "/zostan-dostawca.html"
+  status = 200
+
+[[redirects]]
+  from = "/referral-program"
+  to   = "/referral-program.html"
+  status = 200
+
+[[redirects]]
+  from = "/reputation"
+  to   = "/reputation.html"
+  status = 200
+
+[[redirects]]
+  from = "/linki-sprzedazowe"
+  to   = "/linki-sprzedazowe.html"
+  status = 200
+
+[[redirects]]
+  from = "/publish-center"
+  to   = "/publish-center.html"
+  status = 200
+
+[[redirects]]
+  from = "/tasks"
+  to   = "/tasks.html"
+  status = 200
+
+[[redirects]]
+  from = "/skrypty"
+  to   = "/skrypty.html"
+  status = 200
+
+[[redirects]]
+  from = "/market-landing"
+  to   = "/market-landing.html"
+  status = 200
+
+[[redirects]]
+  from = "/success"
+  to   = "/success.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to   = "/terms.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy"
+  to   = "/privacy.html"
+  status = 200
+
+[[redirects]]
+  from = "/legal"
+  to   = "/legal.html"
+  status = 200
+
+# ── Catch-all: custom 404 instead of Netlify's default ───────────────────────
 [[redirects]]
   from = "/*"
-  to = "/404.html"
+  to   = "/404.html"
   status = 200
 
+# ── Security & cache headers ─────────────────────────────────────────────────
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Content-Security-Policy = "frame-ancestors 'self'; frame-src 'self' https://www.youtube.com https://www.tiktok.com https://js.stripe.com https://hooks.stripe.com; object-src 'none'"
 
 [[headers]]
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# Service Worker must never be cached by the browser so updates propagate immediately
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+
+# Web App Manifest – short TTL so installs pick up icon/name changes quickly
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
 
 [[headers]]
   for = "/js/*"
