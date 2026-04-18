@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-
 import { CreditCard, MapPin, Truck, Shield, ChevronRight, CheckCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
@@ -25,34 +24,8 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [delivery, setDelivery] = useState('standard');
   const [form, setForm] = useState<CheckoutForm>({ firstName: '', lastName: '', email: '', phone: '', street: '', city: '', zip: '' });
-  const [paying, setPaying] = useState(false);
   const deliveryCost = DELIVERY_OPTIONS.find(d => d.id === delivery)?.price || 0;
   const total = 328.20 + deliveryCost;
-
-  const handleStripeCheckout = async () => {
-    setPaying(true);
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: [
-            { name: 'Zamówienie QualitetMarket', price: total, qty: 1 },
-          ],
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data.error ?? 'Nie udało się utworzyć sesji płatności. Spróbuj ponownie.');
-      }
-    } catch {
-      alert('Wystąpił problem z połączeniem podczas przetwarzania płatności. Sprawdź połączenie internetowe i spróbuj ponownie.');
-    } finally {
-      setPaying(false);
-    }
-  };
 
   if (step === 3) return (
     <div className="max-w-lg mx-auto px-4 py-16 text-center">
@@ -141,8 +114,8 @@ export default function CheckoutPage() {
             <div className="border-t border-white/10 pt-2 flex justify-between text-white font-bold text-lg"><span>Total</span><span className="text-[#00d4ff]">{formatCurrency(total)}</span></div>
           </div>
           <div className="flex items-center gap-2 text-white/40 text-xs"><Shield size={12} /><span>Secured by Stripe. Your data is protected.</span></div>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={handleStripeCheckout} disabled={paying} className="btn-primary w-full flex items-center justify-center gap-2 text-lg disabled:opacity-60">
-            {paying ? 'Przekierowuję...' : `Zapłać ${formatCurrency(total)}`} <CreditCard size={18} />
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => setStep(3)} className="btn-primary w-full flex items-center justify-center gap-2 text-lg">
+            Pay {formatCurrency(total)} <CreditCard size={18} />
           </motion.button>
         </motion.div>
       ) : null}
