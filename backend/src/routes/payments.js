@@ -380,7 +380,7 @@ router.post(
  *   - card: generic card payment
  */
 async function buildProviderPayload(method, payment, returnUrl) {
-  const base = process.env.APP_URL || 'https://uszefaqualitet.pl';
+  const base = process.env.APP_URL || 'https://www.qualitet-market.com';
   const successUrl = returnUrl || `${base}/koszyk.html?payment=success&payment_id=${payment.id}`;
   const cancelUrl  = `${base}/koszyk.html?payment=cancel`;
 

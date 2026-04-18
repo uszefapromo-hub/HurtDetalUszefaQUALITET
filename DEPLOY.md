@@ -34,7 +34,7 @@ Repozytorium zawiera gotową konfigurację dla **trzech platform** statycznego h
 
 ### Własna domena na Netlify
 1. Site settings → **Domain management → Add custom domain**
-2. Wpisz `uszefaqualitet.pl`
+2. Wpisz `qualitet-market.com`
 3. Zaktualizuj rekordy DNS u rejestratora domeny na nameservery Netlify
 
 ---
@@ -53,7 +53,7 @@ Repozytorium zawiera gotową konfigurację dla **trzech platform** statycznego h
 
 ### Własna domena na Vercel
 1. Project → **Settings → Domains → Add**
-2. Wpisz `uszefaqualitet.pl`
+2. Wpisz `qualitet-market.com`
 3. Dodaj rekord CNAME u rejestratora: `cname.vercel-dns.com`
 
 ---
@@ -67,7 +67,7 @@ Repozytorium ma gotowy workflow: `.github/workflows/pages.yml`
 3. Przy każdym pushu na branch `main` strona zostanie automatycznie wdrożona
 4. URL: `https://<org>.github.io/<repo>/` lub własna domena z CNAME
 
-> **Uwaga:** plik `CNAME` w repozytorium (`uszefaqualitet.pl`) jest automatycznie odczytywany przez GitHub Pages jako własna domena.
+> **Uwaga:** plik `CNAME` w repozytorium (`qualitet-market.com`) jest automatycznie odczytywany przez GitHub Pages jako własna domena.
 
 ---
 
@@ -99,7 +99,7 @@ Po wdrożeniu na dowolną platformę sprawdź:
 ## Zmienne środowiskowe frontendu
 
 Panel frontendowy odczytuje URL backendu API z `window.QM_API_BASE`.  
-Domyślnie wskazuje na `https://api.uszefaqualitet.pl/api`.
+Domyślnie wskazuje na `https://api.qualitet-market.com/api`.
 
 Aby zmienić, zmodyfikuj przed wdrożeniem w pliku `js/api.js`:
 

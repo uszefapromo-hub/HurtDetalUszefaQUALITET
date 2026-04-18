@@ -28,7 +28,7 @@
   // ─── Configuration ────────────────────────────────────────────────────────────
 
   // Set window.QM_API_BASE before loading this script to point at your backend.
-  // Example: <script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>
+  // Example: <script>window.QM_API_BASE = 'https://api.qualitet-market.com/api';</script>
   const API_BASE = (typeof window !== 'undefined' && window.QM_API_BASE)
     || 'http://localhost:3000/api';
 

@@ -24,7 +24,7 @@ describe('production runtime config', () => {
       ...originalEnv,
       NODE_ENV: 'production',
       JWT_SECRET: '',
-      ALLOWED_ORIGINS: 'https://uszefaqualitet.pl',
+      ALLOWED_ORIGINS: 'https://www.qualitet-market.com',
     };
 
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -60,7 +60,7 @@ describe('production runtime config', () => {
       ...originalEnv,
       NODE_ENV: 'production',
       JWT_SECRET: 'super-secure-production-secret',
-      ALLOWED_ORIGINS: 'https://uszefaqualitet.pl',
+      ALLOWED_ORIGINS: 'https://www.qualitet-market.com',
     };
 
     const app = require('../src/app');
@@ -77,15 +77,15 @@ describe('production runtime config', () => {
       ...originalEnv,
       NODE_ENV: 'production',
       JWT_SECRET: 'super-secure-production-secret',
-      ALLOWED_ORIGINS: 'https://uszefaqualitet.pl',
+      ALLOWED_ORIGINS: 'https://www.qualitet-market.com',
     };
 
     const app = require('../src/app');
     const res = await request(app)
       .get('/health')
-      .set('Origin', 'https://uszefaqualitet.pl');
+      .set('Origin', 'https://www.qualitet-market.com');
 
     expect(res.status).toBe(200);
-    expect(res.headers['access-control-allow-origin']).toBe('https://uszefaqualitet.pl');
+    expect(res.headers['access-control-allow-origin']).toBe('https://www.qualitet-market.com');
   });
 });

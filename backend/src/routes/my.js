@@ -632,7 +632,7 @@ router.post(
       // Non-critical — skip if products table isn't available
     }
 
-    const base = process.env.APP_URL || 'https://uszefaqualitet.pl';
+    const base = process.env.APP_URL || 'https://www.qualitet-market.com';
     const salesLink = `${base}/sklep.html?slug=${content.slug}`;
 
     return res.json({
@@ -763,7 +763,7 @@ router.get(
 
       const storeSlug    = store ? store.slug    : null;
       const storeId      = store ? store.id      : null;
-      const baseUrl      = process.env.APP_URL || 'https://uszefaqualitet.pl';
+      const baseUrl      = process.env.APP_URL || 'https://www.qualitet-market.com';
       const storeFrontUrl = storeSlug ? `${baseUrl}/sklep.html?slug=${storeSlug}` : null;
 
       const steps = [

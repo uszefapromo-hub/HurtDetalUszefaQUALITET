@@ -434,7 +434,7 @@ router.get('/click/:code', async (req, res) => {
 function _buildRedirectUrl(link) {
   // link.product_id and link.store_id are UUIDs fetched from the database;
   // they are never derived from user input, so there is no open-redirect risk.
-  const base = process.env.FRONTEND_URL || 'https://uszefaqualitet.pl';
+  const base = process.env.FRONTEND_URL || 'https://www.qualitet-market.com';
   if (link.product_id) {
     const store = link.store_id ? `?store=${link.store_id}` : '';
     return `${base}/sklep.html${store}#product-${link.product_id}`;

@@ -1,6 +1,6 @@
 # HurtDetalUszefaQUALITET / Qualitet Market
 
-Podgląd produkcyjny: https://uszefaqualitet.pl
+Podgląd produkcyjny: https://www.qualitet-market.com
 
 ## Final release
 

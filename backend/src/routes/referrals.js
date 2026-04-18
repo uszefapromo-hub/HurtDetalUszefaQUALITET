@@ -19,7 +19,7 @@ const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 // Percentage of invited user's order commission credited to the inviter
 const USER_REFERRAL_REWARD_RATE = 0.02; // 2 %
-const BASE_URL = process.env.FRONTEND_URL || 'https://uszefaqualitet.pl';
+const BASE_URL = process.env.FRONTEND_URL || 'https://www.qualitet-market.com';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 

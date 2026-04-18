@@ -114,7 +114,7 @@
 ### 🔴 BUG #1 – 12 stron HTML domyślnie do localhost (NAPRAWIONE)
 **Plik:** `dashboard.html`, `koszyk.html`, `login.html`, `cennik.html`, `operator-panel.html`, `feed.html`, `live.html`, `market-landing.html`, `skrypty.html`, `zarabiaj.html`, `qualitetmarket.html`, `linki-sprzedazowe.html`  
 **Problem:** `js/api.js` linia 33 – fallback `http://localhost:3000/api` gdy `window.QM_API_BASE` nie ustawione. Na produkcji (Netlify) wszystkie wywołania API lądowały na localhost i kończyły się błędem `ERR_CONNECTION_REFUSED`.  
-**Fix:** Dodano `<script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>` do 13 stron.  
+**Fix:** Dodano `<script>window.QM_API_BASE = 'https://api.qualitet-market.com/api';</script>` do 13 stron.  
 **Status:** ✅ NAPRAWIONO
 
 ---
