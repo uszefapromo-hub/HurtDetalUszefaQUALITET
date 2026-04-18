@@ -8,55 +8,55 @@ https://qualitet-market.com/*  https://www.qualitet-market.com/:splat  301!
 /        /index.html   200
 
 # Shop / koszyk
-/sklep   /sklep.html   301
-/sklep/* /sklep.html   200
-/koszyk  /koszyk.html  301
-/koszyk/* /koszyk.html 200
-/checkout  /koszyk.html  301
-/checkout/* /koszyk.html 200
-/shop    /sklep.html   301
-/shop/*  /sklep.html   200
+/sklep        /sklep.html   301
+/sklep/*      /sklep.html   200
+/koszyk       /koszyk.html  301
+/koszyk/*     /koszyk.html  200
+/checkout     /koszyk.html  301
+/checkout/*   /koszyk.html  200
+/shop         /sklep.html   301
+/shop/*       /sklep.html   200
 
 # Auth & dashboards
-/login          /login.html         200
-/dashboard      /dashboard.html     200
-/panel-sklepu   /panel-sklepu.html  200
-/owner-panel    /owner-panel.html   200
+/login          /login.html          200
+/dashboard      /dashboard.html      200
+/panel-sklepu   /panel-sklepu.html   200
+/owner-panel    /owner-panel.html    200
 /operator-panel /operator-panel.html 200
-/panel-artysty  /panel-artysty.html 200
+/panel-artysty  /panel-artysty.html  200
 /panel-dostawcy /panel-dostawcy.html 200
-/panel-firmy    /panel-firmy.html   200
+/panel-firmy    /panel-firmy.html    200
 
 # Marketplace pages
 /affiliate          /affiliate.html          200
-/live               /live.html               200
-/intelligence       /intelligence.html       200
-/zarabiaj           /zarabiaj.html           200
-/hurtownie          /hurtownie.html          200
+/auctions           /auctions.html           200
+/blog               /blog.html               200
 /brand              /brand.html              200
 /cennik             /cennik.html             200
+/community          /community.html          200
 /crm                /crm.html                200
-/qualitetverse      /qualitetverse.html      200
-/qualitetmarket     /qualitetmarket.html     200
+/feed               /feed.html               200
 /generator-sklepu   /generator-sklepu.html   200
+/hurtownie          /hurtownie.html          200
+/intelligence       /intelligence.html       200
+/linki-sprzedazowe  /linki-sprzedazowe.html  200
 /listing            /listing.html            200
 /listing/*          /listing.html            200
+/live               /live.html               200
+/market-landing     /market-landing.html     200
 /product            /product.html            200
 /product/*          /product.html            200
-/feed               /feed.html               200
-/blog               /blog.html               200
-/community          /community.html          200
-/auctions           /auctions.html           200
-/suppliers          /suppliers.html          200
-/zostan-dostawca    /zostan-dostawca.html    200
+/publish-center     /publish-center.html     200
+/qualitetmarket     /qualitetmarket.html     200
+/qualitetverse      /qualitetverse.html      200
 /referral-program   /referral-program.html   200
 /reputation         /reputation.html         200
-/linki-sprzedazowe  /linki-sprzedazowe.html  200
-/publish-center     /publish-center.html     200
-/tasks              /tasks.html              200
 /skrypty            /skrypty.html            200
-/market-landing     /market-landing.html     200
 /success            /success.html            200
+/suppliers          /suppliers.html          200
+/tasks              /tasks.html              200
+/zarabiaj           /zarabiaj.html           200
+/zostan-dostawca    /zostan-dostawca.html    200
 
 # Legal
 /terms   /terms.html   200
