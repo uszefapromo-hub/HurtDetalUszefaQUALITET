@@ -2138,7 +2138,7 @@ table{word-break:break-word}
   .price-card ul{padding:12px 14px 12px 28px}
 
   /* Buttons */
-  .btn{min-height:48px;padding:0 16px;font-size:14px}
+  .btn{min-height:46px;padding:0 16px;font-size:14px}
   .cta-row,.quick-links{flex-wrap:wrap}
 
   /* Sections */
@@ -2283,7 +2283,7 @@ table{word-break:break-word}
   .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
   .stat-card{padding:10px}
   .stat-card strong{font-size:18px}
-  .btn{min-height:44px;padding:0 12px;font-size:13px}
+  .btn{min-height:42px;padding:0 12px;font-size:13px}
   .hero h1,.page-hero h1{font-size:clamp(18px,8vw,28px)}
   .sidebar-nav a{padding:9px 10px;font-size:13px}
   .hero-stat-icon{width:26px;height:26px;font-size:12px}
@@ -2319,7 +2319,7 @@ html,body{max-width:100vw;overflow-x:hidden}
 /* ── Topbar on very small screens ── */
 @media(max-width:400px){
   .topbar-inner{padding:10px 0}
-  .topbar-cta{margin-top:8px;font-size:13px;padding:0 12px;min-height:44px}
+  .topbar-cta{margin-top:8px;font-size:13px;padding:0 12px;min-height:40px}
   .brand strong{font-size:15px}
   .brand span:not(.brand-tag){display:none}
 }
