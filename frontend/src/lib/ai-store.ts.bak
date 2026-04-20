@@ -1,0 +1,126 @@
+export type AiStoreFaqItem = {
+  q: string
+  a: string
+}
+
+export type AiStorePolicy = {
+  shipping: string
+  returns: string
+}
+
+export type AiStoreColors = {
+  primary: string
+  secondary: string
+  background: string
+}
+
+export type AiStoreProduct = {
+  id: string
+  name: string
+  price: number
+  basePrice: number
+  image: string
+  category: string
+}
+
+export type AiStore = {
+  slug: string
+  storeName: string
+  category: string
+  audience: string
+  style: string
+  marginPercent: number
+  autoImportProducts: boolean
+  brandName: string
+  headline: string
+  subheadline: string
+  colors: AiStoreColors
+  faq: AiStoreFaqItem[]
+  policy: AiStorePolicy
+  createdAt: string
+  products: AiStoreProduct[]
+}
+
+const AI_STORES_KEY = 'qm_ai_stores'
+const CURRENT_AI_STORE_KEY = 'qm_ai_current_store'
+
+const isBrowser = () => typeof window !== 'undefined'
+
+export const getAiStores = (): AiStore[] => {
+  if (!isBrowser()) {
+    return []
+  }
+
+  try {
+    const raw = window.localStorage.getItem(AI_STORES_KEY)
+    if (!raw) {
+      return []
+    }
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export const saveAiStores = (stores: AiStore[]): void => {
+  if (!isBrowser()) {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(AI_STORES_KEY, JSON.stringify(stores))
+  } catch (error) {
+    console.error('Failed to save AI stores:', error)
+  }
+}
+
+export const saveAiStore = (store: AiStore): void => {
+  if (!isBrowser()) {
+    return
+  }
+
+  const stores = getAiStores()
+  const next = [store, ...stores.filter((item) => item.slug !== store.slug)]
+  saveAiStores(next)
+}
+
+export const getAiStoreBySlug = (slug: string): AiStore | null => {
+  if (!slug) {
+    return null
+  }
+
+  const stores = getAiStores()
+  return stores.find((store) => store.slug === slug) || null
+}
+
+export const setCurrentAiStore = (slug: string): void => {
+  if (!isBrowser()) {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(CURRENT_AI_STORE_KEY, slug)
+  } catch (error) {
+    console.error('Failed to save current AI store slug:', error)
+  }
+}
+
+export const getCurrentAiStore = (): AiStore | null => {
+  if (!isBrowser()) {
+    return null
+  }
+
+  let slug = ''
+  try {
+    slug = window.localStorage.getItem(CURRENT_AI_STORE_KEY) || ''
+  } catch {
+    return null
+  }
+
+  if (!slug) {
+    return null
+  }
+
+  return getAiStoreBySlug(slug)
+}

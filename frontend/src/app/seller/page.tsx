@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, Package, ShoppingBag, Zap, Plus, Eye, Star, Bell, Bot, MessageSquareText, Sparkles } from 'lucide-react'
+import { TrendingUp, Package, ShoppingBag, Zap, Plus, Eye, Star, Bell, Bot, MessageSquareText, Sparkles, Link2, Download, CheckCircle2 } from 'lucide-react'
 import { StatCard } from '@/components/ui/StatCard'
+import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 
 const RECENT_ORDERS = [
@@ -21,6 +22,82 @@ const AI_ACTIONS = [
 
 export default function SellerDashboard() {
   const [aiTip] = useState('Kategoria audio rośnie. Dodaj warianty premium, skrócone opisy i CTA do kampanii remarketingowej.')
+  const [supplierName, setSupplierName] = useState('')
+  const [sourceUrl, setSourceUrl] = useState('')
+  const [authValue, setAuthValue] = useState('')
+  const [isSavingSupplier, setIsSavingSupplier] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importedProductsCount, setImportedProductsCount] = useState(0)
+  const [supplierStatus, setSupplierStatus] = useState<string | null>(null)
+  const [supplierError, setSupplierError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadSupplier = async () => {
+      try {
+        const configRes = await api.seller.supplier.get()
+        const supplier = configRes?.supplier as
+          | {
+              supplierName?: string
+              sourceUrl?: string
+              authMasked?: string
+              authConfigured?: boolean
+            }
+          | undefined
+          | null
+
+        if (supplier) {
+          setSupplierName(supplier.supplierName || '')
+          setSourceUrl(supplier.sourceUrl || '')
+          setAuthValue('')
+          setSupplierStatus(supplier.supplierName ? `Connected: ${supplier.supplierName}` : null)
+        }
+
+        const productsRes = await api.seller.supplier.listImportedProducts()
+        setImportedProductsCount(Array.isArray(productsRes?.products) ? productsRes.products.length : 0)
+      } catch {
+        setSupplierError('Unable to load supplier settings')
+      }
+    }
+
+    loadSupplier()
+  }, [])
+
+  const handleSaveSupplier = async () => {
+    setSupplierError(null)
+    setSupplierStatus(null)
+    setIsSavingSupplier(true)
+
+    try {
+      const response = await api.seller.supplier.save({
+        supplierName,
+        sourceUrl,
+        authValue,
+      })
+      const supplier = (response as { supplier?: { supplierName?: string } })?.supplier
+      setSupplierStatus(supplier?.supplierName ? `Connected: ${supplier.supplierName}` : 'Supplier config saved')
+      setAuthValue('')
+    } catch (error) {
+      setSupplierError(error instanceof Error ? error.message : 'Unable to save supplier config')
+    } finally {
+      setIsSavingSupplier(false)
+    }
+  }
+
+  const handleImportProducts = async () => {
+    setSupplierError(null)
+    setIsImporting(true)
+
+    try {
+      const response = await api.seller.supplier.importProducts()
+      const payload = response as { importedCount?: number; totalProducts?: number }
+      setImportedProductsCount(payload.totalProducts || 0)
+      setSupplierStatus(`Imported ${payload.importedCount || 0} products`)
+    } catch (error) {
+      setSupplierError(error instanceof Error ? error.message : 'Unable to import products')
+    } finally {
+      setIsImporting(false)
+    }
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 py-4">
@@ -83,6 +160,65 @@ export default function SellerDashboard() {
             <span className="text-white text-xs font-medium">{label}</span>
           </motion.button>
         ))}
+      </div>
+
+      <div className="glass-card p-4 mb-6 border border-[#00d4ff]/30 bg-[#00d4ff]/5">
+        <div className="flex items-center gap-2 mb-1">
+          <Link2 size={17} className="text-[#00d4ff]" />
+          <h2 className="text-white font-semibold">Connect Supplier</h2>
+        </div>
+        <p className="text-white/50 text-sm mb-4">Connect one supplier feed per seller and import products into your store.</p>
+
+        <div className="space-y-3">
+          <input
+            value={supplierName}
+            onChange={(e) => setSupplierName(e.target.value)}
+            placeholder="Supplier name"
+            className="w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-white text-sm placeholder:text-white/40 outline-none focus:border-[#00d4ff]/60"
+          />
+          <input
+            value={sourceUrl}
+            onChange={(e) => setSourceUrl(e.target.value)}
+            placeholder="API URL or XML feed URL"
+            className="w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-white text-sm placeholder:text-white/40 outline-none focus:border-[#00d4ff]/60"
+          />
+          <input
+            value={authValue}
+            onChange={(e) => setAuthValue(e.target.value)}
+            placeholder="API key / login (optional)"
+            type="password"
+            className="w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-white text-sm placeholder:text-white/40 outline-none focus:border-[#00d4ff]/60"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <button
+            onClick={handleSaveSupplier}
+            disabled={isSavingSupplier || !supplierName.trim() || !sourceUrl.trim()}
+            className="rounded-xl py-2 px-3 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingSupplier ? 'Saving...' : 'Save supplier'}
+          </button>
+          <button
+            onClick={handleImportProducts}
+            disabled={isImporting}
+            className="rounded-xl py-2 px-3 bg-[#00d4ff] text-black text-sm font-bold hover:bg-[#4ae5ff] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+          >
+            <Download size={15} />
+            {isImporting ? 'Importing...' : 'Import products'}
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-white/60 text-xs">Products in your store: <span className="text-white font-semibold">{importedProductsCount}</span></p>
+          {supplierStatus && (
+            <p className="text-green-300 text-xs inline-flex items-center gap-1">
+              <CheckCircle2 size={14} />
+              {supplierStatus}
+            </p>
+          )}
+        </div>
+        {supplierError && <p className="mt-2 text-rose-300 text-xs">{supplierError}</p>}
       </div>
 
       <div>

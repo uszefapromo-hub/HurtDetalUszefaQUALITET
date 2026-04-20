@@ -8,10 +8,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 glass-card border-b border-white/10 px-4 py-3">
       <div className="flex items-center justify-between max-w-7xl mx-auto gap-3">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2" aria-label="QualitetMarket">
           <motion.div whileHover={{ scale: 1.05 }} className="text-xl font-black">
-            <span className="neon-text-cyan">Qualitet</span>
-            <span className="text-white/60 font-light text-sm ml-1">Market</span>
+            <span className="neon-text-cyan">Qualitet</span><span className="text-white">Market</span>
           </motion.div>
         </Link>
         <div className="flex items-center gap-2">

@@ -4,8 +4,12 @@ import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 
 export const metadata: Metadata = {
-  title: 'Qualitet Market',
-  description: 'Futuristic B2B/B2C Marketplace Platform',
+  title: {
+    default: 'QualitetMarket | Marketplace B2B/B2C',
+    template: 'QualitetMarket | %s',
+  },
+  applicationName: 'QualitetMarket',
+  description: 'QualitetMarket — marketplace B2B/B2C.',
   manifest: '/manifest.json',
 };
 

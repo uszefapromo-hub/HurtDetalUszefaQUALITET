@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, MapPin, Truck, Shield, ChevronRight, CheckCircle } from 'lucide-react';
+import { CreditCard, MapPin, Truck, Shield, ChevronRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 const DELIVERY_OPTIONS = [
   { id: 'standard', label: 'Standard', days: '3-5 days', price: 0 },
@@ -24,19 +25,31 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [delivery, setDelivery] = useState('standard');
   const [form, setForm] = useState<CheckoutForm>({ firstName: '', lastName: '', email: '', phone: '', street: '', city: '', zip: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const deliveryCost = DELIVERY_OPTIONS.find(d => d.id === delivery)?.price || 0;
   const total = 328.20 + deliveryCost;
 
-  if (step === 3) return (
-    <div className="max-w-lg mx-auto px-4 py-16 text-center">
-      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 rounded-full bg-green-400/20 flex items-center justify-center mx-auto mb-4">
-        <CheckCircle size={40} className="text-green-400" />
-      </motion.div>
-      <h1 className="text-2xl font-black text-white mb-2">Order Placed!</h1>
-      <p className="text-white/50 mb-6">Your order has been confirmed.</p>
-      <a href="/" className="btn-primary inline-block px-8">Back to Home</a>
-    </div>
-  );
+  const handleSubmitOrder = async () => {
+    setIsSubmitting(true);
+    try {
+      const cart = await api.cart.get();
+      const res = await fetch('/api/stripe/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data?.url) {
+        throw new Error('Stripe checkout session could not be created');
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Checkout redirect error:', error);
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="max-w-lg mx-auto px-4 py-4">
@@ -114,8 +127,13 @@ export default function CheckoutPage() {
             <div className="border-t border-white/10 pt-2 flex justify-between text-white font-bold text-lg"><span>Total</span><span className="text-[#00d4ff]">{formatCurrency(total)}</span></div>
           </div>
           <div className="flex items-center gap-2 text-white/40 text-xs"><Shield size={12} /><span>Secured by Stripe. Your data is protected.</span></div>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={() => setStep(3)} className="btn-primary w-full flex items-center justify-center gap-2 text-lg">
-            Pay {formatCurrency(total)} <CreditCard size={18} />
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSubmitOrder}
+            disabled={isSubmitting}
+            className="btn-primary w-full flex items-center justify-center gap-2 text-lg"
+          >
+            {isSubmitting ? 'Redirecting…' : `Pay ${formatCurrency(total)}`} <CreditCard size={18} />
           </motion.button>
         </motion.div>
       ) : null}
