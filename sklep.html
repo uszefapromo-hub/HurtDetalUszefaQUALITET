@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QualitetMarket - Sklep</title>
-  <script>window.QM_API_BASE = window.QM_API_BASE || 'https://api.qualitet-market.com/api';</script>
+  <script>window.QM_API_BASE = window.QM_API_BASE || (window.location.origin + '/api');</script>
   <style>
     * { box-sizing: border-box; }
 
@@ -454,7 +454,7 @@
   </div>
 
   <script>
-    const API_BASE = window.QM_API_BASE || 'https://api.qualitet-market.com/api';
+    const API_BASE = window.QM_API_BASE || (window.location.origin + '/api');
 
     const SOURCE_ENDPOINTS = [
       API_BASE + '/products?status=active&limit=500',
@@ -514,17 +514,31 @@
       }) + ' zł';
     }
 
+    function normalizeCartItem(item) {
+      if (!item || item.id === undefined || item.id === null) return null;
+      const qty = Math.max(1, Number(item.qty) || 1);
+      return {
+        id: item.id,
+        name: String(item.name || 'Produkt'),
+        price: Number(item.price) || 0,
+        img: item.img ? String(item.img) : '',
+        qty
+      };
+    }
+
     function getCart() {
       try {
-        const cart = JSON.parse(localStorage.getItem('qm_cart') || '[]');
-        return Array.isArray(cart) ? cart : [];
+        const rawCart = JSON.parse(localStorage.getItem('qm_cart') || '[]');
+        if (!Array.isArray(rawCart)) return [];
+        return rawCart.map(normalizeCartItem).filter(Boolean);
       } catch (e) {
         return [];
       }
     }
 
     function saveCart(cart) {
-      localStorage.setItem('qm_cart', JSON.stringify(cart));
+      const normalizedCart = (Array.isArray(cart) ? cart : []).map(normalizeCartItem).filter(Boolean);
+      localStorage.setItem('qm_cart', JSON.stringify(normalizedCart));
     }
 
     function updateCartCount() {
@@ -534,6 +548,11 @@
     }
 
     function addToCart(product) {
+      if (!product || product.id === undefined || product.id === null) return;
+
+      const name = product.name || product.title || 'Produkt';
+      const img = product.img || product.image || product.thumbnail || '';
+      const price = Number(product.price ?? product.displayPrice) || 0;
       const cart = getCart();
       const existing = cart.find(item => String(item.id) === String(product.id));
 
@@ -542,9 +561,9 @@
       } else {
         cart.push({
           id: product.id,
-          title: product.title,
-          price: product.displayPrice,
-          image: product.image,
+          name,
+          price,
+          img,
           qty: 1
         });
       }
@@ -884,9 +903,9 @@
         buyBtn.addEventListener('click', function () {
           addToCart({
             id: product.id,
-            title: product.title,
-            displayPrice: product.displayPrice,
-            image: safeImage
+            name: product.title,
+            price: product.displayPrice,
+            img: safeImage
           });
         });
 

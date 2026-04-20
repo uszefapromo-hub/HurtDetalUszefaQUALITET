@@ -398,7 +398,7 @@
   </div>
 
   <script>
-    const DEFAULT_API = window.QM_API_BASE || localStorage.getItem('qm_api_base') || 'https://api.qualitet-market.com/api';
+    const DEFAULT_API = window.QM_API_BASE || localStorage.getItem('qm_api_base') || 'https://api.uszefaqualitet.pl/api';
     const workspace = document.getElementById('workspace');
     const workspaceLabel = document.getElementById('workspaceLabel');
     const currentTitle = document.getElementById('currentTitle');
@@ -526,7 +526,7 @@
 
     function fillLoginRequest(){
       document.getElementById('apiMethod').value = 'POST';
-      document.getElementById('apiPath').value = '/auth/login';
+      document.getElementById('apiPath').value = '/api/health';
       document.getElementById('apiBody').value = JSON.stringify({email:'owner@qualitetmarket.pl',password:'twoje-haslo'}, null, 2);
     }
 

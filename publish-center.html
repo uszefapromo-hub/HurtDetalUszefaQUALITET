@@ -122,7 +122,7 @@
         <h2>Netlify + domena</h2>
         <div class="grid grid-2">
           <div class="field"><label>Public domain</label><input id="publicDomain" value="https://www.qualitet-market.com"></div>
-          <div class="field"><label>Allowed origins</label><input id="allowedOrigins" value="https://www.qualitet-market.com,http://localhost:3000"></div>
+          <div class="field"><label>Allowed origins</label><input id="allowedOrigins" value="https://www.qualitet-market.com"></div>
           <div class="field"><label>Netlify site ID</label><input id="netlifySiteId" placeholder="site-id"></div>
           <div class="field"><label>Netlify access token</label><input id="netlifyToken" type="password" placeholder="personal access token"></div>
           <div class="field"><label>Publish directory</label><input id="netlifyPublish" value="."></div>
@@ -302,7 +302,7 @@
           setVal('apiBase', p.app?.api_base_url || '');
           setVal('appUrl', p.app?.app_url || 'https://www.qualitet-market.com');
           setVal('publicDomain', p.app?.public_domain || 'https://www.qualitet-market.com');
-          setVal('allowedOrigins', p.app?.allowed_origins || 'https://www.qualitet-market.com,http://localhost:3000');
+          setVal('allowedOrigins', p.app?.allowed_origins || 'https://www.qualitet-market.com');
           setVal('stripeSecret', p.stripe?.secret_key || '');
           setVal('stripePublishable', p.stripe?.publishable_key || '');
           setVal('stripeWebhook', p.stripe?.webhook_secret || '');
@@ -408,7 +408,7 @@
           'APP_URL=' + (p.app.app_url || 'https://www.qualitet-market.com'),
           'PUBLIC_DOMAIN=' + (p.app.public_domain || 'https://www.qualitet-market.com'),
           'API_BASE_URL=' + (p.app.api_base_url || ''),
-          'ALLOWED_ORIGINS=' + (p.app.allowed_origins || 'https://www.qualitet-market.com,http://localhost:3000'),
+          'ALLOWED_ORIGINS=' + (p.app.allowed_origins || 'https://www.qualitet-market.com'),
           'STRIPE_SECRET_KEY=' + p.stripe.secret_key,
           'STRIPE_PUBLISHABLE_KEY=' + p.stripe.publishable_key,
           'STRIPE_WEBHOOK_SECRET=' + p.stripe.webhook_secret,

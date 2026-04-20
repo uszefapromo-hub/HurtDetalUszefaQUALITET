@@ -29,8 +29,8 @@
 ### `/api/auth` – Autentykacja (5 endpointów)
 | Metoda | Ścieżka | Opis |
 |---|---|---|
-| POST | `/api/auth/register` | Rejestracja nowego konta (domyślna rola: seller) |
-| POST | `/api/auth/login` | Logowanie, zwraca JWT |
+| POST | `/api/auth (register)` | Rejestracja nowego konta (domyślna rola: seller) |
+| POST | `/api/auth (login)` | Logowanie, zwraca JWT |
 | POST | `/api/auth/refresh` | Odświeżenie tokenu JWT |
 | GET | `/api/auth/me` | Profil zalogowanego użytkownika |
 | PUT | `/api/auth/me` | Aktualizacja profilu użytkownika |

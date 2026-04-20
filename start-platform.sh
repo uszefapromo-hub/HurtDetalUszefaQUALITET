@@ -13,7 +13,7 @@ echo "2/3 Start frontend on http://localhost:8080"
 node "$ROOT_DIR/index.js" &
 FRONT_PID=$!
 
-echo "3/3 Start backend on http://localhost:3000"
+echo "3/3 Start backend on configured API host"
 cd "$ROOT_DIR/backend"
 npm start
 

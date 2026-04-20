@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>QualitetMarket | Generator sklepu</title>
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    .ai-wrap{max-width:760px;margin:32px auto;padding:0 16px}
+    .ai-card{background:rgba(10,14,25,.75);border:1px solid rgba(124,58,237,.35);border-radius:18px;padding:20px}
+    .ai-title{margin:0 0 8px;font-size:30px;line-height:1.2}
+    .ai-lead{margin:0 0 18px;color:var(--muted)}
+    .ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .ai-grid-full{grid-column:1 / -1}
+    @media (max-width:720px){.ai-grid{grid-template-columns:1fr}}
+    .ai-label{display:block;font-weight:600;margin-bottom:6px}
+    .ai-input{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.03);color:#fff;padding:10px 12px}
+    .ai-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+    .ai-error{color:#fda4af;font-size:14px;min-height:20px}
+  </style>
+</head>
+<body class="has-bottom-nav">
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html"><strong>QualitetMarket</strong></a>
+      <a class="btn btn-secondary" href="dashboard.html">Dashboard</a>
+    </div>
+  </header>
+
+  <main class="ai-wrap">
+    <section class="ai-card">
+      <h1 class="ai-title">AI Otwiera Twój Sklep</h1>
+      <p class="ai-lead">Wpisz dane, a system utworzy gotowy sklep dropshippingowy oparty o centralny feed produktów.</p>
+
+      <form id="aiForm" class="ai-grid">
+        <div class="ai-grid-full">
+          <label class="ai-label" for="storeName">Nazwa sklepu</label>
+          <input id="storeName" name="storeName" class="ai-input" required placeholder="np. Velori Home" />
+        </div>
+
+        <div>
+          <label class="ai-label" for="category">Kategoria</label>
+          <input id="category" name="category" class="ai-input" value="home decor" />
+        </div>
+
+        <div>
+          <label class="ai-label" for="marginPercent">Marża %</label>
+          <input id="marginPercent" name="marginPercent" class="ai-input" type="number" min="0" value="35" />
+        </div>
+
+        <div>
+          <label class="ai-label" for="audience">Grupa docelowa</label>
+          <input id="audience" name="audience" class="ai-input" value="Młodzi dorośli 18-35" />
+        </div>
+
+        <div>
+          <label class="ai-label" for="style">Styl sklepu</label>
+          <input id="style" name="style" class="ai-input" value="Dark premium" />
+        </div>
+
+        <div class="ai-grid-full">
+          <label style="display:flex;align-items:center;gap:8px;color:#dbe4ff">
+            <input id="autoImportProducts" name="autoImportProducts" type="checkbox" checked>
+            Automatycznie importuj produkty z centralnego feedu
+          </label>
+        </div>
+
+        <div class="ai-grid-full ai-actions">
+          <button id="submitBtn" class="btn btn-primary" type="submit">Generuj gotowy sklep</button>
+          <span id="status" class="hint"></span>
+        </div>
+        <div class="ai-grid-full ai-error" id="error"></div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const form = document.getElementById('aiForm');
+      const status = document.getElementById('status');
+      const errorEl = document.getElementById('error');
+      const submitBtn = document.getElementById('submitBtn');
+      const STORES_KEY = 'qm_ai_stores';
+      const CURRENT_KEY = 'qm_ai_current_store';
+
+      function saveStore(store){
+        let list = [];
+        try {
+          const raw = localStorage.getItem(STORES_KEY);
+          list = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(list)) list = [];
+        } catch (_) {
+          list = [];
+        }
+
+        const filtered = list.filter(function(item){ return item && item.slug !== store.slug; });
+        localStorage.setItem(STORES_KEY, JSON.stringify([store].concat(filtered)));
+        localStorage.setItem(CURRENT_KEY, store.slug);
+      }
+
+      form.addEventListener('submit', async function(event){
+        event.preventDefault();
+        errorEl.textContent = '';
+        status.textContent = 'Generowanie sklepu...';
+        submitBtn.disabled = true;
+
+        const payload = {
+          storeName: form.storeName.value.trim(),
+          category: form.category.value.trim(),
+          audience: form.audience.value.trim(),
+          style: form.style.value.trim(),
+          marginPercent: Number(form.marginPercent.value || 0),
+          autoImportProducts: Boolean(form.autoImportProducts.checked),
+        };
+
+        try {
+          const res = await fetch('/.netlify/functions/ai-store-generator', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (!res.ok || !data || !data.ok || !data.store || !data.store.slug) {
+            throw new Error((data && data.error) || 'Błąd tworzenia sklepu');
+          }
+
+          saveStore(data.store);
+          window.location.href = '/launch/' + encodeURIComponent(data.store.slug);
+        } catch (err) {
+          errorEl.textContent = (err && err.message) ? err.message : 'Wystąpił błąd połączenia.';
+          status.textContent = '';
+          submitBtn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

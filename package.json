@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "description": "QualitetMarket launcher",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "stripe": "^17.7.0"
+  },
   "scripts": {
     "start": "node index.js",
     "start:frontend": "node index.js",

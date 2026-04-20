@@ -192,7 +192,7 @@
     }
 
   </style>
-  <script>window.QM_API_BASE = 'https://api.qualitet-market.com/api';</script>
+  <script>window.QM_API_BASE = window.location.origin + '/api';</script>
   <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; object-src 'none'">
   <script src="js/security-guard.js"></script>
   <script src="js/qm-runtime.js"></script>
@@ -1695,8 +1695,6 @@
   const input = document.querySelector('[data-ai-input]');
   const messages = document.querySelector('[data-ai-messages]');
   const clearBtn = document.querySelector('[data-ai-clear]');
-  const apiBase = window.QM_API_BASE || '/api';
-
   if(!modal || !form || !input || !messages) return;
 
   function addMessage(text, who){
@@ -1739,18 +1737,18 @@
 
   form.addEventListener('submit', async function(e){
     e.preventDefault();
-    const question = input.value.trim();
-    if(!question) return;
+    const userInput = input.value.trim();
+    if(!userInput) return;
 
-    addMessage(question, 'user');
+    addMessage(userInput, 'user');
     input.value = '';
     addMessage('Łączenie z asystentem...', 'bot');
 
     try {
-      const res = await fetch(apiBase + '/ai/chat', {
+      const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: question })
+        body: JSON.stringify({ message: userInput })
       });
 
       const waiting = messages.lastElementChild;

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>QualitetMarket | Storefront sklepu</title>
+  <link rel="stylesheet" href="panel.css">
+  <style>
+    .launch-wrap{max-width:1120px;margin:24px auto;padding:0 16px 36px}
+    .launch-card{background:rgba(10,14,25,.75);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:18px}
+    .launch-hero{border-color:rgba(124,58,237,.35)}
+    .launch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+    .product-image{width:100%;height:170px;object-fit:cover;border-radius:12px}
+    .product-price{font-size:20px;font-weight:800;color:#c4b5fd}
+    .launch-title{margin:0 0 6px}
+    .launch-sub{margin:0;color:var(--muted)}
+    .section-title{margin:22px 0 10px}
+    .meta{font-size:13px;color:rgba(255,255,255,.65)}
+    .empty{max-width:680px;margin:34px auto}
+  </style>
+</head>
+<body class="has-bottom-nav">
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html"><strong>QualitetMarket</strong></a>
+      <a class="btn btn-secondary" href="dashboard.html">Dashboard</a>
+    </div>
+  </header>
+
+  <main id="app" class="launch-wrap"></main>
+
+  <script>
+    (function(){
+      const STORES_KEY = 'qm_ai_stores';
+
+      function esc(v){
+        return String(v == null ? '' : v)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function slugFromPath(){
+        const path = window.location.pathname || '';
+        const parts = path.split('/').filter(Boolean);
+        if (parts.length >= 2 && parts[0] === 'launch') {
+          return decodeURIComponent(parts[1]);
+        }
+        const qp = new URLSearchParams(window.location.search);
+        return qp.get('slug') || '';
+      }
+
+      function getStoreBySlug(slug){
+        try {
+          const raw = localStorage.getItem(STORES_KEY);
+          const stores = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(stores)) return null;
+          if (slug) {
+            const exact = stores.find(function(item){ return item && item.slug === slug; }) || null;
+            if (exact) return exact;
+          }
+          const current = localStorage.getItem('qm_ai_current_store') || '';
+          if (current) {
+            return stores.find(function(item){ return item && item.slug === current; }) || null;
+          }
+          return stores.length ? stores[0] : null;
+        } catch (_){
+          return null;
+        }
+      }
+
+      function money(value){
+        const num = Number(value);
+        if (!Number.isFinite(num)) return '0.00 zł';
+        return num.toFixed(2) + ' zł';
+      }
+
+      function renderFallback(slug){
+        return '' +
+          '<section class="launch-card empty">' +
+            '<h1 class="launch-title">Sklep nie został znaleziony</h1>' +
+            '<p class="launch-sub">Brak sklepu dla slug: <strong>' + esc(slug || '—') + '</strong>. Utwórz sklep ponownie w generatorze sklepu.</p>' +
+            '<div style="margin-top:16px"><a class="btn btn-primary" href="/generator-sklepu.html">Przejdź do generatora</a></div>' +
+          '</section>';
+      }
+
+      function renderStore(store){
+        const products = Array.isArray(store.products) ? store.products : [];
+        const faq = Array.isArray(store.faq) ? store.faq : [];
+        const heroBg = store.colors && store.colors.background ? store.colors.background : '#070b1a';
+        const policyShipping = store.policy && store.policy.shipping ? store.policy.shipping : 'Brak informacji.';
+        const policyReturns = store.policy && store.policy.returns ? store.policy.returns : 'Brak informacji.';
+
+        const productsHtml = products.length
+          ? products.map(function(p){
+              return '' +
+                '<article class="launch-card">' +
+                  '<img class="product-image" src="' + esc(p.image || '') + '" alt="' + esc(p.name || '') + '">' +
+                  '<div style="margin-top:10px">' +
+                    '<div class="meta">' + esc(p.category || '') + '</div>' +
+                    '<h3 style="margin:4px 0 8px">' + esc(p.name || '') + '</h3>' +
+                    '<div class="product-price">' + money(p.storePrice) + '</div>' +
+                    '<div class="meta">Cena bazowa platformy: ' + money(p.basePrice) + '</div>' +
+                    '<div class="meta">Dostawca: ' + esc(p.supplierName || '') + '</div>' +
+                    '<div class="meta">Wysyłka: ' + esc(p.supplierShipping || '') + '</div>' +
+                  '</div>' +
+                '</article>';
+            }).join('')
+          : '<div class="launch-card">Brak produktów. Wygeneruj sklep z automatycznym importem produktów.</div>';
+
+        const faqHtml = faq.length
+          ? faq.map(function(item){
+              return '<article class="launch-card"><h3 style="margin:0 0 6px">' + esc(item.q) + '</h3><p class="launch-sub">' + esc(item.a) + '</p></article>';
+            }).join('')
+          : '<article class="launch-card">Brak sekcji FAQ.</article>';
+
+        return '' +
+          '<section class="launch-card launch-hero" style="background:' + esc(heroBg) + '">' +
+            '<div class="meta" style="text-transform:uppercase;letter-spacing:.08em">' + esc(store.brandName || store.storeName || '') + '</div>' +
+            '<h1 class="launch-title" style="font-size:34px">' + esc(store.headline || store.storeName || 'Storefront') + '</h1>' +
+            '<p class="launch-sub">' + esc(store.subheadline || '') + '</p>' +
+          '</section>' +
+
+          '<h2 class="section-title">Produkty startowe</h2>' +
+          '<section class="launch-grid">' + productsHtml + '</section>' +
+
+          '<h2 class="section-title">FAQ</h2>' +
+          '<section class="launch-grid">' + faqHtml + '</section>' +
+
+          '<h2 class="section-title">Polityka sklepu</h2>' +
+          '<section class="launch-card">' +
+            '<p><strong>Dostawa:</strong> ' + esc(policyShipping) + '</p>' +
+            '<p><strong>Zwroty:</strong> ' + esc(policyReturns) + '</p>' +
+          '</section>';
+      }
+
+      const app = document.getElementById('app');
+      const slug = slugFromPath();
+      const store = getStoreBySlug(slug);
+      app.innerHTML = store ? renderStore(store) : renderFallback(slug);
+    })();
+  </script>
+</body>
+</html>

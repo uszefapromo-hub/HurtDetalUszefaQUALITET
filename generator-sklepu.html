@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pl">
 <head>
-  <title>Generator sklepu | QualitetMarket</title>
+  <title>QualitetMarket | Generator sklepu</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="manifest" href="manifest.json">
@@ -374,6 +374,105 @@
   (function () {
     let lastGenerated = null;
 
+    function safeParse(raw, fallback) {
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed == null ? fallback : parsed;
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    function asNumber(value) {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function firstPositiveNumber(values) {
+      for (let i = 0; i < values.length; i += 1) {
+        const num = asNumber(values[i]);
+        if (num > 0) return num;
+      }
+      return 0;
+    }
+
+    function normalizeSlug(value) {
+      return String(value || '')
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+    }
+
+    function getCentralFeedProducts() {
+      const merged = [];
+      const fromProducts = safeParse(localStorage.getItem('products') || '[]', []);
+      const fromBySupplier = safeParse(localStorage.getItem('qm_products_by_supplier_v1') || '[]', []);
+
+      if (Array.isArray(fromProducts)) merged.push(...fromProducts);
+      if (Array.isArray(fromBySupplier)) {
+        fromBySupplier.forEach((item) => {
+          if (item && Array.isArray(item.products)) {
+            merged.push(...item.products);
+            return;
+          }
+          if (item && typeof item === 'object') merged.push(item);
+        });
+      }
+
+      const unique = [];
+      const seen = new Set();
+      merged.forEach((item, index) => {
+        if (!item || typeof item !== 'object') return;
+        const key = String(item.id || item.sku || item.code || item.name || `idx-${index}`);
+        if (seen.has(key)) return;
+        seen.add(key);
+        unique.push(item);
+      });
+      return unique;
+    }
+
+    function mapFeedToStoreProducts(products, marginPercent, fallbackCategory) {
+      return products.slice(0, 60).map((product, index) => {
+        const basePrice = firstPositiveNumber([
+          product.basePrice,
+          product.base_price,
+          product.wholesalePrice,
+          product.cost,
+          product.priceNet,
+          product.price_gross,
+          product.selling_price,
+          product.platform_price,
+          product.recommended_reseller_price,
+          product.supplier_price,
+          product.price,
+        ]);
+        const storePrice = Number((basePrice * (1 + marginPercent / 100)).toFixed(2));
+        return {
+          id: String(product.id || product.sku || `generated-product-${Date.now()}-${index}`),
+          name: product.name || product.title || `Produkt ${index + 1}`,
+          image: product.image || product.image_url || product.img || product.thumbnail || product.photo || '',
+          category: product.category || fallbackCategory || 'oferta',
+          basePrice: Number(basePrice.toFixed(2)),
+          storePrice,
+          finalPrice: storePrice,
+          margin: Number(marginPercent),
+          supplierName: product.supplierName || product.supplier || product.sourceName || 'Katalog centralny',
+          supplierShipping: product.supplierShipping || 'Standard',
+          stock: asNumber(product.stock || product.quantity || 0),
+        };
+      });
+    }
+
+    function saveGeneratedStore(store) {
+      const list = safeParse(localStorage.getItem('qm_ai_stores') || '[]', []);
+      const filtered = Array.isArray(list) ? list.filter((item) => item && item.slug !== store.slug) : [];
+      localStorage.setItem('qm_ai_stores', JSON.stringify([store].concat(filtered)));
+      localStorage.setItem('qm_ai_current_store', store.slug);
+    }
+
     async function generateStore() {
       const btn    = document.getElementById('autoGenerateBtn');
       const status = document.getElementById('genStatus');
@@ -388,24 +487,46 @@
       if (status) status.textContent = '';
 
       try {
-        const token = localStorage.getItem('token') || '';
-        const res = await fetch('/api/my/store/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
-          body: JSON.stringify({ interests, product_types: productTypes, style, margin }),
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Błąd generowania');
-        }
-        const data = await res.json();
+        const categorySeed = (productTypes || interests || 'oferta').split(',')[0].trim() || 'oferta';
+        const now = Date.now();
+        const storeName = `Sklep ${categorySeed.charAt(0).toUpperCase()}${categorySeed.slice(1)}`;
+        const slug = normalizeSlug(`${storeName}-${String(now).slice(-5)}`);
+
+        const rawFeed = getCentralFeedProducts();
+        const products = mapFeedToStoreProducts(rawFeed, margin, categorySeed);
+        const launchPath = `/launch/${encodeURIComponent(slug)}`;
+        const data = {
+          id: `store-${now}`,
+          name: storeName,
+          slug,
+          description: `Automatycznie wygenerowany sklep w stylu ${style}. Branża: ${categorySeed}.`,
+          margin,
+          style,
+          headline: `Witamy w ${storeName}`,
+          subheadline: 'Oferta została wygenerowana automatycznie na podstawie katalogu produktów.',
+          brandName: storeName,
+          storeName,
+          category: categorySeed,
+          createdAt: new Date().toISOString(),
+          products,
+          suggested_products: products.slice(0, 8).map((p) => ({
+            name: p.name,
+            selling_price: p.storePrice,
+          })),
+          sales_link: window.location.origin + launchPath,
+        };
+
+        saveGeneratedStore(data);
         lastGenerated = data;
 
         const el = (id) => document.getElementById(id);
         if (el('genResultName')) el('genResultName').textContent = data.name || '';
         if (el('genResultSlug')) el('genResultSlug').textContent = data.slug || '';
         if (el('genResultDesc')) el('genResultDesc').textContent = data.description || '';
-        if (el('genResultLink')) { el('genResultLink').href = data.sales_link || '#'; el('genResultLink').textContent = data.sales_link || ''; }
+        if (el('genResultLink')) {
+          el('genResultLink').href = launchPath;
+          el('genResultLink').textContent = data.sales_link || window.location.origin + launchPath;
+        }
 
         if (data.suggested_products && data.suggested_products.length > 0) {
           const prod = el('genResultProducts');
@@ -419,7 +540,7 @@
         if (result) result.hidden = false;
         if (status) status.textContent = '✅ Gotowe!';
       } catch (err) {
-        if (status) status.textContent = '❌ ' + (err.message || 'Błąd generowania. Upewnij się, że jesteś zalogowany.');
+        if (status) status.textContent = '❌ ' + (err.message || 'Błąd generowania lokalnego sklepu.');
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = '🤖 Generuj sklep automatycznie'; }
       }
@@ -447,6 +568,104 @@
       if (applyBtn) applyBtn.addEventListener('click', applyGenerated);
 
       // ── Sklep w 60 sekund ──────────────────────────────────────────────────
+      const QUICK_STORES_KEY = 'qm_ai_stores';
+      const QUICK_CURRENT_KEY = 'qm_ai_current_store';
+
+      function safeParse(raw, fallback) {
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed == null ? fallback : parsed;
+        } catch (_) {
+          return fallback;
+        }
+      }
+
+      function asNumber(value) {
+        const num = Number(value);
+        return Number.isFinite(num) ? num : 0;
+      }
+
+      function firstPositiveNumber(values) {
+        for (let i = 0; i < values.length; i += 1) {
+          const num = asNumber(values[i]);
+          if (num > 0) return num;
+        }
+        return 0;
+      }
+
+      function getCentralFeedProducts() {
+        const merged = [];
+        const fromProducts = safeParse(localStorage.getItem('products'), []);
+        const fromBySupplier = safeParse(localStorage.getItem('qm_products_by_supplier_v1'), []);
+
+        if (Array.isArray(fromProducts)) {
+          merged.push(...fromProducts);
+        }
+
+        if (Array.isArray(fromBySupplier)) {
+          fromBySupplier.forEach((item) => {
+            if (item && Array.isArray(item.products)) {
+              merged.push(...item.products);
+              return;
+            }
+            if (item && typeof item === 'object') {
+              merged.push(item);
+            }
+          });
+        }
+
+        const unique = [];
+        const seen = new Set();
+        merged.forEach((item, index) => {
+          if (!item || typeof item !== 'object') return;
+          const key = String(item.id || item.sku || item.code || item.name || `idx-${index}`);
+          if (seen.has(key)) return;
+          seen.add(key);
+          unique.push(item);
+        });
+
+        return unique;
+      }
+
+      function mapFeedToStoreProducts(products, marginPercent, fallbackCategory) {
+        return products.slice(0, 60).map((product, index) => {
+          const basePrice = firstPositiveNumber([
+            product.basePrice,
+            product.base_price,
+            product.wholesalePrice,
+            product.cost,
+            product.priceNet,
+            product.price_gross,
+            product.selling_price,
+            product.platform_price,
+            product.recommended_reseller_price,
+            product.supplier_price,
+            product.price,
+          ]);
+          const storePrice = Number((basePrice * (1 + marginPercent / 100)).toFixed(2));
+
+          return {
+            id: String(product.id || product.sku || `quick-product-${Date.now()}-${index}`),
+            name: product.name || product.title || `Produkt ${index + 1}`,
+            image: product.image || product.img || product.thumbnail || product.photo || '',
+            category: product.category || fallbackCategory,
+            basePrice: Number(basePrice.toFixed(2)),
+            storePrice,
+            supplierName: product.supplierName || product.supplier || product.sourceName || 'Katalog centralny',
+            supplierShipping: product.supplierShipping || 'Standard',
+            stock: asNumber(product.stock || product.quantity || 0),
+          };
+        });
+      }
+
+      function saveQuickStore(store) {
+        const current = safeParse(localStorage.getItem(QUICK_STORES_KEY), []);
+        const list = Array.isArray(current) ? current : [];
+        const filtered = list.filter((item) => item && item.slug !== store.slug);
+        localStorage.setItem(QUICK_STORES_KEY, JSON.stringify([store].concat(filtered)));
+        localStorage.setItem(QUICK_CURRENT_KEY, store.slug);
+      }
+
       const quickBtn = document.getElementById('quickSetupBtn');
       if (quickBtn) {
         quickBtn.addEventListener('click', async () => {
@@ -457,12 +676,21 @@
           const resultEl    = document.getElementById('quickResult');
           const msgEl       = document.getElementById('quickResultMsg');
 
-          const name     = (nameInput   || {}).value || '';
-          const category = (catInput    || {}).value || '';
-          const margin   = parseFloat((marginInput || {}).value || '20');
+          const storeName = ((nameInput || {}).value || '').trim();
+          const category = ((catInput || {}).value || '').trim();
+          const marginPercentRaw = ((marginInput || {}).value || '').trim();
+          const marginPercent = Number(marginPercentRaw);
 
-          if (!name.trim()) {
-            if (statusEl) statusEl.textContent = '❌ Wpisz nazwę sklepu';
+          console.log('QUICK STORE CLICK', { storeName, category, marginPercent });
+
+          const missing = [];
+          if (!storeName) missing.push('Nazwa sklepu');
+          if (!category) missing.push('Kategoria');
+          if (!marginPercentRaw || !Number.isFinite(marginPercent)) missing.push('Marża');
+          if (marginPercent < 0 || marginPercent > 100) missing.push('Marża (0-100)');
+
+          if (missing.length) {
+            if (statusEl) statusEl.textContent = `❌ Uzupełnij poprawnie: ${missing.join(', ')}`;
             return;
           }
 
@@ -471,26 +699,52 @@
           if (statusEl) statusEl.textContent = '';
 
           try {
-            const apiBase = window.QM_API_BASE || '/api';
-            const token = localStorage.getItem('token') || '';
-            const res = await fetch(apiBase.replace(/\/api$/, '') + '/api/shops/quick-setup', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: 'Bearer ' + token } : {}),
-              },
-              body: JSON.stringify({ name, category: category || undefined, margin }),
-            });
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              throw new Error(err.error || 'Błąd tworzenia sklepu');
+            const store = {
+              id: 'store-' + Date.now(),
+              slug: storeName.toLowerCase().replace(/\s+/g, '-'),
+              storeName,
+              category,
+              marginPercent: Number(marginPercent),
+              brandName: storeName,
+              headline: 'Twój sklep dropshippingowy gotowy do sprzedaży',
+              subheadline: 'Sprzedawaj bez magazynu. Produkty i marża są gotowe od startu.',
+              createdAt: new Date().toISOString(),
+              products: [],
+            };
+
+            if (!store.slug) {
+              throw new Error('Nie udało się wygenerować poprawnego adresu sklepu (slug).');
             }
-            const data = await res.json();
-            if (msgEl) msgEl.textContent = data.message || 'Sklep gotowy!';
+
+            const feedProducts = getCentralFeedProducts();
+            if (feedProducts.length) {
+              store.products = mapFeedToStoreProducts(feedProducts, store.marginPercent, store.category);
+            }
+
+            saveQuickStore(store);
+
+            const launchUrl = '/launch/' + encodeURIComponent(store.slug);
+            const shopLinkEl = document.getElementById('quickResultShopLink');
+            if (shopLinkEl) shopLinkEl.setAttribute('href', launchUrl);
+
+            if (msgEl) {
+              const count = Array.isArray(store.products) ? store.products.length : 0;
+              msgEl.textContent = count
+                ? `Sklep „${store.storeName}” utworzony. Zaimportowano ${count} produktów.`
+                : `Sklep „${store.storeName}” utworzony. Produkty możesz dodać później.`;
+            }
             if (resultEl) resultEl.hidden = false;
-            if (statusEl) statusEl.textContent = '';
+            if (statusEl) statusEl.textContent = '✅ Sklep utworzony. Przekierowanie…';
+
+            console.log('QUICK STORE SUCCESS', {
+              slug: store.slug,
+              productsCount: Array.isArray(store.products) ? store.products.length : 0,
+            });
+
+            window.location.assign(launchUrl);
           } catch (err) {
-            if (statusEl) statusEl.textContent = '❌ ' + (err.message || 'Błąd. Upewnij się, że jesteś zalogowany jako sprzedawca.');
+            console.error('QUICK STORE ERROR', err);
+            if (statusEl) statusEl.textContent = '❌ ' + (err && err.message ? err.message : 'Nie udało się zapisać sklepu lokalnie.');
           } finally {
             quickBtn.disabled = false;
             quickBtn.textContent = '🚀 Utwórz sklep teraz';

@@ -1,6 +1,6 @@
 # HurtDetalUszefaQUALITET / Qualitet Market
 
-Podgląd produkcyjny: https://www.qualitet-market.com
+Podgląd produkcyjny: https://uszefaqualitet.pl
 
 ## Final release
 
@@ -47,7 +47,7 @@ npm run migrate
 npm run dev
 ```
 
-API domyślnie działa pod adresem `http://localhost:3000/api`.
+API domyślnie działa pod adresem `/api` lub pod hostem ustawionym w `QM_API_BASE`.
 
 ### Frontend web
 
@@ -61,7 +61,7 @@ npm run dev
 W `frontend/.env.local.example` ustaw adres API, np.:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+NEXT_PUBLIC_API_URL=/api
 ```
 
 ### Mobile

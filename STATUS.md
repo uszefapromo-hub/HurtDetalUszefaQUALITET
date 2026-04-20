@@ -10,7 +10,7 @@
 |---|---|
 | **Nazwa repozytorium** | `HurtDetalUszefaQUALITET` |
 | **Pełny link do repozytorium** | https://github.com/uszefapromo-hub/HurtDetalUszefaQUALITET |
-| **Strona produkcyjna** | https://www.qualitet-market.com |
+| **Strona produkcyjna** | https://uszefaqualitet.pl |
 | **Architektura** | REST API (Node.js/Express) + PWA frontend (HTML5/Vanilla JS) + Next.js Mobile Web + Expo React Native |
 | **Baza danych** | PostgreSQL |
 

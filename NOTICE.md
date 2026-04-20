@@ -9,7 +9,7 @@ This software and platform is developed and maintained by **Henryk Ślusarski**.
 ### Project Information
 
 - **Platform name:** QualitetVerse
-- **Website:** https://www.qualitet-market.com
+- **Website:** https://uszefaqualitet.pl
 - **Creator:** Henryk Ślusarski
 - **Year:** 2026
 
