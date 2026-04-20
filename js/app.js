@@ -538,7 +538,7 @@
       listing: 'sklep',
       'store-generator': 'dashboard',
       'panel-sklepu': 'dashboard',
-      'owner-panel': 'dashboard'
+      'operator-panel': 'operator-panel'
     };
     const rawPage = document.body.dataset.page || '';
     const fallbackPath = window.location.pathname.split('/').pop() || '';
@@ -1699,7 +1699,7 @@
         slug: 'qualitet-elektronika',
         description: 'Sklep z elektroniką premium dla wymagających.',
         logo: 'https://placehold.co/96x96/0f1837/FFFFFF?text=QE',
-        email: 'elektronika@qualitet-market.com',
+        email: 'elektronika@uszefaqualitet.pl',
         phone: '+48 690 220 111',
         delivery: 'Wysyłka 24h',
         primaryColor: '#35d9ff',
@@ -1755,7 +1755,7 @@
         slug: 'qualitet-moda',
         description: 'Trendy streetwear i kolekcje premium.',
         logo: 'https://placehold.co/96x96/0f1837/FFFFFF?text=QM',
-        email: 'moda@qualitet-market.com',
+        email: 'moda@uszefaqualitet.pl',
         phone: '+48 690 220 222',
         delivery: 'Wysyłka 48h',
         primaryColor: '#ff4fd8',
@@ -1811,7 +1811,7 @@
         slug: 'dom-lifestyle',
         description: 'Nowoczesne produkty do domu i ogrodu.',
         logo: 'https://placehold.co/96x96/0f1837/FFFFFF?text=DL',
-        email: 'dom@qualitet-market.com',
+        email: 'dom@uszefaqualitet.pl',
         phone: '+48 690 220 333',
         delivery: 'Wysyłka 72h',
         primaryColor: '#9e77ff',
@@ -1867,7 +1867,7 @@
       {
         id: 'user_anna',
         name: 'Anna Nowak',
-        email: 'anna@qualitet-market.com',
+        email: 'anna@uszefaqualitet.pl',
         phone: '+48 601 111 001',
         country: 'PL',
         role: 'partner',
@@ -1879,7 +1879,7 @@
       {
         id: 'user_marek',
         name: 'Marek Kowalski',
-        email: 'marek@qualitet-market.com',
+        email: 'marek@uszefaqualitet.pl',
         phone: '+48 601 111 002',
         country: 'PL',
         role: 'partner',
@@ -1891,7 +1891,7 @@
       {
         id: 'user_ola',
         name: 'Ola Zielińska',
-        email: 'ola@qualitet-market.com',
+        email: 'ola@uszefaqualitet.pl',
         phone: '+48 601 111 003',
         country: 'PL',
         role: 'partner',
@@ -1903,7 +1903,7 @@
       {
         id: 'user_tomasz',
         name: 'Tomasz Kaczmarek',
-        email: 'tomasz@qualitet-market.com',
+        email: 'tomasz@uszefaqualitet.pl',
         phone: '+48 601 111 004',
         country: 'PL',
         role: 'partner',
@@ -1915,7 +1915,7 @@
       {
         id: 'user_klaudia',
         name: 'Klaudia Nowicka',
-        email: 'klaudia@qualitet-market.com',
+        email: 'klaudia@uszefaqualitet.pl',
         phone: '+48 601 111 005',
         country: 'PL',
         role: 'client',
@@ -2059,7 +2059,7 @@
         storeId: 'store_moda',
         storeName: 'Qualitet Moda',
         client: 'Tomasz Kaczmarek',
-        clientEmail: 'tomasz@qualitet-market.com',
+        clientEmail: 'tomasz@uszefaqualitet.pl',
         product: 'Bluza premium StreetCloud',
         amount: 320,
         status: 'shipped',
@@ -2095,7 +2095,7 @@
       {
         id: 'op_001',
         name: 'Kamil Operatorski',
-        email: 'kamil.op@qualitet-market.com',
+        email: 'kamil.op@uszefaqualitet.pl',
         status: 'active',
         tasksOpen: 4,
         activityToday: 12,
@@ -2105,7 +2105,7 @@
       {
         id: 'op_002',
         name: 'Ewa Zarządzająca',
-        email: 'ewa.op@qualitet-market.com',
+        email: 'ewa.op@uszefaqualitet.pl',
         status: 'active',
         tasksOpen: 2,
         activityToday: 8,
@@ -2115,7 +2115,7 @@
       {
         id: 'op_003',
         name: 'Bartek Wsparcie',
-        email: 'bartek.op@qualitet-market.com',
+        email: 'bartek.op@uszefaqualitet.pl',
         status: 'inactive',
         tasksOpen: 0,
         activityToday: 0,
@@ -2170,7 +2170,7 @@
       {
         id: 'log_002',
         time: '2026-03-10T15:30:00Z',
-        user: 'kamil.op@qualitet-market.com',
+        user: 'kamil.op@uszefaqualitet.pl',
         role: 'operator',
         action: 'Edycja sklepu',
         object: 'Qualitet Elektronika',
@@ -2179,7 +2179,7 @@
       {
         id: 'log_003',
         time: '2026-03-10T12:05:00Z',
-        user: 'ewa.op@qualitet-market.com',
+        user: 'ewa.op@uszefaqualitet.pl',
         role: 'operator',
         action: 'Dodanie produktu',
         object: 'Qualitet Moda',
@@ -2197,7 +2197,7 @@
       {
         id: 'log_005',
         time: '2026-03-08T17:45:00Z',
-        user: 'kamil.op@qualitet-market.com',
+        user: 'kamil.op@uszefaqualitet.pl',
         role: 'operator',
         action: 'Obsługa leadu',
         object: 'Anna Grochowska',
@@ -3725,6 +3725,7 @@
   function isAppLoggedIn(){
     try{
       if(localStorage.getItem('qm_token')){ return true; }
+      if(localStorage.getItem('qm_user')){ return true; }
     } catch(_){}
     return localStorage.getItem(STORAGE_KEYS.logged) === 'true';
   }
@@ -3795,30 +3796,11 @@
     return email && email === OWNER_EMAIL_NORMALIZED;
   }
 
-  function applyOwnerAccessState(){
-    if(document.body.dataset.page !== 'owner-panel'){
-      return false;
-    }
-    const logged = isAppLoggedIn();
-    if(!logged){
-      window.location.replace('login.html');
-      return false;
-    }
-    const accessGranted = hasOwnerAccess();
-    if(!accessGranted){
-      window.location.replace('dashboard.html');
-      return false;
-    }
-    const lockedPanel = document.querySelector('[data-owner-locked]');
-    const content = document.querySelector('[data-owner-content]');
-    if(lockedPanel){
-      lockedPanel.hidden = true;
-    }
-    if(content){
-      content.hidden = false;
-    }
-    return true;
+  
+function applyOwnerAccessState(){
+    return false;
   }
+
 
   function escapeHtml(str){
     const stringValue = str == null ? '' : String(str);
@@ -3862,1569 +3844,11 @@
     return `<span class="${cls}">${label}</span>`;
   }
 
-  function initOwnerPanel(){
-    if(document.body.dataset.page !== 'owner-panel'){
-      return;
-    }
-    if(!applyOwnerAccessState()){
-      return;
-    }
-
-    const data = ensureFinalStorage();
-    const users = data.users;
-    const stores = data.stores;
-    const leads = data.leads;
-    const products = data.products;
-    const subscriptions = data.subscriptions;
-    const suppliers = data.suppliers;
-    const orders = data.orders || [];
-    const operators = data.operators || [];
-    const referrals = data.referrals || [];
-    const adminLogs = data.adminLogs || [];
-    const storeMap = new Map(stores.map(store => [store.id, store]));
-    const userMap = new Map(users.map(user => [user.id, user]));
-
-    // ── Tab switching ──
-    const tabNav = document.querySelector('[data-owner-tab-nav]');
-    const tabPanels = document.querySelectorAll('[data-owner-tab-panel]');
-    function showTab(tabId){
-      let targetPanel = null;
-      tabPanels.forEach(panel => {
-        const isActive = panel.dataset.ownerTabPanel === tabId;
-        panel.hidden = !isActive;
-        if(isActive) targetPanel = panel;
-      });
-      if(tabNav){
-        tabNav.querySelectorAll('[data-owner-tab]').forEach(link => {
-          link.classList.toggle('active', link.dataset.ownerTab === tabId);
-        });
-      }
-      if(targetPanel){
-        targetPanel.setAttribute('tabindex', '-1');
-        targetPanel.focus({preventScroll: false});
-      }
-    }
-    if(tabNav){
-      tabNav.addEventListener('click', event => {
-        const link = event.target.closest('[data-owner-tab]');
-        if(!link) return;
-        event.preventDefault();
-        showTab(link.dataset.ownerTab);
-      });
-    }
-    showTab('overview');
-
-    // ── Helpers ──
-    const setText = (selector, value) => {
-      const el = document.querySelector(selector);
-      if(el) el.textContent = value;
-    };
-
-    const renderList = (container, items, builder, emptyMessage) => {
-      if(!container) return;
-      container.innerHTML = '';
-      if(!items.length){
-        const empty = document.createElement('p');
-        empty.className = 'empty';
-        empty.textContent = emptyMessage;
-        container.appendChild(empty);
-        return;
-      }
-      items.forEach(item => container.appendChild(builder(item)));
-    };
-
-    const filterTable = (tbody, rows, filterFn) => {
-      tbody.innerHTML = '';
-      rows.filter(filterFn).forEach(row => tbody.appendChild(row));
-    };
-
-    // ── OVERVIEW: counters ──
-    const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
-    const planCounts = {basic: 0, pro: 0, elite: 0};
-    activeSubscriptions.forEach(s => {
-      const normalizedPlan = normalizePlan(s.plan);
-      if(normalizedPlan && planCounts[normalizedPlan] !== undefined) planCounts[normalizedPlan] += 1;
-    });
-    const revenue = activeSubscriptions.reduce((sum, s) => {
-      const parsedAmount = Number.parseFloat(s.amount);
-      return sum + (Number.isNaN(parsedAmount) ? 0 : parsedAmount);
-    }, 0);
-    const platformMarginRate = 0.15;
-    const platformMargin = revenue * platformMarginRate;
-
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
-    const monthStr = now.toISOString().slice(0, 7);
-
-    const ordersToday = orders.filter(o => (o.createdAt || '').startsWith(todayStr));
-    const revenueToday = ordersToday.reduce((sum, o) => sum + (Number.parseFloat(o.amount) || 0), 0);
-    const ordersThisMonth = orders.filter(o => (o.createdAt || '').startsWith(monthStr));
-    const revenueMonth = ordersThisMonth.reduce((sum, o) => sum + (Number.parseFloat(o.amount) || 0), 0);
-    const regsToday = users.filter(u => (u.createdAt || '').startsWith(todayStr)).length;
-    const regsMonth = users.filter(u => (u.createdAt || '').startsWith(monthStr)).length;
-
-    const counterData = [
-      ['[data-owner-users]', users.length],
-      ['[data-owner-stores]', stores.length],
-      ['[data-owner-products]', products.length],
-      ['[data-owner-orders]', orders.length],
-      ['[data-owner-revenue]', Math.round(revenue)],
-      ['[data-owner-platform-margin]', Math.round(platformMargin)],
-      ['[data-owner-active-subs]', activeSubscriptions.length],
-      ['[data-owner-referrals-count]', referrals.reduce((s, r) => s + (r.referred || 0), 0)],
-      ['[data-owner-plan-basic]', planCounts.basic],
-      ['[data-owner-plan-pro]', planCounts.pro],
-      ['[data-owner-plan-elite]', planCounts.elite]
-    ];
-    counterData.forEach(([selector, value]) => {
-      const target = document.querySelector(selector);
-      if(target){
-        target.dataset.counter = `${Math.max(0, Math.round(value))}`;
-      }
-    });
-    window.setTimeout(() => {
-      counterData.forEach(([selector, value]) => {
-        const target = document.querySelector(selector);
-        if(target) setCounterValue(target, value);
-      });
-    }, 1300);
-
-    setText('[data-owner-revenue-today]', formatCurrency(revenueToday));
-    setText('[data-owner-revenue-month]', formatCurrency(revenueMonth));
-    setText('[data-owner-reg-today]', `${regsToday} os.`);
-    setText('[data-owner-reg-month]', `${regsMonth} os.`);
-
-    // ── OVERVIEW: charts ──
-    const updateChart = (prefix, values) => {
-      const total = Object.values(values).reduce((sum, v) => sum + v, 0) || 1;
-      Object.entries(values).forEach(([key, value]) => {
-        const percent = Math.round((value / total) * 100);
-        const bar = document.querySelector(`[data-${prefix}-chart-bar="${key}"]`);
-        const label = document.querySelector(`[data-${prefix}-chart-value="${key}"]`);
-        if(bar) bar.style.setProperty('--value', `${percent}%`);
-        if(label) label.textContent = `${value} (${percent}%)`;
-      });
-    };
-    updateChart('plan', planCounts);
-    const leadCounts = leads.reduce((acc, lead) => {
-      const status = lead.status || 'cold';
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {hot: 0, warm: 0, cold: 0});
-    updateChart('lead', leadCounts);
-
-    // ── OVERVIEW: lists ──
-    const storeList = document.querySelector('[data-owner-stores-list]');
-    const leadList = document.querySelector('[data-owner-leads-list]');
-    const productList = document.querySelector('[data-owner-products-list]');
-    const supplierList = document.querySelector('[data-owner-suppliers-list]');
-
-    const sortedStores = [...stores].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
-    renderList(storeList, sortedStores, store => {
-      const card = document.createElement('div');
-      card.className = 'list-card';
-      const productCount = Array.isArray(store.products) ? store.products.length : 0;
-      const name = document.createElement('strong');
-      name.textContent = store.name;
-      const hint = document.createElement('span');
-      hint.className = 'hint';
-      hint.textContent = `Plan ${formatPlanLabel(store.plan)} \u2022 ${productCount} produkt\u00f3w`;
-      const small = document.createElement('small');
-      small.textContent = `Dodano: ${formatDate(store.createdAt)}`;
-      card.append(name, hint, small);
-      return card;
-    }, 'Brak ostatnich sklepów.');
-
-    const leadStatusMeta = {
-      hot: {label: 'Gorący lead', className: 'is-hot'},
-      warm: {label: 'Ciepły lead', className: 'is-warm'},
-      cold: {label: 'Zimny lead', className: 'is-cold'}
-    };
-    const sortedLeads = [...leads].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
-    renderList(leadList, sortedLeads, lead => {
-      const meta = leadStatusMeta[lead.status] || {label: 'Nowy lead', className: 'is-pending'};
-      const card = document.createElement('div');
-      card.className = 'list-card';
-      const name = document.createElement('strong');
-      name.textContent = lead.name;
-      const pill = document.createElement('span');
-      pill.className = `status-pill ${meta.className}`;
-      pill.textContent = meta.label;
-      const small = document.createElement('small');
-      small.textContent = `${lead.email} \u2022 ${lead.source}`;
-      card.append(name, pill, small);
-      return card;
-    }, 'Brak nowych leadów.');
-
-    const sortedProducts = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
-    renderList(productList, sortedProducts, product => {
-      const card = document.createElement('div');
-      card.className = 'list-card';
-      const productStore = storeMap.get(product.storeId);
-      const pricing = calculateTieredPricing(product.cost || 0, {
-        userMargin: product.margin,
-        store: productStore,
-        settings: loadStoreSettings(),
-        product
-      });
-      const name = document.createElement('strong');
-      name.textContent = product.name;
-      const hint = document.createElement('span');
-      hint.className = 'hint';
-      hint.textContent = `${product.category || 'Kategoria'} \u2022 ${product.supplier || 'Katalog'}`;
-      const small = document.createElement('small');
-      small.textContent = `Cena: ${formatCurrency(pricing.finalPrice)}`;
-      card.append(name, hint, small);
-      return card;
-    }, 'Brak nowych produktów.');
-
-    const topSuppliers = [...suppliers].slice(0, 4);
-    renderList(supplierList, topSuppliers, supplier => {
-      const card = document.createElement('div');
-      card.className = 'list-card';
-      const productCount = Array.isArray(supplier.products) ? supplier.products.length : 0;
-      const meta = document.createElement('div');
-      meta.className = 'supplier-meta';
-      const img = document.createElement('img');
-      img.src = supplier.logo || '';
-      img.alt = supplier.name || '';
-      img.addEventListener('error', function(){ this.src = `https://placehold.co/48x48/0f1837/FFFFFF?text=${encodeURIComponent((supplier.name || 'H').slice(0, 2).toUpperCase())}`; });
-      const info = document.createElement('div');
-      const nameEl = document.createElement('strong');
-      nameEl.textContent = supplier.name;
-      const cat = document.createElement('small');
-      cat.textContent = supplier.category;
-      info.append(nameEl, cat);
-      meta.append(img, info);
-      const count = document.createElement('small');
-      count.textContent = `${productCount} produktów w katalogu`;
-      card.append(meta, count);
-      return card;
-    }, 'Brak aktywnych hurtowni.');
-
-    // ── USERS TAB ──
-    const usersTbody = document.querySelector('[data-users-tbody]');
-    if(usersTbody){
-      const buildUserRow = user => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(user.id)}</td>
-          <td><strong>${escapeHtml(user.name)}</strong></td>
-          <td>${escapeHtml(user.email)}</td>
-          <td>${escapeHtml(user.phone || '—')}</td>
-          <td>${escapeHtml(user.country || '—')}</td>
-          <td>${statusPill(user.role || 'client')}</td>
-          <td>${escapeHtml(formatPlanLabel(user.plan))}</td>
-          <td class="cell-muted">${formatDate(user.createdAt)}</td>
-          <td>${user.sales || 0}</td>
-          <td>${formatCurrency(user.turnover || 0)}</td>
-        `;
-        return tr;
-      };
-      let userRows = users.map(buildUserRow);
-      usersTbody.append(...userRows);
-
-      const usersSearch = document.querySelector('[data-users-search]');
-      const usersRoleFilter = document.querySelector('[data-users-role-filter]');
-      const usersPlanFilter = document.querySelector('[data-users-plan-filter]');
-      const applyUsersFilter = () => {
-        const searchQuery = (usersSearch ? usersSearch.value.toLowerCase() : '');
-        const role = usersRoleFilter ? usersRoleFilter.value : '';
-        const plan = usersPlanFilter ? usersPlanFilter.value : '';
-        usersTbody.innerHTML = '';
-        users.filter(u => {
-          const matchQ = !searchQuery || (u.name || '').toLowerCase().includes(searchQuery) || (u.email || '').toLowerCase().includes(searchQuery) || (u.country || '').toLowerCase().includes(searchQuery);
-          const matchRole = !role || (u.role || 'client') === role;
-          const matchPlan = !plan || normalizePlan(u.plan) === plan;
-          return matchQ && matchRole && matchPlan;
-        }).map(buildUserRow).forEach(row => usersTbody.appendChild(row));
-      };
-      if(usersSearch) usersSearch.addEventListener('input', applyUsersFilter);
-      if(usersRoleFilter) usersRoleFilter.addEventListener('change', applyUsersFilter);
-      if(usersPlanFilter) usersPlanFilter.addEventListener('change', applyUsersFilter);
-
-      const exportBtn = document.querySelector('[data-export-users]');
-      if(exportBtn){
-        exportBtn.addEventListener('click', () => {
-          const headers = ['ID','Nazwa','Email','Telefon','Kraj','Rola','Plan','Rejestracja','Sprzedaże','Obrót'];
-          const rows = users.map(u => [u.id, u.name, u.email, u.phone || '', u.country || '', u.role || 'client', u.plan, u.createdAt, u.sales || 0, u.turnover || 0]);
-          const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
-          const blob = new Blob([csv], {type: 'text/csv'});
-          const url = URL.createObjectURL(blob);
-          const downloadLink = document.createElement('a');
-          downloadLink.href = url;
-          downloadLink.download = 'uzytkownicy.csv';
-          downloadLink.click();
-          URL.revokeObjectURL(url);
-        });
-      }
-    }
-
-    // ── STORES TAB ──
-    const storesTbody = document.querySelector('[data-stores-tbody]');
-    if(storesTbody){
-      const buildStoreRow = store => {
-        const owner = users.find(u => store.userId ? u.id === store.userId : false);
-        const ownerName = owner ? owner.name : '—';
-        const productCount = Array.isArray(store.products) ? store.products.length : 0;
-        const storeOrders = orders.filter(o => o.storeId === store.id);
-        const storeTurnover = storeOrders.reduce((sum, o) => sum + (Number.parseFloat(o.amount) || 0), 0);
-        const storeStatus = store.trial ? 'trial' : 'active';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(store.id)}</td>
-          <td><strong>${escapeHtml(store.name)}</strong></td>
-          <td>${escapeHtml(ownerName)}</td>
-          <td>${escapeHtml(formatPlanLabel(store.plan))}</td>
-          <td>${productCount}</td>
-          <td>${storeOrders.length}</td>
-          <td>${formatCurrency(storeTurnover)}</td>
-          <td>${statusPill(storeStatus)}</td>
-          <td class="cell-muted">${formatDate(store.createdAt)}</td>
-        `;
-        return tr;
-      };
-      stores.map(buildStoreRow).forEach(row => storesTbody.appendChild(row));
-
-      const storesSearch = document.querySelector('[data-stores-search]');
-      const storesStatusFilter = document.querySelector('[data-stores-status-filter]');
-      const applyStoresFilter = () => {
-        const searchQuery = (storesSearch ? storesSearch.value.toLowerCase() : '');
-        const status = storesStatusFilter ? storesStatusFilter.value : '';
-        storesTbody.innerHTML = '';
-        stores.filter(s => {
-          const matchQ = !searchQuery || (s.name || '').toLowerCase().includes(searchQuery);
-          const storeStatus = s.trial ? 'trial' : 'active';
-          const matchStatus = !status || storeStatus === status || (!s.trial && status === 'active');
-          return matchQ && matchStatus;
-        }).map(buildStoreRow).forEach(row => storesTbody.appendChild(row));
-      };
-      if(storesSearch) storesSearch.addEventListener('input', applyStoresFilter);
-      if(storesStatusFilter) storesStatusFilter.addEventListener('change', applyStoresFilter);
-    }
-
-    // ── PRODUCTS TAB ──
-    const productsTbody = document.querySelector('[data-products-tbody]');
-    if(productsTbody){
-      // State for API-loaded products
-      let apiProducts = null; // null = not loaded yet, [] = loaded but empty
-      // WeakMap to track filter event handlers for proper cleanup on re-render
-      const filterHandlers = new WeakMap();
-
-      const buildProductRowFromApi = (product) => {
-        const tr = document.createElement('tr');
-        const sku = product.sku || String(product.id).slice(0, 8);
-        const supplier = product.supplier_name || product.supplier || '—';
-        const buyPrice = parseFloat(product.supplier_price || product.price_gross || 0);
-        const sellPrice = parseFloat(product.selling_price || product.platform_price || 0);
-        const stockVal = product.stock != null ? product.stock : '—';
-        const statusVal = product.status || 'active';
-        const productId = escapeHtml(String(product.id));
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(sku)}</td>
-          <td><strong>${escapeHtml(product.name)}</strong>${product.description ? `<br><small class="cell-muted">${escapeHtml(product.description.slice(0, 60))}${product.description.length > 60 ? '\u2026' : ''}</small>` : ''}</td>
-          <td>${escapeHtml(product.category || '—')}</td>
-          <td>${escapeHtml(supplier)}</td>
-          <td>${formatCurrency(buyPrice)}</td>
-          <td>${formatCurrency(sellPrice)}</td>
-          <td>${escapeHtml(String(stockVal))}</td>
-          <td>${statusPill(statusVal)}</td>
-          <td>
-            <button class="btn btn-secondary btn-sm" type="button" data-product-edit="${productId}">Edytuj</button>
-            <button class="btn btn-secondary btn-sm" type="button" data-product-delete="${productId}" style="margin-left:4px">Usuń</button>
-          </td>
-        `;
-        return tr;
-      };
-
-      const buildProductRowFromLocal = (product) => {
-        const pricing = calculateTieredPricing(product.cost || 0, {
-          userMargin: product.margin,
-          store: storeMap.get(product.storeId),
-          settings: loadStoreSettings(),
-          product
-        });
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(product.sku || product.id)}</td>
-          <td><strong>${escapeHtml(product.name)}</strong></td>
-          <td>${escapeHtml(product.category || '—')}</td>
-          <td>${escapeHtml(product.supplier || '—')}</td>
-          <td>${formatCurrency(product.cost || 0)}</td>
-          <td>${formatCurrency(pricing.finalPrice)}</td>
-          <td>${product.stock != null ? product.stock : '—'}</td>
-          <td>${statusPill('active')}</td>
-          <td><span class="hint" style="font-size:11px">—</span></td>
-        `;
-        return tr;
-      };
-
-      const renderProductsTable = (list, isFromApi) => {
-        const supplierFilter = document.querySelector('[data-products-supplier-filter]');
-        const statusFilter = document.querySelector('[data-products-status-filter]');
-        const productsSearch = document.querySelector('[data-products-search]');
-        const apiSourceEl = document.querySelector('[data-products-api-source]');
-
-        if(apiSourceEl) apiSourceEl.hidden = !isFromApi;
-
-        // Populate supplier filter from list
-        if(supplierFilter && isFromApi){
-          // Remove non-default options
-          while(supplierFilter.options.length > 1) supplierFilter.remove(1);
-          const suppliersSet = [...new Set(list.map(p => p.supplier_name || p.supplier).filter(Boolean))];
-          suppliersSet.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s;
-            opt.textContent = s;
-            supplierFilter.appendChild(opt);
-          });
-        }
-
-        const applyFilter = () => {
-          const q = productsSearch ? productsSearch.value.toLowerCase() : '';
-          const sup = supplierFilter ? supplierFilter.value : '';
-          const st = statusFilter ? statusFilter.value : '';
-          productsTbody.innerHTML = '';
-          const filtered = list.filter(p => {
-            const matchQ = !q || (p.name || '').toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q);
-            const matchSup = !sup || ((p.supplier_name || p.supplier || '') === sup);
-            const matchSt = !st || (p.status || 'active') === st;
-            return matchQ && matchSup && matchSt;
-          });
-          if(!filtered.length){
-            const row = document.createElement('tr');
-            row.innerHTML = '<td colspan="9" style="text-align:center;padding:24px;color:var(--muted)">Brak produktów spełniających kryteria</td>';
-            productsTbody.appendChild(row);
-          } else {
-            filtered.forEach(p => productsTbody.appendChild(isFromApi ? buildProductRowFromApi(p) : buildProductRowFromLocal(p)));
-          }
-        };
-
-        applyFilter();
-
-        // Store filter function in a WeakMap to allow proper listener cleanup
-        if(productsSearch){
-          if(filterHandlers.has(productsSearch)) productsSearch.removeEventListener('input', filterHandlers.get(productsSearch));
-          filterHandlers.set(productsSearch, applyFilter);
-          productsSearch.addEventListener('input', applyFilter);
-        }
-        if(supplierFilter){
-          if(filterHandlers.has(supplierFilter)) supplierFilter.removeEventListener('change', filterHandlers.get(supplierFilter));
-          filterHandlers.set(supplierFilter, applyFilter);
-          supplierFilter.addEventListener('change', applyFilter);
-        }
-        if(statusFilter){
-          if(filterHandlers.has(statusFilter)) statusFilter.removeEventListener('change', filterHandlers.get(statusFilter));
-          filterHandlers.set(statusFilter, applyFilter);
-          statusFilter.addEventListener('change', applyFilter);
-        }
-      };
-
-      // Load products from API
-      const loadProductsFromApi = () => {
-        const loadingEl = document.querySelector('[data-products-loading]');
-        if(loadingEl) loadingEl.hidden = false;
-        productsTbody.innerHTML = '';
-
-        const api = window.QMApi;
-        if(api && api.Admin && api.Auth && api.Auth.isLoggedIn && api.Auth.isLoggedIn()){
-          api.Admin.products({ limit: 100, page: 1 })
-            .then(resp => {
-              const rows = (resp && resp.products) ? resp.products : (Array.isArray(resp) ? resp : []);
-              apiProducts = rows;
-              if(loadingEl) loadingEl.hidden = true;
-              if(rows.length){
-                renderProductsTable(rows, true);
-                // Update overview counter with real count
-                const counter = document.querySelector('[data-owner-products]');
-                if(counter) setCounterValue(counter, rows.length);
-              } else {
-                // Fall back to local data
-                renderProductsTable(products, false);
-              }
-            })
-            .catch(() => {
-              if(loadingEl) loadingEl.hidden = true;
-              renderProductsTable(products, false);
-            });
-        } else {
-          if(loadingEl) loadingEl.hidden = true;
-          renderProductsTable(products, false);
-        }
-      };
-
-      // Initial load
-      loadProductsFromApi();
-
-      // Reload button
-      const reloadBtn = document.querySelector('[data-products-reload-btn]');
-      if(reloadBtn) reloadBtn.addEventListener('click', () => loadProductsFromApi());
-
-      // ── Product CRUD Modal ──
-      const productModal = document.querySelector('[data-product-modal]');
-      const productForm = document.querySelector('[data-product-form]');
-      const productModalTitle = document.querySelector('[data-product-modal-title]');
-      const productIdField = document.querySelector('[data-product-id]');
-      const productFormMsg = document.querySelector('[data-product-form-msg]');
-
-      const openProductModal = (editProduct = null) => {
-        if(!productModal || !productForm) return;
-        productForm.reset();
-        if(productFormMsg){ productFormMsg.hidden = true; productFormMsg.textContent = ''; }
-        if(editProduct){
-          if(productModalTitle) productModalTitle.textContent = 'Edytuj produkt';
-          if(productIdField) productIdField.value = editProduct.id || '';
-          const f = (s) => productForm.querySelector(s);
-          if(f('[data-pf-name]')) f('[data-pf-name]').value = editProduct.name || '';
-          if(f('[data-pf-sku]')) f('[data-pf-sku]').value = editProduct.sku || '';
-          if(f('[data-pf-category]')) f('[data-pf-category]').value = editProduct.category || '';
-          if(f('[data-pf-description]')) f('[data-pf-description]').value = editProduct.description || '';
-          if(f('[data-pf-price-net]')) f('[data-pf-price-net]').value = editProduct.price_net || '';
-          if(f('[data-pf-tax-rate]')) f('[data-pf-tax-rate]').value = editProduct.tax_rate != null ? editProduct.tax_rate : 23;
-          if(f('[data-pf-stock]')) f('[data-pf-stock]').value = editProduct.stock != null ? editProduct.stock : 0;
-          if(f('[data-pf-status]')) f('[data-pf-status]').value = editProduct.status || 'active';
-          if(f('[data-pf-image-url]')) f('[data-pf-image-url]').value = editProduct.image_url || '';
-        } else {
-          if(productModalTitle) productModalTitle.textContent = 'Dodaj produkt';
-          if(productIdField) productIdField.value = '';
-        }
-        productModal.hidden = false;
-        productModal.querySelector('input,textarea,select')?.focus();
-      };
-
-      const closeProductModal = () => {
-        if(productModal) productModal.hidden = true;
-      };
-
-      // Open "Add" modal
-      const addProductBtn = document.querySelector('[data-products-add-btn]');
-      if(addProductBtn) addProductBtn.addEventListener('click', () => openProductModal(null));
-
-      // Close modal buttons
-      document.querySelectorAll('[data-product-modal-close]').forEach(btn => {
-        btn.addEventListener('click', closeProductModal);
-      });
-      if(productModal){
-        productModal.addEventListener('click', (e) => {
-          if(e.target === productModal) closeProductModal();
-        });
-      }
-
-      // Edit/Delete via event delegation on tbody
-      productsTbody.addEventListener('click', (e) => {
-        // Edit
-        const editBtn = e.target.closest('[data-product-edit]');
-        if(editBtn){
-          const productId = editBtn.dataset.productEdit;
-          const productData = apiProducts && apiProducts.find(p => String(p.id) === String(productId));
-          if(productData) openProductModal(productData);
-          return;
-        }
-        // Delete
-        const deleteBtn = e.target.closest('[data-product-delete]');
-        if(deleteBtn){
-          const productId = deleteBtn.dataset.productDelete;
-          if(!productId) return;
-          if(!window.confirm('Czy na pewno usunąć ten produkt?')) return;
-          const api = window.QMApi;
-          if(!api || !api.Admin){ alert('Brak połączenia z API'); return; }
-          api.Admin.deleteProduct(productId)
-            .then(() => { loadProductsFromApi(); })
-            .catch(err => alert('Błąd usuwania: ' + (err.message || 'Nieznany błąd')));
-        }
-      });
-
-      // Save product form
-      if(productForm){
-        productForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const api = window.QMApi;
-          if(!api || !api.Admin){
-            if(productFormMsg){ productFormMsg.textContent = 'Brak połączenia z API. Zaloguj się jako admin.'; productFormMsg.hidden = false; }
-            return;
-          }
-          const f = (s) => productForm.querySelector(s);
-          const id = productIdField ? productIdField.value : '';
-          const data = {
-            name: (f('[data-pf-name]') ? f('[data-pf-name]').value : '').trim(),
-            sku: (f('[data-pf-sku]') ? f('[data-pf-sku]').value : '').trim() || undefined,
-            category: (f('[data-pf-category]') ? f('[data-pf-category]').value : '').trim() || undefined,
-            description: (f('[data-pf-description]') ? f('[data-pf-description]').value : '').trim() || undefined,
-            price_net: parseFloat(f('[data-pf-price-net]') ? f('[data-pf-price-net]').value : 0),
-            tax_rate: parseFloat(f('[data-pf-tax-rate]') ? f('[data-pf-tax-rate]').value : 23),
-            stock: parseInt(f('[data-pf-stock]') ? f('[data-pf-stock]').value : 0, 10),
-            status: f('[data-pf-status]') ? f('[data-pf-status]').value : 'active',
-            image_url: (f('[data-pf-image-url]') ? f('[data-pf-image-url]').value : '').trim() || undefined,
-            is_central: true,
-          };
-          const submitBtn = productForm.querySelector('[data-product-submit]');
-          if(submitBtn) submitBtn.disabled = true;
-          const action = id ? api.Admin.updateProduct(id, data) : api.Admin.createProduct(data);
-          action
-            .then(() => {
-              closeProductModal();
-              loadProductsFromApi();
-            })
-            .catch(err => {
-              if(productFormMsg){
-                productFormMsg.textContent = 'Błąd: ' + (err.message || 'Nieznany błąd');
-                productFormMsg.hidden = false;
-              }
-            })
-            .finally(() => {
-              if(submitBtn) submitBtn.disabled = false;
-            });
-        });
-      }
-    }
-
-    // ── IMPORT PRODUCTS TAB ──
-    const importFileForm = document.querySelector('[data-import-file-form]');
-    const importSyncForm = document.querySelector('[data-import-sync-form]');
-    const importSupplierSelect = document.querySelector('[data-import-supplier-select]');
-    const importResult = document.querySelector('[data-import-result]');
-    const importResultMsg = document.querySelector('[data-import-result-msg]');
-
-    // Populate supplier select – prefer API data, fall back to demo suppliers
-    if(importSupplierSelect){
-      const api = window.QMApi;
-      if(api && api.Admin && api.Auth && api.Auth.isLoggedIn && api.Auth.isLoggedIn()){
-        api.Admin.suppliers().then(resp => {
-          const rows = (resp && resp.suppliers) ? resp.suppliers : (Array.isArray(resp) ? resp : []);
-          if(rows.length){
-            rows.forEach(s => {
-              const opt = document.createElement('option');
-              opt.value = s.id;
-              opt.textContent = s.name;
-              importSupplierSelect.appendChild(opt);
-            });
-          } else if(suppliers.length){
-            suppliers.forEach(s => {
-              const opt = document.createElement('option');
-              opt.value = s.id;
-              opt.textContent = s.name;
-              importSupplierSelect.appendChild(opt);
-            });
-          }
-        }).catch(() => {
-          suppliers.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = s.name;
-            importSupplierSelect.appendChild(opt);
-          });
-        });
-      } else if(suppliers.length){
-        suppliers.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id;
-          opt.textContent = s.name;
-          importSupplierSelect.appendChild(opt);
-        });
-      }
-    }
-
-    if(importFileForm){
-      importFileForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const api = window.QMApi;
-        const fileInput = importFileForm.querySelector('[data-import-file]');
-        const msgEl = document.querySelector('[data-import-file-msg]');
-        const submitBtn = importFileForm.querySelector('[data-import-file-submit]');
-        if(!fileInput || !fileInput.files || !fileInput.files[0]){
-          if(msgEl){ msgEl.textContent = 'Wybierz plik CSV lub XML.'; msgEl.hidden = false; }
-          return;
-        }
-        if(!api || !api.Admin){
-          if(msgEl){ msgEl.textContent = 'Brak połączenia z API. Zaloguj się jako admin.'; msgEl.hidden = false; }
-          return;
-        }
-        if(submitBtn) submitBtn.disabled = true;
-        if(msgEl){ msgEl.textContent = 'Importowanie…'; msgEl.hidden = false; }
-        api.Admin.importProducts(fileInput.files[0])
-          .then(resp => {
-            const count = resp.count || resp.imported || 0;
-            if(importResult) importResult.hidden = false;
-            if(importResultMsg) importResultMsg.textContent = `✅ Zaimportowano ${count} produktów do katalogu centralnego.`;
-            if(msgEl){ msgEl.textContent = ''; msgEl.hidden = true; }
-          })
-          .catch(err => {
-            if(msgEl){ msgEl.textContent = 'Błąd: ' + (err.message || 'Nieznany błąd'); msgEl.hidden = false; }
-          })
-          .finally(() => {
-            if(submitBtn) submitBtn.disabled = false;
-          });
-      });
-    }
-
-    if(importSyncForm){
-      importSyncForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const api = window.QMApi;
-        const msgEl = document.querySelector('[data-import-sync-msg]');
-        const submitBtn = importSyncForm.querySelector('[data-import-sync-submit]');
-        const supplierId = importSupplierSelect ? importSupplierSelect.value : '';
-        if(!supplierId){
-          if(msgEl){ msgEl.textContent = 'Wybierz hurtownię.'; msgEl.hidden = false; }
-          return;
-        }
-        if(!api || !api.Admin){
-          if(msgEl){ msgEl.textContent = 'Brak połączenia z API. Zaloguj się jako admin.'; msgEl.hidden = false; }
-          return;
-        }
-        if(submitBtn) submitBtn.disabled = true;
-        if(msgEl){ msgEl.textContent = 'Synchronizacja w toku…'; msgEl.hidden = false; }
-        api.Admin.syncSupplier(supplierId)
-          .then(resp => {
-            const count = (resp && resp.count) || 0;
-            if(importResult) importResult.hidden = false;
-            if(importResultMsg) importResultMsg.textContent = `✅ Zsynchronizowano ${count} produktów z hurtownią.`;
-            if(msgEl){ msgEl.textContent = ''; msgEl.hidden = true; }
-          })
-          .catch(err => {
-            if(msgEl){ msgEl.textContent = 'Błąd: ' + (err.message || 'Nieznany błąd'); msgEl.hidden = false; }
-          })
-          .finally(() => {
-            if(submitBtn) submitBtn.disabled = false;
-          });
-      });
-    }
-
-    // ── ORDERS TAB ──
-    const ordersTbody = document.querySelector('[data-orders-tbody]');
-    if(ordersTbody){
-      const buildOrderRow = order => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(order.number || order.id)}</td>
-          <td>${escapeHtml(order.storeName || order.storeId || '—')}</td>
-          <td>${escapeHtml(order.client || '—')}</td>
-          <td>${escapeHtml(order.product || '—')}</td>
-          <td>${formatCurrency(order.amount || 0)}</td>
-          <td>${statusPill(order.status || 'pending')}</td>
-          <td class="cell-muted">${formatDate(order.createdAt)}</td>
-        `;
-        return tr;
-      };
-      orders.map(buildOrderRow).forEach(row => ordersTbody.appendChild(row));
-
-      const ordersSearch = document.querySelector('[data-orders-search]');
-      const ordersStatusFilter = document.querySelector('[data-orders-status-filter]');
-      const applyOrdersFilter = () => {
-        const searchQuery = (ordersSearch ? ordersSearch.value.toLowerCase() : '');
-        const status = ordersStatusFilter ? ordersStatusFilter.value : '';
-        ordersTbody.innerHTML = '';
-        orders.filter(order => {
-          const matchQ = !searchQuery || (order.number || '').toLowerCase().includes(searchQuery) || (order.client || '').toLowerCase().includes(searchQuery) || (order.storeName || '').toLowerCase().includes(searchQuery);
-          const matchStatus = !status || order.status === status;
-          return matchQ && matchStatus;
-        }).map(buildOrderRow).forEach(row => ordersTbody.appendChild(row));
-      };
-      if(ordersSearch) ordersSearch.addEventListener('input', applyOrdersFilter);
-      if(ordersStatusFilter) ordersStatusFilter.addEventListener('change', applyOrdersFilter);
-    }
-
-    // ── SUBSCRIPTIONS TAB ──
-    const subsTbody = document.querySelector('[data-subs-tbody]');
-    if(subsTbody){
-      const subsActive = subscriptions.filter(s => s.status === 'active').length;
-      const subsTrial = subscriptions.filter(s => s.status === 'trial').length;
-      const mrr = subscriptions.filter(s => s.status === 'active').reduce((sum, s) => sum + (Number.parseFloat(s.amount) || 0), 0);
-      setText('[data-subs-total]', subscriptions.length);
-      setText('[data-subs-active]', subsActive);
-      setText('[data-subs-trial]', subsTrial);
-      setText('[data-subs-mrr]', formatCurrency(mrr));
-
-      subscriptions.forEach(sub => {
-        const user = userMap.get(sub.userId);
-        const userName = user ? user.name : sub.userId;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(sub.id)}</td>
-          <td>${escapeHtml(userName)}</td>
-          <td>${escapeHtml(formatPlanLabel(sub.plan))}</td>
-          <td>${statusPill(sub.status || 'pending')}</td>
-          <td>${formatCurrency(sub.amount || 0)}</td>
-          <td class="cell-muted">${formatDate(sub.createdAt)}</td>
-        `;
-        subsTbody.appendChild(tr);
-      });
-    }
-
-    // ── FINANCES TAB ──
-    const partnerSales = orders.reduce((sum, o) => sum + (Number.parseFloat(o.amount) || 0), 0);
-    const platformCommissionRate = 0.10;
-    const platformCommission = partnerSales * platformCommissionRate;
-    const totalRevenue = revenue + platformCommission;
-    setText('[data-fin-partner-sales]', formatCurrency(partnerSales));
-    setText('[data-fin-platform-margin]', formatCurrency(platformMargin));
-    setText('[data-fin-platform-commission]', formatCurrency(platformCommission));
-    setText('[data-fin-total-revenue]', formatCurrency(totalRevenue));
-
-    const dailyChartEl = document.querySelector('[data-fin-daily-chart]');
-    if(dailyChartEl){
-      const days = [];
-      for(let i = 6; i >= 0; i--){
-        const dayDate = new Date(now);
-        dayDate.setDate(dayDate.getDate() - i);
-        days.push(dayDate.toISOString().slice(0, 10));
-      }
-      const dailyRevenue = days.map(day => ({
-        day,
-        amount: orders.filter(o => (o.createdAt || '').startsWith(day)).reduce((sum, o) => sum + (Number.parseFloat(o.amount) || 0), 0)
-      }));
-      const maxDaily = Math.max(...dailyRevenue.map(d => d.amount), 1);
-      dailyChartEl.innerHTML = dailyRevenue.map(d => {
-        const pct = Math.round((d.amount / maxDaily) * 100);
-        const label = escapeHtml(d.day.slice(5));
-        const val = escapeHtml(formatCurrency(d.amount));
-        return `<div class="chart-row"><span>${label}</span><span>${val}</span></div><div class="chart-bar"><span style="--value:${pct}%"></span></div>`;
-      }).join('');
-    }
-
-    const monthlyChartEl = document.querySelector('[data-fin-monthly-chart]');
-    if(monthlyChartEl){
-      const months = [];
-      for(let i = 5; i >= 0; i--){
-        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        months.push(monthDate.toISOString().slice(0, 7));
-      }
-      const monthlyRevenue = months.map(m => ({
-        month: m,
-        amount: orders.filter(o => (o.createdAt || '').startsWith(m)).reduce((sum, o) => sum + (Number.parseFloat(o.amount) || 0), 0)
-      }));
-      const maxMonthly = Math.max(...monthlyRevenue.map(m => m.amount), 1);
-      monthlyChartEl.innerHTML = monthlyRevenue.map(m => {
-        const pct = Math.round((m.amount / maxMonthly) * 100);
-        const label = escapeHtml(m.month.slice(5));
-        const val = escapeHtml(formatCurrency(m.amount));
-        return `<div class="chart-row"><span>${label}</span><span>${val}</span></div><div class="chart-bar"><span style="--value:${pct}%"></span></div>`;
-      }).join('');
-    }
-
-    const marginByPlan = {basic: 0, pro: 0, elite: 0};
-    activeSubscriptions.forEach(s => {
-      const normalizedPlan = normalizePlan(s.plan);
-      if(normalizedPlan && marginByPlan[normalizedPlan] !== undefined){
-        const rate = PLAN_DEFAULT_MARGINS[normalizedPlan] / 100;
-        const parsedAmount = Number.parseFloat(s.amount) || 0;
-        marginByPlan[normalizedPlan] += parsedAmount * rate;
-      }
-    });
-    const totalMargin = Object.values(marginByPlan).reduce((s, v) => s + v, 0) || 1;
-    Object.entries(marginByPlan).forEach(([key, value]) => {
-      const pct = Math.round((value / totalMargin) * 100);
-      const bar = document.querySelector(`[data-fin-margin-bar="${key}"]`);
-      const label = document.querySelector(`[data-fin-margin-value="${key}"]`);
-      if(bar) bar.style.setProperty('--value', `${pct}%`);
-      if(label) label.textContent = formatCurrency(value);
-    });
-
-    // ── REFERRALS TAB ──
-    const totalReferred = referrals.reduce((s, r) => s + (r.referred || 0), 0);
-    const totalActiveStores = referrals.reduce((s, r) => s + (r.activeStores || 0), 0);
-    const totalCommission = referrals.reduce((s, r) => s + (r.commission || 0), 0);
-    setText('[data-ref-total-referrers]', referrals.length);
-    setText('[data-ref-total-referred]', totalReferred);
-    setText('[data-ref-active-stores]', totalActiveStores);
-    setText('[data-ref-commissions]', formatCurrency(totalCommission));
-
-    const refTbody = document.querySelector('[data-ref-tbody]');
-    if(refTbody){
-      referrals.forEach(ref => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${escapeHtml(ref.userName)}</strong></td>
-          <td class="cell-mono">${escapeHtml(ref.refCode || '')}</td>
-          <td>${ref.referred || 0}</td>
-          <td>${ref.activeStores || 0}</td>
-          <td>${formatCurrency(ref.commission || 0)}</td>
-          <td>${statusPill(ref.status || 'active')}</td>
-        `;
-        refTbody.appendChild(tr);
-      });
-    }
-
-    const ownerRefLink = document.querySelector('[data-owner-referral-link]');
-    if(ownerRefLink){
-      const baseUrl = window.location.origin + window.location.pathname.replace('owner-panel.html', 'index.html');
-      ownerRefLink.value = `${baseUrl}?ref=OWNER2026`;
-    }
-    const copyRefBtn = document.querySelector('[data-copy-referral-link]');
-    if(copyRefBtn && ownerRefLink){
-      copyRefBtn.addEventListener('click', () => {
-        const linkValue = ownerRefLink.value;
-        if(navigator.clipboard && typeof navigator.clipboard.writeText === 'function'){
-          navigator.clipboard.writeText(linkValue).then(() => {
-            copyRefBtn.textContent = 'Skopiowano!';
-            window.setTimeout(() => { copyRefBtn.textContent = 'Kopiuj link'; }, 2000);
-          }).catch(() => {
-            ownerRefLink.select();
-            try { document.execCommand('copy'); } catch(_e){/* ignore */}
-            copyRefBtn.textContent = 'Skopiowano!';
-            window.setTimeout(() => { copyRefBtn.textContent = 'Kopiuj link'; }, 2000);
-          });
-        } else {
-          ownerRefLink.select();
-          try { document.execCommand('copy'); } catch(_e){/* ignore */}
-          copyRefBtn.textContent = 'Skopiowano!';
-          window.setTimeout(() => { copyRefBtn.textContent = 'Kopiuj link'; }, 2000);
-        }
-      });
-    }
-
-    // ── OPERATORS TAB ──
-    const totalOpTasksOpen = operators.reduce((s, o) => s + (o.tasksOpen || 0), 0);
-    const totalOpActionsToday = operators.reduce((s, o) => s + (o.activityToday || 0), 0);
-    const activeOperators = operators.filter(o => o.status === 'active').length;
-    setText('[data-op-active]', activeOperators);
-    setText('[data-op-tasks-open]', totalOpTasksOpen);
-    setText('[data-op-actions-today]', totalOpActionsToday);
-
-    const operatorsTbody = document.querySelector('[data-operators-tbody]');
-    if(operatorsTbody){
-      operators.forEach(op => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(op.id)}</td>
-          <td><strong>${escapeHtml(op.name)}</strong></td>
-          <td>${escapeHtml(op.email)}</td>
-          <td>${statusPill(op.status || 'inactive')}</td>
-          <td>${op.tasksOpen || 0}</td>
-          <td class="cell-muted">${formatDate(op.lastActive)}</td>
-          <td>${op.partners || 0}</td>
-        `;
-        operatorsTbody.appendChild(tr);
-      });
-    }
-
-    const opActivityList = document.querySelector('[data-op-activity-list]');
-    renderList(opActivityList, adminLogs.filter(l => l.role === 'operator').slice(0, 5), log => {
-      const card = document.createElement('div');
-      card.className = 'list-card';
-      const name = document.createElement('strong');
-      name.textContent = log.user;
-      const action = document.createElement('span');
-      action.className = 'hint';
-      action.textContent = `${log.action} — ${log.object}`;
-      const time = document.createElement('small');
-      time.textContent = formatDate(log.time);
-      card.append(name, action, time);
-      return card;
-    }, 'Brak działań operatorów.');
-
-    // ── SECURITY TAB ──
-    const adminLogsTbody = document.querySelector('[data-admin-logs-tbody]');
-    if(adminLogsTbody){
-      adminLogs.forEach(log => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-muted">${formatDate(log.time)}</td>
-          <td>${escapeHtml(log.user)}</td>
-          <td>${statusPill(log.role || 'client')}</td>
-          <td>${escapeHtml(log.action)}</td>
-          <td>${escapeHtml(log.object || '—')}</td>
-          <td class="cell-muted">${escapeHtml(log.details || '—')}</td>
-        `;
-        adminLogsTbody.appendChild(tr);
-      });
-    }
-
-    const opLogsList = document.querySelector('[data-op-logs-list]');
-    renderList(opLogsList, adminLogs.slice(0, 5), log => {
-      const card = document.createElement('div');
-      card.className = 'list-card';
-      const name = document.createElement('strong');
-      name.textContent = `${log.action} — ${log.object}`;
-      const detail = document.createElement('span');
-      detail.className = 'hint';
-      detail.textContent = `${log.user} (${log.role})`;
-      const time = document.createElement('small');
-      time.textContent = formatDate(log.time);
-      card.append(name, detail, time);
-      return card;
-    }, 'Brak logów.');
-
-    // ── QUICK NAV TILES (overview) ──
-    const quickNavBtns = document.querySelectorAll('[data-owner-tab-trigger]');
-    quickNavBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tabId = btn.dataset.ownerTabTrigger;
-        if(tabId){
-          showTab(tabId);
-        }
-      });
-    });
-
-    // ── PARTNERS TAB ──
-    const partnerUsers = users.filter(u => (u.role || '') === 'partner');
-    const partnersTbody = document.querySelector('[data-partners-tbody]');
-    const partnersSearch = document.querySelector('[data-partners-search]');
-    const partnersPlanFilter = document.querySelector('[data-partners-plan-filter]');
-
-    function renderPartnersTable(list){
-      if(!partnersTbody){
-        return;
-      }
-      partnersTbody.innerHTML = '';
-      if(!list.length){
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Brak partnerów.</td>';
-        partnersTbody.appendChild(tr);
-        return;
-      }
-      list.forEach(u => {
-        const userStores = stores.filter(s => s.userId === u.id);
-        const userSales = userStores.reduce((s, st) => s + (st.sales || 0), 0);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(u.id)}</td>
-          <td><strong>${escapeHtml(u.name)}</strong></td>
-          <td>${escapeHtml(u.email)}</td>
-          <td>${statusPill(normalizePlan(u.plan) || 'basic')}</td>
-          <td>${userStores.length}</td>
-          <td>${formatCurrency(userSales)}</td>
-          <td>${statusPill(u.status || 'active')}</td>
-          <td class="cell-muted">${formatDate(u.createdAt)}</td>
-        `;
-        partnersTbody.appendChild(tr);
-      });
-    }
-    renderPartnersTable(partnerUsers);
-
-    function filterPartners(){
-      const query = partnersSearch ? partnersSearch.value.trim().toLowerCase() : '';
-      const plan = partnersPlanFilter ? partnersPlanFilter.value : '';
-      let list = partnerUsers;
-      if(query){
-        list = list.filter(u => (u.name + u.email).toLowerCase().includes(query));
-      }
-      if(plan){
-        list = list.filter(u => normalizePlan(u.plan) === plan);
-      }
-      renderPartnersTable(list);
-    }
-    if(partnersSearch){
-      partnersSearch.addEventListener('input', filterPartners);
-    }
-    if(partnersPlanFilter){
-      partnersPlanFilter.addEventListener('change', filterPartners);
-    }
-
-    // ── WAREHOUSES TAB ──
-    const warehousesTbody = document.querySelector('[data-warehouses-tbody]');
-    const warehousesSearch = document.querySelector('[data-warehouses-search]');
-
-    function renderWarehousesTable(list){
-      if(!warehousesTbody){
-        return;
-      }
-      warehousesTbody.innerHTML = '';
-      if(!list.length){
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Brak hurtowni.</td>';
-        warehousesTbody.appendChild(tr);
-        return;
-      }
-      list.forEach(s => {
-        const country = s.country || 'Globalnie';
-        const prodCount = Array.isArray(s.products) ? s.products.length : (s.productCount || 0);
-        const mode = s.mode === 'hurt' ? 'Hurtownia' : 'Dropshipping';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-mono">${escapeHtml(s.id)}</td>
-          <td><strong>${escapeHtml(s.name)}</strong></td>
-          <td>${escapeHtml(country)}</td>
-          <td>${prodCount}</td>
-          <td>${escapeHtml(mode)}</td>
-          <td>${statusPill(s.status || 'active')}</td>
-        `;
-        warehousesTbody.appendChild(tr);
-      });
-    }
-    renderWarehousesTable(suppliers);
-
-    if(warehousesSearch){
-      warehousesSearch.addEventListener('input', () => {
-        const searchQuery = warehousesSearch.value.trim().toLowerCase();
-        renderWarehousesTable(searchQuery ? suppliers.filter(supplier => (supplier.name + (supplier.country || '')).toLowerCase().includes(searchQuery)) : suppliers);
-      });
-    }
-
-    // ── SUPPLIER APPS TAB ──
-    const supplierApps = getStoredList(OWNER_STORAGE_KEYS.supplierApps) || [];
-    const pendingApps = supplierApps.filter(a => a.status === 'pending');
-    const acceptedApps = supplierApps.filter(a => a.status === 'accepted');
-    setText('[data-supplier-apps-total]', supplierApps.length);
-    setText('[data-supplier-apps-pending]', pendingApps.length);
-    setText('[data-supplier-apps-accepted]', acceptedApps.length);
-
-    const supplierAppsTbody = document.querySelector('[data-supplier-apps-tbody]');
-    const supplierAppsSearch = document.querySelector('[data-supplier-apps-search]');
-    const supplierAppsStatusFilter = document.querySelector('[data-supplier-apps-status-filter]');
-
-    function renderSupplierAppsTable(list){
-      if(!supplierAppsTbody){
-        return;
-      }
-      supplierAppsTbody.innerHTML = '';
-      if(!list.length){
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td colspan="9" style="text-align:center;color:var(--muted);padding:24px">Brak zgłoszeń dostawców. <a href="zostan-dostawca.html" style="color:var(--accent-cyan,#35d9ff)">Strona formularzowa</a></td>';
-        supplierAppsTbody.appendChild(tr);
-        return;
-      }
-      list.forEach((app, idx) => {
-        const dropshipLabel = [
-          app.dropshipping ? 'Dropshipping' : '',
-          app.wholesale ? 'Hurt' : '',
-          app.whitelabel ? 'White-label' : '',
-          app.api ? 'API' : ''
-        ].filter(Boolean).join(', ') || '—';
-        const pillMap = {pending: 'pill-pending', accepted: 'pill-accepted', rejected: 'pill-rejected'};
-        const pill = `<span class="${pillMap[app.status] || 'pill-pending'}">${app.status === 'accepted' ? 'Zaakceptowane' : app.status === 'rejected' ? 'Odrzucone' : 'Oczekujące'}</span>`;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-muted">${formatDate(app.submittedAt)}</td>
-          <td><strong>${escapeHtml(app.companyName)}</strong></td>
-          <td>${escapeHtml(app.email)}</td>
-          <td>${escapeHtml(app.phone)}</td>
-          <td>${escapeHtml(app.country)}</td>
-          <td>${escapeHtml(app.productTypes)}</td>
-          <td>${escapeHtml(dropshipLabel)}</td>
-          <td>${pill}</td>
-          <td class="cell-mono">
-            ${app.status === 'pending' ? `<button class="btn btn-secondary" style="font-size:12px;padding:4px 10px" data-accept-app="${idx}">Akceptuj</button> <button class="btn" style="font-size:12px;padding:4px 10px;background:rgba(255,79,79,.15);border-color:rgba(255,79,79,.4);color:#ffd5d5" data-reject-app="${idx}">Odrzuć</button>` : '—'}
-          </td>
-        `;
-        supplierAppsTbody.appendChild(tr);
-      });
-    }
-    renderSupplierAppsTable(supplierApps);
-
-    function filterSupplierApps(){
-      const searchQuery = supplierAppsSearch ? supplierAppsSearch.value.trim().toLowerCase() : '';
-      const statusFilter = supplierAppsStatusFilter ? supplierAppsStatusFilter.value : '';
-      let list = supplierApps;
-      if(searchQuery){
-        list = list.filter(supplierApp => (supplierApp.companyName + supplierApp.email).toLowerCase().includes(searchQuery));
-      }
-      if(statusFilter){
-        list = list.filter(supplierApp => supplierApp.status === statusFilter);
-      }
-      renderSupplierAppsTable(list);
-    }
-    if(supplierAppsSearch){
-      supplierAppsSearch.addEventListener('input', filterSupplierApps);
-    }
-    if(supplierAppsStatusFilter){
-      supplierAppsStatusFilter.addEventListener('change', filterSupplierApps);
-    }
-    if(supplierAppsTbody){
-      supplierAppsTbody.addEventListener('click', event => {
-        const acceptBtn = event.target.closest('[data-accept-app]');
-        const rejectBtn = event.target.closest('[data-reject-app]');
-        if(acceptBtn){
-          const idx = Number(acceptBtn.dataset.acceptApp);
-          if(!Number.isNaN(idx) && supplierApps[idx]){
-            supplierApps[idx].status = 'accepted';
-            saveStoredList(OWNER_STORAGE_KEYS.supplierApps, supplierApps);
-            filterSupplierApps();
-            setText('[data-supplier-apps-pending]', supplierApps.filter(a => a.status === 'pending').length);
-            setText('[data-supplier-apps-accepted]', supplierApps.filter(a => a.status === 'accepted').length);
-          }
-        }
-        if(rejectBtn){
-          const idx = Number(rejectBtn.dataset.rejectApp);
-          if(!Number.isNaN(idx) && supplierApps[idx]){
-            supplierApps[idx].status = 'rejected';
-            saveStoredList(OWNER_STORAGE_KEYS.supplierApps, supplierApps);
-            filterSupplierApps();
-            setText('[data-supplier-apps-pending]', supplierApps.filter(a => a.status === 'pending').length);
-          }
-        }
-      });
-    }
-
-    // ── RANKING TAB ──
-    const rankingTbody = document.querySelector('[data-ranking-tbody]');
-    if(rankingTbody){
-      const rankData = users
-        .filter(u => (u.role || '') === 'partner' || (u.sales || 0) > 0)
-        .map(u => {
-          const userStores = stores.filter(s => s.userId === u.id);
-          const totalOrders = userStores.reduce((s, st) => s + (st.orders || 0), 0);
-          const totalSales = userStores.reduce((s, st) => s + (st.sales || 0), 0);
-          const commission = Math.round(totalSales * PLATFORM_MARGIN_PCT / 100);
-          return {...u, totalOrders, totalSales, commission, storeNames: userStores.map(s => s.name).join(', ')};
-        })
-        .sort((a, b) => b.totalSales - a.totalSales);
-
-      if(!rankData.length){
-        rankingTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Brak danych rankingowych.</td></tr>';
-      } else {
-        rankData.forEach((u, i) => {
-          const pos = i + 1;
-          const medalClass = pos <= 3 ? `rank-medal rank-${pos}` : '';
-          const medal = medalClass ? `<span class="${medalClass}">${pos}</span>` : pos;
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td style="text-align:center">${medal}</td>
-            <td><strong>${escapeHtml(u.name)}</strong><br><small class="cell-muted">${escapeHtml(u.email)}</small></td>
-            <td>${escapeHtml(u.storeNames || '—')}</td>
-            <td>${statusPill(normalizePlan(u.plan) || 'basic')}</td>
-            <td>${u.totalOrders}</td>
-            <td>${formatCurrency(u.totalSales)}</td>
-            <td>${formatCurrency(u.commission)}</td>
-            <td>${statusPill(u.status || 'active')}</td>
-          `;
-          rankingTbody.appendChild(tr);
-        });
-      }
-    }
-
-    // ── REPORTS TAB ──
-    const reportTotalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
-    const reportPlatformMargin = Math.round(reportTotalRevenue * PLATFORM_MARGIN_PCT / 100);
-    const reportActivePartners = users.filter(u => (u.role || '') === 'partner' && u.status === 'active').length;
-    setText('[data-report-total-revenue]', formatCurrency(reportTotalRevenue));
-    setText('[data-report-platform-margin]', formatCurrency(reportPlatformMargin));
-    setText('[data-report-total-orders]', orders.length);
-    setText('[data-report-active-partners]', reportActivePartners);
-
-    // Subscription revenue by plan
-    const reportSubRevenue = {basic: 0, pro: 0, elite: 0};
-    const reportSubCounts = {basic: 0, pro: 0, elite: 0};
-    subscriptions.forEach(sub => {
-      const plan = normalizePlan(sub.plan);
-      if(plan && reportSubRevenue[plan] !== undefined){
-        reportSubRevenue[plan] += (sub.amount || 0);
-        reportSubCounts[plan] += 1;
-      }
-    });
-    const reportSubTotal = Object.values(reportSubRevenue).reduce((s, v) => s + v, 0) || 1;
-    ['basic', 'pro', 'elite'].forEach(p => {
-      setText(`[data-report-sub-${p}]`, `${formatCurrency(reportSubRevenue[p])} (${reportSubCounts[p]} sub.)`);
-      const bar = document.querySelector(`[data-report-sub-${p}-bar]`);
-      if(bar){
-        bar.style.width = `${Math.round(reportSubRevenue[p] / reportSubTotal * 100)}%`;
-        bar.style.background = p === 'elite' ? '#9e77ff' : p === 'pro' ? '#35d9ff' : '#54ffb0';
-        bar.style.display = 'block';
-        bar.style.height = '8px';
-        bar.style.borderRadius = '4px';
-      }
-    });
-
-    // Export buttons
-    document.querySelectorAll('[data-export-report]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const type = btn.dataset.exportReport;
-        let rows, headers;
-        if(type === 'orders'){
-          headers = ['ID', 'Użytkownik', 'Sklep', 'Produkt', 'Kwota', 'Data', 'Status'];
-          rows = orders.map(o => [o.id, o.userName || '', o.storeName || '', o.product || '', o.total || 0, o.date || '', o.status || '']);
-        } else if(type === 'users'){
-          headers = ['ID', 'Imię', 'Email', 'Rola', 'Plan', 'Status', 'Kraj', 'Data'];
-          rows = users.map(u => [u.id, u.name, u.email, u.role || '', u.plan || '', u.status || '', u.country || '', u.createdAt || '']);
-        } else {
-          headers = ['Typ', 'Kwota', 'Basic', 'Pro', 'Elite'];
-          rows = [['Subskrypcje', reportSubTotal, reportSubRevenue.basic, reportSubRevenue.pro, reportSubRevenue.elite],
-                  ['Przychód platformy', reportTotalRevenue, reportPlatformMargin, '', '']];
-        }
-        const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
-        const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-        const url = URL.createObjectURL(blob);
-        const downloadLink = document.createElement('a');
-        downloadLink.href = url;
-        downloadLink.download = `${type}_raport_${new Date().toISOString().slice(0, 10)}.csv`;
-        downloadLink.click();
-        URL.revokeObjectURL(url);
-      });
-    });
-
-    // ── PAYMENTS TAB ──
-    const paymentRows = subscriptions.map(sub => ({
-      date: sub.createdAt || sub.date || '',
-      user: sub.userName || sub.user || '',
-      plan: normalizePlan(sub.plan) || 'basic',
-      amount: sub.amount || 0,
-      type: 'Subskrypcja',
-      status: sub.status || 'paid'
-    }));
-    const totalPayments = paymentRows.reduce((sum, payment) => sum + payment.amount, 0);
-    const pendingPayments = paymentRows.filter(payment => payment.status === 'pending').reduce((sum, payment) => sum + payment.amount, 0);
-    const overduePayments = paymentRows.filter(payment => payment.status === 'overdue').reduce((sum, payment) => sum + payment.amount, 0);
-    setText('[data-payments-total]', formatCurrency(totalPayments));
-    setText('[data-payments-pending]', formatCurrency(pendingPayments));
-    setText('[data-payments-overdue]', formatCurrency(overduePayments));
-
-    const paymentsTbody = document.querySelector('[data-payments-tbody]');
-    const paymentsSearch = document.querySelector('[data-payments-search]');
-    const paymentsStatusFilter = document.querySelector('[data-payments-status-filter]');
-
-    function renderPaymentsTable(list){
-      if(!paymentsTbody){
-        return;
-      }
-      paymentsTbody.innerHTML = '';
-      if(!list.length){
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Brak płatności.</td>';
-        paymentsTbody.appendChild(tr);
-        return;
-      }
-      list.forEach(payment => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="cell-muted">${formatDate(payment.date)}</td>
-          <td>${escapeHtml(payment.user)}</td>
-          <td>${statusPill(payment.plan)}</td>
-          <td><strong>${formatCurrency(payment.amount)}</strong></td>
-          <td>${escapeHtml(payment.type)}</td>
-          <td>${statusPill(payment.status)}</td>
-        `;
-        paymentsTbody.appendChild(tr);
-      });
-    }
-    renderPaymentsTable(paymentRows);
-
-    function filterPayments(){
-      const searchQuery = paymentsSearch ? paymentsSearch.value.trim().toLowerCase() : '';
-      const statusFilter = paymentsStatusFilter ? paymentsStatusFilter.value : '';
-      let list = paymentRows;
-      if(searchQuery){
-        list = list.filter(payment => payment.user.toLowerCase().includes(searchQuery));
-      }
-      if(statusFilter){
-        list = list.filter(payment => payment.status === statusFilter);
-      }
-      renderPaymentsTable(list);
-    }
-    if(paymentsSearch){
-      paymentsSearch.addEventListener('input', filterPayments);
-    }
-    if(paymentsStatusFilter){
-      paymentsStatusFilter.addEventListener('change', filterPayments);
-    }
-
-    // ── SETTINGS TAB ──
-    const settingsForm = document.querySelector('[data-platform-settings-form]');
-    const settingsSaved = document.querySelector('[data-settings-saved]');
-    const PLATFORM_SETTINGS_KEY = 'qm_platform_settings';
-    if(settingsForm){
-      // Load saved settings
-      try {
-        const saved = JSON.parse(localStorage.getItem(PLATFORM_SETTINGS_KEY) || '{}');
-        Object.entries(saved).forEach(([k, v]) => {
-          const el = settingsForm.elements[k];
-          if(el){
-            el.value = v;
-          }
-        });
-      } catch(_e){/* ignore */}
-      settingsForm.addEventListener('submit', event => {
-        event.preventDefault();
-        const formData = new FormData(settingsForm);
-        const settings = {};
-        formData.forEach((v, k) => { settings[k] = v; });
-        localStorage.setItem(PLATFORM_SETTINGS_KEY, JSON.stringify(settings));
-        if(settingsSaved){
-          settingsSaved.hidden = false;
-          window.setTimeout(() => { settingsSaved.hidden = true; }, 2500);
-        }
-        // Log the change
-        const logsForSave = getStoredList(OWNER_STORAGE_KEYS.adminLogs);
-        logsForSave.unshift({
-          id: `log_settings_${Date.now()}`,
-          time: new Date().toISOString(),
-          user: 'Superadmin',
-          role: 'superadmin',
-          action: 'Zmiana ustawień platformy',
-          object: 'settings',
-          details: `Zaktualizowano ${Object.keys(settings).length} parametrów`
-        });
-        saveStoredList(OWNER_STORAGE_KEYS.adminLogs, logsForSave);
-      });
-    }
-
-    // ── PLATFORM MARGIN TIERS ──
-    const MARGIN_TIERS_KEY = 'qm_platform_margin_tiers';
-    const DEFAULT_TIERS = [
-      { threshold_max: 20,   margin_percent: 60 },
-      { threshold_max: 100,  margin_percent: 40 },
-      { threshold_max: 300,  margin_percent: 25 },
-      { threshold_max: null, margin_percent: 15 },
-    ];
-    const tiersTbody  = document.querySelector('[data-margin-tiers-tbody]');
-    const tiersAddBtn = document.querySelector('[data-margin-tier-add]');
-    const tiersSaveBtn = document.querySelector('[data-margin-tiers-save]');
-    const tiersSavedMsg = document.querySelector('[data-margin-tiers-saved]');
-
-    function buildTierRow(tier) {
-      const tr = document.createElement('tr');
-      const maxNum = tier.threshold_max != null ? parseFloat(tier.threshold_max) : null;
-      const marginNum = parseFloat(tier.margin_percent) || 0;
-
-      const maxInput = document.createElement('input');
-      maxInput.className = 'owner-input';
-      maxInput.type = 'number';
-      maxInput.min = '0';
-      maxInput.step = '0.01';
-      maxInput.placeholder = '(brak limitu)';
-      maxInput.style.width = '100%';
-      maxInput.setAttribute('data-tier-max', '');
-      if (maxNum !== null) maxInput.value = maxNum;
-
-      const marginInput = document.createElement('input');
-      marginInput.className = 'owner-input';
-      marginInput.type = 'number';
-      marginInput.min = '0';
-      marginInput.max = '999';
-      marginInput.step = '0.1';
-      marginInput.style.width = '100%';
-      marginInput.setAttribute('data-tier-margin', '');
-      marginInput.value = marginNum;
-
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'btn btn-secondary';
-      removeBtn.type = 'button';
-      removeBtn.setAttribute('data-tier-remove', '');
-      removeBtn.style.padding = '4px 10px';
-      removeBtn.textContent = '✕';
-      removeBtn.addEventListener('click', () => tr.remove());
-
-      const tdMax = document.createElement('td');
-      tdMax.appendChild(maxInput);
-      const tdMargin = document.createElement('td');
-      tdMargin.appendChild(marginInput);
-      const tdAction = document.createElement('td');
-      tdAction.appendChild(removeBtn);
-
-      tr.append(tdMax, tdMargin, tdAction);
-      return tr;
-    }
-
-    function readTiersFromTable() {
-      if (!tiersTbody) return [];
-      return Array.from(tiersTbody.querySelectorAll('tr')).map(tr => {
-        const maxRaw = tr.querySelector('[data-tier-max]').value.trim();
-        const marginRaw = tr.querySelector('[data-tier-margin]').value.trim();
-        const marginVal = parseFloat(marginRaw);
-        return {
-          threshold_max:   maxRaw === '' ? null : parseFloat(maxRaw),
-          margin_percent:  isNaN(marginVal) ? 0 : marginVal,
-        };
-      });
-    }
-
-    function renderTiersTable(tiers) {
-      if (!tiersTbody) return;
-      tiersTbody.innerHTML = '';
-      tiers.forEach(tier => tiersTbody.appendChild(buildTierRow(tier)));
-    }
-
-    if (tiersTbody) {
-      // Try loading from backend; fall back to localStorage, then defaults
-      const api = window.QMApi;
-      if (api && api.Admin && api.Admin.platformMargins && typeof api.Admin.platformMargins === 'function') {
-        api.Admin.platformMargins()
-          .then(data => {
-            const tiers = (data && data.tiers && data.tiers.length)
-              ? data.tiers
-              : JSON.parse(localStorage.getItem(MARGIN_TIERS_KEY) || 'null') || DEFAULT_TIERS;
-            renderTiersTable(tiers);
-          })
-          .catch(() => {
-            const tiers = JSON.parse(localStorage.getItem(MARGIN_TIERS_KEY) || 'null') || DEFAULT_TIERS;
-            renderTiersTable(tiers);
-          });
-      } else {
-        const tiers = JSON.parse(localStorage.getItem(MARGIN_TIERS_KEY) || 'null') || DEFAULT_TIERS;
-        renderTiersTable(tiers);
-      }
-    }
-
-    if (tiersAddBtn) {
-      tiersAddBtn.addEventListener('click', () => {
-        if (tiersTbody) {
-          tiersTbody.appendChild(buildTierRow({ threshold_max: null, margin_percent: 0 }));
-        }
-      });
-    }
-
-    if (tiersSaveBtn) {
-      tiersSaveBtn.addEventListener('click', () => {
-        const tiers = readTiersFromTable();
-        localStorage.setItem(MARGIN_TIERS_KEY, JSON.stringify(tiers));
-        const api = window.QMApi;
-        const saveFinish = (ok) => {
-          if (tiersSavedMsg) {
-            tiersSavedMsg.textContent = ok ? '✅ Zapisano!' : '⚠️ Zapisano lokalnie (brak połączenia z API).';
-            tiersSavedMsg.hidden = false;
-            window.setTimeout(() => { tiersSavedMsg.hidden = true; }, 2500);
-          }
-        };
-        if (api && api.Admin && api.Admin.updatePlatformMargins && typeof api.Admin.updatePlatformMargins === 'function') {
-          api.Admin.updatePlatformMargins({ tiers })
-            .then(() => saveFinish(true))
-            .catch(() => saveFinish(false));
-        } else {
-          saveFinish(false);
-        }
-      });
-    }
-
-    // ── SCRIPTS TAB ──
-    const scriptRunBtns = document.querySelectorAll('[data-script-run]');
-    const scriptResultEl = document.querySelector('[data-script-result]');
-    const SCRIPT_LOG_KEY = 'qm_scripts_log';
-
-    function getScriptLog(){ try { return JSON.parse(localStorage.getItem(SCRIPT_LOG_KEY) || '[]'); } catch(_e){ return []; } }
-    function saveScriptLog(log){ localStorage.setItem(SCRIPT_LOG_KEY, JSON.stringify(log.slice(0, 50))); }
-
-    function renderScriptsLog(){
-      const list = document.querySelector('[data-scripts-log-list]');
-      if(!list) return;
-      const log = getScriptLog();
-      if(!log.length){ list.innerHTML = '<p class="hint">Brak historii uruchomień.</p>'; return; }
-      list.innerHTML = '';
-      log.forEach(entry => {
-        const card = document.createElement('div');
-        card.className = 'list-card';
-        const isOk = entry.ok === true;
-        card.innerHTML = `<strong>${escapeHtml(entry.name)}</strong> <span class="hint">${escapeHtml(entry.time)}</span> <span class="status-pill ${isOk ? 'is-ready' : 'is-error'}">${isOk ? 'OK' : 'Błąd'}</span>`;
-        list.appendChild(card);
-      });
-    }
-
-    if(scriptRunBtns.length){
-      renderScriptsLog();
-      scriptRunBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const scriptId = btn.dataset.scriptRun;
-          const scriptNames = {
-            'warehouse-sync': 'Synchronizacja hurtowni',
-            'recalculate-prices': 'Przeliczenie cen',
-            'csv-import': 'Import produktów CSV',
-            'cleanup-accounts': 'Czyszczenie nieaktywnych kont',
-            'export-report': 'Eksport raportów finansowych'
-          };
-          const name = scriptNames[scriptId] || scriptId;
-          btn.disabled = true;
-          btn.textContent = '⏳ Uruchamianie…';
-          window.setTimeout(() => {
-            const log = getScriptLog();
-            log.unshift({ name, time: new Date().toLocaleString('pl-PL'), ok: true });
-            saveScriptLog(log);
-            btn.disabled = false;
-            btn.textContent = '▶ Uruchom';
-            if(scriptResultEl){ scriptResultEl.textContent = `✅ Skrypt "${name}" wykonany.`; }
-            renderScriptsLog();
-          }, 1200);
-        });
-      });
-    }
+  
+function initOwnerPanel(){
+    return;
   }
+
 
   function initOperatorPanel(){
     if(document.body.dataset.page !== 'operator-panel'){
@@ -6120,7 +4544,7 @@
       updateStatus('Ulepsz plan, aby odblokować hurtownie.');
     }
 
-    // ── Async API enhancement: replace demo data with live API data when logged in ──
+    // ── Async API enhancement: replace local fallback data with live API data when logged in ──
     (function(){
       const api = window.QMApi;
       if(!api || !api.Auth || !api.Auth.isLoggedIn || !api.Auth.isLoggedIn()) return;
@@ -6178,7 +4602,7 @@
             });
           }
           if(!mapped.length) return;
-          // Replace demo suppliers array in-place so closures stay valid
+          // Replace supplier array in-place so closures stay valid
           suppliers.length = 0;
           mapped.forEach(function(s){ suppliers.push(s); });
           const allProds = suppliers.reduce(function(acc, s){ return acc.concat(s.products || []); }, []);
@@ -6189,7 +4613,7 @@
           const firstAvailable = suppliers.find(function(s){ return !isSupplierLocked(s); });
           if(firstAvailable) selectSupplier(firstAvailable);
         });
-      }).catch(function(){}); // keep demo data on API error
+      }).catch(function(){}); // keep local fallback data on API error
     })();
 
     if(searchInput){
@@ -6291,7 +4715,7 @@
     const storeSettings = loadStoreSettings();
     const storeMargin = resolveStoreMargin({store: activeStore, settings: storeSettings, plan: activeStore && activeStore.plan});
 
-    // Try loading products from the backend API first; fall back to localStorage/demo data.
+    // Try loading products from the backend API first; fall back to localStorage data.
     function renderProducts(storeProducts){
       productsGrid.innerHTML = '';
       if(!storeProducts.length){
@@ -6573,9 +4997,32 @@
   }
 
   function initLoginForm(){
+    if(document.body && document.body.dataset && document.body.dataset.page === 'login'){
+      return;
+    }
     const form = document.querySelector('[data-login-form]');
     if(!form){
       return;
+    }
+
+    function getLocalAuthUsers(){
+      try{
+        const raw = localStorage.getItem('qm_users') || '[]';
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch(_){
+        return [];
+      }
+    }
+
+    function saveLocalAuthUsers(users){
+      try{
+        localStorage.setItem('qm_users', JSON.stringify(Array.isArray(users) ? users : []));
+      } catch(_){}
+    }
+
+    function normalizeAuthEmail(email){
+      return String(email || '').trim().toLowerCase();
     }
 
     // "Create account" button (secondary button in the login form)
@@ -6584,40 +5031,32 @@
       createBtn.addEventListener('click', async function(){
         const emailInput = form.querySelector('input[name="email"]');
         const passwordInput = form.querySelector('input[name="password"]');
-        const email = emailInput ? emailInput.value.trim() : '';
+        const email = normalizeAuthEmail(emailInput ? emailInput.value : '');
         const password = passwordInput ? passwordInput.value : '';
         if(!email || !password){
           alert('Podaj adres e-mail i hasło, aby utworzyć konto.');
           return;
         }
-        const name = email.split('@')[0] || 'Użytkownik';
-        if(window.QMApi && window.QMApi.Auth){
-          try{
-            const data = await window.QMApi.Auth.register(email, password, name, 'seller');
-            syncAuthToLegacyStorage(data.user, email);
-            startTrialIfNeeded(email);
-            window.location.href = 'dashboard.html';
-            return;
-          } catch(err){
-            const msg = (err && err.body && err.body.error) || (err && err.message) || '';
-            if(msg){
-              alert('Błąd rejestracji: ' + msg);
-              return;
-            }
-          }
+        const users = getLocalAuthUsers();
+        const exists = users.some(user => normalizeAuthEmail(user && user.email) === email);
+        if(exists){
+          alert('Błąd rejestracji: Email już istnieje');
+          return;
         }
-        // Legacy fallback – no backend available
-        if(email){
-          localStorage.setItem(STORAGE_KEYS.email, email);
-          if(normalizeQueryParam(email) === OWNER_EMAIL_NORMALIZED){
-            localStorage.setItem(STORAGE_KEYS.role, 'superadmin');
-          } else {
-            localStorage.removeItem(STORAGE_KEYS.role);
-          }
-        }
-        localStorage.setItem(STORAGE_KEYS.logged, 'true');
+        const user = {
+          id: `user-${Date.now()}`,
+          name: email.split('@')[0] || 'Użytkownik',
+          email,
+          password: String(password || ''),
+          role: 'customer',
+          createdAt: new Date().toISOString()
+        };
+        users.push(user);
+        saveLocalAuthUsers(users);
+        localStorage.setItem('qm_user', JSON.stringify(user));
+        syncAuthToLegacyStorage(user, email);
         startTrialIfNeeded(email);
-        window.location.href = 'dashboard.html';
+        window.location.href = '/index.html';
       });
     }
 
@@ -6625,38 +5064,29 @@
       event.preventDefault();
       const emailInput = form.querySelector('input[name="email"]');
       const passwordInput = form.querySelector('input[name="password"]');
-      const email = emailInput ? emailInput.value.trim() : '';
+      const email = normalizeAuthEmail(emailInput ? emailInput.value : '');
       const password = passwordInput ? passwordInput.value : '';
 
-      if(window.QMApi && window.QMApi.Auth && email && password){
-        try{
-          const data = await window.QMApi.Auth.login(email, password);
-          syncAuthToLegacyStorage(data.user, email);
-          startTrialIfNeeded(email);
-          window.location.href = 'dashboard.html';
-          return;
-        } catch(err){
-          const msg = (err && err.body && err.body.error) || (err && err.message) || '';
-          // Only block on explicit auth errors (401/403); network errors fall through to legacy
-          if(err && (err.status === 401 || err.status === 403)){
-            alert('Błąd logowania: ' + (msg || 'Nieprawidłowy e-mail lub hasło'));
-            return;
-          }
-        }
+      if(!email || !password){
+        alert('Podaj e-mail i hasło.');
+        return;
       }
 
-      // Legacy fallback – backend not available
-      if(email){
-        localStorage.setItem(STORAGE_KEYS.email, email);
-        if(normalizeQueryParam(email) === OWNER_EMAIL_NORMALIZED){
-          localStorage.setItem(STORAGE_KEYS.role, 'superadmin');
-        } else {
-          localStorage.removeItem(STORAGE_KEYS.role);
-        }
+      const users = getLocalAuthUsers();
+      const user = users.find(item => (
+        normalizeAuthEmail(item && item.email) === email &&
+        String((item && item.password) || '') === String(password || '')
+      ));
+
+      if(!user){
+        alert('Błąd logowania: Nieprawidłowy e-mail lub hasło');
+        return;
       }
-      localStorage.setItem(STORAGE_KEYS.logged, 'true');
+
+      localStorage.setItem('qm_user', JSON.stringify(user));
+      syncAuthToLegacyStorage(user, email);
       startTrialIfNeeded(email);
-      window.location.href = 'dashboard.html';
+      window.location.href = '/index.html';
     });
   }
 
@@ -6751,20 +5181,6 @@
       });
     });
 
-    const demoBtn = document.querySelector('[data-demo-login-btn]');
-    if(!demoBtn){
-      return;
-    }
-
-    demoBtn.addEventListener('click', () => {
-      localStorage.setItem(STORAGE_KEYS.user, JSON.stringify({
-        id: 'user1',
-        role: 'seller'
-      }));
-      localStorage.setItem(STORAGE_KEYS.logged, 'true');
-      localStorage.setItem(STORAGE_KEYS.role, 'seller');
-      window.location.href = 'dashboard.html';
-    });
   }
 
   // ── Supplier application form (zostan-dostawca.html) ──

@@ -28,9 +28,9 @@
   // ─── Configuration ────────────────────────────────────────────────────────────
 
   // Set window.QM_API_BASE before loading this script to point at your backend.
-  // Example: <script>window.QM_API_BASE = 'https://api.qualitet-market.com/api';</script>
+  // Example: <script>window.QM_API_BASE = 'https://api.uszefaqualitet.pl/api';</script>
   const API_BASE = (typeof window !== 'undefined' && window.QM_API_BASE)
-    || 'https://api.qualitet-market.com/api';
+    || '/api';
 
   // Health endpoint lives one level above /api.
   // Override via window.QM_HEALTH_URL if your deployment differs.
@@ -39,6 +39,7 @@
 
   const TOKEN_KEY = 'qm_token';
   const USER_KEY  = 'qm_user';
+  const USERS_KEY = 'qm_users';
 
   // ─── Low-level helpers ────────────────────────────────────────────────────────
 
@@ -53,7 +54,6 @@
   function removeToken() {
     try {
       localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
     } catch { /* noop */ }
   }
 
@@ -63,6 +63,23 @@
 
   function getCachedUser() {
     try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
+  }
+
+  function getAuthUsers() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function setAuthUsers(users) {
+    try { localStorage.setItem(USERS_KEY, JSON.stringify(Array.isArray(users) ? users : [])); } catch { /* noop */ }
+  }
+
+  function normalizeEmail(email) {
+    return String(email || '').trim().toLowerCase();
   }
 
   // ─── Token refresh state ─────────────────────────────────────────────────────
@@ -167,32 +184,71 @@
   const Auth = {
     /**
      * Register a new account.
-     * Uses /api/auth/register (default role: seller).
-     * @returns {{ token: string, user: object }}
+     * LocalStorage-only auth fallback.
+     * @returns {{ token: null, user: object }}
      */
-    register(email, password, name, role = 'seller') {
-      return post('/auth/register', { email, password, name, role }).then((data) => {
-        setToken(data.token);
-        saveUser(data.user);
-        return data;
-      });
+    register(email, password, name, role = 'customer') {
+      const cleanEmail = normalizeEmail(email);
+      const cleanName = String(name || '').trim();
+      const cleanPassword = String(password || '');
+
+      if (!cleanName || !cleanEmail || !cleanPassword) {
+        const err = new Error('Uzupełnij wszystkie pola');
+        err.status = 400;
+        throw err;
+      }
+
+      const users = getAuthUsers();
+      const exists = users.some((user) => normalizeEmail(user && user.email) === cleanEmail);
+      if (exists) {
+        const err = new Error('Email już istnieje');
+        err.status = 409;
+        throw err;
+      }
+
+      const user = {
+        id: `user-${Date.now()}`,
+        name: cleanName,
+        email: cleanEmail,
+        password: cleanPassword,
+        role: role || 'customer',
+        createdAt: new Date().toISOString(),
+      };
+
+      users.push(user);
+      setAuthUsers(users);
+      saveUser(user);
+      removeToken();
+      return Promise.resolve({ token: null, user });
     },
 
     /**
      * Log in.
-     * @returns {{ token: string, user: object }}
+     * @returns {{ token: null, user: object }}
      */
     login(email, password) {
-      return post('/auth/login', { email, password }).then((data) => {
-        setToken(data.token);
-        saveUser(data.user);
-        return data;
-      });
+      const cleanEmail = normalizeEmail(email);
+      const cleanPassword = String(password || '');
+      const users = getAuthUsers();
+      const user = users.find((item) => (
+        normalizeEmail(item && item.email) === cleanEmail &&
+        String((item && item.password) || '') === cleanPassword
+      ));
+
+      if (!user) {
+        const err = new Error('Nieprawidłowy email lub hasło');
+        err.status = 401;
+        throw err;
+      }
+
+      saveUser(user);
+      removeToken();
+      return Promise.resolve({ token: null, user });
     },
 
-    /** Log out (clears local token & user cache). */
+    /** Log out (session only). */
     logout() {
-      removeToken();
+      try { localStorage.removeItem(USER_KEY); } catch { /* noop */ }
     },
 
     /** Returns cached user or null. */
@@ -202,19 +258,52 @@
 
     /** Fetch fresh profile from API. */
     me() {
-      return get('/auth/me').then((user) => { saveUser(user); return user; });
+      return Promise.resolve(getCachedUser());
     },
 
     updateProfile(data) {
-      return put('/auth/me', data).then((user) => { saveUser(user); return user; });
+      const current = getCachedUser();
+      if (!current) {
+        const err = new Error('Brak aktywnej sesji');
+        err.status = 401;
+        throw err;
+      }
+      const updated = { ...current, ...(data || {}) };
+      saveUser(updated);
+      const users = getAuthUsers();
+      const idx = users.findIndex((u) => normalizeEmail(u && u.email) === normalizeEmail(current.email));
+      if (idx >= 0) {
+        users[idx] = updated;
+        setAuthUsers(users);
+      }
+      return Promise.resolve(updated);
     },
 
     changePassword(currentPassword, newPassword) {
-      return put('/users/me/password', { currentPassword, newPassword });
+      const current = getCachedUser();
+      if (!current) {
+        const err = new Error('Brak aktywnej sesji');
+        err.status = 401;
+        throw err;
+      }
+      if (String(current.password || '') !== String(currentPassword || '')) {
+        const err = new Error('Nieprawidłowe aktualne hasło');
+        err.status = 400;
+        throw err;
+      }
+      const updated = { ...current, password: String(newPassword || '') };
+      saveUser(updated);
+      const users = getAuthUsers();
+      const idx = users.findIndex((u) => normalizeEmail(u && u.email) === normalizeEmail(current.email));
+      if (idx >= 0) {
+        users[idx] = updated;
+        setAuthUsers(users);
+      }
+      return Promise.resolve({ ok: true });
     },
 
     isLoggedIn() {
-      return Boolean(getToken());
+      return Boolean(getCachedUser());
     },
 
     /**
@@ -224,26 +313,7 @@
      * @returns {Promise<boolean>} true if the token was refreshed successfully.
      */
     refresh() {
-      return attemptRefresh();
-    },
-
-    /**
-     * Request a password-reset email.
-     * @param {string} email
-     * @returns {Promise<{ message: string }>}
-     */
-    forgotPassword(email) {
-      return post('/auth/forgot-password', { email });
-    },
-
-    /**
-     * Set a new password using a reset token received via email.
-     * @param {string} token    Raw token from the URL parameter.
-     * @param {string} password New password (min 8 chars).
-     * @returns {Promise<{ message: string }>}
-     */
-    resetPassword(token, password) {
-      return post('/auth/reset-password', { token, password });
+      return Promise.resolve(Boolean(getCachedUser()));
     },
   };
 

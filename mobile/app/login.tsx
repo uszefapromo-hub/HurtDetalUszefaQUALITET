@@ -53,9 +53,8 @@ export default function LoginScreen() {
       } else {
         result = await api.auth.register({ email: email.trim(), password, name: name.trim() });
       }
-      if (result?.token) {
-        setAuthToken(result.token);
-        // Navigate to the home tab after successful authentication
+      setAuthToken(result?.token ?? null);
+      if (result?.user) {
         router.replace('/');
       }
     } catch (err: any) {

@@ -1,47 +1,55 @@
-/**
- * qm-runtime.js – Early-stage bootstrap for QualitetMarket pages.
- *
- * Loaded synchronously (no defer/async) in <head> so that downstream scripts
- * and inline handlers can rely on the globals set here.
- *
- * Responsibilities:
- *  1. Ensure window.QM_API_BASE points at the production API (if not already
- *     set by an inline <script> above this tag).
- *  2. Expose window.QMSafeRedirect if security-guard.js was not loaded on
- *     this page (dashboard pages omit security-guard.js).
- *  3. Mark the runtime as initialised so other scripts can feature-detect.
- */
-(function () {
-  'use strict';
 
-  // ── 1. API base URL ─────────────────────────────────────────────────────────
-  if (!window.QM_API_BASE) {
-    window.QM_API_BASE = 'https://api.qualitet-market.com/api';
+(function(){
+  const STORAGE_KEY = 'qualitet.publish.center';
+  const FALLBACK = {
+    app: {
+      app_url: window.location.origin,
+      public_domain: window.location.origin,
+      api_base_url: window.QM_API_BASE || '',
+      allowed_origins: window.location.origin
+    },
+    stripe: { secret_key:'', publishable_key:'', webhook_secret:'', price_ids:{} },
+    suppliers: {
+      bigbuy_api_key:'',
+      bigbuy_secret:'',
+      baselinker_token:'',
+      idosell_api_key:'',
+      xml_feed_url:'',
+      auto_import_enabled:false
+    },
+    ai: {
+      openai_api_key:'',
+      elevenlabs_api_key:'',
+      meta_pixel_id:'',
+      ga_measurement_id:''
+    },
+    netlify: { site_id:'', access_token:'', build_hook_url:'', publish_dir:'.', build_command:'', production_branch:'main' },
+    zoho: { org_email:'', smtp_host:'smtp.zoho.eu', smtp_port:'465', smtp_secure:'true', smtp_user:'', smtp_pass:'', smtp_from:'', imap_host:'imap.zoho.eu', imap_port:'993' }
+  };
+  function deepMerge(target, source){
+    const out = Array.isArray(target) ? target.slice() : Object.assign({}, target);
+    Object.keys(source || {}).forEach(function(key){
+      const sval = source[key];
+      const tval = out[key];
+      if(sval && typeof sval === 'object' && !Array.isArray(sval)){
+        out[key] = deepMerge((tval && typeof tval === 'object') ? tval : {}, sval);
+      }else{
+        out[key] = sval;
+      }
+    });
+    return out;
   }
-
-  // ── 2. Safe-redirect shim (if security-guard.js was not loaded) ─────────────
-  if (typeof window.QMSafeRedirect !== 'function') {
-    var ALLOWED_ORIGINS = [
-      window.location.origin,
-      'https://www.qualitet-market.com',
-      'https://qualitet-market.com'
-    ];
-
-    window.QMSafeRedirect = function (url, fallback) {
-      if (!url) { window.location.href = fallback || '/'; return; }
-      try {
-        var parsed = new URL(url, window.location.origin);
-        for (var i = 0; i < ALLOWED_ORIGINS.length; i++) {
-          if (parsed.origin === ALLOWED_ORIGINS[i]) {
-            window.location.href = url;
-            return;
-          }
-        }
-      } catch (_) { /* malformed URL – fall through to fallback */ }
-      window.location.href = fallback || '/';
-    };
+  function load(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if(raw && raw.payload){
+        return deepMerge(FALLBACK, raw.payload);
+      }
+    }catch(_){}
+    return FALLBACK;
   }
-
-  // ── 3. Runtime flag ─────────────────────────────────────────────────────────
-  window.QM_RUNTIME_READY = true;
+  window.QM_RUNTIME_CONFIG = load();
+  if(!window.QM_API_BASE && window.QM_RUNTIME_CONFIG.app && window.QM_RUNTIME_CONFIG.app.api_base_url){
+    window.QM_API_BASE = window.QM_RUNTIME_CONFIG.app.api_base_url;
+  }
 })();

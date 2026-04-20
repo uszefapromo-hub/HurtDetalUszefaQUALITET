@@ -3,7 +3,7 @@
  *
  * Bridges the PWA frontend with the backend REST API (window.QMApi).
  * Implements all 7 key user flows:
- *   1. Login / Register      → QMApi.Auth.login() / QMApi.Auth.register()
+ *   1. Login / Register      → localStorage (qm_users / qm_user)
  *   2. Store data            → QMApi.MyStore.get()
  *   3. Product catalogue     → QMApi.Products.list()
  *   4. Add to cart           → QMApi.Cart.addByShopProduct()
@@ -96,11 +96,25 @@
   }
 
   function initLoginFlow() {
-    var a = api();
-    if (!a) return;
-
     var form = document.querySelector('[data-login-form]');
     if (!form) return;
+
+    function getLocalUsers() {
+      try {
+        var parsed = JSON.parse(localStorage.getItem('qm_users') || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function saveLocalSession(user) {
+      try { localStorage.setItem('qm_user', JSON.stringify(user)); } catch (_) {}
+    }
+
+    function normalizeEmail(email) {
+      return String(email || '').trim().toLowerCase();
+    }
 
     // Use the capture phase so this handler fires BEFORE app.js registers
     // its bubble-phase handler on the same form element.
@@ -112,10 +126,13 @@
       var passwordInput = form.querySelector('input[name="password"]');
       var submitBtn     = form.querySelector('[type="submit"]');
 
-      var email    = emailInput    ? emailInput.value.trim() : '';
+      var email    = normalizeEmail(emailInput ? emailInput.value : '');
       var password = passwordInput ? passwordInput.value     : '';
 
-      if (!email) return;
+      if (!email || !password) {
+        alert('Podaj e-mail i hasło.');
+        return;
+      }
 
       var origText = submitBtn ? submitBtn.textContent : 'Zaloguj';
       if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Logowanie…'; }
@@ -124,33 +141,20 @@
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
       }
 
-      function fallbackLogin() {
-        setLegacyLoggedIn(email, null);
-        window.location.href = 'dashboard.html';
+      var users = getLocalUsers();
+      var match = users.find(function (user) {
+        return normalizeEmail(user && user.email) === email && String((user && user.password) || '') === String(password || '');
+      });
+
+      if (!match) {
+        done();
+        alert('Błąd logowania: Nieprawidłowy e-mail lub hasło');
+        return;
       }
 
-      if (password) {
-        a.Auth.login(email, password)
-          .then(function (data) {
-            var role = data && data.user && data.user.role;
-            setLegacyLoggedIn(email, role);
-            window.location.href = 'dashboard.html';
-          })
-          .catch(function (err) {
-            done();
-            // Only fall back to localStorage when the API is completely unreachable.
-            // A status code means the API responded (e.g. 401 wrong credentials) —
-            // in that case do NOT grant access via localStorage.
-            if (err && err.status) {
-              return; // pwa-connect.js will show an inline error; do nothing here
-            }
-            // Network/API unreachable – graceful degradation to localStorage
-            fallbackLogin();
-          });
-      } else {
-        // No password field filled — use localStorage-only (demo) login
-        fallbackLogin();
-      }
+      saveLocalSession(match);
+      setLegacyLoggedIn(email, match.role || 'customer');
+      window.location.href = '/index.html';
     }, true); // capture = true
 
     // Wire the "Utwórz konto" (register) button
@@ -161,7 +165,7 @@
       var emailInput    = form.querySelector('input[name="email"]');
       var passwordInput = form.querySelector('input[name="password"]');
 
-      var email    = emailInput    ? emailInput.value.trim() : '';
+      var email    = normalizeEmail(emailInput ? emailInput.value : '');
       var password = passwordInput ? passwordInput.value     : '';
 
       if (!email || !password) {
@@ -169,24 +173,37 @@
         return;
       }
 
-      var name = email.split('@')[0];
+      var name = email.split('@')[0] || 'Użytkownik';
 
       var origText = registerBtn.textContent;
       registerBtn.disabled = true;
       registerBtn.textContent = 'Rejestracja…';
 
-      a.Auth.register(email, password, name)
-        .then(function (data) {
-          var role = data && data.user && data.user.role;
-          setLegacyLoggedIn(email, role);
-          window.location.href = 'dashboard.html';
-        })
-        .catch(function (err) {
-          registerBtn.disabled = false;
-          registerBtn.textContent = origText;
-          var msg = (err && err.body && err.body.error) || 'Nie udało się utworzyć konta. Spróbuj ponownie.';
-          alert('Rejestracja: ' + msg);
-        });
+      var users = getLocalUsers();
+      var exists = users.some(function (user) {
+        return normalizeEmail(user && user.email) === email;
+      });
+      if (exists) {
+        registerBtn.disabled = false;
+        registerBtn.textContent = origText;
+        alert('Rejestracja: Email już istnieje');
+        return;
+      }
+
+      var user = {
+        id: 'user-' + Date.now(),
+        name: name,
+        email: email,
+        password: String(password || ''),
+        role: 'customer',
+        createdAt: new Date().toISOString()
+      };
+
+      users.push(user);
+      try { localStorage.setItem('qm_users', JSON.stringify(users)); } catch (_) {}
+      saveLocalSession(user);
+      setLegacyLoggedIn(email, user.role);
+      window.location.href = '/index.html';
     });
   }
 
@@ -432,7 +449,7 @@
           grid.appendChild(card);
         });
       })
-      .catch(function () { /* keep existing demo products */ });
+      .catch(function () { /* preserve current UI when API products are unavailable */ });
   }
 
   // ─── 4 + 5. Cart ──────────────────────────────────────────────────────────────
@@ -1091,7 +1108,7 @@
       if (a) a.Auth.me().catch(function () {});
     }
 
-    if (page === 'login')         initLoginFlow();
+    // Login/register flow is handled by pwa-connect.js in localStorage-only mode.
     if (page === 'dashboard')     initDashboardFlow();
     if (page === 'sklep')         initProductsFlow();
     if (page === 'koszyk')        initCartFlow();

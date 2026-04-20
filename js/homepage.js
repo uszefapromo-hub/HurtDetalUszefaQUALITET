@@ -12,7 +12,8 @@
   'use strict';
 
   const API_BASE = (typeof window !== 'undefined' && window.QM_API_BASE)
-    || 'https://api.qualitet-market.com/api';
+    || '/api';
+  const HOMEPAGE_PRODUCTS_ENDPOINT = '/.netlify/functions/products';
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,19 @@
       .then(function (r) { return r.json(); });
   }
 
+  function productsGet(params) {
+    var url = new URL(HOMEPAGE_PRODUCTS_ENDPOINT, window.location.origin);
+    if (params) {
+      Object.entries(params).forEach(function (entry) {
+        var k = entry[0];
+        var v = entry[1];
+        if (v !== undefined && v !== null) url.searchParams.set(k, v);
+      });
+    }
+    return fetch(url.toString(), { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); });
+  }
+
   function renderSkeletons(container, count, height) {
     var h = height || 200;
     container.innerHTML = Array.from({ length: count }, function () {
@@ -52,12 +66,14 @@
   // ── Product Card ─────────────────────────────────────────────────────────────
 
   function productCard(p) {
-    var img = p.image_url
-      ? '<img class="mkt-card-img" src="' + escHtml(p.image_url) + '" alt="' + escHtml(p.name) + '" loading="lazy">'
+    var imageSrc = p.image || p.image_url || '';
+    var img = imageSrc
+      ? '<img class="mkt-card-img" src="' + escHtml(imageSrc) + '" alt="' + escHtml(p.name) + '" loading="lazy">'
       : '<div class="mkt-card-img" aria-hidden="true">📦</div>';
-    var price = p.price_gross || p.selling_price || p.platform_price || p.supplier_price || '';
-    var oldPrice = (p.original_price && parseFloat(p.original_price) > parseFloat(price))
-      ? '<span class="old-price">' + formatPrice(p.original_price) + '</span>'
+    var price = p.price || p.price_gross || p.selling_price || p.platform_price || p.supplier_price || '';
+    var oldPriceValue = p.oldPrice || p.original_price || '';
+    var oldPrice = (oldPriceValue && parseFloat(oldPriceValue) > parseFloat(price))
+      ? '<span class="old-price">' + formatPrice(oldPriceValue) + '</span>'
       : '';
     return '<a class="mkt-card" href="listing.html?product=' + escHtml(p.id) + '" style="display:block;text-decoration:none;color:inherit">'
       + img
@@ -137,42 +153,19 @@
   // ── Fallback placeholder cards ────────────────────────────────────────────────
 
   function placeholderProducts() {
-    var items = [
-      { id: '1', name: 'Słuchawki bezprzewodowe BT Pro', price_gross: '149.99', image_url: '' },
-      { id: '2', name: 'Kurtka zimowa Premium', price_gross: '299.00', image_url: '' },
-      { id: '3', name: 'Zestaw do kawy Barista', price_gross: '89.50', image_url: '' },
-      { id: '4', name: 'Smartwatch Fit Plus', price_gross: '199.00', image_url: '' }
-    ];
-    return items.map(productCard).join('');
+    return '<div class="empty-state-card">Produkty pojawią się po imporcie realnego katalogu.</div>';
   }
 
   function placeholderStores() {
-    var items = [
-      { id: '1', name: 'TechZone PL', slug: 'techzone', description: 'Elektronika i gadżety', product_count: 142 },
-      { id: '2', name: 'ModaHouse', slug: 'modahouse', description: 'Odzież i akcesoria', product_count: 87 },
-      { id: '3', name: 'SportPro', slug: 'sportpro', description: 'Sprzęt sportowy', product_count: 65 },
-      { id: '4', name: 'HomeDecor', slug: 'homedecor', description: 'Dom i dekoracje', product_count: 234 }
-    ];
-    return items.map(storeCard).join('');
+    return '<div class="empty-state-card">Sklepy pojawią się po uruchomieniu kont sprzedawców.</div>';
   }
 
   function placeholderAuctions() {
-    var items = [
-      { id: '1', title: 'Pejzaż Mazurski', current_price: 850, ends_at: new Date(Date.now() + 3600000 * 14).toISOString() },
-      { id: '2', title: 'Portret — Nieznajoma', current_price: 1200, ends_at: new Date(Date.now() + 3600000 * 6).toISOString() },
-      { id: '3', title: 'Abstrakcja Złota', current_price: 650, ends_at: new Date(Date.now() + 3600000 * 26).toISOString() }
-    ];
-    return items.map(auctionCard).join('');
+    return '<div class="empty-state-card">Aukcje pojawią się po dodaniu realnych ofert.</div>';
   }
 
   function placeholderSellers() {
-    var items = [
-      { name: 'Marek K.', total_sales: 412, avg_rating: 4.9 },
-      { name: 'Anna W.', total_sales: 289, avg_rating: 4.8 },
-      { name: 'Piotr J.', total_sales: 178, avg_rating: 4.7 },
-      { name: 'Kasia B.', total_sales: 134, avg_rating: 4.8 }
-    ];
-    return items.map(function(item, index) { return sellerCard(item, index); }).join('');
+    return '<div class="empty-state-card">Ranking sprzedawców pojawi się po pierwszej sprzedaży.</div>';
   }
 
   // ── Section loaders ───────────────────────────────────────────────────────────
@@ -181,7 +174,7 @@
     var container = document.getElementById('homepage-trending-products');
     if (!container) return;
     renderSkeletons(container, 4, 220);
-    apiGet('/products', { limit: 8, sort: 'created_at', order: 'desc' })
+    productsGet({ limit: 8, sort: 'created_at', order: 'desc' })
       .then(function (data) {
         var items = Array.isArray(data) ? data : (data.products || data.data || data.items || []);
         if (items.length === 0) throw new Error('empty');
@@ -197,7 +190,7 @@
     if (!container) return;
     renderSkeletons(container, 4, 220);
     // Fetch products sorted by margin descending (highest margin first)
-    apiGet('/products', { limit: 8, sort: 'margin', order: 'desc', is_central: 'true' })
+    productsGet({ limit: 8, sort: 'margin', order: 'desc' })
       .then(function (data) {
         var items = Array.isArray(data) ? data : (data.products || data.data || data.items || []);
         if (items.length === 0) throw new Error('empty');
@@ -205,7 +198,7 @@
       })
       .catch(function () {
         // Fallback: show regular products
-        return apiGet('/products', { limit: 4 })
+        return productsGet({ limit: 4 })
           .then(function (data) {
             var items = Array.isArray(data) ? data : (data.products || data.data || data.items || []);
             if (items.length === 0) throw new Error('empty');
@@ -279,7 +272,7 @@
     var container = document.getElementById('homepage-new-products');
     if (!container) return;
     renderSkeletons(container, 4, 220);
-    apiGet('/products', { limit: 8, sort: 'new', is_central: 'true' })
+    productsGet({ limit: 8, sort: 'new' })
       .then(function (data) {
         var items = Array.isArray(data) ? data : (data.products || []);
         if (items.length === 0) throw new Error('empty');
@@ -296,7 +289,7 @@
     var container = document.getElementById('homepage-bestsellers');
     if (!container) return;
     renderSkeletons(container, 4, 220);
-    apiGet('/products', { limit: 8, sort: 'bestsellers', is_central: 'true' })
+    productsGet({ limit: 8, sort: 'bestsellers' })
       .then(function (data) {
         var items = Array.isArray(data) ? data : (data.products || []);
         if (items.length === 0) throw new Error('empty');
@@ -332,7 +325,7 @@
       })
       .catch(function () {
         // Fallback: newest central products
-        return apiGet('/products', { limit: 4, is_central: 'true', sort: 'new' })
+        return productsGet({ limit: 4, sort: 'new' })
           .then(function (data) {
             var items = Array.isArray(data) ? data : (data.products || []);
             container.innerHTML = items.length > 0 ? items.slice(0, 4).map(productCard).join('') : placeholderProducts();
@@ -414,42 +407,20 @@
     var container = document.getElementById('homepage-social-video');
     if (!container) return;
 
-    // Static demo video cards — will be replaced with API data when posts with video_url exist
-    var demoVideos = [
-      {
-        id: 'demo-1',
-        content: 'Sprawdź te bezprzewodowe słuchawki — najlepszy deal tygodnia!',
-        video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        video_type: 'youtube',
-        product_id: null,
-      },
-      {
-        id: 'demo-2',
-        content: 'TikTok viral — modne sneakersy w promocji!',
-        video_url: 'https://www.tiktok.com/@example/video/7123456789012345678',
-        video_type: 'tiktok',
-        product_id: null,
-      },
-      {
-        id: 'demo-3',
-        content: 'YouTube Shorts — gadżety które musisz mieć',
-        video_url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
-        video_type: 'short',
-        product_id: null,
-      },
-    ];
+    // Empty fallback until real video posts appear
+    var fallbackVideos = [];
 
     apiGet('/social/feed', { type: 'video', limit: 6 })
       .then(function (data) {
         var posts = Array.isArray(data) ? data : (data.posts || []);
         var withVideo = posts.filter(function (p) { return p.video_url; });
-        var items = withVideo.length > 0 ? withVideo : demoVideos;
+        var items = withVideo.length > 0 ? withVideo : [];
         var html = items.slice(0, 3).map(socialVideoCard).join('');
-        container.innerHTML = html || container.innerHTML;
+        container.innerHTML = html || '<div class="empty-state-card">Sekcja video ruszy po dodaniu realnych materiałów.</div>';
       })
       .catch(function () {
-        var html = demoVideos.map(socialVideoCard).join('');
-        container.innerHTML = html || container.innerHTML;
+        var html = fallbackVideos.map(socialVideoCard).join('');
+        container.innerHTML = html || '<div class="empty-state-card">Sekcja video ruszy po dodaniu realnych materiałów.</div>';
       });
   }
 
@@ -458,7 +429,7 @@
   function socialPostCard(post) {
     var hasVideo = !!post.video_url;
     var imgSrc = (post.media_urls && post.media_urls[0]) || '';
-    var mediaSrc = imgSrc || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=60';
+    var mediaSrc = imgSrc || ''; 
     var embed = hasVideo ? buildVideoEmbed(post.video_url, post.video_type) : null;
     var price = post.product_price ? formatPrice(post.product_price) : '';
 
@@ -472,9 +443,11 @@
         + '</div>';
     } else {
       mediaHtml = '<div class="social-post-media">'
-        + '<img src="' + escHtml(mediaSrc) + '" alt="' + escHtml(post.product_name || post.content || '') + '" loading="lazy">'
+        + (mediaSrc
+          ? '<img src="' + escHtml(mediaSrc) + '" alt="' + escHtml(post.product_name || post.content || '') + '" loading="lazy">'
+          : '<div class="empty-state-card" style="margin:12px">Post bez zdjęcia</div>')
         + (hasVideo ? '<span class="social-post-video-badge">▶ Video</span>' : '')
-        + '</div>';
+        + '</div>'; 
     }
 
     var buyLink = post.product_id
@@ -491,36 +464,7 @@
       + '</div></div>';
   }
 
-  var demoSocialPosts = [
-    {
-      id: 'demo-p1',
-      content: 'Viral produkt — bezprzewodowe słuchawki z redukcją szumów. Tysiące pozytywnych recenzji na TikTok!',
-      product_name: 'Słuchawki BT Pro X',
-      product_price: '149.99',
-      media_urls: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=60'],
-      video_url: null,
-      product_id: null,
-    },
-    {
-      id: 'demo-p2',
-      content: 'Ten smartwatch bije rekordy sprzedaży! Sprawdź zanim skończy się promocja 🔥',
-      product_name: 'Smartwatch Fit Ultra',
-      product_price: '199.00',
-      media_urls: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=60'],
-      video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      video_type: 'youtube',
-      product_id: null,
-    },
-    {
-      id: 'demo-p3',
-      content: 'Modne sneakersy z najnowszej kolekcji — polecane przez influencerów na Instagram i TikTok.',
-      product_name: 'Sneakersy Urban Pro',
-      product_price: '299.00',
-      media_urls: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=60'],
-      video_url: null,
-      product_id: null,
-    },
-  ];
+  var fallbackSocialPosts = [];
 
   function loadSocialPosts() {
     var container = document.getElementById('homepage-social-posts');
@@ -528,36 +472,17 @@
     apiGet('/social/feed', { type: 'product', limit: 6 })
       .then(function (data) {
         var posts = Array.isArray(data) ? data : (data.posts || []);
-        var items = posts.length > 0 ? posts : demoSocialPosts;
-        container.innerHTML = items.slice(0, 3).map(socialPostCard).join('');
+        var items = posts.length > 0 ? posts : [];
+        container.innerHTML = items.length ? items.slice(0, 3).map(socialPostCard).join('') : '<div class="empty-state-card">Posty produktowe pojawią się po uruchomieniu feedu.</div>';
       })
       .catch(function () {
-        container.innerHTML = demoSocialPosts.map(socialPostCard).join('');
+        container.innerHTML = '<div class="empty-state-card">Posty produktowe pojawią się po uruchomieniu feedu.</div>';
       });
   }
 
   // ── Community Posts ──────────────────────────────────────────────────────────
 
-  var defaultCommunityPosts = [
-    {
-      author_name: 'Marek K.',
-      content: 'Właśnie uruchomiłem swój sklep na QualitetMarket! Pierwsze produkty z katalogu BigBuy już online. Zapraszam do przeglądania 🎉',
-      likes_count: 14,
-      comments_count: 3,
-    },
-    {
-      author_name: 'Anna W.',
-      content: 'Polecam te słuchawki BT Pro — niesamowita jakość dźwięku w tej cenie! Klienci bardzo zadowoleni 🎧',
-      likes_count: 38,
-      comments_count: 7,
-    },
-    {
-      author_name: 'Piotr J.',
-      content: 'Tip dla nowych sprzedawców: ustawiajcie marżę min. 30% i korzystajcie z narzędzia do generowania opisów AI 💡',
-      likes_count: 22,
-      comments_count: 5,
-    },
-  ];
+  var defaultCommunityPosts = [];
 
   function communityPostCard(post) {
     var name = String(post.author_name || 'Użytkownik');

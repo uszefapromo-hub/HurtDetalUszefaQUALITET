@@ -1,21 +1,35 @@
 'use strict';
 
 /**
- * feed.js – Buyer-Facing Product Feed (TikTok / Instagram style)
+ * feed.js – Social Commerce Product Feed
  *
- * Full-screen vertical snap-scroll: one product per viewport slide.
- * Pressing "Kup teraz" adds the item to the cart and redirects to koszyk.html.
+ * TikTok-style vertical product discovery feed.
+ * Sections: recommended | trending | new | best_margin | bestsellers
  *
- * Depends on: window.QMApi (js/api.js), window.QMCart (js/cart.js)
+ * Depends on: window.QMApi (js/api.js)
  */
 
 (function () {
-  var MAX_PRODUCTS = 30;
+  // ─── State ───────────────────────────────────────────────────────────────────
+  let currentSection = 'recommended';
+  let currentPage    = 1;
+  let isLoading      = false;
+  let hasMore        = true;
+  let totalLoaded    = 0;
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
+  const LIMIT         = 10;
+  const FEED_SECTIONS = [
+    { key: 'recommended', label: '⭐ Dla Ciebie' },
+    { key: 'trending',    label: '🔥 Trending'  },
+    { key: 'new',         label: '✨ Nowości'    },
+    { key: 'best_margin', label: '💰 Marża'      },
+    { key: 'bestsellers', label: '🏆 Bestsellery' },
+  ];
+
+  // ─── Utilities ───────────────────────────────────────────────────────────────
 
   function escHtml(str) {
-    if (str == null) return '';
+    if (!str) return '';
     return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -28,126 +42,265 @@
     return parseFloat(val).toLocaleString('pl-PL', { style: 'currency', currency: 'PLN' });
   }
 
-  function getRetailPrice(p) {
-    return p.selling_price || p.price_gross || p.platform_price || null;
+  // ─── Badge rendering ─────────────────────────────────────────────────────────
+
+  const BADGE_MAP = {
+    new:         { label: 'Nowość',     cls: 'badge-new'        },
+    featured:    { label: 'Wyróżniony', cls: 'badge-featured'   },
+    bestseller:  { label: 'Bestseller', cls: 'badge-bestseller' },
+    high_margin: { label: 'Wysoka Marża', cls: 'badge-margin'   },
+  };
+
+  function renderBadges(badges) {
+    if (!badges || badges.length === 0) return '';
+    return badges.map((b) => {
+      const cfg = BADGE_MAP[b];
+      if (!cfg) return '';
+      return `<span class="feed-badge ${escHtml(cfg.cls)}">${escHtml(cfg.label)}</span>`;
+    }).join('');
   }
 
-  // ─── Slide rendering ──────────────────────────────────────────────────────
+  // ─── Card rendering ──────────────────────────────────────────────────────────
 
-  function renderSlide(p) {
-    var price = getRetailPrice(p);
+  function renderCard(p) {
+    const profitHtml = p.expected_reseller_profit != null
+      ? `<div class="feed-profit">💰 Zysk dla Ciebie: <strong>${escHtml(formatPrice(p.expected_reseller_profit))}</strong></div>`
+      : '';
 
-    var imgHtml = p.image_url
-      ? '<img class="product-img" src="' + escHtml(p.image_url) + '" alt="' + escHtml(p.name) + '" loading="lazy">'
-      : '<div class="product-placeholder">🛍️</div>';
+    const resellerPriceHtml = p.recommended_reseller_price != null
+      ? `<div class="feed-reseller-price">🏷 Proponowana cena sprzedaży: ${escHtml(formatPrice(p.recommended_reseller_price))}</div>`
+      : '';
 
-    return '<article class="product" data-product-id="' + escHtml(p.id) + '">'
-      + imgHtml
-      + '<div class="product-overlay"></div>'
-      + '<div class="product-content">'
-      +   '<h2 class="product-name">' + escHtml(p.name) + '</h2>'
-      +   '<div class="product-price">' + escHtml(formatPrice(price)) + '</div>'
-      +   '<button class="btn-buy"'
-      +     ' data-product-id="' + escHtml(p.id) + '"'
-      +     ' data-product-name="' + escHtml(p.name) + '"'
-      +     ' data-product-price="' + escHtml(String(price != null ? price : 0)) + '"'
-      +     ' data-product-img="' + escHtml(p.image_url || '') + '"'
-      +     ' type="button">'
-      +     '👉 Kup teraz'
-      +   '</button>'
-      + '</div>'
-      + '</article>';
+    const supplierHtml = p.supplier_name
+      ? `<div class="feed-supplier">📦 Dostawca: ${escHtml(p.supplier_name)}</div>`
+      : '';
+
+    const imgHtml = p.image_url
+      ? `<img src="${escHtml(p.image_url)}" alt="${escHtml(p.name)}" class="feed-card-img" loading="lazy">`
+      : `<div class="feed-card-img feed-card-img-placeholder">🛍️</div>`;
+
+    return `
+      <article class="feed-card" data-product-id="${escHtml(p.id)}">
+        <div class="feed-card-media">
+          ${imgHtml}
+          <div class="feed-card-badges">${renderBadges(p.badges)}</div>
+        </div>
+        <div class="feed-card-body">
+          <h3 class="feed-card-name">${escHtml(p.name)}</h3>
+          ${supplierHtml}
+          <div class="feed-card-pricing">
+            <div class="feed-platform-price">Cena hurtowa: <strong>${escHtml(formatPrice(p.platform_price))}</strong></div>
+            ${resellerPriceHtml}
+            ${profitHtml}
+          </div>
+          <div class="feed-card-actions">
+            <button class="feed-btn feed-btn-add" data-action="add" data-product-id="${escHtml(p.id)}">
+              ➕ Dodaj do sklepu
+            </button>
+            <a href="listing.html?id=${escHtml(p.id)}" class="feed-btn feed-btn-view">
+              🔍 Szczegóły
+            </a>
+          </div>
+        </div>
+      </article>`;
   }
 
-  // ─── Buy-now handler ──────────────────────────────────────────────────────
+  // ─── Section tabs ────────────────────────────────────────────────────────────
 
-  function handleBuyNow(btn) {
-    var id    = btn.dataset.productId;
-    var name  = btn.dataset.productName;
-    var price = parseFloat(btn.dataset.productPrice);
-    if (isNaN(price)) price = 0;
-    var img   = btn.dataset.productImg || '';
+  function renderTabs() {
+    const container = document.getElementById('feed-tabs');
+    if (!container) return;
+    container.innerHTML = FEED_SECTIONS.map((s) => `
+      <button
+        class="feed-tab${s.key === currentSection ? ' active' : ''}"
+        data-section="${escHtml(s.key)}">
+        ${escHtml(s.label)}
+      </button>`
+    ).join('');
 
-    if (!id || !name) return;
-
-    btn.textContent = '⏳ Dodawanie…';
-    btn.disabled = true;
-
-    // Add to cart via QMCart (localStorage + optional API sync)
-    if (window.QMCart && typeof window.QMCart.addToCart === 'function') {
-      window.QMCart.addToCart({ id: id, name: name, price: price, img: img });
-    }
-
-    // Redirect to checkout
-    window.location.href = 'koszyk.html';
+    container.querySelectorAll('.feed-tab').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const section = btn.dataset.section;
+        if (section === currentSection) return;
+        switchSection(section);
+      });
+    });
   }
 
-  // ─── Load & render ────────────────────────────────────────────────────────
+  function switchSection(section) {
+    currentSection = section;
+    currentPage    = 1;
+    hasMore        = true;
+    totalLoaded    = 0;
 
-  function showError() {
-    var feed = document.getElementById('feed');
-    if (!feed) return;
-    feed.innerHTML = '<div class="feed-state">'
-      + '<p>Nie udało się załadować produktów.<br>Sprawdź połączenie z internetem.</p>'
-      + '<a href="sklep.html">Przejdź do sklepu</a>'
-      + '</div>';
+    const container = document.getElementById('feed-container');
+    if (container) container.innerHTML = '';
+
+    renderTabs();
+    loadNextPage();
   }
 
-  async function loadFeed() {
-    var feed    = document.getElementById('feed');
-    var loading = document.getElementById('feed-loading');
+  // ─── Loading state ────────────────────────────────────────────────────────────
+
+  function showLoader(show) {
+    const loader = document.getElementById('feed-loader');
+    if (loader) loader.style.display = show ? 'flex' : 'none';
+  }
+
+  function showEndMessage(show) {
+    const el = document.getElementById('feed-end');
+    if (el) el.style.display = show ? 'block' : 'none';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('feed-error');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  // ─── API call ────────────────────────────────────────────────────────────────
+
+  async function loadNextPage() {
+    if (isLoading || !hasMore) return;
+    isLoading = true;
+    showLoader(true);
 
     try {
-      var products = [];
+      const params = new URLSearchParams({
+        section: currentSection,
+        page:    currentPage,
+        limit:   LIMIT,
+      });
 
-      if (window.QMApi && window.QMApi.Products) {
-        var data = await window.QMApi.Products.list({
-          limit:  MAX_PRODUCTS,
-          status: 'active',
-          sort:   'featured',
-        });
-        products = (data && data.products) ? data.products : [];
+      const endpoint = `/api/feed?${params}`;
+      let data;
+
+      if (window.QMApi && window.QMApi.get) {
+        data = await window.QMApi.get(endpoint);
       } else {
-        var base = (window.QM_API_BASE || '/api').replace(/\/api$/, '');
-        var res  = await fetch(base + '/api/products?limit=' + MAX_PRODUCTS + '&status=active&sort=featured');
-        if (!res.ok) throw new Error('network ' + res.status);
-        var json = await res.json();
-        products = json.products || [];
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error('Błąd sieci');
+        data = await res.json();
       }
 
-      // Remove loading placeholder
-      if (loading) loading.remove();
+      const products  = data.products || [];
+      const container = document.getElementById('feed-container');
 
-      if (!products.length) {
-        feed.innerHTML = '<div class="feed-state">'
-          + '<p>Brak dostępnych produktów.</p>'
-          + '<a href="sklep.html">Przejdź do sklepu</a>'
-          + '</div>';
+      if (products.length === 0 && currentPage === 1) {
+        if (container) container.innerHTML = '<p class="feed-empty">Brak produktów w tej sekcji.</p>';
+        hasMore = false;
+      } else {
+        products.forEach((p) => {
+          const div = document.createElement('div');
+          div.innerHTML = renderCard(p).trim();
+          const card = div.firstChild;
+          if (container) container.appendChild(card);
+        });
+
+        totalLoaded += products.length;
+        hasMore = totalLoaded < (data.total || 0);
+        currentPage++;
+      }
+
+      if (!hasMore) showEndMessage(true);
+    } catch (err) {
+      console.error('feed load error:', err);
+      showError('Nie udało się załadować produktów. Spróbuj ponownie.');
+    } finally {
+      isLoading = false;
+      showLoader(false);
+    }
+  }
+
+  // ─── Infinite scroll ─────────────────────────────────────────────────────────
+
+  function setupInfiniteScroll() {
+    const sentinel = document.getElementById('feed-sentinel');
+    if (!sentinel || !('IntersectionObserver' in window)) {
+      // Fallback: scroll listener
+      window.addEventListener('scroll', () => {
+        const scrolledToBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 400;
+        if (scrolledToBottom) loadNextPage();
+      });
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadNextPage(); },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+  }
+
+  // ─── Add to store action ─────────────────────────────────────────────────────
+
+  async function addToStore(productId, btn) {
+    const api  = window.QMApi;
+    const user = api && api.Auth ? api.Auth.currentUser() : null;
+    if (!user) {
+      window.location.href = 'login.html?redirect=feed.html';
+      return;
+    }
+
+    const originalText = btn.textContent;
+    btn.disabled    = true;
+    btn.textContent = '⏳ Dodawanie…';
+
+    try {
+      // Fetch seller's store via QMApi (includes auth header automatically)
+      const store = await api.get('/my/store');
+
+      if (!store || !store.id) {
+        showError('Nie znaleziono Twojego sklepu. Utwórz sklep w dashboardzie.');
+        btn.disabled    = false;
+        btn.textContent = originalText;
         return;
       }
 
-      // Render slides
-      var html = products.map(renderSlide).join('');
-      feed.insertAdjacentHTML('beforeend', html);
+      // Add product to store via QMApi
+      await api.post('/my/store/products', { product_id: productId, store_id: store.id });
 
-      // Delegate click on buy buttons
-      feed.addEventListener('click', function (e) {
-        var btn = e.target.closest('.btn-buy');
-        if (btn) handleBuyNow(btn);
-      });
-
+      btn.textContent = '✅ Dodano!';
+      btn.classList.add('added');
+      setTimeout(() => { btn.textContent = '✅ W sklepie'; }, 2000);
     } catch (err) {
-      console.error('[feed] load error:', err);
-      if (loading) loading.remove();
-      showError();
+      console.error('add-to-store error:', err);
+      const msg = (err && err.error) ? err.error : 'Nie udało się dodać produktu.';
+      showError(msg);
+      btn.disabled    = false;
+      btn.textContent = originalText;
     }
   }
 
-  // ─── Init ─────────────────────────────────────────────────────────────────
+  // ─── Event delegation ────────────────────────────────────────────────────────
+
+  function setupCardEvents() {
+    const container = document.getElementById('feed-container');
+    if (!container) return;
+
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="add"]');
+      if (btn) {
+        e.preventDefault();
+        addToStore(btn.dataset.productId, btn);
+      }
+    });
+  }
+
+  // ─── Init ────────────────────────────────────────────────────────────────────
+
+  function init() {
+    renderTabs();
+    setupCardEvents();
+    setupInfiniteScroll();
+    loadNextPage();
+  }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadFeed);
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    loadFeed();
+    init();
   }
 })();

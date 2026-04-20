@@ -17,6 +17,9 @@
   var CURRENCY_FMT = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 });
 
   var MS_PER_DAY = 86400000;
+  var AUTH_USERS_KEY = 'qm_users';
+  var AUTH_USER_KEY = 'qm_user';
+  window.__QM_AUTH_LOCAL_ONLY = true;
 
   /** Human-readable plan display names (aligned with backend PLAN_DISPLAY_NAMES) */
   var PLAN_DISPLAY_NAMES = {
@@ -40,6 +43,80 @@
     return CURRENCY_FMT.format(Number(value) || 0);
   }
 
+  function safeParse(json, fallback) {
+    try {
+      var parsed = JSON.parse(json);
+      return parsed == null ? fallback : parsed;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function getLocalUsers() {
+    return safeParse(localStorage.getItem(AUTH_USERS_KEY) || '[]', []);
+  }
+
+  function saveLocalUsers(users) {
+    try {
+      localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(Array.isArray(users) ? users : []));
+    } catch (_) {}
+  }
+
+  function getCurrentLocalUser() {
+    return safeParse(localStorage.getItem(AUTH_USER_KEY) || 'null', null);
+  }
+
+  function normalizeEmail(email) {
+    return String(email || '').trim().toLowerCase();
+  }
+
+  function createLocalUser(input) {
+    var now = new Date().toISOString();
+    var cleanEmail = normalizeEmail(input && input.email);
+    return {
+      id: 'user-' + Date.now(),
+      name: String((input && input.name) || cleanEmail.split('@')[0] || 'Klient').trim(),
+      email: cleanEmail,
+      password: String((input && input.password) || ''),
+      role: 'customer',
+      createdAt: now
+    };
+  }
+
+  function saveLocalSession(user) {
+    if (!user || !user.email) return;
+    try { localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)); } catch (_) {}
+    try { localStorage.setItem('app_user_logged', 'true'); } catch (_) {}
+    try { localStorage.setItem('app_user_email', user.email); } catch (_) {}
+    try { localStorage.setItem('app_user_role', user.role || 'customer'); } catch (_) {}
+  }
+
+  function hasSession() {
+    return Boolean(getCurrentLocalUser());
+  }
+
+  function redirectToPostLogin() {
+    window.location.href = '/index.html';
+  }
+
+  function syncPanelLinks() {
+    var logged = hasSession();
+    var panelHref = logged ? 'dashboard.html' : 'login.html';
+
+    document.querySelectorAll('a[data-nav="dashboard"]').forEach(function (link) {
+      link.href = panelHref;
+    });
+
+    document.querySelectorAll('a[data-nav="login"]').forEach(function (link) {
+      link.href = panelHref;
+    });
+
+    var topbarCta = document.querySelector('.topbar-cta');
+    if (topbarCta && /dashboard\.html|login\.html/.test(topbarCta.getAttribute('href') || '')) {
+      topbarCta.href = panelHref;
+    }
+  }
+
   function escapeHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
@@ -57,14 +134,9 @@
    * from reaching the form's own bubble handlers.
    */
   function initLoginPage() {
-    var api = window.QMApi;
-    if (!api) return;
-
     // If already logged in, redirect away from the login page immediately
-    if (api.Auth.isLoggedIn()) {
-      var params = new URLSearchParams(window.location.search);
-      var redirectTarget = params.get('redirect');
-      window.location.replace(redirectTarget || 'dashboard.html');
+    if (hasSession()) {
+      window.location.replace('/index.html');
       return;
     }
 
@@ -76,13 +148,16 @@
       e.preventDefault();
       e.stopImmediatePropagation();
 
+      console.log('LOGIN CLICK');
+
       var emailInput = form.querySelector('input[name="email"]');
       var passwordInput = form.querySelector('input[name="password"]');
-      var email = emailInput ? emailInput.value.trim() : '';
+      var email = normalizeEmail(emailInput ? emailInput.value : '');
       var password = passwordInput ? passwordInput.value : '';
 
       if (!email || !password) {
-        showFormError(form, 'Podaj adres e-mail i has\u0142o.');
+        console.log('LOGIN ERROR');
+        showFormError(form, 'Uzupełnij wszystkie pola');
         return;
       }
 
@@ -91,21 +166,28 @@
       setButtonLoading(submitBtn, 'Logowanie\u2026');
       hideFormError(form);
 
-      api.Auth.login(email, password)
-        .then(function () {
-          // QMApi.Auth.login stores the JWT token under 'qm_token'; that is
-          // sufficient for app.js guards (isAppLoggedIn checks qm_token first).
-          var params = new URLSearchParams(window.location.search);
-          var redirectTarget = params.get('redirect');
-          window.location.href = redirectTarget || 'dashboard.html';
-        })
-        .catch(function (err) {
-          restoreButton(submitBtn, origText);
-          var msg = (err && err.body && err.body.error)
-            || (err && !err.status ? 'Brak po\u0142\u0105czenia z serwerem. Spr\u00f3buj ponownie.' : null)
-            || 'B\u0142\u0105d logowania. Sprawd\u017a e-mail i has\u0142o.';
-          showFormError(form, msg);
+      try {
+        var users = getLocalUsers();
+        var match = users.find(function (user) {
+          return normalizeEmail(user && user.email) === email && String((user && user.password) || '') === password;
         });
+
+        if (!match) {
+          restoreButton(submitBtn, origText);
+          console.log('LOGIN ERROR');
+          showFormError(form, 'Nieprawidłowy email lub hasło');
+          return;
+        }
+
+        saveLocalSession(match);
+        console.log('LOGIN SUCCESS');
+        syncPanelLinks();
+        redirectToPostLogin();
+      } catch (_) {
+        restoreButton(submitBtn, origText);
+        console.log('LOGIN ERROR');
+        showFormError(form, 'Nieprawidłowy email lub hasło');
+      }
     }, true /* capture */);
 
     // Wire the "Utwórz konto" (registration) button
@@ -115,7 +197,9 @@
 
       var registerBtn = loginForm.querySelector('[data-register-btn]');
       if (registerBtn) {
-        registerBtn.addEventListener('click', function () {
+        registerBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
           showRegisterPanel();
         });
       }
@@ -129,31 +213,55 @@
       e.preventDefault();
       e.stopImmediatePropagation();
 
-      var name = (form.querySelector('input[name="name"]') || {}).value || '';
-      var email = (form.querySelector('input[name="email"]') || {}).value || '';
-      var password = (form.querySelector('input[name="password"]') || {}).value || '';
-      var password2 = (form.querySelector('input[name="password2"]') || {}).value || '';
+      console.log('REGISTER CLICK');
 
-      if (!name.trim()) { showFormError(form, 'Podaj imi\u0119 i nazwisko.'); return; }
-      if (!email) { showFormError(form, 'Podaj adres e-mail.'); return; }
-      if (password.length < 8) { showFormError(form, 'Has\u0142o musi mie\u0107 co najmniej 8 znak\u00f3w.'); return; }
-      if (password !== password2) { showFormError(form, 'Has\u0142a nie s\u0105 zgodne.'); return; }
+      var name = (form.querySelector('input[name="name"]') || {}).value || '';
+      var email = normalizeEmail((form.querySelector('input[name="email"]') || {}).value || '');
+      var password = (form.querySelector('input[name="password"]') || {}).value || '';
+      var confirmPassword = (form.querySelector('input[name="confirmPassword"]') || {}).value || '';
+
+      if (!name.trim() || !email || !password || !confirmPassword) {
+        console.log('REGISTER ERROR');
+        showFormError(form, 'Uzupełnij wszystkie pola');
+        return;
+      }
+      if (password !== confirmPassword) {
+        console.log('REGISTER ERROR');
+        showFormError(form, 'Hasła nie są takie same');
+        return;
+      }
 
       var submitBtn = form.querySelector('button[type="submit"]');
       var origText = submitBtn ? submitBtn.textContent : '';
       setButtonLoading(submitBtn, 'Tworz\u0119 konto\u2026');
       hideFormError(form);
 
-      api.Auth.register(email, password, name.trim(), 'buyer')
-        .then(function () {
-          // QMApi.Auth.register stores the JWT token under 'qm_token'.
-          window.location.href = 'dashboard.html';
-        })
-        .catch(function (err) {
-          restoreButton(submitBtn, origText);
-          var msg = (err && err.body && err.body.error) || 'Rejestracja nie powiod\u0142a si\u0119. Spr\u00f3buj ponownie.';
-          showFormError(form, msg);
+      try {
+        var users = getLocalUsers();
+        var exists = users.some(function (user) {
+          return normalizeEmail(user && user.email) === email;
         });
+
+        if (exists) {
+          restoreButton(submitBtn, origText);
+          console.log('REGISTER ERROR');
+          showFormError(form, 'Email już istnieje');
+          return;
+        }
+
+        var localUser = createLocalUser({ email: email, password: password, name: name });
+        users.push(localUser);
+        saveLocalUsers(users);
+        saveLocalSession(localUser);
+
+        console.log('REGISTER SUCCESS');
+        syncPanelLinks();
+        redirectToPostLogin();
+      } catch (err) {
+        restoreButton(submitBtn, origText);
+        console.log('REGISTER ERROR');
+        showFormError(form, 'Uzupełnij wszystkie pola');
+      }
     }, true /* capture */);
   }
 
@@ -175,8 +283,8 @@
       '<form class="form-card" data-register-form>' +
         '<label>Imi\u0119 i nazwisko<input type="text" name="name" placeholder="Jan Kowalski" autocomplete="name" required></label>' +
         '<label>E-mail<input type="email" name="email" placeholder="jan@przyk\u0142ad.pl" autocomplete="email" required></label>' +
-        '<label>Has\u0142o (min. 8 znak\u00f3w)<input type="password" name="password" placeholder="\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7" autocomplete="new-password" required></label>' +
-        '<label>Powt\u00f3rz has\u0142o<input type="password" name="password2" placeholder="\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7" autocomplete="new-password" required></label>' +
+        '<label>Has\u0142o<input type="password" name="password" placeholder="\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7" autocomplete="new-password" required></label>' +
+        '<label>Powt\u00f3rz has\u0142o<input type="password" name="confirmPassword" placeholder="\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7" autocomplete="new-password" required></label>' +
         '<div class="cta-row auth-actions">' +
           '<button class="btn btn-primary" type="submit">Utw\u00f3rz konto</button>' +
           '<button class="btn btn-secondary" type="button" data-back-to-login>Mam ju\u017c konto</button>' +
@@ -305,6 +413,7 @@
   function initCartPage() {
     var api = window.QMApi;
     if (!api || !api.Auth.isLoggedIn()) return;
+    if (document.body && document.body.getAttribute('data-page') === 'koszyk') return;
 
     document.addEventListener('submit', function (e) {
       var form = e.target;
@@ -474,27 +583,8 @@
       .then(function (user) {
         updateDashboardUser(user);
 
-        // Show/hide sections based on role
-        var isSeller = user.role === 'seller' || user.role === 'owner' || user.role === 'admin';
-        var isAdmin  = user.role === 'owner'  || user.role === 'admin';
-
-        // Seller-only sections: store summary, margin summary, scripts panel
-        document.querySelectorAll('[data-seller-only]').forEach(function (el) {
-          el.hidden = !isSeller;
-        });
-
-        // Customer notice (shown only for customers)
-        document.querySelectorAll('[data-customer-only]').forEach(function (el) {
-          el.hidden = isSeller;
-        });
-
-        // Load catalog for sellers
-        if (isSeller) {
-          loadDashboardCatalog();
-        }
-
         // Load promo slots for admin/owner users
-        if (isAdmin) {
+        if (user.role === 'owner' || user.role === 'admin') {
           api.Admin.dashboard()
             .then(function (data) {
               var slots = data && data.promo_slots;
@@ -518,70 +608,6 @@
       });
 
     loadDashboardOrders();
-  }
-
-  function loadDashboardCatalog() {
-    var api = window.QMApi;
-    if (!api) return;
-    var listEl = document.getElementById('dashboard-catalog-list');
-    if (!listEl) return;
-
-    fetch((api._base || '/api') + '/my/catalog?limit=6', {
-      headers: { Authorization: 'Bearer ' + (localStorage.getItem('app_token') || '') },
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        var products = data.products || [];
-        if (!products.length) {
-          listEl.innerHTML = '<p class="hint" style="grid-column:1/-1">Brak produktów w katalogu.</p>';
-          return;
-        }
-        listEl.innerHTML = '';
-        products.forEach(function (p) {
-          var card = document.createElement('div');
-          card.className = 'store-summary-item';
-          card.innerHTML =
-            '<strong>' + escapeHtml(p.name) + '</strong>' +
-            '<span>Cena platformy: ' + (p.platform_price ? formatPrice(parseFloat(p.platform_price)) : '—') + '</span>' +
-            '<span>Sugerowana: ' + (p.recommended_reseller_price ? formatPrice(parseFloat(p.recommended_reseller_price)) : '—') + '</span>' +
-            '<button class="btn btn-primary btn-sm" data-add-to-store="' + escapeHtml(p.id) + '" style="margin-top:8px">+ Dodaj do sklepu</button>';
-          listEl.appendChild(card);
-        });
-
-        listEl.addEventListener('click', function (e) {
-          var btn = e.target.closest('[data-add-to-store]');
-          if (!btn) return;
-          var productId = btn.getAttribute('data-add-to-store');
-          btn.disabled = true;
-          btn.textContent = '…';
-          fetch((api._base || '/api') + '/my/seller-products', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + (localStorage.getItem('app_token') || ''),
-            },
-            body: JSON.stringify({ product_id: productId }),
-          })
-            .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
-            .then(function (res) {
-              if (res.ok) {
-                btn.textContent = '✓ Dodano';
-                btn.classList.add('btn-success');
-              } else {
-                btn.textContent = '+ Dodaj do sklepu';
-                btn.disabled = false;
-                alert(res.body.error || 'Błąd podczas dodawania produktu');
-              }
-            })
-            .catch(function () {
-              btn.textContent = '+ Dodaj do sklepu';
-              btn.disabled = false;
-            });
-        });
-      })
-      .catch(function () {
-        listEl.innerHTML = '<p class="hint" style="grid-column:1/-1">Nie udało się załadować katalogu.</p>';
-      });
   }
 
   function updateDashboardUser(user) {
@@ -702,23 +728,6 @@
       return;
     }
 
-    // Guard: only sellers/admins/owners may access the store panel
-    api.Auth.me()
-      .then(function (user) {
-        var isSeller = user.role === 'seller' || user.role === 'owner' || user.role === 'admin';
-        if (!isSeller) {
-          // Customer trying to access seller panel – redirect to shop
-          window.location.href = 'sklep.html';
-          return;
-        }
-        _loadStorePanelContent(api);
-      })
-      .catch(function () {
-        _loadStorePanelContent(api);
-      });
-  }
-
-  function _loadStorePanelContent(api) {
     var contentEl = document.querySelector('[data-store-content]');
     var emptyEl = document.querySelector('[data-store-empty]');
 
@@ -758,6 +767,8 @@
         }
       });
   }
+
+  // ─── Owner panel page (owner-panel.html) ─────────────────────────────────────
 
   function initOwnerPanelPage() {
     var api = window.QMApi;
@@ -1014,6 +1025,10 @@
 
   var page = document.body ? document.body.dataset.page : null;
 
+  document.addEventListener('DOMContentLoaded', function () {
+    syncPanelLinks();
+  });
+
   if (page === 'login') {
     initLoginPage();
   }
@@ -1041,11 +1056,4 @@
       initStorePanelPage();
     });
   }
-
-  if (page === 'owner-panel') {
-    document.addEventListener('DOMContentLoaded', function () {
-      initOwnerPanelPage();
-    });
-  }
-
 }());

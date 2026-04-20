@@ -11,16 +11,33 @@
 
   // ─── localStorage helpers ────────────────────────────────────────────────────
 
+  function normalizeCartItem(item){
+    if(!item || item.id === undefined || item.id === null){ return null; }
+    return {
+      id: item.id,
+      name: String(item.name || 'Produkt'),
+      price: Number(item.price) || 0,
+      img: item.img ? String(item.img) : '',
+      qty: Math.max(1, Number(item.qty) || 1),
+      apiItemId: item.apiItemId || undefined
+    };
+  }
+
   function getCart(){
     try{
-      return JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+      var parsed = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+      if(!Array.isArray(parsed)){ return []; }
+      return parsed.map(normalizeCartItem).filter(Boolean);
     }catch(e){
       return [];
     }
   }
 
   function saveCart(items){
-    try{ localStorage.setItem(CART_KEY, JSON.stringify(items)); }catch(_){}
+    try{
+      var normalized = (Array.isArray(items) ? items : []).map(normalizeCartItem).filter(Boolean);
+      localStorage.setItem(CART_KEY, JSON.stringify(normalized));
+    }catch(_){}
   }
 
   function getCartCount(cart){
@@ -75,8 +92,9 @@
   // ─── Cart operations (localStorage-first, API sync when logged in) ───────────
 
   function addToCart(product){
+    if(!product || product.id === undefined || product.id === null){ return getCart(); }
     var cart = getCart();
-    var existing = cart.filter(function(item){ return item.id === product.id; })[0];
+    var existing = cart.filter(function(item){ return String(item.id) === String(product.id); })[0];
     if(existing){
       existing.qty = (Number(existing.qty) || 1) + 1;
     } else {
@@ -95,8 +113,8 @@
 
   function removeFromCart(productId){
     var cart = getCart();
-    var item = cart.filter(function(item){ return item.id === productId; })[0];
-    var newCart = cart.filter(function(item){ return item.id !== productId; });
+    var item = cart.filter(function(item){ return String(item.id) === String(productId); })[0];
+    var newCart = cart.filter(function(item){ return String(item.id) !== String(productId); });
     saveCart(newCart);
     updateCartBadge();
 
@@ -111,7 +129,7 @@
   function updateQty(productId, qty){
     var cart = getCart();
     cart.forEach(function(item){
-      if(item.id === productId){ item.qty = Math.max(1, Number(qty) || 1); }
+      if(String(item.id) === String(productId)){ item.qty = Math.max(1, Number(qty) || 1); }
     });
     saveCart(cart);
     updateCartBadge();

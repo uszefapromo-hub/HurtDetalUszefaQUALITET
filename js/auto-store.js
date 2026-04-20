@@ -1,7 +1,8 @@
 (function () {
-  const API_BASE = window.QM_API_BASE || window.location.origin;
   const DEFAULT_MARGIN = 35;
-  const STORE_CACHE_KEY = "qm_operator_store";
+  const STORE_CACHE_KEY = 'qm_operator_store';
+  const STORES_KEY = 'qm_ai_stores';
+  const CURRENT_STORE_KEY = 'qm_ai_current_store';
   const AUTO_SYNC_MS = 30000;
 
   const state = {
@@ -10,192 +11,117 @@
     lastSyncAt: null,
   };
 
-  function getQMApi() {
-    return window.QMApi || null;
+  function safeParse(raw, fallback) {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed == null ? fallback : parsed;
+    } catch (_) {
+      return fallback;
+    }
   }
 
-  async function apiCall(methodName, fallbackUrl, options = {}) {
-    const api = getQMApi();
+  function asNumber(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : 0;
+  }
 
-    if (api && typeof api[methodName] === "function") {
-      return api[methodName](...(options.args || []));
+  function firstPositiveNumber(values) {
+    for (let i = 0; i < values.length; i += 1) {
+      const num = asNumber(values[i]);
+      if (num > 0) return num;
+    }
+    return 0;
+  }
+
+  function toSlug(value) {
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+  }
+
+  function getCentralFeedProducts() {
+    const merged = [];
+    const fromProducts = safeParse(localStorage.getItem('products') || '[]', []);
+    const fromBySupplier = safeParse(localStorage.getItem('qm_products_by_supplier_v1') || '[]', []);
+
+    if (Array.isArray(fromProducts)) {
+      merged.push(...fromProducts);
     }
 
-    const res = await fetch(`${API_BASE}${fallbackUrl}`, {
-      method: options.method || "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
-      body: options.body ? JSON.stringify(options.body) : undefined,
-      credentials: "include",
+    if (Array.isArray(fromBySupplier)) {
+      fromBySupplier.forEach((item) => {
+        if (item && Array.isArray(item.products)) {
+          merged.push(...item.products);
+          return;
+        }
+        if (item && typeof item === 'object') {
+          merged.push(item);
+        }
+      });
+    }
+
+    if (!merged.length) {
+      return [
+        { id: 'demo-1', name: 'Słuchawki bezprzewodowe', category: 'elektronika', supplier: 'Katalog centralny', price: 129, stock: 100 },
+        { id: 'demo-2', name: 'Lampka biurkowa LED', category: 'dom', supplier: 'Katalog centralny', price: 89, stock: 70 },
+        { id: 'demo-3', name: 'Organizer podróżny', category: 'akcesoria', supplier: 'Katalog centralny', price: 59, stock: 120 },
+      ];
+    }
+
+    const unique = [];
+    const seen = new Set();
+
+    merged.forEach((item, index) => {
+      if (!item || typeof item !== 'object') return;
+      const key = String(item.id || item.sku || item.code || item.name || `idx-${index}`);
+      if (seen.has(key)) return;
+      seen.add(key);
+      unique.push(item);
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`API ${fallbackUrl} failed: ${res.status} ${text}`);
-    }
-
-    return res.json();
+    return unique;
   }
 
-  function withMargin(basePrice, margin = DEFAULT_MARGIN) {
-    const price = Number(basePrice);
-    const pct = Number(margin);
-    if (isNaN(price) || isNaN(pct)) return 0;
-    return Math.round(price * (1 + pct / 100));
+  function mapFeedToStoreProducts(products, marginPercent, fallbackCategory) {
+    return products.slice(0, 60).map((product, index) => {
+      const basePrice = firstPositiveNumber([
+        product.basePrice,
+        product.base_price,
+        product.wholesalePrice,
+        product.cost,
+        product.priceNet,
+        product.price_gross,
+        product.selling_price,
+        product.platform_price,
+        product.recommended_reseller_price,
+        product.supplier_price,
+        product.price,
+      ]);
+
+      const storePrice = Number((basePrice * (1 + marginPercent / 100)).toFixed(2));
+
+      return {
+        id: String(product.id || product.sku || `auto-product-${Date.now()}-${index}`),
+        name: product.name || product.title || `Produkt ${index + 1}`,
+        image: product.image || product.image_url || product.img || product.thumbnail || product.photo || '',
+        category: product.category || fallbackCategory || 'oferta',
+        basePrice: Number(basePrice.toFixed(2)),
+        storePrice,
+        finalPrice: storePrice,
+        margin: Number(marginPercent),
+        supplierName: product.supplierName || product.supplier || product.sourceName || 'Katalog centralny',
+        supplierShipping: product.supplierShipping || 'Standard',
+        stock: asNumber(product.stock || product.quantity || 0),
+        isNew: true,
+      };
+    });
   }
 
-  function normalizeProduct(product, margin) {
-    const basePrice =
-      Number(product.basePrice ?? product.base_price ?? product.wholesalePrice ?? product.price ?? 0);
-
-    return {
-      id: product.id,
-      name: product.name || product.title || "Produkt",
-      image: product.image || product.thumbnail || product.photo || "",
-      sourceName: product.supplierName || product.supplier || product.wholesaler || "Hurtownia",
-      category: product.category || "nowości",
-      isNew: Boolean(product.isNew ?? product.is_new ?? true),
-      stock: Number(product.stock ?? product.quantity ?? 0),
-      basePrice,
-      finalPrice: withMargin(basePrice, margin),
-      margin,
-      raw: product,
-    };
-  }
-
-  async function createStoreFromDescription({ description, margin = DEFAULT_MARGIN }) {
-    const payload = {
-      description,
-      margin,
-      mode: "auto",
-      autoImport: true,
-      autoPricing: true,
-      autoSyncNewProducts: true,
-    };
-
-    const data = await apiCall(
-      "createStore",
-      "/api/stores",
-      { method: "POST", body: payload, args: [payload] }
-    );
-
-    const store = {
-      id: data.id || data.storeId || data.store?.id,
-      slug: data.slug || data.store?.slug || null,
-      name: data.name || data.store?.name || "Twój Sklep",
-      description,
-      margin,
-      products: [],
-    };
-
-    state.store = store;
-    persistStore();
-    return store;
-  }
-
-  async function fetchSupplierProducts() {
-    try {
-      return await apiCall(
-        "getSupplierProducts",
-        "/api/suppliers/products?sort=newest&status=active",
-        { method: "GET", args: [] }
-      );
-    } catch (e1) {
-      try {
-        return await apiCall(
-          "getProducts",
-          "/api/products?source=suppliers&sort=newest",
-          { method: "GET", args: [] }
-        );
-      } catch (e2) {
-        return await apiCall(
-          "listProducts",
-          "/api/listing/products?sort=newest",
-          { method: "GET", args: [] }
-        );
-      }
-    }
-  }
-
-  async function attachProductsToStore(storeId, products) {
-    const payload = {
-      products: products.map((p) => ({
-        externalProductId: p.id,
-        name: p.name,
-        basePrice: p.basePrice,
-        price: p.finalPrice,
-        margin: p.margin,
-        image: p.image,
-        sourceName: p.sourceName,
-        category: p.category,
-        stock: p.stock,
-        isNew: p.isNew,
-      })),
-    };
-
-    try {
-      return await apiCall(
-        "attachProductsToStore",
-        `/api/stores/${storeId}/products/import`,
-        { method: "POST", body: payload, args: [storeId, payload] }
-      );
-    } catch (e1) {
-      return await apiCall(
-        "importStoreProducts",
-        `/api/shop-products/import`,
-        { method: "POST", body: { storeId, ...payload }, args: [{ storeId, ...payload }] }
-      );
-    }
-  }
-
-  async function importNewestProductsIntoStore() {
-    if (!state.store?.id) throw new Error("Brak sklepu");
-
-    const raw = await fetchSupplierProducts();
-    const list = Array.isArray(raw)
-      ? raw
-      : raw.items || raw.products || raw.data || [];
-
-    const normalized = list.map((p) => normalizeProduct(p, state.store.margin));
-
-    await attachProductsToStore(state.store.id, normalized);
-
-    state.store.products = normalized;
-    state.lastSyncAt = new Date().toISOString();
-    persistStore();
-    renderAll();
-  }
-
-  async function syncOnlyNewProducts() {
-    if (!state.store?.id) return;
-
-    const raw = await fetchSupplierProducts();
-    const list = Array.isArray(raw)
-      ? raw
-      : raw.items || raw.products || raw.data || [];
-
-    const incoming = list.map((p) => normalizeProduct(p, state.store.margin));
-
-    const existingIds = new Set((state.store.products || []).map((p) => String(p.id)));
-    const newOnes = incoming.filter((p) => !existingIds.has(String(p.id)));
-
-    if (!newOnes.length) {
-      state.lastSyncAt = new Date().toISOString();
-      persistStore();
-      renderAll();
-      return;
-    }
-
-    await attachProductsToStore(state.store.id, newOnes);
-    state.store.products = [...newOnes, ...(state.store.products || [])];
-    state.lastSyncAt = new Date().toISOString();
-    persistStore();
-    renderAll();
-  }
-
-  function persistStore() {
+  function persistOperatorStore() {
     localStorage.setItem(
       STORE_CACHE_KEY,
       JSON.stringify({
@@ -205,69 +131,154 @@
     );
   }
 
-  function restoreStore() {
+  function restoreOperatorStore() {
     const raw = localStorage.getItem(STORE_CACHE_KEY);
     if (!raw) return;
 
-    try {
-      const parsed = JSON.parse(raw);
-      state.store = parsed.store || null;
-      state.lastSyncAt = parsed.lastSyncAt || null;
-    } catch (_) {
-      console.warn("Failed to restore store from localStorage:", _);
+    const parsed = safeParse(raw, null);
+    if (!parsed || typeof parsed !== 'object') return;
+
+    state.store = parsed.store || null;
+    state.lastSyncAt = parsed.lastSyncAt || null;
+  }
+
+  function upsertAiStore(store) {
+    const stores = safeParse(localStorage.getItem(STORES_KEY) || '[]', []);
+    const list = Array.isArray(stores) ? stores : [];
+    const filtered = list.filter((item) => item && item.slug !== store.slug);
+    localStorage.setItem(STORES_KEY, JSON.stringify([store].concat(filtered)));
+    localStorage.setItem(CURRENT_STORE_KEY, store.slug);
+  }
+
+  function extractCategoryFromDescription(description) {
+    const text = String(description || '').trim();
+    if (!text) return 'oferta';
+    const match = text.toLowerCase().match(/([a-ząćęłńóśźż0-9]{3,})/i);
+    return match ? match[1] : 'oferta';
+  }
+
+  function createStoreFromDescription({ description, margin = DEFAULT_MARGIN }) {
+    const category = extractCategoryFromDescription(description);
+    const stamp = Date.now();
+    const storeName = `Auto Sklep ${category.charAt(0).toUpperCase()}${category.slice(1)}`;
+    const slug = `${toSlug(storeName)}-${String(stamp).slice(-5)}`;
+
+    const store = {
+      id: `store-${stamp}`,
+      slug,
+      storeName,
+      brandName: storeName,
+      headline: 'Twój sklep dropshippingowy gotowy do sprzedaży',
+      subheadline: description || 'Automatyczny sklep z produktami z katalogu centralnego.',
+      description: description || '',
+      category,
+      marginPercent: Number(margin),
+      margin: Number(margin),
+      createdAt: new Date().toISOString(),
+      products: [],
+      colors: {
+        background: '#0b1220',
+      },
+      policy: {
+        shipping: 'Wysyłka 24-72h',
+        returns: 'Zwrot do 14 dni',
+      },
+      faq: [
+        { q: 'Jak szybko realizowane są zamówienia?', a: 'Standardowy czas realizacji wynosi 24-72h.' },
+        { q: 'Czy można zwrócić produkt?', a: 'Tak, zwrot jest możliwy do 14 dni.' },
+      ],
+    };
+
+    state.store = store;
+    persistOperatorStore();
+    return store;
+  }
+
+  function importNewestProductsIntoStore() {
+    if (!state.store) throw new Error('Brak sklepu');
+
+    const rawProducts = getCentralFeedProducts();
+    const normalized = mapFeedToStoreProducts(rawProducts, state.store.marginPercent || DEFAULT_MARGIN, state.store.category);
+
+    state.store.products = normalized;
+    state.lastSyncAt = new Date().toISOString();
+
+    upsertAiStore(state.store);
+    persistOperatorStore();
+    renderAll();
+  }
+
+  function syncOnlyNewProducts() {
+    if (!state.store) return;
+
+    const rawProducts = getCentralFeedProducts();
+    const incoming = mapFeedToStoreProducts(rawProducts, state.store.marginPercent || DEFAULT_MARGIN, state.store.category);
+
+    const existingIds = new Set((state.store.products || []).map((p) => String(p.id)));
+    const newOnes = incoming.filter((p) => !existingIds.has(String(p.id)));
+
+    if (newOnes.length) {
+      state.store.products = newOnes.concat(state.store.products || []);
     }
+
+    state.lastSyncAt = new Date().toISOString();
+    upsertAiStore(state.store);
+    persistOperatorStore();
+    renderAll();
   }
 
   function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function renderStoreStatus() {
-    const el = document.getElementById("qm-store-status");
+    const el = document.getElementById('qm-store-status');
     if (!el) return;
 
     if (!state.store) {
-      el.innerHTML = "Sklep jeszcze nie został utworzony.";
+      el.innerHTML = 'Sklep jeszcze nie został utworzony.';
       return;
     }
 
+    const launchUrl = `/launch/${encodeURIComponent(state.store.slug)}`;
     el.innerHTML = `
-      <strong>Sklep:</strong> ${escapeHtml(state.store.name)}<br>
-      <strong>ID:</strong> ${escapeHtml(String(state.store.id))}<br>
-      <strong>Marża:</strong> ${escapeHtml(String(state.store.margin))}%<br>
+      <strong>Sklep:</strong> ${escapeHtml(state.store.storeName || state.store.brandName || 'Sklep')}<br>
+      <strong>Slug:</strong> ${escapeHtml(String(state.store.slug || ''))}<br>
+      <strong>Marża:</strong> ${escapeHtml(String(state.store.marginPercent || state.store.margin || DEFAULT_MARGIN))}%<br>
       <strong>Produktów:</strong> ${(state.store.products || []).length}<br>
-      <strong>Ostatnia synchronizacja:</strong> ${escapeHtml(state.lastSyncAt || "jeszcze nie było")}
+      <strong>Ostatnia synchronizacja:</strong> ${escapeHtml(state.lastSyncAt || 'jeszcze nie było')}<br>
+      <strong>Storefront:</strong> <a href="${escapeHtml(launchUrl)}">${escapeHtml(window.location.origin + launchUrl)}</a>
     `;
   }
 
   function renderProducts() {
-    const grid = document.getElementById("qm-products-grid");
+    const grid = document.getElementById('qm-products-grid');
     if (!grid) return;
 
-    const products = state.store?.products || [];
+    const products = state.store && Array.isArray(state.store.products) ? state.store.products : [];
 
     grid.innerHTML = products.map((p) => `
       <article class="product-card">
         <div class="product-img">
-          ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">` : "📦"}
+          ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">` : '📦'}
         </div>
         <div class="product-body">
           <h4 class="product-title">${escapeHtml(p.name)}</h4>
-          <div class="price">${escapeHtml(String(p.finalPrice))} zł</div>
+          <div class="price">${escapeHtml(String(p.storePrice || p.finalPrice || 0))} zł</div>
           <div class="meta">
-            Hurt: ${escapeHtml(String(p.basePrice))} zł<br>
-            Marża: ${escapeHtml(String(p.margin))}%<br>
-            Źródło: ${escapeHtml(p.sourceName)}<br>
-            ${p.isNew ? "Nowość" : "Produkt"}
+            Hurt: ${escapeHtml(String(p.basePrice || 0))} zł<br>
+            Marża: ${escapeHtml(String(p.margin || state.store.marginPercent || DEFAULT_MARGIN))}%<br>
+            Źródło: ${escapeHtml(p.supplierName || 'Katalog centralny')}<br>
+            ${p.isNew ? 'Nowość' : 'Produkt'}
           </div>
         </div>
       </article>
-    `).join("");
+    `).join('');
   }
 
   function renderAll() {
@@ -275,32 +286,39 @@
     renderProducts();
   }
 
-  async function bootstrapAutoStore() {
-    restoreStore();
+  function bootstrapAutoStore() {
+    restoreOperatorStore();
     renderAll();
 
-    const openBtn = document.getElementById("qm-open-store-btn");
-    const syncBtn = document.getElementById("qm-sync-btn");
-    const descInput = document.getElementById("qm-store-description");
+    const openBtn = document.getElementById('qm-open-store-btn');
+    const syncBtn = document.getElementById('qm-sync-btn');
+    const descInput = document.getElementById('qm-store-description');
 
     if (openBtn) {
-      openBtn.addEventListener("click", async () => {
+      openBtn.addEventListener('click', () => {
         try {
           openBtn.disabled = true;
 
-          if (!state.store?.id) {
-            await createStoreFromDescription({
+          if (!state.store) {
+            createStoreFromDescription({
               description:
-                descInput?.value?.trim() ||
-                "Automatyczny sklep z nowościami z hurtowni i cenami z marżą",
+                (descInput && descInput.value && descInput.value.trim()) ||
+                'Automatyczny sklep z nowościami z hurtowni i cenami z marżą',
               margin: DEFAULT_MARGIN,
             });
           }
 
-          await importNewestProductsIntoStore();
+          importNewestProductsIntoStore();
+
+          if (state.store && state.store.slug) {
+            const launchUrl = `/launch/${encodeURIComponent(state.store.slug)}`;
+            setTimeout(() => {
+              window.location.assign(launchUrl);
+            }, 350);
+          }
         } catch (err) {
           console.error(err);
-          alert("Nie udało się utworzyć sklepu lub pobrać produktów z API.");
+          alert('Nie udało się utworzyć sklepu lokalnie.');
         } finally {
           openBtn.disabled = false;
         }
@@ -308,28 +326,28 @@
     }
 
     if (syncBtn) {
-      syncBtn.addEventListener("click", async () => {
+      syncBtn.addEventListener('click', () => {
         try {
           syncBtn.disabled = true;
-          await syncOnlyNewProducts();
+          syncOnlyNewProducts();
         } catch (err) {
           console.error(err);
-          alert("Synchronizacja nowości nie powiodła się.");
+          alert('Synchronizacja nowości nie powiodła się.');
         } finally {
           syncBtn.disabled = false;
         }
       });
     }
 
-    state.syncTimer = setInterval(async () => {
+    state.syncTimer = setInterval(() => {
       try {
-        await syncOnlyNewProducts();
+        syncOnlyNewProducts();
       } catch (err) {
-        console.error("AUTO SYNC ERROR", err);
+        console.error('AUTO SYNC ERROR', err);
       }
     }, AUTO_SYNC_MS);
 
-    window.addEventListener("beforeunload", () => {
+    window.addEventListener('beforeunload', () => {
       if (state.syncTimer) {
         clearInterval(state.syncTimer);
         state.syncTimer = null;
@@ -337,5 +355,5 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", bootstrapAutoStore);
+  document.addEventListener('DOMContentLoaded', bootstrapAutoStore);
 })();

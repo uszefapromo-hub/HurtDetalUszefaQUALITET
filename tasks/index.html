@@ -1,23 +1,85 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Zadania - HurtDetal Uszefa QUALITET</title>
-  <script>
-    (function(){
-      var path = window.location.pathname;
-      var match = path.match(/\/tasks\/([^/?#]+)/);
-      var taskId = match ? match[1] : '';
-      var search = window.location.search;
-      var params = new URLSearchParams(search);
-      if(taskId){
-        params.set('id', taskId);
-      }
-      var newUrl = (window.location.origin || '') + '/tasks.html' + (params.toString() ? '?' + params.toString() : '');
-      window.location.replace(newUrl);
-    })();
-  </script>
+<meta charset="UTF-8">
+<title>QualitetVerse — Panel</title>
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#0b1120;
+color:white;
+}
+.header{
+padding:20px;
+background:#111827;
+font-size:24px;
+font-weight:700;
+}
+.wrap{
+padding:20px;
+display:grid;
+gap:20px;
+}
+.card{
+background:#111827;
+padding:20px;
+border-radius:12px;
+}
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+}
+.stat{
+background:#0f172a;
+padding:15px;
+border-radius:10px;
+}
+button{
+padding:12px;
+background:#22c55e;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-weight:700;
+}
+</style>
 </head>
-<body></body>
+
+<body>
+
+<div class="header">
+🚀 QualitetVerse — Centrum Dowodzenia
+</div>
+
+<div class="wrap">
+
+<div class="card">
+<h2>Status systemu</h2>
+<button onclick="check()">Sprawdź backend</button>
+<pre id="out"></pre>
+</div>
+
+<div class="card">
+<h2>Statystyki</h2>
+<div class="grid">
+<div class="stat">👥 Użytkownicy: 0</div>
+<div class="stat">🛒 Produkty: 0</div>
+<div class="stat">💳 Subskrypcje: 0</div>
+<div class="stat">📦 Zamówienia: 0</div>
+</div>
+</div>
+
+</div>
+
+<script>
+async function check(){
+const res = await fetch('/health');
+const data = await res.json();
+document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
 </html>
