@@ -1,0 +1,539 @@
+'use strict';
+
+const express = require('express');
+const { body, param } = require('express-validator');
+const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const { parse: csvParse } = require('csv-parse/sync');
+const xml2js = require('xml2js');
+const fetch = require('node-fetch');
+
+const db = require('../config/database');
+const { searchOfficialSuppliers } = require('../config/supplierRegistry');
+const {
+  listSupplierConnectorPresets,
+  getSupplierConnectorPreset,
+  getSupplierConnectorStatus,
+  listSupplierConnectorStatuses,
+} = require('../services/supplier-connectors');
+const { authenticate, requireRole } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { sendImportNotification } = require('../helpers/mailer');
+const { computeQualityScore, isProductFeatured, isLowQuality } = require('../helpers/pricing');
+const { parsePagination } = require('../helpers/pagination');
+const AiService = require('../modules/ai/service');
+
+const router = express.Router();
+
+const MAX_UPLOAD_MB = parseInt(process.env.UPLOAD_MAX_SIZE_MB || '10', 10);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
+});
+
+// ─── List suppliers ────────────────────────────────────────────────────────────
+
+router.get('/', authenticate, async (req, res) => {
+  const { page, limit, offset } = parsePagination(req);
+  try {
+    const result = await db.query(
+      `SELECT *, COUNT(*) OVER() AS total_count FROM suppliers ORDER BY name ASC LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+    const total = result.rows.length > 0 ? parseInt(result.rows[0].total_count, 10) : 0;
+    const suppliers = result.rows.map(({ total_count, ...rest }) => rest);
+    return res.json({ total, page, limit, suppliers });
+  } catch (err) {
+    console.error('list suppliers error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── Official supplier catalogue / connector presets ──────────────────────────
+
+router.get('/official-catalog', authenticate, async (req, res) => {
+  try {
+    const hasFilters = req.query.q || req.query.integration_type || req.query.country || req.query.transport;
+    const suppliers = hasFilters
+      ? searchOfficialSuppliers({
+          query: req.query.q || '',
+          integrationType: req.query.integration_type || '',
+          country: req.query.country || '',
+          transport: req.query.transport || '',
+        }).map((supplier) => ({
+          ...supplier,
+          connector: getSupplierConnectorPreset(supplier.slug),
+        }))
+      : listSupplierConnectorPresets();
+
+    return res.json({ total: suppliers.length, suppliers });
+  } catch (err) {
+    console.error('official suppliers error:', err.message);
+    return res.status(500).json({ error: 'Nie udało się pobrać katalogu hurtowni' });
+  }
+});
+
+router.get('/official-catalog/status', authenticate, async (_req, res) => {
+  try {
+    const suppliers = listSupplierConnectorStatuses();
+    return res.json({ total: suppliers.length, suppliers });
+  } catch (err) {
+    console.error('official supplier status error:', err.message);
+    return res.status(500).json({ error: 'Nie udało się pobrać statusów integracji' });
+  }
+});
+
+router.get('/official-catalog/:slug', authenticate, async (req, res) => {
+  try {
+    const supplier = searchOfficialSuppliers({ query: req.params.slug })[0] || null;
+    if (!supplier || supplier.slug !== req.params.slug) {
+      return res.status(404).json({ error: 'Nie znaleziono oficjalnej integracji' });
+    }
+
+    return res.json({
+      supplier,
+      connector: getSupplierConnectorPreset(supplier.slug),
+    });
+  } catch (err) {
+    console.error('official supplier detail error:', err.message);
+    return res.status(500).json({ error: 'Nie udało się pobrać szczegółów integracji' });
+  }
+});
+
+router.get('/official-catalog/:slug/env-status', authenticate, async (req, res) => {
+  try {
+    const supplier = searchOfficialSuppliers({ query: req.params.slug })[0] || null;
+    if (!supplier || supplier.slug !== req.params.slug) {
+      return res.status(404).json({ error: 'Nie znaleziono oficjalnej integracji' });
+    }
+
+    return res.json({
+      supplier,
+      connector: getSupplierConnectorStatus(supplier.slug),
+    });
+  } catch (err) {
+    console.error('official supplier env-status error:', err.message);
+    return res.status(500).json({ error: 'Nie udało się pobrać statusu zmiennych integracji' });
+  }
+});
+
+// ─── Get supplier ──────────────────────────────────────────────────────────────
+
+router.get('/:id', authenticate, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM suppliers WHERE id = $1', [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'Hurtownia nie znaleziona' });
+    return res.json(result.rows[0]);
+  } catch (err) {
+    console.error('get supplier error:', err.message);
+    return res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// ─── Create supplier ───────────────────────────────────────────────────────────
+
+router.post(
+  '/',
+  authenticate,
+  requireRole('owner', 'admin'),
+  [
+    body('name').trim().notEmpty(),
+    body('integration_type').isIn(['api', 'xml', 'csv', 'manual']),
+    body('api_url').optional().isURL(),
+    body('api_key').optional().trim(),
+    body('margin').optional().isFloat({ min: 0, max: 100 }),
+  ],
+  validate,
+  async (req, res) => {
+    const { name, integration_type, api_url = null, api_key = null, margin = 0, notes = '' } = req.body;
+
+    try {
+      const id = uuidv4();
+      const result = await db.query(
+        `INSERT INTO suppliers (id, name, integration_type, api_url, api_key, margin, notes, active, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,true,NOW())
+         RETURNING *`,
+        [id, name, integration_type, api_url, api_key, margin, notes]
+      );
+      return res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error('create supplier error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── Update supplier ───────────────────────────────────────────────────────────
+
+router.put(
+  '/:id',
+  authenticate,
+  requireRole('owner', 'admin'),
+  [
+    param('id').isUUID(),
+    body('name').optional().trim().notEmpty(),
+    body('api_url').optional().isURL(),
+    body('margin').optional().isFloat({ min: 0, max: 100 }),
+    body('active').optional().isBoolean(),
+  ],
+  validate,
+  async (req, res) => {
+    const { name, api_url, api_key, margin, active, notes } = req.body;
+    try {
+      const result = await db.query(
+        `UPDATE suppliers SET
+           name             = COALESCE($1, name),
+           api_url          = COALESCE($2, api_url),
+           api_key          = COALESCE($3, api_key),
+           margin           = COALESCE($4, margin),
+           active           = COALESCE($5, active),
+           notes            = COALESCE($6, notes),
+           updated_at       = NOW()
+         WHERE id = $7
+         RETURNING *`,
+        [name || null, api_url || null, api_key !== undefined ? api_key : null,
+         margin !== undefined ? margin : null, active !== undefined ? active : null,
+         notes !== undefined ? notes : null, req.params.id]
+      );
+      if (!result.rows[0]) return res.status(404).json({ error: 'Hurtownia nie znaleziona' });
+      return res.json(result.rows[0]);
+    } catch (err) {
+      console.error('update supplier error:', err.message);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+  }
+);
+
+// ─── Import products from supplier (CSV or XML file upload) ───────────────────
+// Optional store_id: if omitted and user is admin/owner, products are imported
+// into the central catalogue (is_central = true).
+
+router.post(
+  '/:id/import',
+  authenticate,
+  requireRole('seller', 'owner', 'admin'),
+  upload.single('file'),
+  async (req, res) => {
+    const supplierId = req.params.id;
+    const { store_id = null, ai_clean = false } = req.body;
+    const isAdmin = ['owner', 'admin'].includes(req.user.role);
+    let supplier = null;
+
+    if (!store_id && !isAdmin) {
+      return res.status(422).json({ error: 'Wymagany parametr: store_id' });
+    }
+
+    try {
+      const supplierResult = await db.query('SELECT * FROM suppliers WHERE id = $1', [supplierId]);
+      supplier = supplierResult.rows[0];
+      if (!supplier) return res.status(404).json({ error: 'Hurtownia nie znaleziona' });
+
+      let store = null;
+      let storeMargin = parseFloat(process.env.PLATFORM_MARGIN_DEFAULT || '15');
+
+      if (store_id) {
+        const storeResult = await db.query('SELECT owner_id, margin FROM stores WHERE id = $1', [store_id]);
+        store = storeResult.rows[0];
+        if (!store) return res.status(404).json({ error: 'Sklep nie znaleziony' });
+
+        if (!isAdmin && store.owner_id !== req.user.id) {
+          return res.status(403).json({ error: 'Brak uprawnień do tego sklepu' });
+        }
+        storeMargin = parseFloat(store.margin || storeMargin);
+      }
+
+      let rawProducts = [];
+
+      if (req.file) {
+        const contentType = req.file.mimetype;
+        const content = req.file.buffer.toString('utf-8');
+
+        if (contentType.includes('xml') || req.file.originalname.endsWith('.xml')) {
+          rawProducts = await parseXmlProducts(content);
+        } else {
+          // Default: CSV
+          rawProducts = parseCsvProducts(content);
+        }
+      } else if (supplier.integration_type === 'api' && supplier.api_url) {
+        rawProducts = await fetchApiProducts(supplier);
+      } else {
+        return res.status(422).json({ error: 'Brak pliku lub URL API dostawcy' });
+      }
+
+      rawProducts = await AiService.normalizeSupplierProducts(req.user.id, rawProducts, {
+        supplierName: supplier.name,
+        enabled: ai_clean === true || ai_clean === 'true' || process.env.AI_AUTO_SUPPLIER_ENRICH === 'true',
+      });
+
+      const report = await upsertProducts(rawProducts, store_id, supplierId, storeMargin);
+
+      // Fire-and-forget: notify admin about completed import
+      sendImportNotification({
+        supplierName: supplier.name,
+        count: report.count,
+        status: 'success',
+      });
+
+      return res.json({
+        message: `Zaimportowano ${report.count} produktów`,
+        count: report.count,
+        featured: report.featured,
+        skipped: report.skipped,
+        suppliers: [supplier.name],
+      });
+    } catch (err) {
+      console.error('import supplier products error:', err.message);
+      // Fire-and-forget: notify admin about failed import
+      sendImportNotification({
+        supplierName: supplier?.name || req.params.id,
+        count: 0,
+        status: 'failure',
+        errorMessage: err.message,
+      });
+      return res.status(500).json({ error: 'Błąd importu: ' + err.message });
+    }
+  }
+);
+
+// ─── Sync products from supplier API ──────────────────────────────────────────
+// Optional store_id: admin/owner can sync directly into the central catalogue.
+
+router.post(
+  '/:id/sync',
+  authenticate,
+  requireRole('seller', 'owner', 'admin'),
+  async (req, res) => {
+    const supplierId = req.params.id;
+    const { store_id = null, ai_clean = false } = req.body;
+    const isAdmin = ['owner', 'admin'].includes(req.user.role);
+    let supplier = null;
+
+    if (!store_id && !isAdmin) {
+      return res.status(422).json({ error: 'Wymagany parametr: store_id' });
+    }
+
+    try {
+      const supplierResult = await db.query('SELECT * FROM suppliers WHERE id = $1', [supplierId]);
+      supplier = supplierResult.rows[0];
+      if (!supplier) return res.status(404).json({ error: 'Hurtownia nie znaleziona' });
+      if (!supplier.api_url) return res.status(422).json({ error: 'Hurtownia nie ma skonfigurowanego URL API' });
+
+      let storeMargin = parseFloat(process.env.PLATFORM_MARGIN_DEFAULT || '15');
+
+      if (store_id) {
+        const storeResult = await db.query('SELECT owner_id, margin FROM stores WHERE id = $1', [store_id]);
+        const store = storeResult.rows[0];
+        if (!store) return res.status(404).json({ error: 'Sklep nie znaleziony' });
+
+        if (!isAdmin && store.owner_id !== req.user.id) {
+          return res.status(403).json({ error: 'Brak uprawnień do tego sklepu' });
+        }
+        storeMargin = parseFloat(store.margin || storeMargin);
+      }
+
+      let rawProducts = await fetchApiProducts(supplier);
+      rawProducts = await AiService.normalizeSupplierProducts(req.user.id, rawProducts, {
+        supplierName: supplier.name,
+        enabled: ai_clean === true || ai_clean === 'true' || process.env.AI_AUTO_SUPPLIER_ENRICH === 'true',
+      });
+
+      const report = await upsertProducts(rawProducts, store_id, supplierId, storeMargin);
+
+      // Update last sync timestamp
+      await db.query('UPDATE suppliers SET last_sync_at = NOW() WHERE id = $1', [supplierId]);
+
+      // Fire-and-forget: notify admin about completed sync
+      sendImportNotification({
+        supplierName: supplier.name,
+        count: report.count,
+        status: 'success',
+      });
+
+      return res.json({
+        message: `Zsynchronizowano ${report.count} produktów`,
+        count: report.count,
+        featured: report.featured,
+        skipped: report.skipped,
+        suppliers: [supplier.name],
+      });
+    } catch (err) {
+      console.error('sync supplier error:', err.message);
+      // Fire-and-forget: notify admin about failed sync
+      sendImportNotification({
+        supplierName: supplier?.name || req.params.id,
+        count: 0,
+        status: 'failure',
+        errorMessage: err.message,
+      });
+      return res.status(500).json({ error: 'Błąd synchronizacji: ' + err.message });
+    }
+  }
+);
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+function parseCsvProducts(content) {
+  const records = csvParse(content, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+  return records.map((csvRecord) => ({
+    sku: csvRecord.sku || csvRecord.SKU || csvRecord.id || null,
+    name: csvRecord.name || csvRecord.nazwa || csvRecord.Name || '',
+    price_net: parseFloat(csvRecord.price_net || csvRecord.cena_netto || csvRecord.price || 0),
+    tax_rate: parseFloat(csvRecord.tax_rate || csvRecord.vat || csvRecord.VAT || 23),
+    stock: parseInt(csvRecord.stock || csvRecord.stan || 0, 10),
+    category: csvRecord.category || csvRecord.kategoria || null,
+    description: csvRecord.description || csvRecord.opis || '',
+    image_url: csvRecord.image_url || csvRecord.zdjecie || csvRecord.image || null,
+  }));
+}
+
+async function parseXmlProducts(content) {
+  const parsed = await xml2js.parseStringPromise(content, { explicitArray: false });
+  // Support common XML schemas used by Polish wholesalers (Baselinker, IAI, custom)
+  const rootKey = Object.keys(parsed)[0];
+  const root = parsed[rootKey];
+  let items = root.product || root.products?.product || root.item || root.items?.item || [];
+  if (!Array.isArray(items)) items = [items];
+
+  return items.map((item) => ({
+    sku: item.sku || item.id || item.kod || null,
+    name: item.name || item.nazwa || item.title || '',
+    price_net: parseFloat(item.price_net || item.cena_netto || item.price || 0),
+    tax_rate: parseFloat(item.tax_rate || item.vat || item.stawka_vat || 23),
+    stock: parseInt(item.stock || item.stan || item.quantity || 0, 10),
+    category: item.category || item.kategoria || null,
+    description: item.description || item.opis || '',
+    image_url: item.image_url || item.zdjecie || item.img || null,
+  }));
+}
+
+async function fetchApiProducts(supplier) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  let response;
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (supplier.api_key) headers['Authorization'] = `Bearer ${supplier.api_key}`;
+
+    response = await fetch(supplier.api_url, { headers, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+  if (!response.ok) throw new Error(`API returned ${response.status}`);
+
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('xml')) {
+    const text = await response.text();
+    return parseXmlProducts(text);
+  }
+  if (contentType.includes('csv')) {
+    const text = await response.text();
+    return parseCsvProducts(text);
+  }
+
+  // JSON default
+  const json = await response.json();
+  const items = Array.isArray(json) ? json : json.products || json.items || json.data || [];
+  return items.map((item) => ({
+    sku: item.sku || item.id || null,
+    name: item.name || item.nazwa || '',
+    price_net: parseFloat(item.price_net || item.price || 0),
+    tax_rate: parseFloat(item.tax_rate || item.vat || 23),
+    stock: parseInt(item.stock || item.quantity || 0, 10),
+    category: item.category || item.kategoria || null,
+    description: item.description || item.opis || '',
+    image_url: item.image_url || item.image || null,
+  }));
+}
+
+async function upsertProducts(rawProducts, storeId, supplierId, storeMargin) {
+  let count    = 0;
+  let featured = 0;
+  let skipped  = 0;
+  const isCentral = !storeId;
+
+  for (const raw of rawProducts) {
+    if (!raw.name) continue;
+
+    // Skip completely empty / low-quality listings
+    if (isLowQuality(raw)) {
+      skipped++;
+      continue;
+    }
+
+    const priceGross     = raw.price_net * (1 + raw.tax_rate / 100);
+    const sellingPrice   = priceGross * (1 + storeMargin / 100);
+    const qualityScore   = computeQualityScore({ ...raw, price_gross: priceGross });
+    const productFeatured = isProductFeatured({ ...raw, price_gross: priceGross });
+
+    // Upsert by SKU when available
+    if (raw.sku) {
+      // Build a single parameterised lookup/update regardless of central vs. store-scoped
+      const lookupParams = isCentral ? [raw.sku] : [storeId, raw.sku];
+      const lookupSql = isCentral
+        ? 'SELECT id FROM products WHERE is_central = true AND sku = $1'
+        : 'SELECT id FROM products WHERE store_id = $1 AND sku = $2';
+
+      const existing = await db.query(lookupSql, lookupParams);
+      if (existing.rows.length > 0) {
+        // Common update fields ($1–$10), quality fields ($11,$12), then dynamic WHERE params
+        const updateCommon = [
+          raw.name, raw.price_net, raw.tax_rate,
+          priceGross.toFixed(2), sellingPrice.toFixed(2),
+          storeMargin, raw.stock,
+          raw.category, raw.description, raw.image_url,
+          qualityScore, productFeatured,
+        ];
+        const updateParams = isCentral
+          ? [...updateCommon, raw.sku]
+          : [...updateCommon, storeId, raw.sku];
+
+        const whereClause = isCentral
+          ? 'WHERE is_central = true AND sku = $13'
+          : 'WHERE store_id = $13 AND sku = $14';
+
+        await db.query(
+          `UPDATE products SET
+             name          = $1,
+             price_net     = $2,
+             tax_rate      = $3,
+             price_gross   = $4,
+             selling_price = $5,
+             margin        = $6,
+             stock         = $7,
+             category      = COALESCE($8, category),
+             description   = COALESCE($9, description),
+             image_url     = COALESCE($10, image_url),
+             quality_score = $11,
+             is_featured   = $12,
+             updated_at    = NOW()
+           ${whereClause}`,
+          updateParams
+        );
+        count++;
+        if (productFeatured) featured++;
+        continue;
+      }
+    }
+
+    await db.query(
+      `INSERT INTO products
+         (id, store_id, supplier_id, name, sku, price_net, tax_rate, price_gross, selling_price,
+          margin, stock, category, description, image_url, is_central, quality_score, is_featured, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW())`,
+      [uuidv4(), storeId, supplierId, raw.name, raw.sku || null,
+       raw.price_net, raw.tax_rate, priceGross.toFixed(2), sellingPrice.toFixed(2),
+       storeMargin, raw.stock, raw.category, raw.description, raw.image_url, isCentral,
+       qualityScore, productFeatured]
+    );
+    count++;
+    if (productFeatured) featured++;
+  }
+  return { count, featured, skipped };
+}
+
+module.exports = router;
